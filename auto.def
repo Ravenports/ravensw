@@ -43,39 +43,39 @@ cc-with { -libs { -larchive }} {
 	}
 }
 
-cc-with { -libs { -lexpat }} {
+cc-with { -libs { -lexpat_pic }} {
 	if {![cc-check-functions XML_ParseBuffer]} {
-		user-error "Unable to find libexpat"
+		user-error "Unable to find libexpat_pic"
 	}
 }
 
-cc-with { -libs { -lb2 }} {
+cc-with { -libs { -lb2_pic }} {
 	if {![cc-check-functions blake2b_init]} {
-		user-error "Unable to find libb2"
+		user-error "Unable to find libb2_pic"
 	}
 }
 
-cc-with { -libs { -lpicosat }} {
+cc-with { -libs { -lpicosat_pic }} {
 	if {![cc-check-functions picosat_set_verbosity]} {
-		user-error "Unable to find libpicosat"
+		user-error "Unable to find libpicosat_pic"
 	}
 }
 
-cc-with { -libs { -llinenoise }} {
+cc-with { -libs { -llinenoise_pic }} {
 	if {![cc-check-functions linenoiseClearScreen]} {
-		user-error "Unable to find liblinenoise"
+		user-error "Unable to find liblinenoise_pic"
 	}
 }
 
-cc-with { -libs { -lucl }} {
+cc-with { -libs { -lucl_pic }} {
 	if {![cc-check-functions ucl_object_string_to_type]} {
-		user-error "Unable to find libucl"
+		user-error "Unable to find libucl_pic"
 	}
 }
 
-cc-with { -libs { -lelf }} {
+cc-with { -libs { -lelf_pic }} {
 	if {![cc-check-functions elf_version]} {
-		user-error "Unable to find libelf"
+		user-error "Unable to find libelf_pic"
 	}
 }
 
