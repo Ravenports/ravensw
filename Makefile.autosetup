@@ -1,5 +1,5 @@
 include @builddir@/mk/defs.mk
-DIRS=	external compat libpkg/repo libpkg src docs scripts @testsdir@
+DIRS=	external libpkg/repo libpkg src docs scripts @testsdir@
 
 include $(MK)/dir.mk
 
@@ -21,15 +21,8 @@ check: all
 COCCI_ARGS=	-I ${top_srcdir} \
 		-I /usr/include \
 		-I /usr/local/include \
-		-I ${top_srcdir}/compat \
 		-I ${top_srcdir}/libpkg \
-		-I ${top_srcdir}/src \
-		-I ${top_srcdir}/external/expat/lib \
-		-I ${top_srcdir}/external/libyaml/include \
-		-I ${top_srcdir}/external/libucl/include \
-		-I ${top_srcdir}/external/uthash \
-		-I ${top_srcdir}/external/sqlite  \
-		-I ${top_srcdir}/external/libelf
+		-I ${top_srcdir}/src
 
 1cocci:
 	spatch ${COCCI_ARGS} -in_place -sp_file $(top_srcdir)/tests/cocci/${COCCITEST} -dir ${top_srcdir}/libpkg ; \

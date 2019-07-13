@@ -1,6 +1,9 @@
 include $(MK)/common.mk
 
-all: lib$(LIB)$(LIBSOEXT) lib$(LIB)$(SH_SOEXT) lib$(LIB).a
+# Disable dynamic library builds
+# all: lib$(LIB)$(LIBSOEXT) lib$(LIB)$(SH_SOEXT) lib$(LIB).a
+
+all: lib$(LIB).a
 
 lib$(LIB)$(SH_SOEXT): lib$(LIB)$(LIBSOEXT)
 	ln -sf lib$(LIB)$(LIBSOEXT) $@

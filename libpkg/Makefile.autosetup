@@ -41,15 +41,7 @@ SRCS=	backup.c \
 	rcscripts.c
 
 LOCAL_CFLAGS=	-I$(top_srcdir)/compat \
-		-I$(top_srcdir)/external/blake2 \
-		-I$(top_srcdir)/external/sqlite \
-		-I$(top_srcdir)/external/uthash \
-		-I$(top_srcdir)/external/picosat \
-		-I$(top_srcdir)/external/expat/lib \
 		-I$(top_srcdir)/external/include \
-		-I$(top_srcdir)/external/libucl/include \
-		-I$(top_srcdir)/external/libucl/klib \
-		-I$(top_srcdir)/external/libfetch \
 		-I$(top_srcdir)/libpkg/repo \
 		-I$(top_srcdir)/libpkg \
 		-I$(top_srcdir) \
@@ -75,14 +67,13 @@ LOCAL_LDFLAGS=	@waflags@ \
 		-lm
 
 STATIC_LIBS=	@REPOS_STATIC_LIBS@ \
-		$(top_builddir)/external/sqlite/libsqlite.a \
-		$(top_builddir)/external/libucl/libucl.a \
-		$(top_builddir)/external/picosat/libpicosat.a \
-		$(top_builddir)/external/linenoise/liblinenoise.a \
-		$(top_builddir)/external/expat/libexpat.a \
-		$(top_builddir)/external/blake2/libblake2.a \
-		$(top_builddir)/compat/libbsd_compat.a \
-		$(top_builddir)/external/libfetch/libfetch.a \
+		$(prefix)/lib/libsqlite.a \
+		$(prefix)/lib/libucl.a \
+		$(prefix)/lib/libpicosat.a \
+		$(prefix)/lib/liblinenoise.a \
+		$(prefix)/lib/libexpat.a \
+		$(prefix)/lib/libb2.a \
+		$(prefix)/lib/libfetch.a \
 		# end of list
 
 @if HAVE_LIBUTIL
@@ -110,8 +101,7 @@ LOCAL_LDFLAGS+=	-Wl,--version-script,$(top_builddir)/libpkg/libpkg.ver
 @endif
 
 @if libabidir == libelf
-LOCAL_CFLAGS+= -I$(top_srcdir)/external/libelf
-STATIC_LIBS+=	$(top_builddir)/external/libelf/libelf.a
+STATIC_LIBS+=	$(prefix)/lib/libelf.a
 LOCAL_LDFLAGS+=	-L$(top_builddir)/external/libelf -lelf
 @endif
 
@@ -120,12 +110,7 @@ LOCAL_LDFLAGS+=	-L$(top_builddir)/external/libelf -lelf
 LOCAL_LDFLAGS+=	-lelf
 @endif
 
-@if PKG_LIBARCHIVE_LIBS
-LOCAL_CFLAGS+=	@PKG_LIBARCHIVE_CFLAGS@
-LOCAL_LDFLAGS+=	@PKG_LIBARCHIVE_LDFLAGS@ @PKG_LIBARCHIVE_LIBS@
-@else
 LOCAL_LDFLAGS+=	-larchive
-@endif
 
 @if PKG_LIBLDNS_LIBS
 LOCAL_CFLAGS+=	@PKG_LIBLDNS_CFLAGS@
@@ -138,9 +123,11 @@ $(OBJS) $(SHOBJS): $(top_builddir)/pkg_config.h
 
 all: lib$(LIB)_flat.a
 
-lib$(LIB)_flat.a: mergelib_script
+# lib$(LIB)_flat.a: mergelib_script
 	# ar -M is not portable (not supported by Mac ar)
 	# ar -M < mergelib_script
+
+lib$(LIB)_flat.a: $(STATIC_LIBS) lib$(LIB).a
 	for l in $(STATIC_LIBS) ${.OBJDIR}/lib$(LIB).a; do \
 	   n=`basename $$l`; \
 	   mkdir -p breakdown/$$n; \
@@ -160,8 +147,6 @@ install: all pkg.h lib$(LIB)$(LIBSOEXT) lib$(LIB).a
 	install -d -m 755 $(DESTDIR)$(libdir)
 	install -d -m 755 $(DESTDIR)$(includedir)
 	install -d -m 755 $(DESTDIR)$(pkgconfigdir)
-	install -m 644 lib$(LIB)$(LIBSOEXT) $(DESTDIR)$(libdir)/
-	ln -sf lib$(LIB)$(LIBSOEXT) $(DESTDIR)$(libdir)/lib$(LIB)$(SH_SOEXT)
 	install -m 644 lib$(LIB).a $(DESTDIR)$(libdir)/
 	install -m 644 pkg.h $(DESTDIR)$(includedir)/
 	install -m 644 pkg.pc $(DESTDIR)$(pkgconfigdir)

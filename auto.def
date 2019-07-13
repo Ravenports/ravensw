@@ -40,18 +40,7 @@ if {[cc-check-progs git] && [file exists .git]} {
 	define GITHASH -$gitrev[expr {$gitdirty eq {} ? {} : {-dirty}}]
 }
 
-if {[string match *-linux* [get-define host]]} {
-	cc-with { -libs { -lbsd }} {
-		if {[cc-check-functions getprogname]} {
-			define-append EXTRA_LIBS -lbsd
-			define-feature libbsd
-		} else {
-			user-error "Unable to find libbsd"
-		}
-	}
-} else {
-	define-feature static
-}
+define-feature static
 
 if {![opt-bool with-libarchive.pc]} {
 	cc-with { -libs { -larchive }} {
@@ -61,21 +50,47 @@ if {![opt-bool with-libarchive.pc]} {
 	}
 }
 
-cc-with { -libs { -lz }} {
-	if {![cc-check-functions zlibVersion]} {
-		user-error "Unable to find zlib"
+if {![opt-bool with-expat.pc]} {
+	cc-with { -libs { -lexpat }} {
+		if {![cc-check-functions XML_ParseBuffer]} {
+			user-error "Unable to find libexpat"
+		}
 	}
 }
 
-cc-with { -libs { -lbz2 }} {
-	if {![cc-check-functions BZ2_bzReadOpen]} {
-		user-error "Unable to find bzip2"
+if {![opt-bool with-libb2.pc]} {
+	cc-with { -libs { -lb2 }} {
+		if {![cc-check-functions blake2b_init]} {
+			user-error "Unable to find libb2"
+		}
 	}
 }
 
-cc-with { -libs { -llzma }} {
-	if {![cc-check-functions lzma_version_string]} {
-		user-error "Unable to find liblzma"
+cc-with { -libs { -lpicosat }} {
+	if {![cc-check-functions picosat_set_verbosity]} {
+		user-error "Unable to find libpicosat"
+	}
+}
+
+cc-with { -libs { -llinenoise }} {
+	if {![cc-check-functions linenoiseClearScreen]} {
+		user-error "Unable to find liblinenoise"
+	}
+}
+
+if {![opt-bool with-libucl.pc]} {
+	cc-with { -libs { -lucl }} {
+		if {![cc-check-functions ucl_object_string_to_type]} {
+			user-error "Unable to find libucl"
+		}
+	}
+}
+
+if {![opt-bool with-libelf.pc]} {
+	cc-with { -libs { -lelf }} {
+		if {![cc-check-functions elf_version]} {
+			user-error "Unable to find libelf"
+		}
 	}
 }
 
@@ -265,10 +280,8 @@ make-template libpkg/pkg.pc.in
 make-template tests/frontend/test_environment.sh.in
 make-template Makefile.autosetup Makefile
 
-foreach dir [list external/expat external/blake2 external/picosat \
-	external/linenoise external/libfetch external/sqlite \
-	external compat libpkg libpkg/repo libpkg/repo/binary src \
-	external/libucl external/libelf external/libmachista tests docs scripts] {
+foreach dir [list external/sqlite libpkg libpkg/repo libpkg/repo/binary src \
+	external/libmachista tests docs scripts] {
 	make-template $dir/Makefile.autosetup $dir/Makefile
 }
 
