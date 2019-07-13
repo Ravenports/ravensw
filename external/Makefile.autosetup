@@ -1,0 +1,3 @@
+include @builddir@/mk/defs.mk
+DIRS=	sqlite @libabidir@
+include $(MK)/dir.mk
