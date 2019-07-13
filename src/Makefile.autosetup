@@ -36,18 +36,22 @@ SRCS=	add.c \
 	version.c \
 	which.c
 
-LOCAL_CFLAGS=	-I$(top_srcdir)/external/uthash \
-		-I$(top_srcdir)/compat \
-		-I$(top_srcdir)/external/libucl/klib \
+LOCAL_CFLAGS=	-I$(prefix)/include \
 		-I$(top_builddir)/ \
 		-I$(top_builddir)/libpkg \
 		-DGITHASH=\"@GITHASH@\" \
 		-DHAVE_CONFIG_H
-LIBPKGFLAT=	-L$(top_builddir)/libpkg -lpkg_flat
+LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
 OTHER_LIBS=	@EXTRA_LIBS@
 
 LIBS+=		-larchive
-OTHER_LIBS+=	-lm -pthread
+LIBS+=		-lsqlite_pic
+LIBS+=		-lucl_pic
+LIBS+=		-llinenoise_pic
+LIBS+=		-lexpat_pic
+LIBS+=		-lbb2_pic
+LIBS+=		-lfetch_pic
+OTHER_LIBS+=	-lm -lssl -lcrypto -pthread
 @if HAVE_LIBUTIL
 OTHER_LIBS+=	-lutil
 @endif
@@ -62,48 +66,22 @@ OTHER_LIBS+=	-lresolv
 @endif
 
 @if libabidir == libmachista
-LOCAL_LDFLAGS=	$(LIBPKGFLAT) $(LIBS) $(OTHER_LIBS) -lresolv
-STATIC_LDFLAGS=	$(LIBPKGFLAT) \
-		$(PREFIX)/lib/libarchive.a \
-		$(PREFIX)/lib/libbz2.a \
-		$(PREFIX)/lib/libz.a \
-		$(PREFIX)/lib/liblzma.a \
-		$(PREFIX)/lib/libzstd.a \
-		$(PREFIX)/lib/libssl.a \
-		$(PREFIX)/lib/libcrypto.a \
-		-lm -pthread -lresolv
-@else
-LOCAL_LDFLAGS=	-Wl,-Bstatic \
-		@waflags@ $(LIBPKGFLAT) @nowaflags@ \
-		$(LIBS) \
-		-Wl,-Bdynamic $(OTHER_LIBS) \
-		-Wl,--export-dynamic \
-		-Wl,--version-script,$(top_builddir)/libpkg/libpkg.ver
-STATIC_LDFLAGS=	-static $(LIBPKGFLAT) $(LIBS) $(OTHER_LIBS)
+LIBS+=		-L$(top_builddir)/external/libmachista -lmachista_pic
 @endif
 
+@if libabidir == libelf
+LIBS+=		-lelf_pic
+@endif
+
+LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBS) $(OTHER_LIBS)
 
 include $(MK)/prog.mk
 
-all: pkg-static
-install: install-static
+$(OBJS): $(top_builddir)/pkg_config.h
 
-pkg-static: $(OBJS) $(top_builddir)/libpkg/libpkg_flat.a
-	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(STATIC_LDFLAGS)
+$(PROG): $(top_builddir)/libpkg/libpkg_pic.a
 
-install-static: pkg-static
+install: $(PROG)
 	install -d -m 755 $(DESTDIR)$(sbindir)
-	install -m 755 pkg-static $(DESTDIR)$(sbindir)/pkg-static
-
-${OBJS}: $(top_builddir)/pkg_config.h
-
-$(PROG): $(top_builddir)/libpkg/libpkg_flat.a
-
-install: $(PROG) pkg-static
-	install -d -m 755 $(DESTDIR)$(sbindir)
-	install -m 755 pkg $(DESTDIR)$(sbindir)/pkg
-	install -m 644 pkg.conf.sample $(DESTDIR)$(etcdir)
-
-clean: clean-pkg-static
-clean-pkg-static:
-	rm -f pkg-static
+	install -m 755 $(PROG) $(DESTDIR)$(sbindir)/$(PROG)
+	install -m 644 ravensw.conf.sample $(DESTDIR)$(etcdir)

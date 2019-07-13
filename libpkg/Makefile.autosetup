@@ -40,8 +40,7 @@ SRCS=	backup.c \
 	pkg_version.c \
 	rcscripts.c
 
-LOCAL_CFLAGS=	-I$(top_srcdir)/compat \
-		-I$(top_srcdir)/external/include \
+LOCAL_CFLAGS=	-I$(top_srcdir)/external/include \
 		-I$(top_srcdir)/libpkg/repo \
 		-I$(top_srcdir)/libpkg \
 		-I$(top_srcdir) \
@@ -51,102 +50,17 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/compat \
 		-DPREFIX=\"$(PREFIX)\" \
 		-DHAVE_CONFIG_H
 
-LOCAL_LDFLAGS=	@waflags@ \
-		@REPOS_LDFLAGS@ \
-		-L$(top_builddir)/external/sqlite -lsqlite_pic \
-		-L$(top_builddir)/external/libucl -lucl_pic \
-		-L$(top_builddir)/external/picosat -lpicosat_pic \
-		-L$(top_builddir)/external/linenoise -llinenoise_pic \
-		-L$(top_builddir)/external/expat -lexpat_pic \
-		-L$(top_builddir)/external/blake2 -lblake2_pic \
-		-L$(top_builddir)/compat -lbsd_compat_pic \
-		-L$(top_builddir)/external/libfetch -lfetch_pic \
-		@nowaflags@ \
-		-lssl \
-		-lcrypto \
-		-lm
-
-STATIC_LIBS=	@REPOS_STATIC_LIBS@ \
-		$(prefix)/lib/libsqlite.a \
-		$(prefix)/lib/libucl.a \
-		$(prefix)/lib/libpicosat.a \
-		$(prefix)/lib/liblinenoise.a \
-		$(prefix)/lib/libexpat.a \
-		$(prefix)/lib/libb2.a \
-		$(prefix)/lib/libfetch.a \
-		# end of list
-
-@if HAVE_LIBUTIL
-LOCAL_LDFLAGS+=	-lutil
-@endif
-@if HAVE_LIBFTS
-LOCAL_LDFLAGS+=	-lfts
-@endif
-@if HAVE_LIBDL
-LOCAL_LDFLAS+= -ldl
-@endif
-@if HAVE_LIBRESOLV
-LOCAL_LDFLAS+= -lresolv
-@endif
-
 @if libabidir == libmachista
 LOCAL_CFLAGS+= -I$(top_srcdir)/external/libmachista
-STATIC_LIBS+=	$(top_builddir)/external/libmachista/libmachista.a
-LOCAL_LDFLAGS+=	-L$(top_builddir)/external/libmachista -lmachista_pic \
-		-larchive -lresolv
 SRCS+=		pkg_macho.c
 @else
 SRCS+=		pkg_elf.c
-LOCAL_LDFLAGS+=	-Wl,--version-script,$(top_builddir)/libpkg/libpkg.ver
 @endif
-
-@if libabidir == libelf
-STATIC_LIBS+=	$(prefix)/lib/libelf.a
-LOCAL_LDFLAGS+=	-L$(top_builddir)/external/libelf -lelf
-@endif
-
-@if libabidir
-@else
-LOCAL_LDFLAGS+=	-lelf
-@endif
-
-LOCAL_LDFLAGS+=	-larchive
 
 @if PKG_LIBLDNS_LIBS
 LOCAL_CFLAGS+=	@PKG_LIBLDNS_CFLAGS@
-LOCAL_LDFLAGS+=	@PKG_LIBLDNS_LDFLAGS@ @PKG_LIBLDNS_LIBS@
 @endif
 
-include $(MK)/lib.mk
+include $(MK)/pic-lib.mk
 
-$(OBJS) $(SHOBJS): $(top_builddir)/pkg_config.h
-
-all: lib$(LIB)_flat.a
-
-# lib$(LIB)_flat.a: mergelib_script
-	# ar -M is not portable (not supported by Mac ar)
-	# ar -M < mergelib_script
-
-lib$(LIB)_flat.a: $(STATIC_LIBS) lib$(LIB).a
-	for l in $(STATIC_LIBS) ${.OBJDIR}/lib$(LIB).a; do \
-	   n=`basename $$l`; \
-	   mkdir -p breakdown/$$n; \
-	   (cd breakdown/$$n && ar -x $$l); \
-	done
-	ar -qc ${.TARGET} breakdown/*/*.o
-
-mergelib_script: $(STATIC_LIBS) lib$(LIB).a
-	@echo "CREATE lib$(LIB)_flat.a" > $@
-	@for l in $(STATIC_LIBS) lib$(LIB).a; do \
-		echo "ADDLIB $$l"; \
-	done >> $@
-	@echo "SAVE" >> $@
-	@echo "END" >> $@
-
-install: all pkg.h lib$(LIB)$(LIBSOEXT) lib$(LIB).a
-	install -d -m 755 $(DESTDIR)$(libdir)
-	install -d -m 755 $(DESTDIR)$(includedir)
-	install -d -m 755 $(DESTDIR)$(pkgconfigdir)
-	install -m 644 lib$(LIB).a $(DESTDIR)$(libdir)/
-	install -m 644 pkg.h $(DESTDIR)$(includedir)/
-	install -m 644 pkg.pc $(DESTDIR)$(pkgconfigdir)
+$(SHOBJS): $(top_builddir)/pkg_config.h

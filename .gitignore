@@ -45,17 +45,8 @@ scripts/sbin/pkg2ng
 /compat/Makefile
 /docs/Makefile
 /external/Makefile
-/external/blake2/Makefile
-/external/picosat/Makefile
-/external/expat/Makefile
-/external/linenoise/Makefile
-/external/libucl/Makefile
 /external/sqlite/Makefile
 /external/sqlite/config.h
-/external/libelf/libelf_convert.c
-/external/libelf/libelf_fsize.c
-/external/libelf/libelf_msize.c
-/external/libelf/native-elf-format.h
 /libpkg/Makefile
 /libpkg/repo/Makefile
 /libpkg/repo/binary/Makefile

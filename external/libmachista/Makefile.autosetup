@@ -3,4 +3,4 @@ LIB=	machista
 SRCS=	libmachista.c \
 	hashmap.c
 
-include $(MK)/static-lib.mk
+include $(MK)/pic-lib.mk

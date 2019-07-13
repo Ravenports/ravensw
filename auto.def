@@ -210,12 +210,14 @@ if {[string match *-darwin* [get-define host]]} {
 	define libabidir libmachista
 	define waflags ""
 	define nowaflags ""
+	define machista libmachista
 } else {
 # libelf
 	define-feature libelf 0
 	define libabidir "libelf"
 	define waflags "-Wl,-whole-archive"
 	define nowaflags "-Wl,-no-whole-archive"
+	define machista ""
 }
 
 cc-with { -libs { -ljail} } {

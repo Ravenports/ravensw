@@ -3,7 +3,7 @@ LIB=	sqlite
 SRCS=	sqlite3.c \
 	shell.c
 
-LOCAL_CFLAGS=	-I$(top_srcdir)/external/linenoise \
+LOCAL_CFLAGS=	-I$(prefix)/include \
 		-D_HAVE_SQLITE_CONFIG_H \
 		-DHAVE_LINENOISE \
 		-Wno-unused-variable \
@@ -36,4 +36,4 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/external/linenoise \
 		-DSQLITE_SHELL_DBNAME_PROC=pkgshell_open \
 		-DNDEBUG
 
-include $(MK)/static-lib.mk
+include $(MK)/pic-lib.mk
