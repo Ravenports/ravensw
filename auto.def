@@ -14,17 +14,12 @@ define VERSION $maj_ver.$med_ver.$min_ver[expr {$dev_ver ? ".$dev_ver" : ""}]
 options {
 	pkgconfigdir:WHERE => "path to the directory where to install pc files"
 	with-ldns => "add support for libldns"
-	with-libarchive.pc => "build with libarchive getting flags via pc files"
 }
 
 if {[opt-str pkgconfigdir dir]} {
 	define pkgconfigdir $dir
 } else {
-	if {[string match *-freebsd* [get-define host]]} {
-		define pkgconfigdir [get-define prefix]/libdata/pkgconfig
-	} else {
-		define pkgconfigdir [get-define prefix]/lib/pkgconfig
-	}
+	define pkgconfigdir [get-define prefix]/lib/pkgconfig
 }
 
 cc-check-tools ar ranlib strip
@@ -42,27 +37,21 @@ if {[cc-check-progs git] && [file exists .git]} {
 
 define-feature static
 
-if {![opt-bool with-libarchive.pc]} {
-	cc-with { -libs { -larchive }} {
-		if {![cc-check-functions archive_read_open]} {
-			user-error "Unable to find libarchive"
-		}
+cc-with { -libs { -larchive }} {
+	if {![cc-check-functions archive_read_open]} {
+		user-error "Unable to find libarchive"
 	}
 }
 
-if {![opt-bool with-expat.pc]} {
-	cc-with { -libs { -lexpat }} {
-		if {![cc-check-functions XML_ParseBuffer]} {
-			user-error "Unable to find libexpat"
-		}
+cc-with { -libs { -lexpat }} {
+	if {![cc-check-functions XML_ParseBuffer]} {
+		user-error "Unable to find libexpat"
 	}
 }
 
-if {![opt-bool with-libb2.pc]} {
-	cc-with { -libs { -lb2 }} {
-		if {![cc-check-functions blake2b_init]} {
-			user-error "Unable to find libb2"
-		}
+cc-with { -libs { -lb2 }} {
+	if {![cc-check-functions blake2b_init]} {
+		user-error "Unable to find libb2"
 	}
 }
 
@@ -78,19 +67,15 @@ cc-with { -libs { -llinenoise }} {
 	}
 }
 
-if {![opt-bool with-libucl.pc]} {
-	cc-with { -libs { -lucl }} {
-		if {![cc-check-functions ucl_object_string_to_type]} {
-			user-error "Unable to find libucl"
-		}
+cc-with { -libs { -lucl }} {
+	if {![cc-check-functions ucl_object_string_to_type]} {
+		user-error "Unable to find libucl"
 	}
 }
 
-if {![opt-bool with-libelf.pc]} {
-	cc-with { -libs { -lelf }} {
-		if {![cc-check-functions elf_version]} {
-			user-error "Unable to find libelf"
-		}
+cc-with { -libs { -lelf }} {
+	if {![cc-check-functions elf_version]} {
+		user-error "Unable to find libelf"
 	}
 }
 
