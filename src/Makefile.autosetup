@@ -44,15 +44,16 @@ LOCAL_CFLAGS=	-I$(PREFIX)/include \
 		-DHAVE_CONFIG_H
 LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
 LIBREPO_PIC=	-L$(top_builddir)/libpkg/repo/binary -lrepo-binary_pic
+SQLITE_PIC=	-L$(top_builddir)/external/sqlite -lsqlite_pic
 OTHER_LIBS=	@EXTRA_LIBS@
 
+LIBS+=		${SQLITE_PIC}
 LIBS+=		-larchive
 LIBS+=		-lexpat_pic
 LIBS+=		-lzstd_pic
-LIBS+=		-lsqlite_pic
 LIBS+=		-llinenoise_pic
 LIBS+=		-lucl_pic
-LIBS+=		-lbb2_pic
+LIBS+=		-lb2_pic
 LIBS+=		-lfetch_pic
 OTHER_LIBS+=	-lm -lssl -lcrypto -pthread
 @if HAVE_LIBUTIL
