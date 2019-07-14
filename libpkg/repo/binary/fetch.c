@@ -95,7 +95,7 @@ pkg_repo_binary_create_symlink(struct pkg *pkg, const char *fname,
 	const char *dir)
 {
 	const char *ext, *dest_fname;
-	char link_dest_tmp[MAXPATHLEN], link_dest[MAXPATHLEN];
+	char link_dest_tmp[MAXPATHLEN+1], link_dest[MAXPATHLEN+1-4];
 
 	/* Create symlink from full pkgname */
 	ext = strrchr(fname, '.');
