@@ -47,7 +47,7 @@
 #include "binary_private.h"
 
 static int
-pkg_repo_binary_init_update(struct pkg_repo *repo, const char *name)
+pkg_repo_binary_init_update(struct pkg_repo *repo)
 {
 	sqlite3 *sqlite;
 	const char update_check_sql[] = ""
@@ -510,7 +510,7 @@ pkg_repo_binary_update_proceed(const char *name, struct pkg_repo *repo,
 	xasprintf(&path, "%s-pkgtemp", name);
 	rename(name, path);
 	pkg_register_cleanup_callback(rollback_repo, (void *)name);
-	rc = pkg_repo_binary_init_update(repo, name);
+	rc = pkg_repo_binary_init_update(repo);
 	if (rc != EPKG_OK) {
 		rc = EPKG_FATAL;
 		goto cleanup;
