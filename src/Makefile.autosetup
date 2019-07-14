@@ -54,6 +54,7 @@ LIBS+=		-lzstd_pic
 LIBS+=		-llinenoise_pic
 LIBS+=		-lucl_pic
 LIBS+=		-lb2_pic
+LIBS+=		-lpicosat_pic
 LIBS+=		-lfetch_pic
 OTHER_LIBS+=	-lm -lssl -lcrypto -pthread
 @if HAVE_LIBUTIL
