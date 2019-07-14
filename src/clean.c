@@ -56,8 +56,6 @@
 #include <dirent.h>
 #include <errno.h>
 
-#include <bsd_compat.h>
-
 #include "pkgcli.h"
 
 KHASH_MAP_INIT_STR(sum, char *);

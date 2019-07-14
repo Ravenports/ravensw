@@ -54,8 +54,6 @@
 #include <grp.h>
 #endif
 
-#include <bsd_compat.h>
-
 #include "utlist.h"
 #include "pkgcli.h"
 

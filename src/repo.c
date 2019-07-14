@@ -28,7 +28,6 @@
 #include "pkg_config.h"
 #endif
 
-#include <bsd_compat.h>
 #include <getopt.h>
 #include <signal.h>
 #include <sysexits.h>

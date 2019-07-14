@@ -56,8 +56,6 @@
 #include <poll.h>
 #include <sys/uio.h>
 
-#include <bsd_compat.h>
-
 #include "pkg.h"
 #include "private/event.h"
 #include "private/utils.h"

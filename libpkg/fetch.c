@@ -40,8 +40,6 @@
 #include <paths.h>
 #include <poll.h>
 
-#include <bsd_compat.h>
-
 #include "pkg.h"
 #include "private/event.h"
 #include "private/pkg.h"

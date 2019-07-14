@@ -56,7 +56,6 @@
 #endif
 #include <kvec.h>
 
-#include <bsd_compat.h>
 #include <utstring.h>
 
 #include "pkg.h"

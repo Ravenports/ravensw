@@ -32,8 +32,6 @@
 #include "pkg_config.h"
 #endif
 
-#include <bsd_compat.h>
-
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/types.h>

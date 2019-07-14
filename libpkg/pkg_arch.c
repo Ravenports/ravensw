@@ -29,8 +29,6 @@
 #include "pkg_config.h"
 #endif
 
-#include <bsd_compat.h>
-
 #include "pkg.h"
 #include "private/pkg.h"
 #include "private/event.h"

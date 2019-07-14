@@ -44,8 +44,6 @@
 #include <fcntl.h>
 #include <limits.h>
 
-#include <bsd_compat.h>
-
 #include "pkg.h"
 #include "private/event.h"
 

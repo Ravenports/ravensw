@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bsd_compat.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -43,8 +42,6 @@
 #include <time.h>
 #include <utlist.h>
 #include <utstring.h>
-
-#include <bsd_compat.h>
 
 #include "pkg.h"
 #include <private/pkg_printf.h>

@@ -26,8 +26,6 @@
 #include "pkg_config.h"
 #endif
 
-#include "bsd_compat.h"
-
 #include <stddef.h>
 #include <ctype.h>
 #include <assert.h>

@@ -37,8 +37,6 @@
 
 #include <pkg.h>
 
-#include <bsd_compat.h>
-
 #include "pkgcli.h"
 
 #define AUTOMATIC 1U<<0

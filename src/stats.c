@@ -41,8 +41,6 @@
 
 #include <pkg.h>
 
-#include <bsd_compat.h>
-
 #include "pkgcli.h"
 
 void

@@ -77,7 +77,6 @@
 } while (0)
 #endif
 
-#include <bsd_compat.h>
 #include "private/utils.h"
 #include "xmalloc.h"
 #include "pkg.h"

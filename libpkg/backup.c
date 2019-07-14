@@ -35,8 +35,6 @@
 #include "private/pkg.h"
 #include "private/pkgdb.h"
 
-#include <bsd_compat.h>
-
 /* Number of pages to copy per call to sqlite3_backup_step()
    Default page size is 1024 bytes on Unix */
 #define NPAGES	4

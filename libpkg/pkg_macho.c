@@ -42,7 +42,6 @@
 #include <limits.h>
 
 #include <libmachista.h>
-#include <bsd_compat.h>
 
 #include "pkg.h"
 #include "private/pkg.h"

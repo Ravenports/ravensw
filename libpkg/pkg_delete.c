@@ -40,8 +40,6 @@
 #include <fcntl.h>
 #include <utstring.h>
 
-#include <bsd_compat.h>
-
 #include "pkg.h"
 #include "private/event.h"
 #include "private/pkg.h"
