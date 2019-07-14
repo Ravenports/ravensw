@@ -217,7 +217,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 	ssize_t link_len;
 	size_t nbfiles = 0, added = 0;
 	khint_t k;
-#ifndef HAVE_STRUCT_DIRECT_D__TYPE
+#ifndef HAVE_STRUCT_DIRECT_D_TYPE
 	struct stat stbuf;
 #endif
 
@@ -234,7 +234,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 		    strcmp(ent->d_name, "..") == 0)
 			continue;
 		snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
-#ifdef HAVE_STRUCT_DIRECT_D__TYPE
+#ifdef HAVE_STRUCT_DIRECT_D_TYPE
 		if (ent->d_type == DT_DIR) {
 #else
 		stat(ent->d_name, &stbuf);
@@ -255,7 +255,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 			close(newfd);
 			continue;
 		}
-#ifdef HAVE_STRUCT_DIRECT_D__TYPE
+#ifdef HAVE_STRUCT_DIRECT_D_TYPE
 		if (ent->d_type != DT_LNK && ent->d_type != DT_REG)
 			continue;
 #else
@@ -271,7 +271,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 			*sumlist = populate_sums(db);
 		}
 		name = ent->d_name;
-#ifdef HAVE_STRUCT_DIRECT_D__TYPE
+#ifdef HAVE_STRUCT_DIRECT_D_TYPE
 		if (ent->d_type == DT_LNK) {
 #else
 		if (S_ISLNK(stbuf.st_mode)) {
