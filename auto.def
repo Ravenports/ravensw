@@ -37,7 +37,7 @@ if {[cc-check-progs git] && [file exists .git]} {
 
 define-feature static
 
-cc-with { -libs { -larchive }} {
+cc-with { -libs { -larchive_pic }} {
 	if {![cc-check-functions archive_read_open]} {
 		user-error "Unable to find libarchive"
 	}
@@ -46,6 +46,12 @@ cc-with { -libs { -larchive }} {
 cc-with { -libs { -lexpat_pic }} {
 	if {![cc-check-functions XML_ParseBuffer]} {
 		user-error "Unable to find libexpat_pic"
+	}
+}
+
+cc-with { -libs { -lzstd_pic }} {
+	if {![cc-check-functions ZSTD_versionNumber]} {
+		user-error "Unable to find libzstd_pic"
 	}
 }
 
@@ -212,11 +218,6 @@ cc-with { -libs { -ljail} } {
 	}
 }
 
-# libbsd
-cc-check-includes bsd/err.h bsd/libutil.h bsd/readpassphrase.h \
-	bsd/stdio.h bsd/strlib.h bsd/string.h bsd/sys/cdefs.h \
-	bsd/unistd.h
- 
 # capsicum
 if {[cc-check-functions cap_sandboxed]} {
 	define-feature capsicum
@@ -237,13 +238,6 @@ if {[pkg-config-init 0]} {
 			user-error "Unable to find libldns"
 		} else {
 			define PKG_LIBDNS_LIBS_STATIC [exec pkg-config --static --libs-only-l libldns]
-		}
-	}
-	if {[opt-bool with-libarchive.pc]} {
-		if {![pkg-config libarchive]} {
-			user-error "Unable to find libarchive"
-		} else {
-			define PKG_LIBARCHIVE_LIBS_STATIC [exec pkg-config --static --libs-only-l libarchive]
 		}
 	}
 }
