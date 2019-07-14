@@ -52,7 +52,7 @@ sqlite_file_exists(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 	char	 fpath[MAXPATHLEN];
 	sqlite3	*db = sqlite3_context_db_handle(ctx);
 	char	*path = dirname(sqlite3_db_filename(db, "main"));
-	char	*cksum;
+	unsigned char *cksum;
 
 	if (argc != 2) {
 		sqlite3_result_error(ctx, "file_exists needs two argument", -1);
@@ -63,7 +63,8 @@ sqlite_file_exists(sqlite3_context *ctx, int argc, sqlite3_value **argv)
 
 	if (access(fpath, R_OK) == 0) {
 		cksum = pkg_checksum_file(fpath, PKG_HASH_TYPE_SHA256_HEX);
-		if (cksum && strcmp(cksum, sqlite3_value_text(argv[1])) == 0)
+		if (cksum && strcmp((char *)cksum,
+		                    (char *)sqlite3_value_text(argv[1])) == 0)
 			sqlite3_result_int(ctx, 1);
 		else
 			sqlite3_result_int(ctx, 0);
