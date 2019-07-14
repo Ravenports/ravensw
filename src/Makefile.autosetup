@@ -43,6 +43,7 @@ LOCAL_CFLAGS=	-I$(prefix)/include \
 		-DGITHASH=\"@GITHASH@\" \
 		-DHAVE_CONFIG_H
 LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
+LIBREPO_PIC=	-L$(top_builddir)/libpkg/repo/binary -lrepo-binary_pic
 OTHER_LIBS=	@EXTRA_LIBS@
 
 LIBS+=		-larchive
@@ -75,13 +76,11 @@ LIBS+=		-L$(top_builddir)/external/libmachista -lmachista_pic
 LIBS+=		-lelf_pic
 @endif
 
-LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBS) $(OTHER_LIBS)
+LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBREPO_PIC) $(LIBS) $(OTHER_LIBS)
 
 include $(MK)/prog.mk
 
 $(OBJS): $(top_builddir)/pkg_config.h
-
-$(PROG): $(top_builddir)/libpkg/libpkg_pic.a
 
 install: $(PROG)
 	install -d -m 755 $(DESTDIR)$(sbindir)
