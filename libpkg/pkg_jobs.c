@@ -408,87 +408,6 @@ pkg_jobs_add_req(struct pkg_jobs *j, struct pkg *pkg)
 	return (nit);
 }
 
-/*
- * Post-process add request and handle flags:
- * upgrade - search for upgrades for dependencies and add them to the request
- * force - all upgrades are forced
- * reverse - try to upgrade reverse deps as well
- */
-static void
-pkg_jobs_process_add_request(struct pkg_jobs *j)
-{
-	bool force = j->flags & PKG_FLAG_FORCE,
-		 reverse = j->flags & PKG_FLAG_RECURSIVE,
-		 upgrade = j->type == PKG_JOBS_UPGRADE;
-	struct pkg_job_request *req, *tmp, *found;
-	struct pkg_job_request_item *it;
-	struct pkg_job_universe_item *un, *cur;
-	struct pkg_dep *d;
-	struct pkg *lp;
-	int (*deps_func)(const struct pkg *pkg, struct pkg_dep **d);
-	kvec_t(struct pkg_job_universe_item *) to_process;
-
-	if (!upgrade && !reverse)
-		return;
-
-	kv_init(to_process);
-	HASH_ITER(hh, j->request_add, req, tmp) {
-		it = req->item;
-
-		if (reverse)
-			deps_func = pkg_rdeps;
-		else
-			deps_func = pkg_deps;
-
-		d = NULL;
-		/*
-		 * Here we get deps of local packages only since we are pretty sure
-		 * that they are completely expanded
-		 */
-		lp = pkg_jobs_universe_get_local(j->universe,
-		    it->pkg->uid, 0);
-		while (lp != NULL && deps_func(lp, &d) == EPKG_OK) {
-			/*
-			 * Do not add duplicated upgrade candidates
-			 */
-			HASH_FIND_STR(j->request_add, d->uid, found);
-			if (found != NULL)
-				continue;
-
-			pkg_debug(4, "adding dependency %s to request", d->uid);
-			lp = pkg_jobs_universe_get_local(j->universe,
-				d->uid, 0);
-			/*
-			 * Here we need to check whether specific remote package
-			 * is newer than a local one
-			 */
-			un = pkg_jobs_universe_get_upgrade_candidates(j->universe,
-				d->uid, lp, force, NULL);
-			if (un == NULL)
-				continue;
-
-			cur = un->prev;
-			while (cur != un) {
-				if (cur->pkg->type != PKG_INSTALLED) {
-					kv_push(typeof(un), to_process, un);
-					break;
-				}
-				cur = cur->prev;
-			}
-		}
-	}
-
-	/* Add all items to the request */
-	for (int i = 0; i < kv_size(to_process); i++) {
-		un = kv_A(to_process, i);
-		pkg_jobs_add_req_from_universe(&j->request_add, un, false, true);
-	}
-	/* Now recursively process all items checked */
-	if (kv_size(to_process) > 0)
-		pkg_jobs_process_add_request(j);
-
-	kv_destroy(to_process);
-}
 
 /*
  * For delete request we merely check rdeps and force flag
@@ -1642,10 +1561,6 @@ jobs_solve_install_upgrade(struct pkg_jobs *j)
 		}
 	}
 
-#if 0
-	/* XXX: check if we can safely remove this function */
-	pkg_jobs_process_add_request(j);
-#endif
 	if (pkg_conflicts_request_resolve(j) != EPKG_OK) {
 		pkg_emit_error("Cannot resolve conflicts in a request");
 		return (EPKG_FATAL);

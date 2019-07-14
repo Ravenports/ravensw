@@ -228,8 +228,11 @@ out:
 }
 
 static int
-set_attrs(int fd, char *path, char *fullpath,
-    mode_t perm, uid_t uid, gid_t gid,
+set_attrs(int fd, char *path, char *fullpath
+#ifndef __sun__
+__unused
+#endif
+    , mode_t perm, uid_t uid, gid_t gid,
     const struct timespec *ats, const struct timespec *mts)
 {
 
@@ -960,8 +963,8 @@ pkg_add_check_pkg_archive(struct pkgdb *db, struct pkg *pkg,
 	const char	*arch;
 	int	ret, retcode;
 	struct pkg_dep	*dep = NULL;
-	char	bd[MAXPATHLEN], *basedir = NULL;
-	char	dpath[MAXPATHLEN], *ppath;
+	char	bd[MAXPATHLEN+1], *basedir = NULL;
+	char	dpath[MAXPATHLEN+1], *ppath;
 	const char	*ext = NULL;
 	struct pkg	*pkg_inst = NULL;
 	bool	fromstdin;

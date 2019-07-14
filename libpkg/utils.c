@@ -374,7 +374,11 @@ is_valid_abi(const char *arch, bool emit_error) {
 }
 
 bool
-is_valid_os_version(struct pkg *pkg)
+is_valid_os_version(struct pkg *pkg
+#ifndef __FreeBSD__
+__unused
+#endif
+)
 {
 #ifdef __FreeBSD__
 	const char *fbsd_version;
