@@ -40,7 +40,9 @@ SRCS=	backup.c \
 	pkg_version.c \
 	rcscripts.c
 
-LOCAL_CFLAGS=	-I$(top_srcdir)/external/include \
+LOCAL_CFLAGS=	-I$(top_srcdir)/external/sqlite \
+		-I$(top_srcdir)/external/include \
+		-I$(top_srcdir)/external/klib \
 		-I$(top_srcdir)/libpkg/repo \
 		-I$(top_srcdir)/libpkg \
 		-I$(top_srcdir) \

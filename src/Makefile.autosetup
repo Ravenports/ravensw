@@ -37,6 +37,7 @@ SRCS=	add.c \
 	which.c
 
 LOCAL_CFLAGS=	-I$(prefix)/include \
+		-I$(top_srcdir)/external/klib \
 		-I$(top_builddir)/ \
 		-I$(top_builddir)/libpkg \
 		-DGITHASH=\"@GITHASH@\" \
