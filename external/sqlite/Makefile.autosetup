@@ -3,7 +3,7 @@ LIB=	sqlite
 SRCS=	sqlite3.c \
 	shell.c
 
-LOCAL_CFLAGS=	-I$(prefix)/include \
+LOCAL_CFLAGS=	-I$(PREFIX)/include \
 		-D_HAVE_SQLITE_CONFIG_H \
 		-DHAVE_LINENOISE \
 		-Wno-unused-variable \

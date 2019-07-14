@@ -46,7 +46,7 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/external/sqlite \
 		-I$(top_srcdir)/libpkg/repo \
 		-I$(top_srcdir)/libpkg \
 		-I$(top_srcdir) \
-		-I$(PREFIX)/libelf \
+		-I$(PREFIX)/include/libelf \
 		-Wno-pointer-sign \
 		-Wno-missing-field-initializers \
 		-Wno-sign-compare \

@@ -36,7 +36,7 @@ SRCS=	add.c \
 	version.c \
 	which.c
 
-LOCAL_CFLAGS=	-I$(prefix)/include \
+LOCAL_CFLAGS=	-I$(PREFIX)/include \
 		-I$(top_srcdir)/external/klib \
 		-I$(top_builddir)/ \
 		-I$(top_builddir)/libpkg \

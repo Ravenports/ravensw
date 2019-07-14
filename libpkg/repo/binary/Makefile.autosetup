@@ -8,7 +8,7 @@ SRCS=	binary.c \
 	query.c \
 	update.c
 
-LOCAL_CFLAGS=	-I$(prefix)/include \
+LOCAL_CFLAGS=	-I$(PREFIX)/include \
 		-I$(top_srcdir)/libpkg \
 		-I$(top_srcdir)/external/sqlite \
 		-I$(top_srcdir)/external/klib \
