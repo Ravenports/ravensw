@@ -79,9 +79,9 @@ cc-with { -libs { -lucl_pic }} {
 	}
 }
 
-cc-with { -libs { -lelf_pic }} {
-	if {![cc-check-functions elf_version]} {
-		user-error "Unable to find libelf_pic"
+foreach header [list uthash.h utstring.h] {
+	if {![cc-check-includes $header]} {
+		user-error "Unable to find uthash headers"
 	}
 }
 
@@ -209,6 +209,12 @@ if {[string match *-darwin* [get-define host]]} {
 	define waflags "-Wl,-whole-archive"
 	define nowaflags "-Wl,-no-whole-archive"
 	define machista ""
+
+	cc-with { -libs { -lelf_pic }} {
+		if {![cc-check-functions elf_version]} {
+			user-error "Unable to find libelf_pic"
+		}
+	}
 }
 
 cc-with { -libs { -ljail} } {
