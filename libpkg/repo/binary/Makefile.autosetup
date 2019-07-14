@@ -10,6 +10,7 @@ SRCS=	binary.c \
 
 LOCAL_CFLAGS=	-I$(prefix)/include \
 		-I$(top_srcdir)/libpkg \
+		-I$(top_srcdir)/external/sqlite \
 		-I$(top_srcdir)
 
 include $(MK)/pic-lib.mk
