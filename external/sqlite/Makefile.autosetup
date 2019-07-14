@@ -10,6 +10,9 @@ LOCAL_CFLAGS=	-I$(PREFIX)/include \
 		-Wno-unused-function \
 		-Wno-strict-aliasing \
 		-Wno-unused-parameter \
+		-Wno-cast-function-type \
+		-Wno-sign-compare \
+		-Wno-implicit-fallthrough \
 		-DHAVE_USLEEP=1 \
 		-DSQLITE_OMIT_AUTOVACUUM \
 		-DSQLITE_OMIT_BLOB_LITERAL \
