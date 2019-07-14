@@ -3,6 +3,11 @@ DIRS=	external libpkg/repo libpkg src docs scripts @testsdir@
 
 include $(MK)/dir.mk
 
+BSD_INSTALL_PROGRAM?=	install -m 755
+BSD_INSTALL_DATA?=	install -m 644
+BSD_INSTALL_MAN?=	install -m 644
+BSD_INSTALL_SCRIPT?=	install -m 755
+
 check: all
 @if testsdir == "tests"
 	if [ "$(HTML)" != "" ]; then \

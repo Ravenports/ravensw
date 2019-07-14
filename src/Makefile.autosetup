@@ -86,5 +86,5 @@ $(OBJS): $(top_builddir)/pkg_config.h
 
 install: $(PROG)
 	install -d -m 755 $(DESTDIR)$(sbindir)
-	install -m 755 $(PROG) $(DESTDIR)$(sbindir)/$(PROG)
-	install -m 644 ravensw.conf.sample $(DESTDIR)$(etcdir)
+	${BSD_INSTALL_PROGRAM} $(PROG) $(DESTDIR)$(sbindir)/$(PROG)
+	${BSD_INSTALL_DATA} ravensw.conf.sample $(DESTDIR)$(etcdir)

@@ -7,8 +7,8 @@ pweeklydir=		$(sysconfdir)/periodic/weekly
 bashcompdir=		$(sysconfdir)/bash_completion.d
 zshcompdir=		$(PREFIX)/share/zsh/site-functions
 
-PDAILY=	periodic/411.pkg-backup \
-	periodic/490.status-pkg-changes
+PDAILY=		periodic/411.pkg-backup \
+		periodic/490.status-pkg-changes
 PSECURITY=	periodic/410.pkg-audit \
 		periodic/460.pkg-checksum
 PWEEKLY=	periodic/400.status-pkg
@@ -27,13 +27,13 @@ install: $(PDAILY) $(PSECURITY) $(PWEEKLY) $(COMPLETION)
 	install -d -m 755 $(DESTDIR)$(bashcompdir)
 	install -d -m 755 $(DESTDIR)$(zshcompdir)
 	for script in $(PDAILY); do \
-		install -m 755 $$script $(DESTDIR)$(pdailydir) ; \
+		${BSD_INSTALL_SCRIPT} $$script $(DESTDIR)$(pdailydir) ; \
 	done
 	for script in $(PSECURITY); do \
-		install -m 755 $$script $(DESTDIR)$(psecuritydir) ; \
+		${BSD_INSTALL_SCRIPT} $$script $(DESTDIR)$(psecuritydir) ; \
 	done
 	for script in $(PWEEKLY); do \
-		install -m 755 $$script $(DESTDIR)$(pweeklydir) ; \
+		${BSD_INSTALL_SCRIPT} $$script $(DESTDIR)$(pweeklydir) ; \
 	done
-	install -m 644 completion/_pkg.bash $(DESTDIR)$(bashcompdir)/
-	install -m 644 completion/_pkg  $(DESTDIR)$(zshcompdir)/
+	${BSD_INSTALL_DATA} completion/_pkg.bash $(DESTDIR)$(bashcompdir)/
+	${BSD_INSTALL_DATA} completion/_pkg  $(DESTDIR)$(zshcompdir)/
