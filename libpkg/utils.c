@@ -814,7 +814,7 @@ pkg_absolutepath(const char *src, char *dest, size_t dest_size, bool fromroot) {
 	return (dest);
 }
 
-#ifndef __sun__
+#ifdef HAVE_MKDIRAT
 bool
 mkdirat_p(int fd, const char *path)
 {

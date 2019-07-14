@@ -98,7 +98,7 @@ void *parse_mode(const char *str);
 int *text_diff(char *a, char *b);
 int merge_3way(char *pivot, char *v1, char *v2, UT_string *out);
 bool string_end_with(const char *path, const char *str);
-#ifndef __sun__
+#ifdef HAVE_MKDIRAT
 bool mkdirat_p(int fd, const char *path);
 #endif
 

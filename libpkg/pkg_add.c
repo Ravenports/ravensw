@@ -229,7 +229,7 @@ out:
 
 static int
 set_attrs(int fd, char *path, char *fullpath
-#ifndef __sun__
+#ifndef HAVE_SYMLINKAT
 __unused
 #endif
     , mode_t perm, uid_t uid, gid_t gid,
@@ -238,6 +238,9 @@ __unused
 
 	struct timeval tv[2];
 	struct stat st;
+#ifndef __sun__
+	int fdcwd;
+#endif
 #ifdef HAVE_UTIMENSAT
 	struct timespec times[2];
 
@@ -271,14 +274,13 @@ __unused
 		}
 	}
 #else
-	int fdcwd;
-
 	if ((fdcwd = open(".", O_DIRECTORY|O_CLOEXEC)) == -1) {
 		pkg_fatal_errno("Failed to open .%s", "");
 	}
 	fchdir(fd);
 
 	if (lutimes(RELATIVE_PATH(path), tv) == -1) {
+
 		if (errno != ENOSYS) {
 			close(fdcwd);
 			pkg_fatal_errno("Fail to set time on %s", path);
@@ -373,7 +375,22 @@ create_dir(struct pkg *pkg, struct pkg_dir *d)
 {
 	struct stat st;
 
-#ifdef __sun__
+#if HAVE_MKDIRAT
+	if (mkdirat(pkg->rootfd, RELATIVE_PATH(d->path), 0755) == -1)
+		if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(d->path)))
+			return (EPKG_FATAL);
+	if (fstatat(pkg->rootfd, RELATIVE_PATH(d->path), &st, 0) == -1) {
+		if (errno != ENOENT) {
+			pkg_fatal_errno("Fail to stat directory %s", d->path);
+		}
+		if (fstatat(pkg->rootfd, RELATIVE_PATH(d->path), &st, AT_SYMLINK_NOFOLLOW) == 0) {
+			unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
+		}
+		if (mkdirat(pkg->rootfd, RELATIVE_PATH(d->path), 0755) == -1) {
+			pkg_fatal_errno("Fail to create directory %s", d->path);
+		}
+	}
+#else
 	char fullpath[MAXPATHLEN * 2]; /* 1023*2 + slash + nullchar */
 
 	snprintf(fullpath, sizeof(fullpath), "%s/%s",
@@ -398,21 +415,6 @@ create_dir(struct pkg *pkg, struct pkg_dir *d)
 			unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
 		}
 		if (mkdir(fullpath, 0755) == -1) {
-			pkg_fatal_errno("Fail to create directory %s", d->path);
-		}
-	}
-#else
-	if (mkdirat(pkg->rootfd, RELATIVE_PATH(d->path), 0755) == -1)
-		if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(d->path)))
-			return (EPKG_FATAL);
-	if (fstatat(pkg->rootfd, RELATIVE_PATH(d->path), &st, 0) == -1) {
-		if (errno != ENOENT) {
-			pkg_fatal_errno("Fail to stat directory %s", d->path);
-		}
-		if (fstatat(pkg->rootfd, RELATIVE_PATH(d->path), &st, AT_SYMLINK_NOFOLLOW) == 0) {
-			unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
-		}
-		if (mkdirat(pkg->rootfd, RELATIVE_PATH(d->path), 0755) == -1) {
 			pkg_fatal_errno("Fail to create directory %s", d->path);
 		}
 	}
@@ -463,11 +465,20 @@ static int
 create_symlinks(struct pkg *pkg, struct pkg_file *f, const char *target)
 {
 	bool tried_mkdir = false;
-
-	pkg_hidden_tempfile(f->temppath, sizeof(f->temppath), f->path);
-#ifdef __sun__
+#ifdef HAVE_SYMLINKAT
+	char fullpath[1] = { 0 };
+#else
 	char fullpath[MAXPATHLEN * 2];
 	char basepath[MAXPATHLEN * 2];
+#endif
+
+	pkg_hidden_tempfile(f->temppath, sizeof(f->temppath), f->path);
+#ifdef HAVE_SYMLINKAT
+retry:
+	if (symlinkat(target, pkg->rootfd, RELATIVE_PATH(f->temppath)) == -1) {
+		if (!tried_mkdir) {
+			if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(dirname(f->path))))
+#else
 
 	snprintf(fullpath, sizeof(fullpath), "%s/%s",
 		 pkg->rootpath, RELATIVE_PATH(f->temppath));
@@ -481,12 +492,6 @@ retry:
 	if (symlink(target, fullpath) == -1) {
 		if (!tried_mkdir) {
 			if (mkdirp(basepath, 0755) == -1)
-#else
-	char fullpath[1] = { 0 };
-retry:
-	if (symlinkat(target, pkg->rootfd, RELATIVE_PATH(f->temppath)) == -1) {
-		if (!tried_mkdir) {
-			if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(dirname(f->path))))
 #endif
 				return (EPKG_FATAL);
 			tried_mkdir = true;
@@ -550,7 +555,14 @@ create_hardlink(struct pkg *pkg, struct pkg_file *f, const char *path)
 		return (EPKG_FATAL);
 	}
 
-#ifdef __sun__
+#ifdef HAVE_LINKAT
+retry:
+	if (linkat(pkg->rootfd, RELATIVE_PATH(fh->temppath),
+	    pkg->rootfd, RELATIVE_PATH(f->temppath), 0) == -1) {
+		if (!tried_mkdir) {
+			if (!mkdirat_p(pkg->rootfd,
+			    RELATIVE_PATH(dirname(f->path))))
+#else
 	char linkpath1[MAXPATHLEN * 2];
 	char linkpath2[MAXPATHLEN * 2];
 	char link_dir2[MAXPATHLEN * 2];
@@ -573,13 +585,6 @@ retry:
 	if (link(linkpath1, linkpath2) == -1) {
 		if (!tried_mkdir) {
 			if (mkdirp (link_dir2, 0755) == -1)
-#else
-retry:
-	if (linkat(pkg->rootfd, RELATIVE_PATH(fh->temppath),
-	    pkg->rootfd, RELATIVE_PATH(f->temppath), 0) == -1) {
-		if (!tried_mkdir) {
-			if (!mkdirat_p(pkg->rootfd,
-			    RELATIVE_PATH(dirname(f->path))))
 #endif
 				return (EPKG_FATAL);
 			tried_mkdir = true;
@@ -649,11 +654,11 @@ retry:
 	    O_CREAT|O_WRONLY|O_EXCL, f->perm);
 	if (fd == -1) {
 		if (!tried_mkdir) {
-#ifdef __sun__
-			if (mkdirp(basepath, 0755) == -1) {
-#else
+#ifdef HAVE_MKDIRAT
 			if (!mkdirat_p(pkg->rootfd,
 			    RELATIVE_PATH(dirname(f->path)))) {
+#else
+			if (mkdirp(basepath, 0755) == -1) {
 #endif
 				return (EPKG_FATAL);
 			}
@@ -843,10 +848,10 @@ pkg_extract_finalize(struct pkg *pkg)
 	struct pkg_dir *d = NULL;
 	char path[MAXPATHLEN + 8];
 	const char *fto;
-#ifdef __sun__
-	char fullpath[MAXPATHLEN * 2];
-#else
+#ifdef HAVE_SYMLINKAT
 	char fullpath[1] = { 0 };
+#else
+	char fullpath[MAXPATHLEN * 2];
 #endif
 #ifdef HAVE_CHFLAGSAT
 	bool install_as_user;
@@ -900,7 +905,7 @@ pkg_extract_finalize(struct pkg *pkg)
 	while (pkg_dirs(pkg, &d) == EPKG_OK) {
 		if (d->noattrs)
 			continue;
-#ifdef __sun__
+#ifndef HAVE_SYMLINKAT
 		snprintf(fullpath, sizeof(fullpath), "%s/%s",
 			pkg->rootpath, d->path);
 		if (strlen(fullpath) > MAXPATHLEN - 1)
@@ -963,8 +968,8 @@ pkg_add_check_pkg_archive(struct pkgdb *db, struct pkg *pkg,
 	const char	*arch;
 	int	ret, retcode;
 	struct pkg_dep	*dep = NULL;
-	char	bd[MAXPATHLEN+1], *basedir = NULL;
-	char	dpath[MAXPATHLEN+1], *ppath;
+	char	bd[MAXPATHLEN], *basedir = NULL;
+	char	dpath[MAXPATHLEN*2], *ppath;
 	const char	*ext = NULL;
 	struct pkg	*pkg_inst = NULL;
 	bool	fromstdin;
@@ -1052,6 +1057,11 @@ pkg_add_check_pkg_archive(struct pkgdb *db, struct pkg *pkg,
 		} else {
 			snprintf(dpath, sizeof(dpath), "%s/%s-*%s", bd,
 			    dep->name, ext);
+			if (strlen(dpath) > MAXPATHLEN - 1) {
+				pkg_emit_error("dpath exceeds limit(%d): %s",
+					MAXPATHLEN, dpath);
+				goto cleanup;
+			}
 			ppath = pkg_globmatch(dpath, dep->name);
 			if (ppath == NULL) {
 				pkg_emit_missing_dep(pkg, dep);

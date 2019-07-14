@@ -217,6 +217,9 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 	ssize_t link_len;
 	size_t nbfiles = 0, added = 0;
 	khint_t k;
+#ifndef HAVE_STRUCT_DIRECT_D__TYPE
+	struct stat stbuf;
+#endif
 
 	tmpfd = dup(fd);
 	d = fdopendir(tmpfd);
@@ -231,13 +234,11 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 		    strcmp(ent->d_name, "..") == 0)
 			continue;
 		snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
-#ifdef __sun__
-		struct stat	stbuf;
-
+#ifdef HAVE_STRUCT_DIRECT_D__TYPE
+		if (ent->d_type == DT_DIR) {
+#else
 		stat(ent->d_name, &stbuf);
 		if (S_ISDIR(stbuf.st_mode)) {
-#else
-		if (ent->d_type == DT_DIR) {
 #endif
 			nbfiles++;
 			newfd = openat(fd, ent->d_name, O_DIRECTORY|O_CLOEXEC, 0);
@@ -254,11 +255,11 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 			close(newfd);
 			continue;
 		}
-#ifdef __sun__
-		if (!(S_ISREG(stbuf.st_mode) || S_ISLNK(stbuf.st_mode)))
+#ifdef HAVE_STRUCT_DIRECT_D__TYPE
+		if (ent->d_type != DT_LNK && ent->d_type != DT_REG)
 			continue;
 #else
-		if (ent->d_type != DT_LNK && ent->d_type != DT_REG)
+		if (!(S_ISREG(stbuf.st_mode) || S_ISLNK(stbuf.st_mode)))
 			continue;
 #endif
 		nbfiles++;
@@ -270,10 +271,10 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 			*sumlist = populate_sums(db);
 		}
 		name = ent->d_name;
-#ifdef __sun__
-		if (S_ISLNK(stbuf.st_mode)) {
-#else
+#ifdef HAVE_STRUCT_DIRECT_D__TYPE
 		if (ent->d_type == DT_LNK) {
+#else
+		if (S_ISLNK(stbuf.st_mode)) {
 #endif
 			/* Dereference the symlink and check it for being
 			 * recognized checksum file, or delete the symlink

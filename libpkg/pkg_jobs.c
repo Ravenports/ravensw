@@ -596,7 +596,7 @@ static bool
 new_pkg_version(struct pkg_jobs *j)
 {
 	struct pkg *p;
-	const char *uid = "pkg-bsd-static-standard";
+	const char *uid = "ravensw-single-standard";
 	pkg_flags old_flags;
 	bool ret = false;
 	struct pkg_job_universe_item *nit, *cit;
@@ -1925,7 +1925,7 @@ pkg_jobs_execute(struct pkg_jobs *j)
 				goto cleanup;
 			}
 			if (ps->type == PKG_SOLVED_DELETE &&
-			    (strcmp(p->name, "pkg-bsd-static-standard") == 0) &&
+			    (strcmp(p->name, "ravensw-single-standard") == 0) &&
 			    (flags & PKG_DELETE_FORCE) == 0) {
 				if (j->patterns->match == MATCH_ALL) {
 					continue;

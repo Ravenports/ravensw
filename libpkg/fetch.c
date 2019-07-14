@@ -108,10 +108,10 @@ pkg_fetch_file_tmp(struct pkg_repo *repo, const char *url, char *dest,
 			.tv_usec = 0
 			}
 		};
-#ifdef __sun__
-		futimesat(fd, NULL, ftimes);
-#else
+#ifdef HAVE_FUTIMES
 		futimes(fd, ftimes);
+#else
+		futimesat(fd, NULL, ftimes);
 #endif
 	}
 
@@ -150,10 +150,10 @@ pkg_fetch_file(struct pkg_repo *repo, const char *url, char *dest, time_t t,
 			.tv_usec = 0
 			}
 		};
-#ifdef __sun__
-		futimesat(fd, NULL, ftimes);
-#else
+#ifdef HAVE_FUTIMES
 		futimes(fd, ftimes);
+#else
+		futimesat(fd, NULL, ftimes);
 #endif
 	}
 
@@ -166,7 +166,7 @@ pkg_fetch_file(struct pkg_repo *repo, const char *url, char *dest, time_t t,
 	return (retcode);
 }
 
-#ifdef __sun__
+#ifdef USE_ESTREAM
 static ssize_t
 ssh_read(void *data, void *buf, size_t len)
 #else
@@ -303,7 +303,7 @@ ssh_writev(int fd, struct iovec *iov, int iovcnt)
 	return (total);
 }
 
-#ifdef __sun__
+#ifdef USE_ESTREAM
 static ssize_t
 ssh_write(void *data, const void *buf, size_t l)
 #else
@@ -353,7 +353,7 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 	int sshout[2];
 	int retcode = EPKG_FATAL;
 	const char *argv[4];
-#ifdef __sun__
+#ifdef USE_ESTREAM
 	es_cookie_io_functions_t ssh_cookie_functions =
 	{
 	  ssh_read,
@@ -425,7 +425,7 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 		repo->sshio.out = sshin[1];
 		set_nonblocking(repo->sshio.in);
 
-#ifdef __sun__
+#ifdef USE_ESTREAM
 		repo->ssh = es_fopencookie ((void *)repo, "rb", ssh_cookie_functions);
 #else
 		repo->ssh = funopen(repo, ssh_read, ssh_write, NULL, ssh_close);
@@ -501,7 +501,7 @@ pkg_fetch_file_to_fd(struct pkg_repo *repo, const char *url, int dest,
 	char		*doc = NULL;
 	char		 docpath[MAXPATHLEN];
 	int		 retcode = EPKG_OK;
-	char		 zone[MAXHOSTNAMELEN + URL_SCHEMELEN + 5 + 15];
+	char		 zone[MAXHOSTNAMELEN + URL_SCHEMELEN + 5 + 10];
 	struct dns_srvinfo	*srv_current = NULL;
 	struct http_mirror	*http_current = NULL;
 	off_t		 sz = 0;
@@ -755,10 +755,10 @@ cleanup:
 			.tv_usec = 0
 			}
 		};
-#ifdef __sun__
-		futimesat(dest, NULL, ftimes);
-#else
+#ifdef HAVE_FUTIMES
 		futimes(dest, ftimes);
+#else
+		futimesat(dest, NULL, ftimes);
 #endif
 	}
 

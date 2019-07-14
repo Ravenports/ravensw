@@ -134,6 +134,10 @@ cc-with { -includes sys/stat.h } {
 	cc-check-members "struct stat.st_mtim" "struct stat.st_flags"
 }
 
+cc-with { -includes dirent.h } {
+	cc-check-members "struct dirent.d_type"
+}
+
 # check for sqlite
 cc-check-functions gmtime_r isnan localtime_r strchrnul strerror_r
 cc-check-includes stdint.h inttypes.h
@@ -142,7 +146,8 @@ cc-check-includes stdint.h inttypes.h
 cc-check-functions arc4random arc4random_stir basename_r chflagsat \
 	closefrom dirfd eaccess fopencookie fstatfs funopen strnstr \
 	strtofflags strtonum sysconf utimensat __res_setservers unlinkat \
-	faccessat fstatat openat readlinkat fflagstostr
+	linkat faccessat fstatat openat mkdirat readlinkat symlinkat \
+	mkdirat fflagstostr futimes
 
 cc-with { -includes { libutil.h }} {
 	if {[cc-check-decls humanize_number]} {

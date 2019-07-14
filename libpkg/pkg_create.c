@@ -37,8 +37,7 @@
 #include "private/event.h"
 #include "private/pkg.h"
 
-#undef TICK
-#define TICK	100
+#define RAVENSW_TICK	100
 
 static int pkg_create_from_dir(struct pkg *, const char *, struct packing *);
 static void counter_init(const char *what, int64_t max);
@@ -525,7 +524,7 @@ counter_count(void)
 {
 	count++;
 
-	if (count % TICK == 0)
+	if (count % RAVENSW_TICK == 0)
 		pkg_emit_progress_tick(count, maxcount);
 
 	return;

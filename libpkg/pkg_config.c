@@ -516,9 +516,6 @@ pkg_config_dump(void)
 static void
 disable_plugins_if_static(void)
 {
-#ifdef SKIP_PLUGINS
-	ucl_object_replace_key(config, ucl_object_frombool(false), "PKG_ENABLE_PLUGINS", 18, false);
-#else
 	void *dlh;
 
 	dlh = dlopen(0, RTLD_NOW);
@@ -529,7 +526,6 @@ disable_plugins_if_static(void)
 	else
 		dlclose(dlh);
 
-#endif
 	return;
 }
 

@@ -73,8 +73,8 @@ static int
 pkg_repo_fetch_remote_tmp(struct pkg_repo *repo,
 		const char *filename, const char *extension, time_t *t, int *rc)
 {
-	char url[MAXPATHLEN*2 + 1];
-	char tmp[MAXPATHLEN+1];
+	char url[MAXPATHLEN*2+20];
+	char tmp[MAXPATHLEN];
 	int fd;
 	const char *tmpdir, *dot;
 
