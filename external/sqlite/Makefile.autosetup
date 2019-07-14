@@ -12,6 +12,7 @@ LOCAL_CFLAGS=	-I$(PREFIX)/include \
 		-Wno-unused-parameter \
 		-Wno-cast-function-type \
 		-Wno-sign-compare \
+		-Wno-empty-body \
 		-Wno-implicit-fallthrough \
 		-DHAVE_USLEEP=1 \
 		-DSQLITE_OMIT_AUTOVACUUM \
