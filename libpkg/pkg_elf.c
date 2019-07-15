@@ -89,6 +89,7 @@ static int
 filter_system_shlibs(const char *name, char *path, size_t pathlen)
 {
 	const char *shlib_path;
+	ssize_t     shlib_pathlen;
 
 	shlib_path = shlib_list_find_by_name(name);
 	if (shlib_path == NULL) {
@@ -106,9 +107,11 @@ filter_system_shlibs(const char *name, char *path, size_t pathlen)
 			return (EPKG_END); /* ignore libs from base */
 	}
 
-	if (path != NULL && pathlen > 0)
-		strncpy(path, shlib_path, pathlen);
-
+	if (path != NULL) {
+		shlib_pathlen = strlen(shlib_path);
+		if (pathlen > shlib_pathlen)
+			strncpy(path, shlib_path, pathlen);
+	}
 	return (EPKG_OK);
 }
 

@@ -147,7 +147,7 @@ cc-check-functions arc4random arc4random_stir basename_r chflagsat \
 	closefrom dirfd eaccess fopencookie fstatfs funopen strnstr \
 	strtofflags strtonum sysconf utimensat __res_setservers unlinkat \
 	linkat faccessat fstatat openat mkdirat readlinkat symlinkat \
-	mkdirat fflagstostr futimes
+	fflagstostr futimes
 
 cc-with { -includes { libutil.h }} {
 	if {[cc-check-decls humanize_number]} {
