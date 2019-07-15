@@ -117,7 +117,7 @@ EOF
 	atf_check \
 	    -o ignore \
 	    -s exit:0 \
-	    pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" install -y puppet
+	    pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -y puppet
 
 #### NEW
 	rm repo1.conf
@@ -259,5 +259,5 @@ Number of packages to be reinstalled: 3
 	atf_check \
 	    -o inline:"${OUTPUT}" \
 	    -s exit:1 \
-	    pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -yn
+	    pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -yn
 }

@@ -67,5 +67,5 @@ EOF
 		-o ignore \
 		-e match:".*extracting signature of repo.*" \
 		pkg -dd -o REPOS_DIR="${TMPDIR}" \
-		-o PKG_CACHEDIR="${TMPDIR}" update
+		-o RAVENSW_CACHEDIR="${TMPDIR}" update
 }

@@ -58,7 +58,7 @@ pkg_repo_binary_get_cached_name(struct pkg_repo *repo, struct pkg *pkg,
 	const char *packagesite;
 	struct stat st;
 
-	cachedir = pkg_object_string(pkg_config_get("PKG_CACHEDIR"));
+	cachedir = pkg_object_string(pkg_config_get("RAVENSW_CACHEDIR"));
 
 	packagesite = pkg_repo_url(repo);
 
@@ -146,7 +146,7 @@ pkg_repo_binary_try_fetch(struct pkg_repo *repo, struct pkg *pkg,
 		if (destdir != NULL)
 			cachedir = destdir;
 		else
-			cachedir = pkg_object_string(pkg_config_get("PKG_CACHEDIR"));
+			cachedir = pkg_object_string(pkg_config_get("RAVENSW_CACHEDIR"));
 
 		snprintf(dest, sizeof(dest), "%s/%s", cachedir, pkg->repopath);
 	}

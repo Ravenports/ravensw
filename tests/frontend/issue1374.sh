@@ -138,13 +138,13 @@ EOF
         atf_check \
                 -o ignore \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" install -y foo
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -y foo
 
         atf_check \
                 -o ignore \
                 -e empty \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" delete -y foo
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" delete -y foo
 
 
 
@@ -152,14 +152,14 @@ EOF
                 -o ignore \
                 -e empty \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" autoremove -y
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" autoremove -y
 
 	# 100% must be empty, but it's not
         atf_check \
                 -o empty \
                 -e empty \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" query -e "%a == 0" "%n-%v"
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" query -e "%a == 0" "%n-%v"
 
 
 }

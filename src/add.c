@@ -84,7 +84,6 @@ exec_add(int argc, char **argv)
 		{ "force",               no_argument,            NULL,           'f' },
 		{ "accept-missing",      no_argument,            NULL,           'M' },
 		{ "quiet",               no_argument,            NULL,           'q' },
-		{ "relocate",            required_argument,      NULL,            1  },
 		{ NULL,                  0,                      NULL,            0  }
 	};
 
@@ -105,9 +104,6 @@ exec_add(int argc, char **argv)
 			break;
 		case 'q':
 			quiet = true;
-			break;
-		case 1:
-			location = optarg;
 			break;
 		default:
 			usage_add();

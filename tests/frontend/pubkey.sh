@@ -43,5 +43,5 @@ EOF
 	atf_check \
 		-o ignore \
 		pkg -o REPOS_DIR="${TMPDIR}" \
-		-o ${PKG_CACHEDIR}="${TMPDIR}" update
+		-o ${RAVENSW_CACHEDIR}="${TMPDIR}" update
 }

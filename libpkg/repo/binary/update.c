@@ -609,7 +609,7 @@ pkg_repo_binary_update(struct pkg_repo *repo, bool force)
 	if (!pkg_repo_enabled(repo))
 		return (EPKG_OK);
 
-	dbdir = pkg_object_string(pkg_config_get("PKG_DBDIR"));
+	dbdir = pkg_object_string(pkg_config_get("RAVENSW_DBDIR"));
 	pkg_debug(1, "PkgRepo: verifying update for %s", pkg_repo_name(repo));
 
 	/* First of all, try to open and init repo and check whether it is fine */

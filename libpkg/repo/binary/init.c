@@ -526,7 +526,7 @@ pkg_repo_binary_access(struct pkg_repo *repo, unsigned mode)
 	const char		*dbdir;
 	int			 ret = EPKG_OK;
 
-	o = pkg_config_get("PKG_DBDIR");
+	o = pkg_config_get("RAVENSW_DBDIR");
 	dbdir = pkg_object_string(o);
 
 	ret = pkgdb_check_access(mode, dbdir,

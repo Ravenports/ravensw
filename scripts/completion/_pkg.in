@@ -135,9 +135,9 @@ _pkg_config_opts() {
 		'NAMESERVER[hostname or IPv\[46\] address of a nameserver for DNS resolution]:name server:_hosts' \
 		'OSVERSION[FreeBSD OS version]:version' \
 		'PERMISSIVE[ignore conflicts while registering a package]:boolean:(yes no)' \
-		'PKG_CACHEDIR[specify cache directory for packages]:directory:_files -/' \
+		'RAVENSW_CACHEDIR[specify cache directory for packages]:directory:_files -/' \
 		'PKG_CREATE_VERBOSE[make pkg_create(8) use verbose mode]:boolean:(yes no)' \
-		'PKG_DBDIR[specify directory to use for storing package database files]:directory:_files -/' \
+		'RAVENSW_DBDIR[specify directory to use for storing package database files]:directory:_files -/' \
 		'PKG_ENABLE_PLUGINS[activate plugin support]:boolean:(yes no)' \
 		'PKG_ENV[key/value pair of environment variables]:key/value list' \
 		'PKG_PLUGINS_DIR[specify directory for plugins]:directory:_files -/' \

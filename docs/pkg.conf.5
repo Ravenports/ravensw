@@ -29,7 +29,7 @@ is the system-wide configuration file used by the
 tools.
 .Pp
 The default location of this file is
-.Pa /usr/local/etc/pkg.conf
+.Pa /raven/etc/ravensw.conf
 .Pp
 Lines in the file beginning with a "#" are comments
 and are ignored.
@@ -74,7 +74,7 @@ the original command line.
 Default: not set.
 .It Cm AUTOCLEAN: boolean
 Automatically cleanout the content of
-.Em PKG_CACHEDIR
+.Em RAVENSW_CACHEDIR
 after each non dry-run call to
 .Xr pkg-install 8
 or
@@ -194,7 +194,7 @@ Ignore conflicts while registering a package.
 Note that the conflicting files will not be recorded as owned by the new
 package.
 Default: NO.
-.It Cm PKG_CACHEDIR: string
+.It Cm RAVENSW_CACHEDIR: string
 Specifies the cache directory for packages.
 Default:
 .Pa /var/cache/pkg
@@ -206,11 +206,11 @@ value, make
 use verbose mode as standard.
 Default:
 .Sy false
-.It Cm PKG_DBDIR: string
+.It Cm RAVENSW_DBDIR: string
 Specifies the directory to use for storing the package
 database files.
 Default:
-.Pa /var/db/pkg
+.Pa /var/db/ravensw
 .It Cm PKG_ENABLE_PLUGINS: boolean
 When set to
 .Dq YES ,
@@ -232,7 +232,7 @@ Directory which
 .Xr pkg 8
 will load plugins from.
 Default:
-.Pa /usr/local/lib/pkg
+.Pa /raven/lib/ravensw
 .It Cm PKG_SSH_ARGS: string
 Extra arguments to pass to
 .Xr ssh 1 .
@@ -251,22 +251,22 @@ Default: not set.
 .It Cm PLUGINS_CONF_DIR: string
 Directory containing per-plugin configuration files.
 Default:
-.Pa /usr/local/etc/pkg
+.Pa /raven/etc/ravensw
 .It Cm PORTSDIR: string
 Specifies the location to the Ports directory.
 Default:
-.Pa /usr/ports
+.Pa /var/ravenports/conspiracy
 .It Cm READ_LOCK: boolean
 Use read locking for query database.
 Default: NO.
 .It Cm REPOS_DIR: array
 List of directories to search for repository configuration files.
 Default:
-.Pa /etc/pkg/ ,
-.Pa /usr/local/etc/pkg/repos/ .
+.Pa /etc/ravensw/ ,
+.Pa /raven/etc/ravensw/repos/ .
 .It Cm REPO_AUTOUPDATE: boolean
 When true, automatically check for and download updates to
-.Pa /var/db/pkg/repo.sqlite
+.Pa /var/db/ravensw/repo.sqlite
 when running one of:
 .Nm pkg fetch ,
 .Nm pkg install ,
@@ -334,14 +334,14 @@ directories listed in the
 .Cm REPOS_DIR
 array,
 which defaults to
-.Pa /etc/pkg/
+.Pa /etc/ravensw/
 and
-.Pa /usr/local/etc/pkg/repos/ .
+.Pa /raven/etc/ravensw/repos/ .
 .Pp
 Filenames are arbitrary, but should end in
 .Sq .conf
 For example
-.Pa /usr/local/etc/pkg/repos/myrepo.conf .
+.Pa /raven/etc/ravensw/repos/myrepo.conf .
 .Pp
 A repository file is in UCL format and has the following form:
 .Bl -tag -width ".Cm myrepo:"
@@ -449,11 +449,11 @@ for more discussion on signature types.
 If
 .Sy FINGERPRINTS
 is set to
-.Pa /usr/local/etc/pkg/fingerprints/myrepo ,
+.Pa /raven/etc/ravensw/fingerprints/myrepo ,
 then the directories
-.Pa /usr/local/etc/pkg/fingerprints/myrepo/trusted
+.Pa /raven/etc/ravensw/fingerprints/myrepo/trusted
 and
-.Pa /usr/local/etc/pkg/fingerprints/myrepo/revoked
+.Pa /raven/etc/ravensw/fingerprints/myrepo/revoked
 should exist with known good and bad fingerprints, respectively.
 Files in those directories should be in the format:
 .Bd -literal -offset indent
@@ -469,16 +469,6 @@ configuration files later on the
 .Sy REPOS_DIR
 search path to overwrite the equivalent settings for the same tag
 earlier on the search path.
-Hence the very common idiom, used to turn off the default
-.Cm FreeBSD
-configuration shipped in
-.Pa /etc/pkg/FreeBSD.conf .
-Rather than editing that file directly, create
-.Pa /usr/local/etc/pkg/repos/FreeBSD.conf
-with this content:
-.Bd -literal -offset indent
-FreeBSD: { enabled: NO }
-.Ed
 .Pp
 Repositories are processed in the order they are found on the
 .Sy REPOS_DIR
@@ -520,14 +510,14 @@ FreeBSD: {
 .Pp
 Example for pkg.conf:
 .Bd -literal -offset indent
-pkg_dbdir: "/var/db/pkg"
+ravensw_dbdir: "/var/db/ravensw"
 pkg_cachedir: "/var/cache/pkg"
 portsdir: "/usr/ports"
 handle_rc_scripts: false
 assume_always_yes: false
 repos_dir: [
-     "/etc/pkg",
-     "/usr/local/etc/pkg/repos",
+     "/etc/ravensw",
+     "/raven/etc/ravensw/repos",
 ]
 syslog: true
 autodeps: true
@@ -549,12 +539,12 @@ new enough to support the
 .Cm bootstrap
 command.):
 .Bd -literal -offset indent
-# cat > /usr/local/etc/pkg/repos/example.conf <<EOF
+# cat > /raven/etc/ravensw/repos/example.conf <<EOF
 example: {
     url: http://pkgrepo.example.com/${ABI}
 }
 EOF
-# cat > /usr/local/etc/pkg/repos/FreeBSD.conf <<EOF
+# cat > /raven/etc/ravensw/repos/FreeBSD.conf <<EOF
 FreeBSD: {
     enabled: NO
 }

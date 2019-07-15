@@ -179,5 +179,5 @@ ${JAILED}[2/2] Extracting test-1.1:  done
 	atf_check \
 		-o inline:"${OUTPUT}" \
 		-s exit:0 \
-		pkg -o CONSERVATIVE_UPGRADE=no -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -y
+		pkg -o CONSERVATIVE_UPGRADE=no -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -y
 }

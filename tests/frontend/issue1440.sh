@@ -219,7 +219,7 @@ ${JAILED}[4/4] Extracting pkgA-1.0:  done
         atf_check \
                 -o inline:"${OUTPUT_CASE1}" \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" install -y pkgA
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -y pkgA
 
 
 
@@ -237,6 +237,6 @@ Your packages are up to date.
                 -o inline:"${OUTPUT_CASE2}" \
                 -e empty \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -y
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -y
 
 }

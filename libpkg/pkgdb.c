@@ -862,7 +862,7 @@ pkgdb_access(unsigned mode, unsigned database)
 	 * EPKG_OK: We can go ahead
 	 */
 
-	o = pkg_config_get("PKG_DBDIR");
+	o = pkg_config_get("RAVENSW_DBDIR");
 	dbdir = pkg_object_string(o);
 	if ((mode & ~(PKGDB_MODE_READ|PKGDB_MODE_WRITE|PKGDB_MODE_CREATE))
 	    != 0)
@@ -1019,7 +1019,7 @@ _dbdir_mkdir(const char *path, mode_t mode)
 #else
 	char fullpath[MAXPATHLEN * 2];
 	snprintf(fullpath, sizeof(fullpath), "%s/%s",
-		 pkg_object_string(pkg_config_get("PKG_DBDIR")),
+		 pkg_object_string(pkg_config_get("RAVENSW_DBDIR")),
 		 _dbdir_trim_path(path));
 	return (mkdir (fullpath, mode));
 #endif
@@ -1101,7 +1101,7 @@ retry:
 		dbdirfd = pkg_get_dbdirfd();
 		if (dbdirfd == -1) {
 			if (errno == ENOENT) {
-				dbdir = pkg_object_string(pkg_config_get("PKG_DBDIR"));
+				dbdir = pkg_object_string(pkg_config_get("RAVENSW_DBDIR"));
 				if (mkdirs(dbdir) != EPKG_OK) {
 					pkgdb_close(db);
 					return (EPKG_FATAL);
@@ -2722,7 +2722,7 @@ pkgshell_open(const char **reponame)
 
 	sqlite3_auto_extension((void(*)(void))pkgdb_sqlcmd_init);
 
-	dbdir = pkg_object_string(pkg_config_get("PKG_DBDIR"));
+	dbdir = pkg_object_string(pkg_config_get("RAVENSW_DBDIR"));
 
 	snprintf(localpath, sizeof(localpath), "%s/local.sqlite", dbdir);
 	*reponame = xstrdup(localpath);

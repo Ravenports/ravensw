@@ -42,7 +42,7 @@ EOF
 		pkg create -M ./foo.ucl -o ./repo/
 
 	cat << EOF > pkg.conf
-PKG_DBDIR=${TMPDIR}
+RAVENSW_DBDIR=${TMPDIR}
 REPOS_DIR=[]
 repositories: {
 	local: { url : file://${TMPDIR}/repo }
@@ -238,5 +238,5 @@ ${JAILED}[2/2] Extracting test2-1:  done
 	atf_check \
 		-o inline:"${OUTPUT}" \
 		-s exit:0 \
-		pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" install -y test2-1
+		pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -y test2-1
 }

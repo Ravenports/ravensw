@@ -86,7 +86,7 @@ EOF
 	atf_check \
 	    -o ignore \
 	    -s exit:0 \
-	    pkg -o REPOS_DIR="$TMPDIR" -o PKG_CACHEDIR="$TMPDIR" upgrade -y
+	    pkg -o REPOS_DIR="$TMPDIR" -o RAVENSW_CACHEDIR="$TMPDIR" upgrade -y
 
 	test -f file1 || atf_fail "file1 is not present"
 }

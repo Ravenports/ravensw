@@ -2081,7 +2081,7 @@ pkg_jobs_fetch(struct pkg_jobs *j)
 
 
 	if (j->destdir == NULL || !mirror)
-		cachedir = pkg_object_string(pkg_config_get("PKG_CACHEDIR"));
+		cachedir = pkg_object_string(pkg_config_get("RAVENSW_CACHEDIR"));
 	else
 		cachedir = j->destdir;
 

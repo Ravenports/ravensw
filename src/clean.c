@@ -352,7 +352,7 @@ exec_clean(int argc, char **argv)
 		}
 	}
 
-	cachedir = pkg_object_string(pkg_config_get("PKG_CACHEDIR"));
+	cachedir = pkg_object_string(pkg_config_get("RAVENSW_CACHEDIR"));
 	cachefd = open(cachedir, O_DIRECTORY|O_CLOEXEC);
 	if (cachefd == -1) {
 		warn("Impossible to open %s", cachedir);

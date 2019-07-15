@@ -15,10 +15,10 @@
 .\"     @(#)pkg.8
 .\"
 .Dd May 17, 2014
-.Dt PKG-ANNOTATE 8
+.Dt RAVENSW-ANNOTATE 8
 .Os
 .Sh NAME
-.Nm "pkg annotate"
+.Nm "ravensw annotate"
 .Nd add, modify or delete arbitrary annotations from packages
 .Sh SYNOPSIS
 .Nm
@@ -129,7 +129,7 @@ case insensitive.
 This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .It Fl M , Cm --modify
 The operation is to modify a previously existing annotation.
 Functionally, this behaves similarly to
@@ -155,63 +155,63 @@ Assume "yes" as the answer to all questions.
 The following environment variables affect the execution of
 .Nm .
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for further description.
 .Bl -tag -width ".Ev NO_DESCRIPTIONS"
-.It Ev PKG_DBDIR
+.It Ev RAVENSW_DBDIR
 .It Ev DEFAULT_ALWAYS_YES
 .It Ev ASSUME_ALWAYS_YES
 .It Ev CASE_SENSITIVE_MATCH
 .El
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh EXAMPLES
 Annotate the nginx package with the tag foo and a value of bar:
-.Dl # pkg annotate -A nginx foo bar
+.Dl # ravensw annotate -A nginx foo bar
 .Pp
 View all annotations on a package:
-.Dl $ pkg info nginx
+.Dl $ ravensw info nginx
 .Pp
 Remove the annotation:
-.Dl # pkg annotate -D nginx foo
+.Dl # ravensw annotate -D nginx foo
 .Pp
 Show all packages with the foo annotation:
-.Dl # pkg annotate --all --show foo
+.Dl # ravensw annotate --all --show foo
 .Pp
 .\" ---------------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr pkg_printf 3 ,
-.Xr pkg_repos 3 ,
-.Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
-.Xr pkg 8 ,
-.Xr pkg-add 8 ,
-.Xr pkg-alias 8 ,
-.Xr pkg-audit 8 ,
-.Xr pkg-autoremove 8 ,
-.Xr pkg-backup 8 ,
-.Xr pkg-check 8 ,
-.Xr pkg-clean 8 ,
-.Xr pkg-config 8 ,
-.Xr pkg-create 8 ,
-.Xr pkg-delete 8 ,
-.Xr pkg-fetch 8 ,
-.Xr pkg-info 8 ,
-.Xr pkg-install 8 ,
-.Xr pkg-lock 8 ,
-.Xr pkg-query 8 ,
-.Xr pkg-register 8 ,
-.Xr pkg-repo 8 ,
-.Xr pkg-rquery 8 ,
-.Xr pkg-search 8 ,
-.Xr pkg-set 8 ,
-.Xr pkg-shell 8 ,
-.Xr pkg-shlib 8 ,
-.Xr pkg-ssh 8 ,
-.Xr pkg-stats 8 ,
-.Xr pkg-update 8 ,
-.Xr pkg-updating 8 ,
-.Xr pkg-upgrade 8 ,
-.Xr pkg-version 8 ,
-.Xr pkg-which 8
+.Xr ravensw_printf 3 ,
+.Xr ravensw_repos 3 ,
+.Xr ravensw-repository 5 ,
+.Xr ravensw.conf 5 ,
+.Xr ravensw 8 ,
+.Xr ravensw-add 8 ,
+.Xr ravensw-alias 8 ,
+.Xr ravensw-audit 8 ,
+.Xr ravensw-autoremove 8 ,
+.Xr ravensw-backup 8 ,
+.Xr ravensw-check 8 ,
+.Xr ravensw-clean 8 ,
+.Xr ravensw-config 8 ,
+.Xr ravensw-create 8 ,
+.Xr ravensw-delete 8 ,
+.Xr ravensw-fetch 8 ,
+.Xr ravensw-info 8 ,
+.Xr ravensw-install 8 ,
+.Xr ravensw-lock 8 ,
+.Xr ravensw-query 8 ,
+.Xr ravensw-register 8 ,
+.Xr ravensw-repo 8 ,
+.Xr ravensw-rquery 8 ,
+.Xr ravensw-search 8 ,
+.Xr ravensw-set 8 ,
+.Xr ravensw-shell 8 ,
+.Xr ravensw-shlib 8 ,
+.Xr ravensw-ssh 8 ,
+.Xr ravensw-stats 8 ,
+.Xr ravensw-update 8 ,
+.Xr ravensw-updating 8 ,
+.Xr ravensw-upgrade 8 ,
+.Xr ravensw-version 8 ,
+.Xr ravensw-which 8

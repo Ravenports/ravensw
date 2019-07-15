@@ -15,17 +15,17 @@
 .\"     @(#)pkg.8
 .\"
 .Dd May 13, 2018
-.Dt PKG-ALIAS 8
+.Dt RAVENSW-ALIAS 8
 .Os
 .Sh NAME
-.Nm "pkg alias"
+.Nm "ravensw alias"
 .Nd display configured aliases
 .Sh SYNOPSIS
 .Nm
 .Op Fl q
 .Op Fl l
 .Pp
-.Nm "pkg alias"
+.Nm "ravensw alias"
 .Op Fl -quiet
 .Op Fl -list
 .Ar [alias]
@@ -33,9 +33,9 @@
 .Nm
 displays configured aliases
 If given the name of an existing alias only shows the aliased arguments to
-.Xr pkg 8 .
+.Xr ravensw 8 .
 Without arguments all aliases and their respective
-.Xr pkg 8
+.Xr ravensw 8
 arguments are printed.
 .Sh OPTIONS
 The following options are supported by
@@ -43,54 +43,54 @@ The following options are supported by
 .Bl -tag -width quiet
 .It Fl l , Fl -list
 Print all aliases, one alias per line, without their
-.Xr pkg 8
+.Xr ravensw 8
 arguments.
 .It Fl q , Fl -quiet
 Force quiet output (suppress column headers).
 .El
 .Sh FILES
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 .Sh EXAMPLES
 Display all aliases:
-.Dl % pkg alias
+.Dl % ravensw alias
 .Pp
 Display
-.Xr pkg 8
+.Xr ravensw 8
 for alias
 .Dq Li size :
-.Dl % pkg alias size
+.Dl % ravensw alias size
 .Sh SEE ALSO
-.Xr pkg_printf 3 ,
-.Xr pkg_repos 3 ,
-.Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
-.Xr pkg 8 ,
-.Xr pkg-add 8 ,
-.Xr pkg-annotate 8 ,
-.Xr pkg-audit 8 ,
-.Xr pkg-autoremove 8 ,
-.Xr pkg-backup 8 ,
-.Xr pkg-check 8 ,
-.Xr pkg-clean 8 ,
-.Xr pkg-config 8 ,
-.Xr pkg-create 8 ,
-.Xr pkg-delete 8 ,
-.Xr pkg-fetch 8 ,
-.Xr pkg-info 8 ,
-.Xr pkg-install 8 ,
-.Xr pkg-lock 8 ,
-.Xr pkg-query 8 ,
-.Xr pkg-register 8 ,
-.Xr pkg-repo 8 ,
-.Xr pkg-rquery 8 ,
-.Xr pkg-search 8 ,
-.Xr pkg-set 8 ,
-.Xr pkg-shell 8 ,
-.Xr pkg-shlib 8 ,
-.Xr pkg-ssh 8 ,
-.Xr pkg-stats 8 ,
-.Xr pkg-update 8 ,
-.Xr pkg-updating 8 ,
-.Xr pkg-upgrade 8 ,
-.Xr pkg-version 8 ,
-.Xr pkg-which 8
+.Xr ravensw_printf 3 ,
+.Xr ravensw_repos 3 ,
+.Xr ravensw-repository 5 ,
+.Xr ravensw.conf 5 ,
+.Xr ravensw 8 ,
+.Xr ravensw-add 8 ,
+.Xr ravensw-annotate 8 ,
+.Xr ravensw-audit 8 ,
+.Xr ravensw-autoremove 8 ,
+.Xr ravensw-backup 8 ,
+.Xr ravensw-check 8 ,
+.Xr ravensw-clean 8 ,
+.Xr ravensw-config 8 ,
+.Xr ravensw-create 8 ,
+.Xr ravensw-delete 8 ,
+.Xr ravensw-fetch 8 ,
+.Xr ravensw-info 8 ,
+.Xr ravensw-install 8 ,
+.Xr ravensw-lock 8 ,
+.Xr ravensw-query 8 ,
+.Xr ravensw-register 8 ,
+.Xr ravensw-repo 8 ,
+.Xr ravensw-rquery 8 ,
+.Xr ravensw-search 8 ,
+.Xr ravensw-set 8 ,
+.Xr ravensw-shell 8 ,
+.Xr ravensw-shlib 8 ,
+.Xr ravensw-ssh 8 ,
+.Xr ravensw-stats 8 ,
+.Xr ravensw-update 8 ,
+.Xr ravensw-updating 8 ,
+.Xr ravensw-upgrade 8 ,
+.Xr ravensw-version 8 ,
+.Xr ravensw-which 8

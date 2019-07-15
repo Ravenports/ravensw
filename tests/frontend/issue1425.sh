@@ -184,7 +184,7 @@ ${JAILED}[4/4] Extracting pkgA-1.0:  done
         atf_check \
                 -o inline:"${OUTPUT_CASE1}" \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" install -y pkgA
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -y pkgA
 
 	#rm -f ${TMPDIR}/local.sqlite
 
@@ -224,7 +224,7 @@ ${JAILED}[2/2] Extracting pkgA-1.0:  done
                 -o inline:"${OUTPUT_CASE2}" \
                 -e empty \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -yf pkgA pkgD
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -yf pkgA pkgD
 
 
 	rm -f ${TMPDIR}/local.sqlite
@@ -259,5 +259,5 @@ ${JAILED}[4/4] Extracting pkgA-1.0:  done
                 -o inline:"${OUTPUT_CASE3}" \
                 -e empty \
                 -s exit:0 \
-                pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" install -y pkgA
+                pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -y pkgA
 }

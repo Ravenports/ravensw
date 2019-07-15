@@ -49,10 +49,10 @@
 #include "pkg_repos.h"
 
 #ifndef PORTSDIR
-#define PORTSDIR "/usr/ports"
+#define PORTSDIR "/var/ravenports/conspiracy"
 #endif
 #ifndef DEFAULT_VULNXML_URL
-#define DEFAULT_VULNXML_URL "http://vuxml.freebsd.org/freebsd/vuln.xml.bz2"
+#define DEFAULT_VULNXML_URL "http://www.ravenports.com/vuln/vuln.xml.bz2"
 #endif
 
 #ifdef	OSMAJOR
@@ -96,13 +96,13 @@ ucl_object_t *config = NULL;
 static struct config_entry c[] = {
 	{
 		PKG_STRING,
-		"PKG_DBDIR",
-		"/var/db/pkg",
+		"RAVENSW_DBDIR",
+		"/var/db/ravensw",
 		"Where the package databases are stored",
 	},
 	{
 		PKG_STRING,
-		"PKG_CACHEDIR",
+		"RAVENSW_CACHEDIR",
 		"/var/cache/pkg",
 		"Directory containing cache of downloaded packages",
 	},
@@ -145,7 +145,7 @@ static struct config_entry c[] = {
 	{
 		PKG_ARRAY,
 		"REPOS_DIR",
-		"/etc/pkg/,"PREFIX"/etc/pkg/repos/",
+		"/etc/ravensw/,"PREFIX"/etc/ravensw/repos/",
 		"Location of the repository configuration files"
 	},
 	{
@@ -193,7 +193,7 @@ static struct config_entry c[] = {
 	{
 		PKG_STRING,
 		"PKG_PLUGINS_DIR",
-		PREFIX"/lib/pkg/",
+		PREFIX"/lib/ravensw/",
 		"Directory which pkg(8) will load plugins from",
 	},
 	{
@@ -217,7 +217,7 @@ static struct config_entry c[] = {
 	{
 		PKG_STRING,
 		"PLUGINS_CONF_DIR",
-		PREFIX"/etc/pkg/",
+		PREFIX"/etc/ravensw/",
 		"Directory containing plugin configuration data",
 	},
 	{
@@ -241,7 +241,7 @@ static struct config_entry c[] = {
 	{
 		PKG_STRING,
 		"HTTP_USER_AGENT",
-		"pkg/"PKGVERSION,
+		"ravensw/"PKGVERSION,
 		"HTTP User-Agent",
 	},
 	{
@@ -994,7 +994,7 @@ pkg_ini(const char *path, const char *reposdir, pkg_init_flags flags)
 	}
 
 	if (path == NULL)
-		conffd = openat(ctx.rootfd, PREFIX"/etc/pkg.conf" + 1, 0);
+		conffd = openat(ctx.rootfd, PREFIX"/etc/ravensw.conf" + 1, 0);
 	else
 		conffd = open(path, O_RDONLY);
 	if (conffd == -1 && errno != ENOENT) {
@@ -1481,7 +1481,7 @@ pkg_get_cachedirfd(void)
 	const char *cachedir;
 
 	if (ctx.cachedirfd == -1) {
-		cachedir = pkg_object_string(pkg_config_get("PKG_CACHEDIR"));
+		cachedir = pkg_object_string(pkg_config_get("RAVENSW_CACHEDIR"));
 		/*
 		 * do not check the value as if we cannot open it means
 		 * it has not been created yet
@@ -1498,7 +1498,7 @@ pkg_get_dbdirfd(void)
 	const char *dbdir;
 
 	if (ctx.pkg_dbdirfd == -1) {
-		dbdir = pkg_object_string(pkg_config_get("PKG_DBDIR"));
+		dbdir = pkg_object_string(pkg_config_get("RAVENSW_DBDIR"));
 		/*
 		 * do not check the value as if we cannot open it means
 		 * it has not been created yet

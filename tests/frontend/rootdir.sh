@@ -6,7 +6,7 @@ tests_init \
 	rootdir
 
 rootdir_body() {
-	unset PKG_DBDIR
+	unset RAVENSW_DBDIR
 	if [ `uname -s` = "Linux" ]; then
 		RP='readlink -e'
 	else
@@ -14,7 +14,7 @@ rootdir_body() {
 	fi
 
 	atf_check \
-		-o inline:"`${RP} ${TMPDIR}`/var/db/pkg\n" \
+		-o inline:"`${RP} ${TMPDIR}`/var/db/ravensw\n" \
 		-e empty \
 		-s exit:0 \
 		pkg -r "${TMPDIR}" config pkg_dbdir

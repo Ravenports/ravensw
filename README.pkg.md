@@ -416,7 +416,7 @@ Priority defaults to 0 unless explicitly stated.  This is the value
 for the default `/etc/pkg/FreeBSD.conf`
 
 To disable the default FreeBSD.conf, create a file
-`/usr/local/etc/pkg/repos/FreeBSD.conf` with the contents:
+`/raven/etc/ravensw/repos/FreeBSD.conf` with the contents:
 
 ```
 FreeBSD: { enabled: no }

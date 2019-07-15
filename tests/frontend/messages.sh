@@ -56,7 +56,7 @@ EOF
 	atf_check -o ignore pkg create -M test.ucl
 	atf_check -o ignore pkg repo .
 	atf_check -o match:"^Upgrading from lower than 1.0.*" \
-	    pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -y
+	    pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -y
 	atf_check -o ignore pkg delete -y test
 
 	cat > test2.ucl << EOF
@@ -73,7 +73,7 @@ EOF
 	atf_check -o ignore pkg register -M test2.ucl
 	atf_check \
 		-o match:"^Upgrading from higher than 1.0.*" \
-	    pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -y
+	    pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -y
 	atf_check -o ignore pkg delete -y test
 
 	cat > test2.ucl << EOF
@@ -91,7 +91,7 @@ EOF
 	atf_check \
 		-o match:"^Upgrading from >1.0 < 3.0.*" \
 		-o match:"^Upgrading from higher than 1.0.*" \
-		pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -y
+		pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -y
 OUTPUT='test-5.20_3:
 Always:
 Always print

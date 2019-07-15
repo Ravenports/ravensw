@@ -139,5 +139,5 @@ EOF
 	atf_check \
 		-o ignore \
 		-s exit:0 \
-		pkg -o REPOS_DIR="${TMPDIR}" -o PKG_CACHEDIR="${TMPDIR}" upgrade -y
+		pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" upgrade -y
 }

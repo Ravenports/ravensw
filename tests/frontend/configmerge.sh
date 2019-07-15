@@ -23,7 +23,7 @@ config_body()
 		pkg info -R --raw-format ucl -F ${TMPDIR}/test-1.txz
 
 	mkdir ${TMPDIR}/target
-	unset PKG_DBDIR
+	unset RAVENSW_DBDIR
 	atf_check \
 		pkg -o REPOS_DIR=/dev/null -r ${TMPDIR}/target install -qy ${TMPDIR}/test-1.txz
 	test -f ${TMPDIR}/target/${TMPDIR}/a || atf_fail "file absent"
@@ -59,7 +59,7 @@ config_fileexist_body()
 		pkg create -M test.ucl -p plist
 
 	mkdir ${TMPDIR}/target
-	unset PKG_DBDIR
+	unset RAVENSW_DBDIR
 	atf_check \
 		pkg -o REPOS_DIR=/dev/null -r ${TMPDIR}/target install -qy ${TMPDIR}/test-1.txz
 	test -f ${TMPDIR}/target/${TMPDIR}/a || atf_fail "file absent"
@@ -137,7 +137,7 @@ config_fileexist_notinpkg_body()
 {
 	mkdir -p ${TMPDIR}/target/${TMPDIR}
 	echo "entry" > ${TMPDIR}/target/${TMPDIR}/a
-	unset PKG_DBDIR
+	unset RAVENSW_DBDIR
 
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "2"
 	echo "entry 2" > a
@@ -169,7 +169,7 @@ config_morecomplicated_body()
 		pkg info -R --raw-format ucl -F ${TMPDIR}/test-1.txz
 
 	mkdir ${TMPDIR}/target
-	unset PKG_DBDIR
+	unset RAVENSW_DBDIR
 	atf_check \
 		pkg -o REPOS_DIR=/dev/null -r ${TMPDIR}/target install -qy ${TMPDIR}/test-1.txz
 	test -f ${TMPDIR}/target/${TMPDIR}/test.config || atf_fail "file absent"

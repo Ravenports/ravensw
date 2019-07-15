@@ -40,7 +40,7 @@ EOF
 	atf_check \
 		-o match:".*New version of pkg detected.*" \
 		-s exit:1 \
-		pkg -o REPOS_DIR="$TMPDIR" -o PKG_CACHEDIR="$TMPDIR" upgrade -n
+		pkg -o REPOS_DIR="$TMPDIR" -o RAVENSW_CACHEDIR="$TMPDIR" upgrade -n
 }
 
 autoupgrade_multirepo_head() {

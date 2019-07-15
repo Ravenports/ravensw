@@ -15,10 +15,10 @@
 .\"     @(#)pkg.8
 .\"
 .Dd May 25, 2014
-.Dt PKG-ADD 8
+.Dt RAVENSW-ADD 8
 .Os
 .Sh NAME
-.Nm "pkg add"
+.Nm "ravensw add"
 .Nd Registers a package and installs it on the system
 .Sh SYNOPSIS
 .Nm
@@ -30,11 +30,9 @@
 .Pp
 .Nm
 .Op Cm --{no-scripts,automatic,force,accept-missing,quiet}
-.Op Cm --relocate Ar location
 .Ar pkg-name ...
 .Nm
 .Op Cm --{no-scripts,automatic,force,accept-missing,quiet}
-.Op Cm --relocate Ar location
 .Ar <protocol>://<path>/<pkg-name> ...
 .Sh DESCRIPTION
 .Nm
@@ -54,7 +52,7 @@ unmet dependencies,
 .Nm
 will search the directory containing
 .Ar pkg-name
-for suitable pkg archive files to fulfill those dependencies.
+for suitable archive files to fulfill those dependencies.
 If
 .Ar pkg-name
 is literally
@@ -80,7 +78,7 @@ The following options are supported by
 Mark the installed packages as automatic.
 Will be automatically removed if no other packages depend on them.
 For more information please refer to
-.Xr pkg-autoremove 8 .
+.Xr ravensw-autoremove 8 .
 .It Fl f , Cm --force
 Force the reinstallation of the package if already installed.
 .It Fl I , Cm --no-scripts
@@ -90,62 +88,54 @@ packages, do not execute them.
 Force the installation of the package with missing dependencies.
 .It Fl q , Cm --quiet
 Force quiet output.
-.It Cm --relocate Ar location
-Annotates the package as having been relocated to
-.Pa location ,
-which is an alternate system root.
-This is an experimental feature and intended for cross-architecture
-package management.
-There is no corresponding single letter option.
-.Pq DEPRECATED
 .El
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm .
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for further description.
 .Bl -tag -width ".Ev NO_DESCRIPTIONS"
 .It Ev DEFAULT_ALWAYS_YES
 .It Ev ASSUME_ALWAYS_YES
 .It Ev HANDLE_RC_SCRIPTS
-.It Ev PKG_DBDIR
+.It Ev RAVENSW_DBDIR
 .El
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh SEE ALSO
-.Xr pkg_printf 3 ,
-.Xr pkg_repos 3 ,
-.Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
-.Xr pkg 8 ,
-.Xr pkg-alias 8 ,
-.Xr pkg-annotate 8 ,
-.Xr pkg-audit 8 ,
-.Xr pkg-autoremove 8 ,
-.Xr pkg-backup 8 ,
-.Xr pkg-check 8 ,
-.Xr pkg-clean 8 ,
-.Xr pkg-config 8 ,
-.Xr pkg-create 8 ,
-.Xr pkg-delete 8 ,
-.Xr pkg-fetch 8 ,
-.Xr pkg-info 8 ,
-.Xr pkg-install 8 ,
-.Xr pkg-lock 8 ,
-.Xr pkg-query 8 ,
-.Xr pkg-register 8 ,
-.Xr pkg-repo 8 ,
-.Xr pkg-rquery 8 ,
-.Xr pkg-search 8 ,
-.Xr pkg-set 8 ,
-.Xr pkg-shell 8 ,
-.Xr pkg-shlib 8 ,
-.Xr pkg-ssh 8 ,
-.Xr pkg-stats 8 ,
-.Xr pkg-update 8 ,
-.Xr pkg-updating 8 ,
-.Xr pkg-upgrade 8 ,
-.Xr pkg-version 8 ,
-.Xr pkg-which 8
+.Xr ravensw_printf 3 ,
+.Xr ravensw_repos 3 ,
+.Xr ravensw-repository 5 ,
+.Xr ravensw.conf 5 ,
+.Xr ravensw 8 ,
+.Xr ravensw-alias 8 ,
+.Xr ravensw-annotate 8 ,
+.Xr ravensw-audit 8 ,
+.Xr ravensw-autoremove 8 ,
+.Xr ravensw-backup 8 ,
+.Xr ravensw-check 8 ,
+.Xr ravensw-clean 8 ,
+.Xr ravensw-config 8 ,
+.Xr ravensw-create 8 ,
+.Xr ravensw-delete 8 ,
+.Xr ravensw-fetch 8 ,
+.Xr ravensw-info 8 ,
+.Xr ravensw-install 8 ,
+.Xr ravensw-lock 8 ,
+.Xr ravensw-query 8 ,
+.Xr ravensw-register 8 ,
+.Xr ravensw-repo 8 ,
+.Xr ravensw-rquery 8 ,
+.Xr ravensw-search 8 ,
+.Xr ravensw-set 8 ,
+.Xr ravensw-shell 8 ,
+.Xr ravensw-shlib 8 ,
+.Xr ravensw-ssh 8 ,
+.Xr ravensw-stats 8 ,
+.Xr ravensw-update 8 ,
+.Xr ravensw-updating 8 ,
+.Xr ravensw-upgrade 8 ,
+.Xr ravensw-version 8 ,
+.Xr ravensw-which 8

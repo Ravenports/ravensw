@@ -70,7 +70,7 @@ repo_multiversion_body() {
 		pkg repo .
 
 	cat > pkg.conf << EOF
-PKG_DBDIR=${TMPDIR}
+RAVENSW_DBDIR=${TMPDIR}
 REPOS_DIR=[]
 repositories: {
 	local: { url : file://${TMPDIR} }

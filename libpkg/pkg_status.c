@@ -69,7 +69,7 @@ pkg_status(int *count)
 	/* Does the local.sqlite pkg database exist, and can we open
 	   it for reading? */
 
-	o = pkg_config_get("PKG_DBDIR");
+	o = pkg_config_get("RAVENSW_DBDIR");
 	snprintf(dbpath, sizeof(dbpath), "%s/local.sqlite", pkg_object_string(o));
 
 	if (eaccess(dbpath, R_OK) == -1)

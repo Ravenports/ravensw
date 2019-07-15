@@ -4,18 +4,14 @@
 
 .cocci files in this directory are copied (and some adapted) from
 http://coccinelle.lip6.fr/rules/. the pkg directory contains .cocci files
-written for pkg.
+written for pkg (ravensw).
 
 Installation
 ============
 
-port:
-
-	# make -C /usr/ports/devel/coccinelle install clean
-
 package:
 
-	# pkg install coccinelle
+	# ravensw install coccinelle
 
 Usage
 =====

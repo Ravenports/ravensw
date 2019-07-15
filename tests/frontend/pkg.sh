@@ -15,14 +15,14 @@ pkg_no_database_body() {
 	    -o empty \
 	    -e inline:"${PROGNAME}: package database non-existent\n" \
 	    -s exit:69 \
-	    env -i PATH="${PATH}" DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" pkg -o PKG_DBDIR=/dev/null -N
+	    env -i PATH="${PATH}" DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" pkg -o RAVENSW_DBDIR=/dev/null -N
 }
 
 pkg_config_defaults_body()
 {
 	atf_check \
-	    -o match:'^ *PKG_DBDIR = "/var/db/pkg";$' \
-	    -o match:'^ *PKG_CACHEDIR = "/var/cache/pkg";$' \
+	    -o match:'^ *RAVENSW_DBDIR = "/var/db/ravensw";$' \
+	    -o match:'^ *RAVENSW_CACHEDIR = "/var/cache/pkg";$' \
 	    -o match:'^ *PORTSDIR = "/usr/d?ports";$' \
 	    -o match:'^ *HANDLE_RC_SCRIPTS = false;$' \
 	    -o match:'^ *DEFAULT_ALWAYS_YES = false;$' \
@@ -33,10 +33,10 @@ pkg_config_defaults_body()
 	    -o match:'^ *DEVELOPER_MODE = false;$' \
 	    -o match:'^ *VULNXML_SITE = "http://vuxml.freebsd.org/freebsd/vuln.xml.bz2";$' \
 	    -o match:'^ *FETCH_RETRY = 3;$' \
-	    -o match:'^ *PKG_PLUGINS_DIR = ".*lib/pkg/";$' \
+	    -o match:'^ *PKG_PLUGINS_DIR = ".*lib/ravensw/";$' \
 	    -o match:'^ *PKG_ENABLE_PLUGINS = true;$' \
 	    -o match:'^ *DEBUG_SCRIPTS = false;$' \
-	    -o match:'^ *PLUGINS_CONF_DIR = ".*/etc/pkg/";$' \
+	    -o match:'^ *PLUGINS_CONF_DIR = ".*/etc/ravensw/";$' \
 	    -o match:'^ *PERMISSIVE = false;$' \
 	    -o match:'^ *REPO_AUTOUPDATE = true;$' \
 	    -o match:'^ *NAMESERVER = "";$' \

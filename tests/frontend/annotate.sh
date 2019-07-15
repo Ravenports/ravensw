@@ -15,7 +15,7 @@ annotate_body() {
 	done
 
 	[ -f "./local.sqlite" ] || \
-	    atf_fail "Can't populate $PKG_DBDIR/local.sqlite"
+	    atf_fail "Can't populate $RAVENSW_DBDIR/local.sqlite"
 
 	atf_check \
 	    -o match:"added annotation tagged: TEST1" \
