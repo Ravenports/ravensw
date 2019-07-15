@@ -32,13 +32,14 @@ SRCS=	backup.c \
 	pkg_jobs_universe.c  pkg_printf.c \
 	pkg_status.c \
 	plugins.c \
-	utils.c fetch.c \
+	utils.c \
+	fetch.c \
 	pkg_attributes.c \
 	pkg_delete.c \
 	pkg_jobs.c \
 	pkg_repo_create.c \
 	pkg_version.c \
-	port_humanize_number \
+	port_humanize_number.c \
 	rcscripts.c
 
 LOCAL_CFLAGS=	-I$(top_srcdir)/external/sqlite \
