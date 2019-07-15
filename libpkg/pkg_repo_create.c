@@ -825,8 +825,7 @@ done:
 
 static int
 pkg_repo_pack_db(const char *name, const char *archive, char *path,
-		struct rsa_key *rsa, struct pkg_repo_meta *meta,
-		char **argv, int argc)
+		struct rsa_key *rsa, char **argv, int argc)
 {
 	struct packing *pack;
 	unsigned char *sigret = NULL;
@@ -931,7 +930,7 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 		} else {
 			meta = pkg_repo_meta_default();
 		}
-		if (pkg_repo_pack_db(repo_meta_file, repo_path, repo_path, rsa, meta,
+		if (pkg_repo_pack_db(repo_meta_file, repo_path, repo_path, rsa,
 			argv, argc) != EPKG_OK) {
 			ret = EPKG_FATAL;
 			goto cleanup;
@@ -946,7 +945,7 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 	    meta->manifests);
 	snprintf(repo_archive, sizeof(repo_archive), "%s/%s", output_dir,
 		meta->manifests_archive);
-	if (pkg_repo_pack_db(meta->manifests, repo_archive, repo_path, rsa, meta,
+	if (pkg_repo_pack_db(meta->manifests, repo_archive, repo_path, rsa,
 		argv, argc) != EPKG_OK) {
 		ret = EPKG_FATAL;
 		goto cleanup;
@@ -959,7 +958,7 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 		    meta->filesite);
 		snprintf(repo_archive, sizeof(repo_archive), "%s/%s",
 		    output_dir, meta->filesite_archive);
-		if (pkg_repo_pack_db(meta->filesite, repo_archive, repo_path, rsa, meta,
+		if (pkg_repo_pack_db(meta->filesite, repo_archive, repo_path, rsa,
 			argv, argc) != EPKG_OK) {
 			ret = EPKG_FATAL;
 			goto cleanup;
@@ -972,7 +971,7 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 	    meta->digests);
 	snprintf(repo_archive, sizeof(repo_archive), "%s/%s", output_dir,
 	    meta->digests_archive);
-	if (pkg_repo_pack_db(meta->digests, repo_archive, repo_path, rsa, meta,
+	if (pkg_repo_pack_db(meta->digests, repo_archive, repo_path, rsa,
 		argv, argc) != EPKG_OK) {
 		ret = EPKG_FATAL;
 		goto cleanup;
@@ -985,7 +984,7 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 		meta->conflicts);
 	snprintf(repo_archive, sizeof(repo_archive), "%s/%s", output_dir,
 		meta->conflicts_archive);
-	if (pkg_repo_pack_db(meta->conflicts, repo_archive, repo_path, rsa, meta,
+	if (pkg_repo_pack_db(meta->conflicts, repo_archive, repo_path, rsa,
 		argv, argc) != EPKG_OK) {
 		ret = EPKG_FATAL;
 		goto cleanup;

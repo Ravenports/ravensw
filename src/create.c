@@ -148,7 +148,7 @@ pkg_create_matches(int argc, char **argv, match_t match,
 			}
 		}
 		pkg_printf("Creating package for %n-%v\n", e->pkg, e->pkg);
-		if (pkg_create_installed(outdir, fmt, e->pkg) !=
+		if (pkg_create_installed(outdir, e->pkg) !=
 		    EPKG_OK)
 			retcode++;
 		pkg_free(e->pkg);
@@ -276,7 +276,7 @@ exec_create(int argc, char **argv)
 		return (pkg_create_matches(argc, argv, match, outdir,
 		    overwrite) == EPKG_OK ? EX_OK : EX_SOFTWARE);
 	} else if (metadatadir != NULL) {
-		return (pkg_create_staged(outdir, fmt, rootdir, metadatadir,
+		return (pkg_create_staged(outdir, rootdir, metadatadir,
 		    plist, hash) == EPKG_OK ? EX_OK : EX_SOFTWARE);
 	} else  { /* (manifest != NULL) */
 		return (pkg_create_from_manifest(outdir, rootdir, manifest,
