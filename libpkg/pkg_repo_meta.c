@@ -97,7 +97,7 @@ pkg_repo_meta_open_schema_v1()
 			"version = {type = integer};\n"
 			"maintainer = {type = string};\n"
 			"source = {type = string};\n"
-			"packing_format = {enum = [tzst, txz, tbz, tgz, tar]};\n"
+			"packing_format = {enum = [tzs, txz, tbz, tgz, tar]};\n"
 			"digest_format = {enum = [sha256_base32, sha256_hex, blake2_base32, blake2s_base32]};\n"
 			"digests = {type = string};\n"
 			"manifests = {type = string};\n"
@@ -210,7 +210,7 @@ pkg_repo_meta_parse(ucl_object_t *top, struct pkg_repo_meta **target, int versio
 
 	obj = ucl_object_find_key(top, "packing_format");
 	if (obj != NULL && obj->type == UCL_STRING) {
-		meta->packing_format = packing_format_from_string(ucl_object_tostring(obj));
+		meta->packing_format = TZS;
 	}
 
 	obj = ucl_object_find_key(top, "digest_format");
@@ -327,8 +327,6 @@ pkg_repo_meta_to_ucl(struct pkg_repo_meta *meta)
 	META_EXPORT_FIELD(result, meta, maintainer, string);
 	META_EXPORT_FIELD(result, meta, source, string);
 
-	META_EXPORT_FIELD_FUNC(result, meta, packing_format, string,
-		packing_format_to_string);
 	META_EXPORT_FIELD_FUNC(result, meta, digest_format, string,
 		pkg_checksum_type_to_string);
 

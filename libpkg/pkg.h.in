@@ -47,12 +47,7 @@ extern "C" {
 
 /* The expected name of the pkg(8) binary executable. */
 #ifndef PKG_EXEC_NAME
-#define PKG_EXEC_NAME	"pkg"
-#endif
-
-/* The expected name of the pkg-static(8) binary */
-#ifndef PKG_STATIC_NAME
-#define PKG_STATIC_NAME	"pkg-static"
+#define PKG_EXEC_NAME	"ravensw"
 #endif
 
 #define PKGVERSION "@VERSION@"
@@ -1125,23 +1120,24 @@ void pkg_solve_problem_free(struct pkg_solve_problem *problem);
  * Archive formats options.
  */
 typedef enum pkg_formats { TAR, TGZ, TBZ, TXZ, TZS } pkg_formats;
+#define PKG_FORMAT_EXT	"tzst"
 
 /**
  * Create package from an installed & registered package
  */
-int pkg_create_installed(const char *, pkg_formats, struct pkg *);
+int pkg_create_installed(const char *, struct pkg *);
 
 /**
  * Create package from stage install using just the manifest --
  * no old pkg_tools compatibility stuff
  */
-int pkg_create_from_manifest(const char *, pkg_formats, const char *,
+int pkg_create_from_manifest(const char *, const char *,
     const char *, const char *);
 
 /**
  * Create package from stage install with a metadata directory
  */
-int pkg_create_staged(const char *, pkg_formats, const char *, const char *, char *, bool);
+int pkg_create_staged(const char *, const char *, const char *, char *, bool);
 int pkg_load_metadata(struct pkg *, const char *, const char *, const char *, const char *, bool);
 
 /**

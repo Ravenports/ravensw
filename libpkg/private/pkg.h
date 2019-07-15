@@ -701,7 +701,7 @@ int pkg_jobs_resolv(struct pkg_jobs *jobs);
 
 struct packing;
 
-int packing_init(struct packing **pack, const char *path, pkg_formats format);
+int packing_init(struct packing **pack, const char *path);
 int packing_append_file_attr(struct packing *pack, const char *filepath,
      const char *newpath, const char *uname, const char *gname, mode_t perm,
      u_long fflags);
@@ -711,8 +711,7 @@ int packing_append_tree(struct packing *pack, const char *treepath,
 			const char *newroot);
 void packing_get_filename(struct packing *pack, const char *filename);
 void packing_finish(struct packing *pack);
-pkg_formats packing_format_from_string(const char *str);
-const char* packing_format_to_string(pkg_formats format);
+
 
 int pkg_delete_files(struct pkg *pkg, unsigned force);
 int pkg_delete_dirs(struct pkgdb *db, struct pkg *pkg, struct pkg *p);

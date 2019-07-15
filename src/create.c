@@ -74,7 +74,7 @@ usage_create(void)
 }
 
 static int
-pkg_create_matches(int argc, char **argv, match_t match, pkg_formats fmt,
+pkg_create_matches(int argc, char **argv, match_t match,
     const char * const outdir, bool overwrite)
 {
 	int i, ret = EPKG_OK, retcode = EPKG_OK;
@@ -89,7 +89,7 @@ pkg_create_matches(int argc, char **argv, match_t match, pkg_formats fmt,
 	    PKG_LOAD_SHLIBS_PROVIDED | PKG_LOAD_ANNOTATIONS;
 	struct pkg_entry *e = NULL, *etmp;
 	char pkgpath[MAXPATHLEN];
-	const char *format = NULL;
+	const char *format = PKG_FORMAT_EXT;
 	bool foundone;
 
 	if (pkgdb_open(&db, PKGDB_DEFAULT) != EPKG_OK) {
@@ -101,24 +101,6 @@ pkg_create_matches(int argc, char **argv, match_t match, pkg_formats fmt,
 		pkgdb_close(db);
 		warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
-	}
-
-	switch (fmt) {
-	case TZS:
-		format = "tzst";
-		break;
-	case TXZ:
-		format = "txz";
-		break;
-	case TBZ:
-		format = "tbz";
-		break;
-	case TGZ:
-		format = "tgz";
-		break;
-	case TAR:
-		format = "tar";
-		break;
 	}
 
 	for (i = 0; i < argc || match == MATCH_ALL; i++) {
@@ -183,7 +165,6 @@ cleanup:
 /*
  * options:
  * -M: manifest file
- * -f <format>: format could be tzst, txz, tgz, tbz or tar
  * -g: globbing
  * -h: pkg name with hash and symlink
  * -m: path to dir where to find the metadata
@@ -198,12 +179,10 @@ exec_create(int argc, char **argv)
 {
 	match_t		 match = MATCH_EXACT;
 	const char	*outdir = NULL;
-	const char	*format = NULL;
 	const char	*rootdir = NULL;
 	const char	*metadatadir = NULL;
 	const char	*manifest = NULL;
 	char		*plist = NULL;
-	pkg_formats	 fmt;
 	int		 ch;
 	bool		 overwrite = true;
 	bool		 hash = false;
@@ -217,7 +196,6 @@ exec_create(int argc, char **argv)
 
 	struct option longopts[] = {
 		{ "all",	no_argument,		NULL,	'a' },
-		{ "format",	required_argument,	NULL,	'f' },
 		{ "glob",	no_argument,		NULL,	'g' },
 		{ "hash",	no_argument,		NULL,	'h' },
 		{ "regex",	no_argument,		NULL,	'x' },
@@ -232,13 +210,10 @@ exec_create(int argc, char **argv)
 		{ NULL,		0,			NULL,	0   },
 	};
 
-	while ((ch = getopt_long(argc, argv, "+aghxf:r:m:M:o:np:qv", longopts, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "+aghxr:m:M:o:np:qv", longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'a':
 			match = MATCH_ALL;
-			break;
-		case 'f':
-			format = optarg;
 			break;
 		case 'g':
 			match = MATCH_GLOB;
@@ -297,36 +272,15 @@ exec_create(int argc, char **argv)
 	if (outdir == NULL)
 		outdir = "./";
 
-	if (format == NULL) {
-		fmt = TXZ;
-	} else {
-		if (format[0] == '.')
-			++format;
-		if (strcmp(format, "tzst") == 0)
-			fmt = TZS;
-		else if (strcmp(format, "txz") == 0)
-			fmt = TXZ;
-		else if (strcmp(format, "tbz") == 0)
-			fmt = TBZ;
-		else if (strcmp(format, "tgz") == 0)
-			fmt = TGZ;
-		else if (strcmp(format, "tar") == 0)
-			fmt = TAR;
-		else {
-			warnx("unknown format %s, using txz", format);
-			fmt = TXZ;
-		}
-	}
-
 	if (metadatadir == NULL && manifest == NULL) {
-		return (pkg_create_matches(argc, argv, match, fmt, outdir,
+		return (pkg_create_matches(argc, argv, match, outdir,
 		    overwrite) == EPKG_OK ? EX_OK : EX_SOFTWARE);
 	} else if (metadatadir != NULL) {
 		return (pkg_create_staged(outdir, fmt, rootdir, metadatadir,
 		    plist, hash) == EPKG_OK ? EX_OK : EX_SOFTWARE);
 	} else  { /* (manifest != NULL) */
-		return (pkg_create_from_manifest(outdir, fmt, rootdir,
-		    manifest, plist) == EPKG_OK ? EX_OK : EX_SOFTWARE);
+		return (pkg_create_from_manifest(outdir, rootdir, manifest,
+		    plist) == EPKG_OK ? EX_OK : EX_SOFTWARE);
 	}
 }
 

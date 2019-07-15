@@ -39,8 +39,6 @@
 #include "private/event.h"
 #include "private/pkg.h"
 
-static const char *packing_set_format(struct archive *a, pkg_formats format);
-
 struct packing {
 	struct archive *aread;
 	struct archive *awrite;
@@ -48,7 +46,7 @@ struct packing {
 };
 
 int
-packing_init(struct packing **pack, const char *path, pkg_formats format)
+packing_init(struct packing **pack, const char *path)
 {
 	char archive_path[MAXPATHLEN];
 	const char *ext;
@@ -63,7 +61,7 @@ packing_init(struct packing **pack, const char *path, pkg_formats format)
 
 	(*pack)->awrite = archive_write_new();
 	archive_write_set_format_pax_restricted((*pack)->awrite);
-	ext = packing_set_format((*pack)->awrite, format);
+	ext = PKG_FORMAT_EXT;
 	if (ext == NULL) {
 		archive_read_close((*pack)->aread);
 		archive_read_free((*pack)->aread);
@@ -309,80 +307,3 @@ packing_finish(struct packing *pack)
 	free(pack);
 }
 
-static const char *
-packing_set_format(struct archive *a, pkg_formats format)
-{
-	const char *notsupp_fmt = "%s is not supported, trying %s";
-
-	switch (format) {
-	case TZS:
-		if (archive_write_add_filter_zstd(a) == ARCHIVE_OK)
-			return ("tzst");
-		pkg_emit_error(notsupp_fmt, "zstd", "xz");
-		/* FALLTHRU */
-	case TXZ:
-		if (archive_write_add_filter_xz(a) == ARCHIVE_OK)
-			return ("txz");
-		pkg_emit_error(notsupp_fmt, "xz", "bzip2");
-		/* FALLTHRU */
-	case TBZ:
-		if (archive_write_add_filter_bzip2(a) == ARCHIVE_OK)
-			return ("tbz");
-		pkg_emit_error(notsupp_fmt, "bzip2", "gzip");
-		/* FALLTHRU */
-	case TGZ:
-		if (archive_write_add_filter_gzip(a) == ARCHIVE_OK)
-			return ("tgz");
-		pkg_emit_error(notsupp_fmt, "gzip", "plain tar");
-		/* FALLTHRU */
-	case TAR:
-		archive_write_add_filter_none(a);
-		return ("tar");
-	}
-	return (NULL);
-}
-
-pkg_formats
-packing_format_from_string(const char *str)
-{
-	if (str == NULL)
-		return TXZ;
-	if (strcmp(str, "tzst") == 0)
-		return TZS;
-	if (strcmp(str, "txz") == 0)
-		return TXZ;
-	if (strcmp(str, "tbz") == 0)
-		return TBZ;
-	if (strcmp(str, "tgz") == 0)
-		return TGZ;
-	if (strcmp(str, "tar") == 0)
-		return TAR;
-	pkg_emit_error("unknown format %s, using txz", str);
-	return TXZ;
-}
-
-const char*
-packing_format_to_string(pkg_formats format)
-{
-	const char *res = NULL;
-
-	switch (format) {
-	case TZS:
-		res = "tzst";
-		break;
-	case TXZ:
-		res = "txz";
-		break;
-	case TBZ:
-		res = "tbz";
-		break;
-	case TGZ:
-		res = "tgz";
-		break;
-	case TAR:
-		res = "tar";
-		break;
-	}
-
-	return (res);
-}

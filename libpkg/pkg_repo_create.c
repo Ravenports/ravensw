@@ -993,8 +993,8 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 #endif
 
 	/* Now we need to set the equal mtime for all archives in the repo */
-	snprintf(repo_archive, sizeof(repo_archive), "%s/%s.tzst",
-	    output_dir, repo_meta_file);
+	snprintf(repo_archive, sizeof(repo_archive), "%s/%s.%s",
+	    output_dir, repo_meta_file, PKG_FORMAT_EXT);
 	if (stat(repo_archive, &st) == 0) {
 		struct timeval ftimes[2] = {
 			{
@@ -1006,20 +1006,22 @@ pkg_finish_repo(const char *output_dir, pkg_password_cb *password_cb,
 			.tv_usec = 0
 			}
 		};
-		snprintf(repo_archive, sizeof(repo_archive), "%s/%s.tzst",
-		    output_dir, meta->manifests_archive);
+		snprintf(repo_archive, sizeof(repo_archive), "%s/%s.%s",
+		    output_dir, meta->manifests_archive, PKG_FORMAT_EXT);
 		utimes(repo_archive, ftimes);
-		snprintf(repo_archive, sizeof(repo_archive), "%s/%s.tzst",
-		    output_dir, meta->digests_archive);
+		snprintf(repo_archive, sizeof(repo_archive), "%s/%s.%s",
+		    output_dir, meta->digests_archive, PKG_FORMAT_EXT);
 		utimes(repo_archive, ftimes);
 		if (filelist) {
 			snprintf(repo_archive, sizeof(repo_archive),
-			    "%s/%s.tzst", output_dir, meta->filesite_archive);
+			    "%s/%s.%s", output_dir, meta->filesite_archive,
+			    PKG_FORMAT_EXT);
 			utimes(repo_archive, ftimes);
 		}
 		if (!legacy) {
 			snprintf(repo_archive, sizeof(repo_archive),
-				"%s/%s.tzst", output_dir, repo_meta_file);
+			    "%s/%s.%s", output_dir, repo_meta_file,
+			    PKG_FORMAT_EXT);
 			utimes(repo_archive, ftimes);
 		}
 	}

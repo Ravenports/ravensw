@@ -54,8 +54,8 @@ pkg_status(int *count)
 	const char		*sql = "SELECT COUNT(*) FROM packages";
 	bool			 dbsuccess;
 
-	/* Is this executable called pkg, or does pkg exist at
-	   $LOCALBASE/sbin/pkg.  Ditto: pkg-static. Portability:
+	/* Is this executable called ravensw, or does pkg exist at
+	   $LOCALBASE/sbin/ravensw. Portability:
 	   assumes setprogname() has been called */
 
 	progname = getprogname();
@@ -63,9 +63,7 @@ pkg_status(int *count)
 		return (PKG_STATUS_UNINSTALLED);
 
 	if (strcmp(progname, PKG_EXEC_NAME) != 0   &&
-	    strcmp(progname, PKG_STATIC_NAME) != 0 &&
-	    !is_exec_at_localbase(PKG_EXEC_NAME)   &&
-	    !is_exec_at_localbase(PKG_STATIC_NAME))
+	    !is_exec_at_localbase(PKG_EXEC_NAME))
 		return (PKG_STATUS_UNINSTALLED);
 
 	/* Does the local.sqlite pkg database exist, and can we open

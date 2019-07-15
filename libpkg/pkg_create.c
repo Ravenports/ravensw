@@ -166,8 +166,7 @@ pkg_create_from_dir(struct pkg *pkg, const char *root,
 }
 
 static struct packing *
-pkg_create_archive(const char *outdir, struct pkg *pkg, pkg_formats format,
-    unsigned required_flags)
+pkg_create_archive(const char *outdir, struct pkg *pkg, unsigned required_flags)
 {
 	char		*pkg_path = NULL;
 	struct packing	*pkg_archive = NULL;
@@ -221,8 +220,8 @@ static const char * const scripts[] = {
 /* The "no concessions to old pkg_tools" variant: just get everything
  * from the manifest */
 int
-pkg_create_from_manifest(const char *outdir, pkg_formats format,
-    const char *rootdir, const char *manifest, const char *plist)
+pkg_create_from_manifest(const char *outdir, const char *rootdir,
+    const char *manifest, const char *plist)
 {
 	struct pkg	*pkg = NULL;
 	struct packing	*pkg_archive = NULL;
@@ -242,7 +241,7 @@ pkg_create_from_manifest(const char *outdir, pkg_formats format,
 	}
 
 	/* Create the archive */
-	pkg_archive = pkg_create_archive(outdir, pkg, format, 0);
+	pkg_archive = pkg_create_archive(outdir, pkg, 0);
 	if (pkg_archive == NULL) {
 		ret = EPKG_FATAL; /* XXX do better */
 		goto cleanup;
@@ -398,7 +397,7 @@ cleanup:
 }
 
 int
-pkg_create_staged(const char *outdir, pkg_formats format, const char *rootdir,
+pkg_create_staged(const char *outdir, const char *rootdir,
     const char *md_dir, char *plist, bool hash)
 {
 	char		 hash_dest[MAXPATHLEN];
@@ -419,7 +418,7 @@ pkg_create_staged(const char *outdir, pkg_formats format, const char *rootdir,
 		goto cleanup;
 
 	/* Create the archive */
-	pkg_archive = pkg_create_archive(outdir, pkg, format, 0);
+	pkg_archive = pkg_create_archive(outdir, pkg, 0);
 	if (pkg_archive == NULL) {
 		ret = EPKG_FATAL; /* XXX do better */
 		goto cleanup;
@@ -441,11 +440,11 @@ cleanup:
 	if (hash && ret == EPKG_OK) {
 		/* Find the hash and rename the file and create a symlink */
 		pkg_snprintf(filename, sizeof(filename), "%n-%v.%S",
-			pkg, pkg, packing_format_to_string(format));
+			pkg, pkg, PKG_FORMAT_EXT);
 		pkg->sum = pkg_checksum_file(filename,
 			PKG_HASH_TYPE_SHA256_HEX);
 		pkg_snprintf(hash_dest, sizeof(hash_dest), "%n-%v-%z.%S",
-			pkg, pkg, pkg, packing_format_to_string(format));
+			pkg, pkg, pkg, PKG_FORMAT_EXT);
 
 		pkg_debug(1, "Rename the pkg file from: %s to: %s",
 			filename, hash_dest);
@@ -465,7 +464,7 @@ cleanup:
 }
 
 int
-pkg_create_installed(const char *outdir, pkg_formats format, struct pkg *pkg)
+pkg_create_installed(const char *outdir, struct pkg *pkg)
 {
 	struct packing	*pkg_archive;
 
@@ -475,7 +474,7 @@ pkg_create_installed(const char *outdir, pkg_formats format, struct pkg *pkg)
 
 	assert(pkg->type == PKG_INSTALLED || pkg->type == PKG_OLD_FILE);
 
-	pkg_archive = pkg_create_archive(outdir, pkg, format, required_flags);
+	pkg_archive = pkg_create_archive(outdir, pkg, required_flags);
 	if (pkg_archive == NULL) {
 		pkg_emit_error("unable to create archive");
 		return (EPKG_FATAL);
