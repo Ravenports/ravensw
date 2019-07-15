@@ -11,7 +11,7 @@ PDAILY=		periodic/411.ravensw-backup \
 		periodic/490.status-ravensw-changes
 PSECURITY=	periodic/410.ravensw-audit \
 		periodic/460.ravensw-checksum
-PWEEKLY=	periodic/400.ravensw-pkg
+PWEEKLY=	periodic/400.status-ravensw
 COMPLETION=	completion/_pkg \
 		completion/_pkg.bash
 
