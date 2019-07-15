@@ -85,7 +85,7 @@ pkg_repo_binary_delete_conflicting(const char *origin, const char *version,
 			 const char *pkg_path, bool forced)
 {
 	int ret = EPKG_FATAL;
-	char *oversion;
+	const char *oversion;
 
 	if (pkg_repo_binary_run_prstatement(REPO_VERSION, origin) != SQLITE_ROW) {
 		ret = EPKG_FATAL;
