@@ -42,11 +42,11 @@ compares the versions of all or specific packages installed on the system
 to what is available in the configured package repositories.
 Any out of date packages are added to a work list for processing.
 The difference to
-.Xr pkg-install 8
+.Xr ravensw-install 8
 is that
 .Nm
 tries to upgrade dependencies of packages matched as well while
-.Xr pkg-install 8
+.Xr ravensw-install 8
 is more conservative during dependencies upgrade.
 Moreover,
 .Nm
@@ -72,7 +72,7 @@ Autoremoval flags are sticky, and will persist over reinstallation or
 upgrade of the packages concerned, even if subsequently the packages
 are named explicitly on a command line.
 See
-.Xr pkg-query 8
+.Xr ravensw-query 8
 for finding the autoremoval status of a package, and
 .Xr pkg-set 8
 for modifying it.
@@ -204,15 +204,15 @@ See
 .Xr pkg-autoremove 8 ,
 .Xr ravensw-backup 8 ,
 .Xr ravensw-check 8 ,
-.Xr pkg-clean 8 ,
-.Xr pkg-config 8 ,
-.Xr pkg-create 8 ,
-.Xr pkg-delete 8 ,
-.Xr pkg-fetch 8 ,
-.Xr pkg-info 8 ,
-.Xr pkg-install 8 ,
-.Xr pkg-lock 8 ,
-.Xr pkg-query 8 ,
+.Xr ravensw-clean 8 ,
+.Xr ravensw-config 8 ,
+.Xr ravensw-create 8 ,
+.Xr ravensw-delete 8 ,
+.Xr ravensw-fetch 8 ,
+.Xr ravensw-info 8 ,
+.Xr ravensw-install 8 ,
+.Xr ravensw-lock 8 ,
+.Xr ravensw-query 8 ,
 .Xr pkg-register 8 ,
 .Xr pkg-repo 8 ,
 .Xr pkg-rquery 8 ,
