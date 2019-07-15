@@ -149,23 +149,10 @@ cc-check-functions arc4random arc4random_stir basename_r chflagsat \
 	linkat faccessat fstatat openat mkdirat readlinkat symlinkat \
 	fflagstostr futimes
 
-cc-with { -includes { libutil.h }} {
-	if {[cc-check-decls humanize_number]} {
-	}
-}
-
 if {![cc-check-functions fts_open]} {
 	cc-with { -libs { -lfts }} {
 		if {[cc-check-functions fts_open]} {
 			define-feature LIBFTS
-		}
-	}
-}
-
-if {[get-define HAVE_DECL_HUMANIZE_NUMBER] eq 1} {
-	cc-with { -libs { -lutil }} {
-		if {[cc-check-functions humanize_number]} {
-			define-feature LIBUTIL
 		}
 	}
 }
@@ -187,7 +174,7 @@ if {![cc-check-functions __res_query]} {
 }
 
 cc-check-includes link.h machine/endian.h osreldate.h readpassphrase.h \
-	sys/procctl.h sys/statfs.h sys/statvfs.h libutil.h
+	sys/procctl.h sys/statfs.h sys/statvfs.h
 
 # for compat
 cc-check-includes dirent.h

@@ -1706,6 +1706,26 @@ void pkg_cache_full_clean(void);
 int pkg_get_cachedirfd(void);
 int pkg_get_dbdirfd(void);
 
+/********************************
+/* portability functions
+/********************************
+
+int
+port_humanize_number(char *buf, size_t len, int64_t quotient,
+    const char *suffix, int scale, int flags);
+
+/* Values for port_humanize_number's flags parameter. */
+#define HN_DECIMAL	0x01
+#define HN_NOSPACE	0x02
+#define HN_B		0x04
+#define HN_DIVISOR_1000	0x08
+#define HN_IEC_PREFIXES	0x10
+
+/* Values for port_humanize_number's scale parameter. */
+#define HN_GETSCALE	0x10
+#define HN_AUTOSCALE	0x20
+
+
 #ifdef __cplusplus
 }
 #endif

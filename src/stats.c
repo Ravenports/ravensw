@@ -32,9 +32,6 @@
 #include <err.h>
 #include <getopt.h>
 #include <inttypes.h>
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
 #include <stdio.h>
 #include <sysexits.h>
 #include <unistd.h>
@@ -112,7 +109,7 @@ exec_stats(int argc, char **argv)
 		if (show_bytes)
 			printf("\tDisk space occupied: %" PRId64 "\n\n", flatsize);
 		else {
-			humanize_number(size, sizeof(size), flatsize, "B",
+			port_humanize_number(size, sizeof(size), flatsize, "B",
 			    HN_AUTOSCALE, HN_IEC_PREFIXES);
 			printf("\tDisk space occupied: %s\n\n", size);
 		}
@@ -129,7 +126,7 @@ exec_stats(int argc, char **argv)
 		if (show_bytes)
 			printf("\tTotal size of packages: %" PRId64 "\n", flatsize);
 		else {
-			humanize_number(size, sizeof(size), flatsize, "B",
+			port_humanize_number(size, sizeof(size), flatsize, "B",
 			    HN_AUTOSCALE, HN_IEC_PREFIXES);
 			printf("\tTotal size of packages: %s\n", size);
 		}

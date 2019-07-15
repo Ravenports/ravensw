@@ -38,9 +38,6 @@
 #include <err.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -50,9 +47,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <pkg.h>
-#ifdef __linux__
 #include <grp.h>
-#endif
 
 #include "utlist.h"
 #include "pkgcli.h"
@@ -890,9 +885,9 @@ display_summary_item(struct pkg_solved_display_item *it, int64_t dlsize)
 		printf("\n");
 		break;
 	case PKG_DISPLAY_FETCH:
-		humanize_number(size, sizeof(size), pkgsize, "B",
+		port_humanize_number(size, sizeof(size), pkgsize, "B",
 		    HN_AUTOSCALE, HN_IEC_PREFIXES);
-		humanize_number(tlsize, sizeof(size), dlsize, "B",
+		port_humanize_number(tlsize, sizeof(size), dlsize, "B",
 		    HN_AUTOSCALE, HN_IEC_PREFIXES);
 
 		pkg_printf("\t%n-%v ", it->new, it->new);
@@ -994,18 +989,18 @@ print_jobs_summary(struct pkg_jobs *jobs, const char *msg, ...)
 
 	if (bytes_change > limbytes) {
 		if (oldsize > newsize) {
-			humanize_number(size, sizeof(size), oldsize - newsize, "B",
+			port_humanize_number(size, sizeof(size), oldsize - newsize, "B",
 			    HN_AUTOSCALE, HN_IEC_PREFIXES);
 			printf("The operation will free %s.\n", size);
 		} else if (newsize > oldsize) {
-			humanize_number(size, sizeof(size), newsize - oldsize, "B",
+			port_humanize_number(size, sizeof(size), newsize - oldsize, "B",
 			    HN_AUTOSCALE, HN_IEC_PREFIXES);
 			printf("The process will require %s more space.\n", size);
 		}
 	}
 
 	if (dlsize > 0) {
-		humanize_number(size, sizeof(size), dlsize, "B",
+		port_humanize_number(size, sizeof(size), dlsize, "B",
 		    HN_AUTOSCALE, HN_IEC_PREFIXES);
 		printf("%s to be downloaded.\n", size);
 	}

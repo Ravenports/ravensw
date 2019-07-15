@@ -51,9 +51,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
 #include <kvec.h>
 
 #include <utstring.h>
@@ -483,7 +480,7 @@ draw_progressbar(int64_t current, int64_t total)
 			} else
 				bytes_per_second = cur_speed;
 
-			humanize_number(buf, sizeof(buf),
+			port_humanize_number(buf, sizeof(buf),
 			    current,"B", HN_AUTOSCALE, HN_IEC_PREFIXES);
 			printf(" %*s", (int)sizeof(buf), buf);
 

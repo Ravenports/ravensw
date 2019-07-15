@@ -89,9 +89,6 @@ LIBS+=	@PKG_LIBARCHIVE_LDFLAGS@ @PKG_LIBARCHIVE_LIBS_STATIC@
 LIBS+=	-L/usr/lib -larchive -lbz2 -lz -llzma
 @endif
 OTHER_LIBS=	-lssl -lcrypto -pthread
-@if HAVE_LIBUTIL
-OTHER_LIBS+=	-lutil
-@endif
 @if HAVE_LIBFTS
 OTHER_LIBS+=	-lfts
 @endif

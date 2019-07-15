@@ -42,9 +42,6 @@
 #include <assert.h>
 #include <err.h>
 #include <getopt.h>
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
 #include <pkg.h>
 #include <stdbool.h>
 #include <string.h>
@@ -425,7 +422,7 @@ exec_clean(int argc, char **argv)
 		goto cleanup;
 	}
 
-	humanize_number(size, sizeof(size), total, "B",
+	port_humanize_number(size, sizeof(size), total, "B",
 	    HN_AUTOSCALE, HN_IEC_PREFIXES);
 
 	if (!quiet)

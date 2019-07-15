@@ -38,6 +38,7 @@ SRCS=	backup.c \
 	pkg_jobs.c \
 	pkg_repo_create.c \
 	pkg_version.c \
+	port_humanize_number \
 	rcscripts.c
 
 LOCAL_CFLAGS=	-I$(top_srcdir)/external/sqlite \

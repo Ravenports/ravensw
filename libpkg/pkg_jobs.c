@@ -40,9 +40,6 @@
 #include <archive_entry.h>
 #include <assert.h>
 #include <errno.h>
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
 #include <search.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -2152,9 +2149,9 @@ pkg_jobs_fetch(struct pkg_jobs *j)
 	if (fs_avail != -1 && dlsize > fs_avail) {
 		char dlsz[9], fsz[9];
 
-		humanize_number(dlsz, sizeof(dlsz), dlsize, "B",
+		port_humanize_number(dlsz, sizeof(dlsz), dlsize, "B",
 		    HN_AUTOSCALE, HN_IEC_PREFIXES);
-		humanize_number(fsz, sizeof(fsz), fs_avail, "B",
+		port_humanize_number(fsz, sizeof(fsz), fs_avail, "B",
 		    HN_AUTOSCALE, HN_IEC_PREFIXES);
 		pkg_emit_error("Not enough space in %s, needed %s available %s",
 		    cachedir, dlsz, fsz);

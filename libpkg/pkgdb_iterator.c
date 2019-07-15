@@ -40,9 +40,6 @@
 #include <errno.h>
 #include <regex.h>
 #include <grp.h>
-#ifdef HAVE_LIBUTIL_H
-#include <libutil.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

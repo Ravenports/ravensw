@@ -59,9 +59,6 @@ LIBS+=		-lfetch_pic
 LIBS+=		-lssl_pic
 LIBS+=		-lcrypto_pic
 OTHER_LIBS+=	-lm -pthread
-@if HAVE_LIBUTIL
-OTHER_LIBS+=	-lutil
-@endif
 @if HAVE_LIBFTS
 OTHER_LIBS+=	-lfts
 @endif
