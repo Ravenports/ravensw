@@ -89,6 +89,7 @@ static int
 filter_system_shlibs(const char *name, char *path, size_t pathlen)
 {
 	const char *shlib_path;
+	ssize_t shlen;
 
 	shlib_path = shlib_list_find_by_name(name);
 	if (shlib_path == NULL) {
@@ -106,9 +107,15 @@ filter_system_shlibs(const char *name, char *path, size_t pathlen)
 			return (EPKG_END); /* ignore libs from base */
 	}
 
+	/*
+	 * Use memcpy instead of strncpy to avoid this false mesage:
+	 * warning: 'strncpy' destination unchanged after copying no bytes
+	 * [-Wstringop-truncation]
+	 */
 	if (path != NULL) {
-		if (pathlen > strlen(shlib_path))
-			strncpy(path, shlib_path, pathlen);
+		shlen = strlen(shlib_path);
+		if (pathlen > shlen)
+			memcpy(path, shlib_path, shlen+1);
 	}
 	return (EPKG_OK);
 }

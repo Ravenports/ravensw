@@ -406,8 +406,7 @@ do_activation_test(int argc)
 
 	switch (pkg_status(&count)) {
 	case PKG_STATUS_UNINSTALLED: /* This case shouldn't ever happen... */
-		errx(EX_UNAVAILABLE, "can't execute " PKG_EXEC_NAME
-		    " or " PKG_STATIC_NAME "\n");
+		errx(EX_UNAVAILABLE, "can't execute " PKG_EXEC_NAME "\n");
 		/* NOTREACHED */
 	case PKG_STATUS_NODB:
 		errx(EX_UNAVAILABLE, "package database non-existent");
