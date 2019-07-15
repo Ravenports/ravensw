@@ -185,7 +185,7 @@ pkg_create_archive(const char *outdir, struct pkg *pkg, unsigned required_flags)
 		return (NULL);
 	}
 
-	if (packing_init(&pkg_archive, pkg_path, format) != EPKG_OK)
+	if (packing_init(&pkg_archive, pkg_path) != EPKG_OK)
 		pkg_archive = NULL;
 
 	free(pkg_path);
