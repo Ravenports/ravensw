@@ -107,11 +107,18 @@ filter_system_shlibs(const char *name, char *path, size_t pathlen)
 			return (EPKG_END); /* ignore libs from base */
 	}
 
+/* 
+ * Avoid warning: 'strncpy' destination unchanged after copying
+ *                 no bytes [-Wstringop-truncation]
+ * Enable if filter_system_shlibs() ever takes a non-NULL path
+ */
+#if 0
 	if (path != NULL) {
 		shlib_pathlen = strlen(shlib_path);
 		if (pathlen > shlib_pathlen)
 			strncpy(path, shlib_path, pathlen);
 	}
+#endif
 	return (EPKG_OK);
 }
 
