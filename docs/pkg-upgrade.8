@@ -89,14 +89,14 @@ overridden by the
 option or the
 .Cm ASSUME_ALWAYS_YES
 setting in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .Pp
 Packages are fetched from the repositories into the local package
 cache if they are not already present, or if the checksum of the
 cached package file differs from the one in the repository.
 Packages may be downloaded from any of the repositories mentioned
 in
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 or in the files in
 .Pa /raven/etc/ravensw/repo .
 See
@@ -113,7 +113,7 @@ flag or setting
 to
 .Sy NO
 in
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Pp
 Finally, the work list is executed in dependency order.
 Package reinstall or update jobs are processed by removing the currently
@@ -150,7 +150,7 @@ case insensitive.
 This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .It Fl n , Cm --dry-run
 Dry-run mode: show what packages have updates available, but do not perform
 any upgrades.
@@ -180,7 +180,7 @@ Assume yes when asked for confirmation before package installation.
 The following environment variables affect the execution of
 .Nm .
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for further description.
 .Bl -tag -width ".Ev NO_DESCRIPTIONS"
 .It Ev DEFAULT_ALWAYS_YES
@@ -192,12 +192,12 @@ for further description.
 .El
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh SEE ALSO
 .Xr pkg_printf 3 ,
 .Xr pkg_repos 3 ,
 .Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
+.Xr ravensw.conf 5 ,
 .Xr pkg 8 ,
 .Xr pkg-add 8 ,
 .Xr pkg-alias 8 ,

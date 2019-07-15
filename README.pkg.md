@@ -424,11 +424,11 @@ FreeBSD: { enabled: no }
 
 To check quickly what repositories you have configured, run `pkg -vv`.
 
-See *pkg.conf(5)* for details of the format of `pkg.conf` and the
+See *ravensw.conf(5)* for details of the format of `ravensw.conf` and the
 per-repository `repo.conf` files.  See *pkg-repository(5)* for more
 details about package repositories and how to work with them.
 
-Note that the old style of setting _PACKAGESITE_ in pkg.conf is
+Note that the old style of setting _PACKAGESITE_ in ravensw.conf is
 no-longer supported.  Setting _PACKAGESITE_ in the environment has
 meaning for the pkg(7) shim, but is ignored by pkg(8).
 
@@ -468,7 +468,7 @@ repository a package came from, similarly to the effect of running:
 pkg(8) will attempt to use the same repository for any updates to this
 package, even if there are more recent versions available from other
 repositories.  This is usually the desired behaviour.  Otherwise see
-the documentation for `CONSERVATIVE_UPGRADE` in pkg.conf(5).
+the documentation for `CONSERVATIVE_UPGRADE` in ravensw.conf(5).
 
 <a name="pkgsearch"></a>
 ### Searching in remote package repositories

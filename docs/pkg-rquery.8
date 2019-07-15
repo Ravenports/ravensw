@@ -53,7 +53,7 @@ flag or setting
 to
 .Dq Li NO
 in
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh OPTIONS
 The following options are supported by
 .Nm :
@@ -106,7 +106,7 @@ This is the default, unless modified by setting
 to
 .Dq Li true
 in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .It Fl U , Fl -no-repo-update
 Suppress the automatic update of the local copy of the repository catalogue
 from remote.
@@ -322,7 +322,7 @@ is not equal to the given number.
 The following environment variables affect the execution of
 .Nm .
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for further description.
 .Bl -tag -width Ds
 .It Ev RAVENSW_DBDIR
@@ -330,7 +330,7 @@ for further description.
 .El
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
@@ -341,7 +341,7 @@ for example usage.
 .Xr pkg_printf 3 ,
 .Xr pkg_repos 3 ,
 .Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
+.Xr ravensw.conf 5 ,
 .Xr pkg 8 ,
 .Xr pkg-add 8 ,
 .Xr pkg-alias 8 ,

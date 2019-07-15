@@ -100,7 +100,7 @@ matching with
 This is the default unless
 .Ev CASE_SENSITIVE_MATCH
 has been set to true in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .It Fl n , Fl -dry-run
 Only check for missing dependencies, do not install them.
 .It Fl v , Fl -verbose
@@ -123,7 +123,7 @@ dependencies.
 These environment variables affect the execution of
 .Nm .
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for additional information.
 .Bl -tag -width ".Ev NO_DESCRIPTIONS"
 .It Ev RAVENSW_DBDIR
@@ -131,7 +131,7 @@ for additional information.
 .El
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh EXAMPLES
 Regenerate the library dependency metadata of all installed packages
 from the library information in each package's binary ELF files:
@@ -154,7 +154,7 @@ pkg check -sa
 .Xr pkg_printf 3 ,
 .Xr pkg_repos 3 ,
 .Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
+.Xr ravensw.conf 5 ,
 .Xr pkg 8 ,
 .Xr pkg-add 8 ,
 .Xr pkg-alias 8 ,

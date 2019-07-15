@@ -9,7 +9,7 @@ tests_init \
 #	duplicate_pkgs_allowed \
 
 duplicate_pkgs_allowed_body() {
-	cat << EOF > pkg.conf
+	cat << EOF > ravensw.conf
 duplicatedefault: 2
 EOF
 
@@ -56,7 +56,7 @@ duplicate_pkgs_notallowed_body() {
 }
 
 empty_conf_body() {
-	touch pkg.conf
+	touch ravensw.conf
 
 	cat << EOF > test.ucl
 name: test
@@ -82,7 +82,7 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg -C pkg.conf info test
+		pkg -C ravensw.conf info test
 }
 
 inline_repo_body() {

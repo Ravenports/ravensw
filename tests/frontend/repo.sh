@@ -69,7 +69,7 @@ repo_multiversion_body() {
 		-o inline:"Creating repository in .:  done\nPacking files for repository:  done\n" \
 		pkg repo .
 
-	cat > pkg.conf << EOF
+	cat > ravensw.conf << EOF
 RAVENSW_DBDIR=${TMPDIR}
 REPOS_DIR=[]
 repositories: {
@@ -78,26 +78,26 @@ repositories: {
 EOF
 
 	atf_check -o ignore \
-		pkg -C ./pkg.conf update
+		pkg -C ./ravensw.conf update
 
 	# Ensure we can pickup the old version
 	atf_check -o match:"Installing test-1\.0" \
-		pkg -C ./pkg.conf install -y test-1.0
+		pkg -C ./ravensw.conf install -y test-1.0
 
 	atf_check -o match:"Upgrading.*to 1\.1" \
-		pkg -C ./pkg.conf install -y test
+		pkg -C ./ravensw.conf install -y test
 
 	atf_check -o ignore pkg delete -y test
 
 	atf_check -o match:"Installing test-1\.0" \
-		pkg -C ./pkg.conf install -y test-1.0
+		pkg -C ./ravensw.conf install -y test-1.0
 
 	atf_check -o match:"Upgrading.*to 1\.1" \
-		pkg -C ./pkg.conf upgrade -y
+		pkg -C ./ravensw.conf upgrade -y
 
-	atf_check -o ignore pkg -C ./pkg.conf delete -y test
+	atf_check -o ignore pkg -C ./ravensw.conf delete -y test
 
 	# Ensure the latest version is installed
 	atf_check -o match:"Installing test-1.1" \
-		pkg -C ./pkg.conf install -y test
+		pkg -C ./ravensw.conf install -y test
 }

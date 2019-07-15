@@ -189,7 +189,7 @@ exec_create(int argc, char **argv)
 
 
 	/* POLA: pkg create is quiet by default, unless
-	 * PKG_CREATE_VERBOSE is set in pkg.conf.  This is for
+	 * PKG_CREATE_VERBOSE is set in ravensw.conf.  This is for
 	 * historical reasons. */
 
 	quiet = !pkg_object_bool(pkg_config_get("PKG_CREATE_VERBOSE"));

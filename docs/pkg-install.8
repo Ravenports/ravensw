@@ -47,7 +47,7 @@ first updates any out of date repository catalogues, unless
 has been set to
 .Sy NO
 in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .Pp
 It then creates a work-list of all the package installations to do.
 Any already installed and up-to-date packages will be dropped from the
@@ -84,14 +84,14 @@ overridden by the
 option or the
 .Cm ASSUME_ALWAYS_YES
 setting in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .Pp
 Packages are fetched from the repositories into the local package
 cache if they are not already present, or if the checksum of the
 cached package file differs from the one in the repository.
 Packages may be downloaded from any of the repositories mentioned
 in
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 or in the files in
 .Pa /raven/etc/ravensw/repo .
 See
@@ -108,7 +108,7 @@ flag or setting
 to
 .Sy NO
 in
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh OPTIONS
 The following options are supported by
 .Nm :
@@ -142,7 +142,7 @@ case insensitive.
 This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .It Fl M , Cm --ignore-missing
 Force the installation of the package with missing dependencies.
 .It Fl n , Cm --dry-run
@@ -185,7 +185,7 @@ Assume yes when asked for confirmation before package installation.
 The following environment variables affect the execution of
 .Nm .
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for further description.
 .Bl -tag -width ".Ev NO_DESCRIPTIONS"
 .It Ev DEFAULT_ALWAYS_YES
@@ -198,12 +198,12 @@ for further description.
 .El
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh SEE ALSO
 .Xr pkg_printf 3 ,
 .Xr pkg_repos 3 ,
 .Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
+.Xr ravensw.conf 5 ,
 .Xr pkg 8 ,
 .Xr pkg-add 8 ,
 .Xr pkg-alias 8 ,

@@ -398,7 +398,7 @@ static struct config_entry c[] = {
 		PKG_OBJECT,
 		"REPOSITORIES",
 		NULL,
-		"Repository config in pkg.conf"
+		"Repository config in ravensw.conf"
 	},
 	{
 		PKG_ARRAY,
@@ -1033,9 +1033,9 @@ pkg_ini(const char *path, const char *reposdir, pkg_init_flags flags)
 		    == 0 || strncasecmp(utstring_body(ukey), "PUBKEY",
 		    utstring_len(ukey)) == 0 || strncasecmp(utstring_body(ukey),
 		    "MIRROR_TYPE", utstring_len(ukey)) == 0) {
-			pkg_emit_error("%s in pkg.conf is no longer "
+			pkg_emit_error("%s in ravensw.conf is no longer "
 			    "supported.  Convert to the new repository style."
-			    "  See pkg.conf(5)", utstring_body(ukey));
+			    "  See ravensw.conf(5)", utstring_body(ukey));
 			fatal_errors = true;
 			continue;
 		}

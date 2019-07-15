@@ -275,8 +275,8 @@ exec_help(int argc, char **argv)
 	if (strcmp(argv[1], "pkg") == 0) {
 		system("/usr/bin/man 8 pkg");
 		return (0);
-	} else if (strcmp(argv[1], "pkg.conf") == 0) {
-		system("/usr/bin/man 5 pkg.conf");
+	} else if (strcmp(argv[1], "ravensw.conf") == 0) {
+		system("/usr/bin/man 5 ravensw.conf");
 		return (0);
 	}
 

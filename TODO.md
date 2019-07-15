@@ -41,7 +41,7 @@ RPM already does this
 
 Allow multiple packages having the same name as long as they don't conflict
 
-* pkg.conf:
+* ravensw.conf:
 
   duplicatenumber: 2
   duplicate: { FreeBSD-kernel-*: 3, clibs: 5 }
@@ -95,7 +95,7 @@ pkg upgrade could grow a way to complain about packages it cannot upgrade becaus
 
 # Add a periodic script for reporting pkg check -d output
 
-# add a pkg wrongabi alias if possible in pkg.conf
+# add a pkg wrongabi alias if possible in ravensw.conf
 
 This would allow after a major upgrade to check what packages are still on the old ABI
 

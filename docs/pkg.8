@@ -57,7 +57,7 @@ typically only used for the initial installation of
 .Nm .
 There are some differences in functionality.
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for details.
 .\" ---------------------------------------------------------------------------
 .Sh OPTIONS
@@ -274,7 +274,7 @@ Display package database statistics.
 Unlocks packages, allowing them to be modified or deleted.
 .It Ic update
 Update the available remote repositories as listed in
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .It Ic updating
 Display UPDATING entries of installed packages.
 .It Ic upgrade
@@ -288,7 +288,7 @@ file.
 .\" ---------------------------------------------------------------------------
 .Sh ENVIRONMENT
 All configuration options from
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 can be passed as environment variables.
 .Pp
 Extra environment variables are:
@@ -307,7 +307,7 @@ by the user.
 .\" ---------------------------------------------------------------------------
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .\" ---------------------------------------------------------------------------
 .Sh EXAMPLES
 Search for a package:
@@ -369,7 +369,7 @@ Check for missing dependencies:
 .Xr pkg_printf 3 ,
 .Xr pkg_repos 3 ,
 .Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
+.Xr ravensw.conf 5 ,
 .Xr pkg-add 8 ,
 .Xr pkg-alias 8 ,
 .Xr pkg-annotate 8 ,

@@ -149,7 +149,7 @@ _pkg_config_opts() {
 		'PORTSDIR[specify location of ports directory]:directory:_files -/' \
 		'READ_LOCK[use read locking for query database]:boolean:(yes no)' \
 		'REPOS_DIR[list of directories to search for repository configuration files]: : _sequence _directories' \
-		'REPOSITORIES[repository config in pkg.conf]:value' \
+		'REPOSITORIES[repository config in ravensw.conf]:value' \
 		'REPO_AUTOUPDATE[automatically check for repo.sqlsite updates]:boolean:(yes no)' \
 		'RUN_SCRIPTS[run pre-/post-installation action scripts]:boolean:(yes no)' \
 		'SAT_SOLVER[experimental\: use an external SAT solver]:SAT solver:_files' \

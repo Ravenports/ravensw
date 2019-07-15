@@ -41,7 +41,7 @@ EOF
 		-s exit:0 \
 		pkg create -M ./foo.ucl -o ./repo/
 
-	cat << EOF > pkg.conf
+	cat << EOF > ravensw.conf
 RAVENSW_DBDIR=${TMPDIR}
 REPOS_DIR=[]
 repositories: {
@@ -53,17 +53,17 @@ EOF
 		-o inline:"Creating repository in ./repo:  done\nPacking files for repository:  done\n" \
 		-e empty \
 		-s exit:0 \
-		pkg -C ./pkg.conf repo ./repo
+		pkg -C ./ravensw.conf repo ./repo
 
 	atf_check \
 		-o ignore \
 		-s exit:0 \
-		pkg -C ./pkg.conf update -f
+		pkg -C ./ravensw.conf update -f
 
 	atf_check \
 		-o match:"Installing foo-1\.0" \
 		-s exit:0 \
-		pkg -C ./pkg.conf install -y foo
+		pkg -C ./ravensw.conf install -y foo
 
 	# Upgrade bar
 	rm -fr repo
@@ -116,13 +116,13 @@ EOF
 		-o inline:"Creating repository in ./repo:  done\nPacking files for repository:  done\n" \
 		-e empty \
 		-s exit:0 \
-		pkg -C ./pkg.conf repo ./repo
+		pkg -C ./ravensw.conf repo ./repo
 
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg -C ./pkg.conf update -f
+		pkg -C ./ravensw.conf update -f
 
 OUTPUT="Updating local repository catalogue...
 local repository is up to date.
@@ -159,7 +159,7 @@ Number of packages to be upgraded: 1
 		-o inline:"${OUTPUT}" \
 		-e empty \
 		-s exit:0 \
-		pkg -C ./pkg.conf upgrade -y
+		pkg -C ./ravensw.conf upgrade -y
 
 	atf_check \
 		-o match:"foo-1.0_1" \

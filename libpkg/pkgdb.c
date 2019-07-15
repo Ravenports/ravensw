@@ -1321,7 +1321,7 @@ pkgdb_transaction_rollback(struct pkgdb *db, const char *savepoint)
 
 /* By default, MATCH_EXACT and MATCH_REGEX are case sensitive.  This
  * is modified in many actions according to the value of
- * CASE_SENSITIVE_MATCH in pkg.conf and then possbily reset again in
+ * CASE_SENSITIVE_MATCH in ravensw.conf and then possbily reset again in
  * pkg search et al according to command line flags */
 
 static bool _case_sensitive_flag = false;

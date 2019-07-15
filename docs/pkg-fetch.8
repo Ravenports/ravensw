@@ -68,7 +68,7 @@ flag or setting
 to
 .Sy NO
 in
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh OPTIONS
 The following options are supported by
 .Nm :
@@ -100,7 +100,7 @@ case insensitive.
 This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
-.Pa pkg.conf .
+.Pa ravensw.conf .
 .It Fl q , Cm --quiet
 Quiet mode.
 Show less output.
@@ -109,7 +109,7 @@ Fetches packages from the given
 .Ar reponame
 if multiple repo support is enabled.
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .It Fl u , Cm --available-updates
 Fetch all available updates for the currently installed packages.
 .It Fl U , Cm --no-repo-update
@@ -136,16 +136,16 @@ The following environment variables affect the execution of
 .El
 .Pp
 See
-.Xr pkg.conf 5
+.Xr ravensw.conf 5
 for additional environment variables that control behaviour.
 .Sh FILES
 See
-.Xr pkg.conf 5 .
+.Xr ravensw.conf 5 .
 .Sh SEE ALSO
 .Xr pkg_printf 3 ,
 .Xr pkg_repos 3 ,
 .Xr pkg-repository 5 ,
-.Xr pkg.conf 5 ,
+.Xr ravensw.conf 5 ,
 .Xr pkg 8 ,
 .Xr pkg-add 8 ,
 .Xr pkg-alias 8 ,
