@@ -268,11 +268,11 @@ Default:
 When true, automatically check for and download updates to
 .Pa /var/db/ravensw/repo.sqlite
 when running one of:
-.Nm pkg fetch ,
-.Nm pkg install ,
-.Nm pkg rquery ,
-.Nm pkg search ,
-.Nm pkg upgrade ,
+.Nm ravensw fetch ,
+.Nm ravensw install ,
+.Nm ravensw rquery ,
+.Nm ravensw search ,
+.Nm ravensw upgrade ,
 or
 .Nm pkg version -R .
 Default: YES.
@@ -319,7 +319,7 @@ vulnerability database from.
 Default:
 .Pa http://vuxml.freebsd.org/freebsd/vuln.xml.bz2 .
 .It Cm WORKERS_COUNT: integer
-How many workers are used for pkg-repo.
+How many workers are used for ravensw-repo.
 If set to 0,
 .Va hw.ncpu
 is used.
@@ -488,7 +488,7 @@ same repository the older installed version came from, as given in the
 .Sy repository
 annotation of the installed package.
 See
-.Xr pkg-repository 8
+.Xr ravensw-repository 8
 for details.
 .Pp
 It is possible to specify more than one repository per file.
@@ -533,11 +533,7 @@ alias: {
 .Pp
 To bootstrap
 .Xr ravensw 8
-using a private repository (Assuming a
-.Xr pkg 7
-new enough to support the
-.Cm bootstrap
-command.):
+using a private repository:
 .Bd -literal -offset indent
 # cat > /raven/etc/ravensw/repos/example.conf <<EOF
 example: {
@@ -560,7 +556,7 @@ uses
 for the URL to download
 .Xr ravensw 8
 from, and subsequently passes it in the environment to
-.Xr pkg-static 8 ,
+.Xr ravensw 8 ,
 which ignores it (possibly with a deprecation warning that should be
 ignored), and reads the configuration files instead.
 .Sh SEE ALSO
