@@ -39,13 +39,15 @@ MAN8GZ=	$(MAN8:.8=.8.gz)
 
 .SUFFIXES: .5.gz .8.gz .5 .8
 
-all: $(MAN3GZ) $(MAN5GZ) $(MAN8GZ)
+all: $(MAN5GZ) $(MAN8GZ)
 
 .5.5.gz:
-	gzip -kfn $< > $@
+	gzip -kfnc ${.ALLSRC} > ${.TARGET:S|pkg|ravensw|}
+	touch ${.TARGET}
 
 .8.8.gz:
-	gzip -kfn $< > $@
+	gzip -kfnc ${.ALLSRC} > ${.TARGET:S|pkg|ravensw|}
+	touch ${.TARGET}
 
 clean:
 	rm -f *.gz
@@ -56,8 +58,7 @@ run-fix-xrefs:
 install:
 	install -d $(DESTDIR)$(mandir)/man5
 	install -d $(DESTDIR)$(mandir)/man8
-	${BSD_INSTALL_MAN} *.5.gz $(DESTDIR)$(mandir)/man5
-	${BSD_INSTALL_MAN} *.8.gz $(DESTDIR)$(mandir)/man8
-	ln -sf pkg-delete.8.gz $(DESTDIR)$(mandir)/man8/pkg-remove.8.gz
-	ln -sf pkg.8.gz $(DESTDIR)$(mandir)/man8/pkg-static.8.gz
-	ln -sf pkg-lock.8.gz $(DESTDIR)$(mandir)/man8/pkg-unlock.8.gz
+	${BSD_INSTALL_MAN} raven*.5.gz $(DESTDIR)$(mandir)/man5
+	${BSD_INSTALL_MAN} raven*.8.gz $(DESTDIR)$(mandir)/man8
+	ln -sf ravensw-delete.8.gz $(DESTDIR)$(mandir)/man8/ravensw-remove.8.gz
+	ln -sf ravensw-lock.8.gz $(DESTDIR)$(mandir)/man8/ravensw-unlock.8.gz
