@@ -18,8 +18,8 @@
 .Dt RAVENSW-LOCK 8
 .Os
 .Sh NAME
-.Nm "pkg lock" ,
-.Nm "pkg unlock"
+.Nm "ravensw lock" ,
+.Nm "ravensw unlock"
 .Nd lock or unlock packages
 .Sh SYNOPSIS
 .Nm
@@ -29,10 +29,10 @@
 .Op Fl lqy
 .Op Fl Cgix
 .Ar pkg-name
-.Nm "pkg unlock"
+.Nm "ravensw unlock"
 .Op Fl lqy
 .Op Fl a
-.Nm "pkg unlock"
+.Nm "ravensw unlock"
 .Op Fl lqy
 .Op Fl Cgix
 .Ar pkg-name
@@ -46,10 +46,10 @@
 .Op Cm --{show-locked,quiet,yes}
 .Op Cm --{case-sensitive,glob,case-insensitive,regex}
 .Ar pkg-name
-.Nm "pkg unlock"
+.Nm "ravensw unlock"
 .Op Cm --{show-locked,quiet,yes}
 .Op Cm --all
-.Nm "pkg unlock"
+.Nm "ravensw unlock"
 .Op Cm --{show-locked,quiet,yes}
 .Op Cm --{case-sensitive,glob,case-insensitive,regex}
 .Ar pkg-name
@@ -57,7 +57,7 @@
 .Nm
 is used to lock packages against reinstallation,
 modification or deletion.
-.Nm "pkg unlock"
+.Nm "ravensw unlock"
 unlocks the named packages.
 Either variant only has an effect on currently installed packages.
 Consequently it is impossible to block installation of a new package
