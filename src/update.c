@@ -126,7 +126,7 @@ void
 usage_update(void)
 {
 	fprintf(stderr, "Usage: pkg update [-fq] [-r reponame]\n\n");
-	fprintf(stderr, "For more information, see 'pkg help update'.\n");
+	fprintf(stderr, SEE_HELP "update'.\n");
 }
 
 int

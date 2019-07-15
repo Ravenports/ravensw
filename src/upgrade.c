@@ -58,7 +58,7 @@ void
 usage_upgrade(void)
 {
 	fprintf(stderr, "Usage: pkg upgrade [-fInFqUy] [-r reponame] [-Cgix] <pkg-name> ...\n\n");
-	fprintf(stderr, "For more information see 'pkg help upgrade'.\n");
+	fprintf(stderr, SEE_HELP "upgrade'.\n");
 }
 
 KHASH_MAP_INIT_STR(pkgs, struct pkg *);

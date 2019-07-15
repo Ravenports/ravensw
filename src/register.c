@@ -47,7 +47,7 @@ usage_register(void)
 	                " [-f <plist-file>] -m <metadatadir>\n");
 	fprintf(stderr, "       pkg register [-ldt] [-i <input_path>]"
 		        " -M <manifest>\n\n");
-	fprintf(stderr, "For more information see 'pkg help register'.\n");
+	fprintf(stderr, SEE_HELP "register'.\n");
 }
 
 int

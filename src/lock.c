@@ -51,7 +51,7 @@ usage_lock(void)
 	fprintf(stderr, "Usage: pkg lock [-lqy] [-a|[-Cgix] <pkg-name>]\n");
 	fprintf(stderr, "       pkg lock --has-locked-packages\n");
 	fprintf(stderr, "       pkg unlock [-lqy] [-a|[-Cgix] <pkg-name>]\n");
-	fprintf(stderr, "For more information see 'pkg help lock'.\n");
+	fprintf(stderr, SEE_HELP "lock'.\n");
 }
 
 static int

@@ -64,7 +64,7 @@ usage_info(void)
 	fprintf(stderr, "       pkg info -a\n");
 	fprintf(stderr, "       pkg info [-AbBDdefIklOqRrs] [-Cgix] <pkg-name>\n");
 	fprintf(stderr, "       pkg info [-AbBDdfIlqRrs] -F <pkg-file>\n\n");
-	fprintf(stderr, "For more information see 'pkg help info'.\n");
+	fprintf(stderr, SEE_HELP "info'.\n");
 }
 
 /*

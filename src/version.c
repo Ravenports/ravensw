@@ -77,7 +77,7 @@ usage_version(void)
 	fprintf(stderr, "		    [-r reponame] [-O origin|-n pkgname] [index]\n");
 	fprintf(stderr, "	pkg version -t <version1> <version2>\n");
 	fprintf(stderr, "	pkg version -T <pkgname> <pattern>\n\n");
-	fprintf(stderr, "For more information see 'pkg help version'.\n");
+	fprintf(stderr, SEE_HELP "version'.\n");
 }
 
 static void

@@ -44,7 +44,7 @@ void
 usage_alias(void)
 {
 	fprintf(stderr, "Usage: pkg alias [-ql] [alias]\n\n");
-	fprintf(stderr, "For more information see 'pkg help alias'.\n");
+	fprintf(stderr, SEE_HELP "alias'.\n");
 }
 
 int

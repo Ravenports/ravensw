@@ -302,7 +302,7 @@ void
 usage_clean(void)
 {
 	fprintf(stderr, "Usage: pkg clean [-anqy]\n\n");
-	fprintf(stderr, "For more information see 'pkg help clean'.\n");
+	fprintf(stderr, SEE_HELP "clean'.\n");
 }
 
 int

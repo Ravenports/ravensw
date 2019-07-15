@@ -56,7 +56,7 @@ void
 usage_updating(void)
 {
 	fprintf(stderr, "Usage: pkg updating [-i] [-d YYYYMMDD] [-f file] [portname ...]\n");
-	fprintf(stderr, "For more information see 'pkg help updating'.\n");
+	fprintf(stderr, SEE_HELP "updating'.\n");
 
 }
 

@@ -38,7 +38,7 @@ usage_backup(void)
 {
 	fprintf(stderr, "Usage: pkg backup [-q] -d <dest_file>\n");
 	fprintf(stderr, "       pkg backup [-q] -r <src_file>\n\n");
-	fprintf(stderr, "For more information see 'pkg help backup'.\n");
+	fprintf(stderr, SEE_HELP "backup'.\n");
 }
 
 int

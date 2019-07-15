@@ -62,7 +62,7 @@ void
 usage_audit(void)
 {
 	fprintf(stderr, "Usage: pkg audit [-Fqr] [-f file] <pattern>\n\n");
-	fprintf(stderr, "For more information see 'pkg help audit'.\n");
+	fprintf(stderr, SEE_HELP "audit'.\n");
 }
 
 KHASH_MAP_INIT_STR(pkgs, struct pkg *);

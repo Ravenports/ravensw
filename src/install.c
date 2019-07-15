@@ -49,7 +49,7 @@ usage_install(void)
 {
 	fprintf(stderr,
 	    "Usage: pkg install [-AfInFMqRUy] [-r reponame] [-Cgix] <pkg-name> ...\n\n");
-	fprintf(stderr, "For more information see 'pkg help install'.\n");
+	fprintf(stderr, SEE_HELP "install'.\n");
 }
 
 int

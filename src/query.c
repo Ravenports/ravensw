@@ -848,7 +848,7 @@ usage_query(void)
 	fprintf(stderr, "       pkg query -F <pkg-name> <query-format>\n");
 	fprintf(stderr, "       pkg query -e <evaluation> <query-format>\n");
 	fprintf(stderr, "       pkg query [-Cgix] <query-format> <pattern> <...>\n\n");
-	fprintf(stderr, "For more information see 'pkg help query.'\n");
+	fprintf(stderr, SEE_HELP "query.'\n");
 }
 
 int

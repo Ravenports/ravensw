@@ -59,7 +59,7 @@ usage_add(void)
 {
 	fprintf(stderr, "Usage: pkg add [-IAfqM] <pkg-name> ...\n");
 	fprintf(stderr, "       pkg add [-IAfqM] <protocol>://<path>/<pkg-name> ...\n\n");
-	fprintf(stderr, "For more information see 'pkg help add'.\n");
+	fprintf(stderr, SEE_HELP "add'.\n");
 }
 
 int

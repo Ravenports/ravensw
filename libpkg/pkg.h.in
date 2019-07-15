@@ -49,6 +49,7 @@ extern "C" {
 #ifndef PKG_EXEC_NAME
 #define PKG_EXEC_NAME	"ravensw"
 #endif
+#define SEE_HELP	"For more information see '" PKG_EXEC_NAME " help "
 
 #define PKGVERSION "@VERSION@"
 

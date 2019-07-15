@@ -76,7 +76,7 @@ usage_rquery(void)
 	fprintf(stderr, "       pkg rquery [-a] [-r reponame] [-I|<query-format>]\n");
 	fprintf(stderr, "       pkg rquery -e <evaluation> [-r reponame] <query-format>\n");
 	fprintf(stderr, "       pkg rquery [-Cgix] [-r reponame] [-I|<query-format>] <pattern> <...>\n\n");
-	fprintf(stderr, "For more information see 'pkg help rquery.'\n");
+	fprintf(stderr, SEE_HELP "rquery.'\n");
 }
 
 static void

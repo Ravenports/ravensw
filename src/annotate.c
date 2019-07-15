@@ -62,8 +62,7 @@ usage_annotate(void)
             "       pkg annotate [-qy] -a [-A|M] <tag> [<value>]\n");
 	fprintf(stderr,
             "       pkg annotate [-qy] -a [-S|D] <tag>\n\n");
-	fprintf(stderr,
-            "For more information see 'pkg help annotate'.\n");
+	fprintf(stderr, SEE_HELP "annotate'.\n");
 }
 
 static int

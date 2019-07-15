@@ -70,7 +70,7 @@ usage_create(void)
 		"[-r rootdir] pkg-name ...\n");
 	fprintf(stderr, "       pkg create [-Ohnqv] [-f format] [-o outdir] "
 		"[-r rootdir] -a\n\n");
-	fprintf(stderr, "For more information see 'pkg help create'.\n");
+	fprintf(stderr, SEE_HELP "create'.\n");
 }
 
 static int

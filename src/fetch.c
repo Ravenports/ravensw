@@ -49,7 +49,7 @@ usage_fetch(void)
 					"[-Cgix] <pkg-name> <...>\n");
 	fprintf(stderr, "       pkg fetch [-r reponame] [-dqUy] -a\n");
 	fprintf(stderr, "       pkg fetch [-r reponame] [-dqUy] -u\n\n");
-	fprintf(stderr, "For more information see 'pkg help fetch'.\n");
+	fprintf(stderr, SEE_HELP "fetch'.\n");
 }
 
 int

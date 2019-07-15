@@ -48,7 +48,7 @@ void
 usage_set(void)
 {
 	fprintf(stderr, "Usage: pkg set [-a] [-A [01]] [-o <oldorigin>:<neworigin>] [-n <oldname>:<newname>] [-y] [-Cgix] [-v 0|1] <pkg-name>\n\n");
-	fprintf(stderr, "For more information see 'pkg help set'. \n");
+	fprintf(stderr, SEE_HELP "set'. \n");
 }
 
 static bool

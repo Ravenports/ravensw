@@ -212,12 +212,13 @@ usage(const char *conffile, const char *reposdir, FILE *out, enum pkg_usage_reas
 			}
 		}
 		fprintf(out, "\nFor more information on the different commands"
-					" see 'pkg help <command>'.\n");
+				" see '" PKG_EXEC_NAME " help <command>'.\n");
 		exit(EXIT_SUCCESS);
 	}
 
 out:
-	fprintf(out, "\nFor more information on available commands and options see 'pkg help'.\n");
+	fprintf(out, "\nFor more information on available commands and options see '"
+		PKG_EXEC_NAME " help'.\n");
 	exit(EX_USAGE);
 }
 
@@ -291,7 +292,8 @@ exec_help(int argc, char **argv)
 	/* Command name not found */
 	warnx("'%s' is not a valid command.\n", argv[1]);
 
-	fprintf(stderr, "See 'pkg help' for more information on the commands.\n");
+	fprintf(stderr, "See '" PKG_EXEC_NAME
+		" help' for more information on the commands.\n");
 
 	return (EX_USAGE);
 }

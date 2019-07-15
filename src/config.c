@@ -39,7 +39,7 @@ usage_config(void)
 {
 	fprintf(stderr,
             "Usage: pkg config <name>\n\n");
-	//fprintf(stderr, "For more information see 'pkg help config'.\n");
+	//fprintf(stderr, SEE_HELP "config'.\n");
 }
 
 int

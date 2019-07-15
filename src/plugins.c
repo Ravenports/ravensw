@@ -39,7 +39,7 @@ void
 usage_plugins(void)
 {
         fprintf(stderr, "Usage: pkg plugins [-l] <plugin>\n\n");
-        //fprintf(stderr, "For more information see 'pkg help plugins'.\n");
+        //fprintf(stderr, SEE_HELP "plugins'.\n");
 }
 
 int

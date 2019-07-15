@@ -238,7 +238,7 @@ usage_search(void)
 		n += fprintf(stderr, " %s", modifiers[i].option);
 	}
 	fprintf(stderr, "\n");
-	fprintf(stderr, "For more information see 'pkg help search'.\n");
+	fprintf(stderr, SEE_HELP "search'.\n");
 }
 
 int

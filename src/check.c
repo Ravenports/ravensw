@@ -268,7 +268,7 @@ usage_check(void)
 	    "Usage: pkg check -B|-d|-s|-r [-qvy] -a\n");
 	fprintf(stderr,
 	    "       pkg check -B|-d|-s|-r [-qvy] [-Cgix] <pattern>\n\n");
-	fprintf(stderr, "For more information see 'pkg help check'.\n");
+	fprintf(stderr, SEE_HELP "check'.\n");
 }
 
 int
