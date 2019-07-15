@@ -129,7 +129,7 @@ is in human readable format.
 Returns 1 if the matched package was automatically installed
 as a dependency of another package, 0 otherwise.
 The package can be automatically removed via
-.Sq pkg autoremove
+.Sq ravensw autoremove
 when this flag is set and no other package depends on it.
 .It Cm \&%Q
 Alternative architecture of the matches package
@@ -360,34 +360,34 @@ See
 .Ex -std
 .Sh EXAMPLES
 List all installed packages by name-version:
-.Dl $ pkg query %n-%v
+.Dl $ ravensw query %n-%v
 .Pp
 List all dependencies for a package by origin:
-.Dl $ pkg query %do subversion
+.Dl $ ravensw query %do subversion
 .Pp
 List all dependencies by package name-version:
-.Dl $ pkg query %dn-%dv subversion
+.Dl $ ravensw query %dn-%dv subversion
 .Pp
 List all reverse dependencies for a package:
-.Dl $ pkg query %ro perl
+.Dl $ ravensw query %ro perl
 .Pp
 List all files and their known checksums for a package:
-.Dl $ pkg query '%Fp %Fs' perl
+.Dl $ ravensw query '%Fp %Fs' perl
 .Pp
 List all files for all packages:
-.Dl $ pkg query '%o: %Fp'
+.Dl $ ravensw query '%o: %Fp'
 .Pp
 List all packages with no reverse dependencies:
-.Dl $ pkg query -e '%#r = 0' %o
+.Dl $ ravensw query -e '%#r = 0' %o
 .Pp
 List non-automatic packages:
-.Dl $ pkg query -e '%a = 0' %o
+.Dl $ ravensw query -e '%a = 0' %o
 .Pp
 List automatic packages:
-.Dl $ pkg query -e '%a = 1' %o
+.Dl $ ravensw query -e '%a = 1' %o
 .Pp
 List unmaintained packages:
-.Dl $ pkg query -e '%m = ports@FreeBSD.org' %o
+.Dl $ ravensw query -e '%m = ports@FreeBSD.org' %o
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,
 .Xr ravensw.conf 5 ,

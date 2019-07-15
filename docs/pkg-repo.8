@@ -245,7 +245,7 @@ and its path set via
 .Sy PUBKEY
 setting in the repository configuration file:
 .Pp
-.Dl pkg repo /usr/ports/packages repo.key
+.Dl ravensw repo /var/ravenports/primary/packages repo.key
 .Pp
 Create a repository and sign it with an external command.
 The client should set, via the repository configuration file,
@@ -270,7 +270,7 @@ echo END
 EOF
 
 # On package server:
-% pkg repo /usr/ports/packages signing_command: ssh signing-server sign.sh
+% ravensw repo /var/ravenports/primary/packages signing_command: ssh signing-server sign.sh
 # Generate fingerprint for sharing with clients
 % sh -c '( echo "function: sha256"; echo "fingerprint: $(sha256 -q repo.pub)"; ) > fingerprint'
 # The 'fingerprint' file should be distributed to all clients.

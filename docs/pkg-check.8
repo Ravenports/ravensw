@@ -136,19 +136,19 @@ See
 Regenerate the library dependency metadata of all installed packages
 from the library information in each package's binary ELF files:
 .Bd -literal -offset indent
-pkg check -Ba
+ravensw check -Ba
 .Ed
 .Pp
 Test for missing dependencies needed by nano, installing any that are
 missing:
 .Bd -literal -offset indent
-pkg check -d nano
+ravensw check -d nano
 .Ed
 .Pp
 Test the checksums of all installed packages to make sure none are
 corrupted:
 .Bd -literal -offset indent
-pkg check -sa
+ravensw check -sa
 .Ed
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,

@@ -21,11 +21,11 @@
 .Sh NAME
 .Nm "ravensw.conf"
 .Nd system-wide configuration file for
-.Xr pkg 1
+.Xr ravensw 1
 .Sh DESCRIPTION
 .Nm
 is the system-wide configuration file used by the
-.Xr pkg 1
+.Xr ravensw 1
 tools.
 .Pp
 The default location of this file is
@@ -62,7 +62,7 @@ Whenever the
 text occurs as a separate
 .Sq action
 word in a command line of the form
-.Nm pkg Em key ... ,
+.Nm ravensw Em key ... ,
 substitute the
 .Em value
 text verbatim.
@@ -81,13 +81,13 @@ or
 .Xr ravensw-upgrade 8
 .It Cm DEFAULT_ALWAYS_YES: boolean
 When this option is enabled
-.Xr pkg 1
+.Xr ravensw 1
 will default to "yes" for all questions
 which require user confirmation before doing anything.
 Default: NO.
 .It Cm ASSUME_ALWAYS_YES: boolean
 When this option is enabled
-.Xr pkg 1
+.Xr ravensw 1
 will automatically assume "yes" to all questions
 which require user confirmation before doing anything, as if it
 the
@@ -99,7 +99,7 @@ Ensure in multi repository mode that the priority is given as much as possible
 to the repository where a package was first installed from.
 Default: YES.
 .It Cm CUDF_SOLVER: string
-Experimental: tells pkg to use an external CUDF solver.
+Experimental: tells ravensw to use an external CUDF solver.
 Default: not set.
 .It Cm CASE_SENSITIVE_MATCH: boolean
 Match package names or regular expressions given on the command line
@@ -280,7 +280,7 @@ Default: YES.
 Run pre-/post-installation action scripts.
 Default: YES.
 .It Cm SAT_SOLVER: string
-Experimental: tells pkg to use an external SAT solver.
+Experimental: tells ravensw to use an external SAT solver.
 Default: not set.
 .It Cm SQLITE_PROFILE: boolean
 Profile SQLite queries.
@@ -511,7 +511,7 @@ FreeBSD: {
 Example for ravensw.conf:
 .Bd -literal -offset indent
 ravensw_dbdir: "/var/db/ravensw"
-pkg_cachedir: "/var/cache/pkg"
+ravensw_cachedir: "/var/cache/ravensw"
 portsdir: "/usr/ports"
 handle_rc_scripts: false
 assume_always_yes: false

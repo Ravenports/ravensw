@@ -67,20 +67,20 @@ See
 .Xr ravensw.conf 5 .
 .Sh EXAMPLES
 Shows all entries of all installed ports:
-.Dl % pkg updating
+.Dl % ravensw updating
 .Pp
 Shows all entries of all installed ports since 2012-01-01:
-.Dl % pkg updating -d 20120101
+.Dl % ravensw updating -d 20120101
 .Pp
 Shows all entries for all apache and mysql ports:
-.Dl % pkg updating apache mysql
+.Dl % ravensw updating apache mysql
 .Pp
 Shows all apache entries since 2012-01-01:
-.Dl % pkg updating -d 20120101 apache
+.Dl % ravensw updating -d 20120101 apache
 .Pp
 Defines that the UPDATING file is in /tmp and shows all entries of all
 installed ports:
-.Dl % pkg updating -f /tmp/UPDATING
+.Dl % ravensw updating -f /tmp/UPDATING
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,
 .Xr ravensw.conf 5 ,

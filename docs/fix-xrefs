@@ -18,7 +18,7 @@ MAIN:
       map { ".Xr $_->[0] $_->[1]" }
       sort {
              ( $a->[1] <=> $b->[1] )
-          || ( ( $b->[0] eq 'pkg' ) <=> ( $a->[0] eq 'pkg' ) )
+          || ( ( $b->[0] eq 'ravensw' ) <=> ( $a->[0] eq 'ravensw' ) )
           || ( $a->[0] cmp $b->[0] )
       }
       map {

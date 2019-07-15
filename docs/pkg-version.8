@@ -275,21 +275,21 @@ The following is a typical invocation of the
 command, which checks the installed packages against the local ports
 index file:
 .Pp
-.Dl % pkg version -v
+.Dl % ravensw version -v
 .Pp
 The command below generates a report against the versions in the repository catalogue:
 .Pp
-.Dl % pkg update
-.Dl % pkg version -vR
+.Dl % ravensw update
+.Dl % ravensw version -vR
 .Pp
 The following lists packages needing upgrade, compared to the repository catalogue:
 .Pp
-.Dl % pkg update
-.Dl % pkg version -vRL=
+.Dl % ravensw update
+.Dl % ravensw version -vRL=
 .Pp
 The following command compares two package version strings:
 .Pp
-.Dl % pkg version -t 1.5 1.5.1
+.Dl % ravensw version -t 1.5 1.5.1
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,
 .Xr ravensw.conf 5 ,

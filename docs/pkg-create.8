@@ -107,7 +107,7 @@ or passed as the argument to
 .Pp
 Packages thus created can be distributed and subsequently installed on
 other machines using the
-.Cm pkg add
+.Cm ravensw add
 command.
 .\" ---------------------------------------------------------------------------
 .Sh OPTIONS
@@ -474,10 +474,10 @@ See
 .\" ---------------------------------------------------------------------------
 .Sh EXAMPLES
 Create package files for installed packages:
-.Dl % pkg create -a -o /usr/ports/packages/All
+.Dl % ravensw create -a -o /var/ravenports/primary/packages/All
 .Pp
-Create package file for pkg:
-.Dl % pkg create -o /usr/ports/packages/All pkg
+Create ravensw file for ravensw:
+.Dl % ravensw create -o /var/ravenports/primary/packages/All ravensw
 .\" ---------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,

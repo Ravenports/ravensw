@@ -106,8 +106,8 @@ as its package management system or not.
 .Pp
 Example usage:
 .Bd -literal -offset indent
-  if pkg -N >/dev/null 2>&1; then
-    # pkgng-specifics
+  if ravensw -N >/dev/null 2>&1; then
+    # ravensw-specifics
   else
     # pkg_install-specifics
   fi
@@ -304,59 +304,59 @@ See
 .\" ---------------------------------------------------------------------------
 .Sh EXAMPLES
 Search for a package:
-.Dl $ pkg search perl
+.Dl $ ravensw search perl
 .Pp
 Install a package:
 .Dl Installing must specify a unique origin or version otherwise it will try installing all matches.
 .Pp
-.Dl % pkg install perl-5.14
+.Dl % ravensw install perl-5.14
 .Pp
 List installed packages:
-.Dl $ pkg info
+.Dl $ ravensw info
 .Pp
 Upgrade from remote repository:
-.Dl % pkg upgrade
+.Dl % ravensw upgrade
 .Pp
 Change the origin for an installed package:
-.Dl % pkg set -o lang/perl5.12:lang/perl5.14
-.Dl % pkg install -Rf lang/perl5.14
+.Dl % ravensw set -o lang/perl5.12:lang/perl5.14
+.Dl % ravensw install -Rf lang/perl5.14
 .Pp
 List non-automatic packages:
-.Dl $ pkg query -e '%a = 0' %o
+.Dl $ ravensw query -e '%a = 0' %o
 .Pp
 List automatic packages:
-.Dl $ pkg query -e '%a = 1' %o
+.Dl $ ravensw query -e '%a = 1' %o
 .Pp
 Delete an installed package:
-.Dl % pkg delete perl-5.14
+.Dl % ravensw delete perl-5.14
 .Pp
 Remove unneeded dependencies:
-.Dl % pkg autoremove
+.Dl % ravensw autoremove
 .Pp
 Change a package from automatic to non-automatic, which will prevent
 .Ic autoremove
 from removing it:
-.Dl % pkg set -A 0 perl-5.14
+.Dl % ravensw set -A 0 perl-5.14
 .Pp
 Change a package from non-automatic to automatic, which will make
 .Ic autoremove
 allow it be removed once nothing depends on it:
-.Dl % pkg set -A 1 perl-5.14
+.Dl % ravensw set -A 1 perl-5.14
 .Pp
 Create package file from an installed package:
-.Dl % pkg create -o /usr/ports/packages/All perl-5.14
+.Dl % ravensw create -o /usr/ports/packages/All perl-5.14
 .Pp
 Determine which package installed a file:
-.Dl $ pkg which /usr/local/bin/perl
+.Dl $ ravensw which /usr/local/bin/perl
 .Pp
 Audit installed packages for security advisories:
-.Dl $ pkg audit
+.Dl $ ravensw audit
 .Pp
 Check installed packages for checksum mismatches:
-.Dl # pkg check -s -a
+.Dl # ravensw check -s -a
 .Pp
 Check for missing dependencies:
-.Dl # pkg check -d -a
+.Dl # ravensw check -d -a
 .\" ---------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,
