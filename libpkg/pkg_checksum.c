@@ -429,8 +429,17 @@ static void
 pkg_checksum_hash_blake2_bulk(const unsigned char *in, size_t inlen,
 				unsigned char **out, size_t *outlen)
 {
+	/*
+	 * BLAKE2_API int blake2b(
+	 *    uint8_t *out, 
+	 *    const void *in,
+	 *    const void *key,
+	 *    size_t outlen,
+	 *    size_t inlen,
+	 *    size_t keylen );
+	 */
 	*out = xmalloc(BLAKE2B_OUTBYTES);
-	blake2b(*out, BLAKE2B_OUTBYTES,  in, inlen, NULL, 0);
+	blake2b(*out, in, NULL, BLAKE2B_OUTBYTES, inlen, 0);
 	*outlen = BLAKE2B_OUTBYTES;
 }
 
@@ -473,8 +482,17 @@ static void
 pkg_checksum_hash_blake2s_bulk(const unsigned char *in, size_t inlen,
 				unsigned char **out, size_t *outlen)
 {
+	/*
+	 * BLAKE2_API int blake2s(
+	 *    uint8_t *out,
+	 *    const void *in,
+	 *    const void *key,
+	 *    size_t outlen,
+	 *    size_t inlen,
+	 *    size_t keylen );
+	 */
 	*out = xmalloc(BLAKE2S_OUTBYTES);
-	blake2s(*out, BLAKE2S_OUTBYTES,  in, inlen, NULL, 0);
+	blake2s(*out, in, NULL, BLAKE2S_OUTBYTES, inlen, 0); 
 	*outlen = BLAKE2S_OUTBYTES;
 }
 

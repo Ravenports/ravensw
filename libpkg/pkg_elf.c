@@ -106,7 +106,7 @@ filter_system_shlibs(const char *name, char *path, size_t pathlen)
 			return (EPKG_END); /* ignore libs from base */
 	}
 
-	if (path != NULL)
+	if (path != NULL && pathlen > 0)
 		strncpy(path, shlib_path, pathlen);
 
 	return (EPKG_OK);

@@ -120,8 +120,9 @@ exec_audit(int argc, char **argv)
 	char			*name;
 	char			*version;
 	char			*audit_file = NULL;
-	unsigned int		 affected = 0, vuln = 0;
+	unsigned int		 vuln = 0;
 	bool			 fetch = false, recursive = false;
+	int			 affected = 0;
 	int			 ch, i;
 	int			 ret = EX_OK;
 	UT_string		*sb;
@@ -302,7 +303,7 @@ exec_audit(int argc, char **argv)
 			ret = EX_OK;
 
 		if (!quiet)
-			printf("%u problem(s) in %u installed package(s) found.\n",
+			printf("%d problem(s) in %u installed package(s) found.\n",
 			   affected, vuln);
 	}
 	else {

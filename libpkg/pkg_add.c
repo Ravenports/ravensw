@@ -229,7 +229,7 @@ out:
 
 static int
 set_attrs(int fd, char *path, char *fullpath
-#ifndef HAVE_SYMLINKAT
+#ifdef HAVE_SYMLINKAT
 __unused
 #endif
     , mode_t perm, uid_t uid, gid_t gid,

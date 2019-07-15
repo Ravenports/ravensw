@@ -85,7 +85,7 @@ pkg_repo_binary_delete_conflicting(const char *origin, const char *version,
 			 const char *pkg_path, bool forced)
 {
 	int ret = EPKG_FATAL;
-	const char *oversion;
+	char *oversion;
 
 	if (pkg_repo_binary_run_prstatement(REPO_VERSION, origin) != SQLITE_ROW) {
 		ret = EPKG_FATAL;
@@ -93,7 +93,7 @@ pkg_repo_binary_delete_conflicting(const char *origin, const char *version,
 	}
 	oversion = sqlite3_column_text(pkg_repo_binary_stmt_prstatement(REPO_VERSION), 0);
 	if (!forced) {
-		switch(pkg_version_cmp(oversion, version)) {
+		switch(pkg_version_cmp((const char*)oversion, version)) {
 		case -1:
 			pkg_emit_error("duplicate package origin: replacing older "
 					"version %s in repo with package %s for "
