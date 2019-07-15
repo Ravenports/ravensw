@@ -35,7 +35,7 @@
 void
 usage_shell(void)
 {
-	fprintf(stderr, "Usage: pkg shell\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " shell\n\n");
 	fprintf(stderr, SEE_HELP "shell'.\n");
 }
 

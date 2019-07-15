@@ -42,7 +42,7 @@
 void
 usage_shlib(void)
 {
-	fprintf(stderr, "Usage: pkg shlib [-q] [-P|R] <library>\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " shlib [-q] [-P|R] <library>\n\n");
 	fprintf(stderr, "<library> should be a filename without leading path.\n");
 	fprintf(stderr, SEE_HELP "shlib'.\n");
 }

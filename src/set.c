@@ -47,7 +47,7 @@
 void
 usage_set(void)
 {
-	fprintf(stderr, "Usage: pkg set [-a] [-A [01]] [-o <oldorigin>:<neworigin>] [-n <oldname>:<newname>] [-y] [-Cgix] [-v 0|1] <pkg-name>\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " set [-a] [-A [01]] [-o <oldorigin>:<neworigin>] [-n <oldname>:<newname>] [-y] [-Cgix] [-v 0|1] <pkg-name>\n\n");
 	fprintf(stderr, SEE_HELP "set'. \n");
 }
 

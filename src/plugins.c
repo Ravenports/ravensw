@@ -38,7 +38,7 @@
 void
 usage_plugins(void)
 {
-        fprintf(stderr, "Usage: pkg plugins [-l] <plugin>\n\n");
+        fprintf(stderr, "Usage: " PKG_EXEC_NAME " plugins [-l] <plugin>\n\n");
         //fprintf(stderr, SEE_HELP "plugins'.\n");
 }
 

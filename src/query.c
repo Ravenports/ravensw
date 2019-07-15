@@ -843,11 +843,11 @@ analyse_query_string(char *qstr, struct query_flags *q_flags, const unsigned int
 void
 usage_query(void)
 {
-	fprintf(stderr, "Usage: pkg query <query-format> <pkg-name>\n");
-	fprintf(stderr, "       pkg query [-a] <query-format>\n");
-	fprintf(stderr, "       pkg query -F <pkg-name> <query-format>\n");
-	fprintf(stderr, "       pkg query -e <evaluation> <query-format>\n");
-	fprintf(stderr, "       pkg query [-Cgix] <query-format> <pattern> <...>\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " query <query-format> <pkg-name>\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " query [-a] <query-format>\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " query -F <pkg-name> <query-format>\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " query -e <evaluation> <query-format>\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " query [-Cgix] <query-format> <pattern> <...>\n\n");
 	fprintf(stderr, SEE_HELP "query.'\n");
 }
 

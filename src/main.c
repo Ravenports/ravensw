@@ -174,20 +174,20 @@ usage(const char *conffile, const char *reposdir, FILE *out, enum pkg_usage_reas
 #else
 #define JAIL_ARG
 #endif
-	fprintf(out, "Usage: pkg [-v] [-d] [-l] [-N] ["JAIL_ARG"-c <chroot path>|-r <rootdir>] [-C <configuration file>] [-R <repo config dir>] [-o var=value] [-4|-6] <command> [<args>]\n");
+	fprintf(out, "Usage: " PKG_EXEC_NAME " [-v] [-d] [-l] [-N] ["JAIL_ARG"-c <chroot path>|-r <rootdir>] [-C <configuration file>] [-R <repo config dir>] [-o var=value] [-4|-6] <command> [<args>]\n");
 	if (reason == PKG_USAGE_HELP) {
 		fprintf(out, "Global options supported:\n");
 		fprintf(out, "\t%-15s%s\n", "-d", "Increment debug level");
 #ifdef HAVE_LIBJAIL
-		fprintf(out, "\t%-15s%s\n", "-j", "Execute pkg(8) inside a jail(8)");
+		fprintf(out, "\t%-15s%s\n", "-j", "Execute " PKG_EXEC_NAME "(8) inside a jail(8)");
 #endif
-		fprintf(out, "\t%-15s%s\n", "-r", "Execute pkg(8) using relocating installation to <rootdir>");
-		fprintf(out, "\t%-15s%s\n", "-c", "Execute pkg(8) inside a chroot(8)");
+		fprintf(out, "\t%-15s%s\n", "-r", "Execute " PKG_EXEC_NAME "(8) using relocating installation to <rootdir>");
+		fprintf(out, "\t%-15s%s\n", "-c", "Execute " PKG_EXEC_NAME "(8) inside a chroot(8)");
 		fprintf(out, "\t%-15s%s\n", "-C", "Use the specified configuration file");
 		fprintf(out, "\t%-15s%s\n", "-R", "Directory to search for individual repository configurations");
 		fprintf(out, "\t%-15s%s\n", "-l", "List available commands and exit");
-		fprintf(out, "\t%-15s%s\n", "-v", "Display pkg(8) version");
-		fprintf(out, "\t%-15s%s\n", "-N", "Test if pkg(8) is activated and avoid auto-activation");
+		fprintf(out, "\t%-15s%s\n", "-v", "Display " PKG_EXEC_NAME "(8) version");
+		fprintf(out, "\t%-15s%s\n", "-N", "Test if " PKG_EXEC_NAME "(8) is activated and avoid auto-activation");
 		fprintf(out, "\t%-15s%s\n", "-o", "Override configuration option from the command line");
 		fprintf(out, "\t%-15s%s\n", "-4", "Only use IPv4");
 		fprintf(out, "\t%-15s%s\n", "-6", "Only use IPv6");

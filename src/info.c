@@ -60,10 +60,10 @@ enum sign {
 void
 usage_info(void)
 {
-	fprintf(stderr, "Usage: pkg info <pkg-name>\n");
-	fprintf(stderr, "       pkg info -a\n");
-	fprintf(stderr, "       pkg info [-AbBDdefIklOqRrs] [-Cgix] <pkg-name>\n");
-	fprintf(stderr, "       pkg info [-AbBDdfIlqRrs] -F <pkg-file>\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " info <pkg-name>\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " info -a\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " info [-AbBDdefIklOqRrs] [-Cgix] <pkg-name>\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " info [-AbBDdfIlqRrs] -F <pkg-file>\n\n");
 	fprintf(stderr, SEE_HELP "info'.\n");
 }
 

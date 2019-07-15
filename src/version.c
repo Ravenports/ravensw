@@ -73,10 +73,10 @@ kh_categories_t *categories = NULL;
 void
 usage_version(void)
 {
-	fprintf(stderr, "Usage: pkg version [-IPR] [-hoqvU] [-l limchar] [-L limchar] [-Cegix pattern]\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " version [-IPR] [-hoqvU] [-l limchar] [-L limchar] [-Cegix pattern]\n");
 	fprintf(stderr, "		    [-r reponame] [-O origin|-n pkgname] [index]\n");
-	fprintf(stderr, "	pkg version -t <version1> <version2>\n");
-	fprintf(stderr, "	pkg version -T <pkgname> <pattern>\n\n");
+	fprintf(stderr, "	" PKG_EXEC_NAME " version -t <version1> <version2>\n");
+	fprintf(stderr, "	" PKG_EXEC_NAME " version -T <pkgname> <pattern>\n\n");
 	fprintf(stderr, SEE_HELP "version'.\n");
 }
 

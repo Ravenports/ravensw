@@ -125,7 +125,7 @@ pkgcli_update(bool force, bool strict, const char *reponame)
 void
 usage_update(void)
 {
-	fprintf(stderr, "Usage: pkg update [-fq] [-r reponame]\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " update [-fq] [-r reponame]\n\n");
 	fprintf(stderr, SEE_HELP "update'.\n");
 }
 

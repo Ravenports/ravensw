@@ -43,7 +43,7 @@
 void
 usage_register(void)
 {
-	fprintf(stderr, "Usage: pkg register [-ldt] [-i <input-path>]"
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " register [-ldt] [-i <input-path>]"
 	                " [-f <plist-file>] -m <metadatadir>\n");
 	fprintf(stderr, "       pkg register [-ldt] [-i <input_path>]"
 		        " -M <manifest>\n\n");

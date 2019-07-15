@@ -45,10 +45,10 @@
 void
 usage_fetch(void)
 {
-	fprintf(stderr, "Usage: pkg fetch [-r reponame] [-o destdir] [-dqUy] "
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " fetch [-r reponame] [-o destdir] [-dqUy] "
 					"[-Cgix] <pkg-name> <...>\n");
-	fprintf(stderr, "       pkg fetch [-r reponame] [-dqUy] -a\n");
-	fprintf(stderr, "       pkg fetch [-r reponame] [-dqUy] -u\n\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " fetch [-r reponame] [-dqUy] -a\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " fetch [-r reponame] [-dqUy] -u\n\n");
 	fprintf(stderr, SEE_HELP "fetch'.\n");
 }
 

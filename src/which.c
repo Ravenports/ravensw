@@ -47,7 +47,7 @@ typedef kvec_t(char *) charlist;
 void
 usage_which(void)
 {
-	fprintf(stderr, "Usage: pkg which [-mqgop] <file>\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " which [-mqgop] <file>\n\n");
 	fprintf(stderr, SEE_HELP "which'.\n");
 }
 

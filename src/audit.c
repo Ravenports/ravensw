@@ -61,7 +61,7 @@
 void
 usage_audit(void)
 {
-	fprintf(stderr, "Usage: pkg audit [-Fqr] [-f file] <pattern>\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " audit [-Fqr] [-f file] <pattern>\n\n");
 	fprintf(stderr, SEE_HELP "audit'.\n");
 }
 

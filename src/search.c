@@ -220,9 +220,9 @@ usage_search(void)
 {
 	int i, n;
 
-	fprintf(stderr, "Usage: pkg search [-eU] [-r repo] [-S search] "
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " search [-eU] [-r repo] [-S search] "
 	    "[-L label] [-Q mod]... [-Cgix] <pkg-name>\n");
-	fprintf(stderr, "       pkg search [-cDdefopqRU] [-r repo] "
+	fprintf(stderr, "       " PKG_EXEC_NAME " search [-cDdefopqRU] [-r repo] "
 	    "[-Cgix] <pattern>\n\n");
 	n = fprintf(stderr, "       Search and Label options:");
 	for (i = 0; search_label[i].option != NULL; i++) {

@@ -48,9 +48,9 @@ static int do_unlock(struct pkgdb *db, struct pkg *pkg);
 void
 usage_lock(void)
 {
-	fprintf(stderr, "Usage: pkg lock [-lqy] [-a|[-Cgix] <pkg-name>]\n");
-	fprintf(stderr, "       pkg lock --has-locked-packages\n");
-	fprintf(stderr, "       pkg unlock [-lqy] [-a|[-Cgix] <pkg-name>]\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " lock [-lqy] [-a|[-Cgix] <pkg-name>]\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " lock --has-locked-packages\n");
+	fprintf(stderr, "       " PKG_EXEC_NAME " unlock [-lqy] [-a|[-Cgix] <pkg-name>]\n");
 	fprintf(stderr, SEE_HELP "lock'.\n");
 }
 

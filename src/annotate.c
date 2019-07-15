@@ -55,13 +55,13 @@ void
 usage_annotate(void)
 {
 	fprintf(stderr,
-            "Usage: pkg annotate [-Cgiqxy] [-A|M] <pkg-name> <tag> [<value>]\n");
+            "Usage: " PKG_EXEC_NAME " annotate [-Cgiqxy] [-A|M] <pkg-name> <tag> [<value>]\n");
 	fprintf(stderr,
-            "       pkg annotate [-Cgiqxy] [-S|D] <pkg-name> <tag>\n");
+            "       " PKG_EXEC_NAME " annotate [-Cgiqxy] [-S|D] <pkg-name> <tag>\n");
 	fprintf(stderr,
-            "       pkg annotate [-qy] -a [-A|M] <tag> [<value>]\n");
+            "       " PKG_EXEC_NAME " annotate [-qy] -a [-A|M] <tag> [<value>]\n");
 	fprintf(stderr,
-            "       pkg annotate [-qy] -a [-S|D] <tag>\n\n");
+            "       " PKG_EXEC_NAME " annotate [-qy] -a [-S|D] <tag>\n\n");
 	fprintf(stderr, SEE_HELP "annotate'.\n");
 }
 

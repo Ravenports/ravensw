@@ -57,7 +57,7 @@ static const char vuln_end_lit[] = "**END**";
 void
 usage_upgrade(void)
 {
-	fprintf(stderr, "Usage: pkg upgrade [-fInFqUy] [-r reponame] [-Cgix] <pkg-name> ...\n\n");
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " upgrade [-fInFqUy] [-r reponame] [-Cgix] <pkg-name> ...\n\n");
 	fprintf(stderr, SEE_HELP "upgrade'.\n");
 }
 
