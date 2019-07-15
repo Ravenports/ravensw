@@ -7,11 +7,11 @@ pweeklydir=		$(sysconfdir)/periodic/weekly
 bashcompdir=		$(sysconfdir)/bash_completion.d
 zshcompdir=		$(PREFIX)/share/zsh/site-functions
 
-PDAILY=		periodic/411.pkg-backup \
-		periodic/490.status-pkg-changes
-PSECURITY=	periodic/410.pkg-audit \
-		periodic/460.pkg-checksum
-PWEEKLY=	periodic/400.status-pkg
+PDAILY=		periodic/411.ravensw-backup \
+		periodic/490.status-ravensw-changes
+PSECURITY=	periodic/410.ravensw-audit \
+		periodic/460.ravensw-checksum
+PWEEKLY=	periodic/400.ravensw-pkg
 COMPLETION=	completion/_pkg \
 		completion/_pkg.bash
 
@@ -35,5 +35,8 @@ install: $(PDAILY) $(PSECURITY) $(PWEEKLY) $(COMPLETION)
 	for script in $(PWEEKLY); do \
 		${BSD_INSTALL_SCRIPT} $$script $(DESTDIR)$(pweeklydir) ; \
 	done
-	${BSD_INSTALL_DATA} completion/_pkg.bash $(DESTDIR)$(bashcompdir)/
-	${BSD_INSTALL_DATA} completion/_pkg  $(DESTDIR)$(zshcompdir)/
+	# Keep original names for diff tool use against freebsd/pkg
+	${BSD_INSTALL_DATA} completion/_pkg.bash \
+		$(DESTDIR)$(bashcompdir)/_ravensw.bash
+	${BSD_INSTALL_DATA} completion/_pkg  \
+		$(DESTDIR)$(zshcompdir)/_ravensw

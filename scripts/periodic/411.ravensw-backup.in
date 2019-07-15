@@ -58,7 +58,7 @@ backup_pkg_all() {
 
 	if [ ! -d $bak ]; then
 		install -d -o root -g wheel -m 750 $bak || {
-			echo 'pkg-backup is enabled but' \
+			echo 'ravensw-backup is enabled but' \
 			"$daily_backup_pkg_dbdir doesn't exist" ;
 		exit 2 ; }
 	fi
@@ -116,11 +116,11 @@ case "${daily_backup_pkg_enable:-YES}" in
 	;;
 *)
 	bak="${daily_backup_pkg_dir:-/var/backups}"
-	bak_file="${bak}/pkg.sql.xz"
-	pkgcmd=@prefix@/sbin/pkg
+	bak_file="${bak}/ravensw.sql.xz"
+	pkgcmd=@prefix@/sbin/ravensw
 
 	if ! ${pkgcmd} -N >/dev/null 2>&1 ; then
-		echo 'pkg-backup is enabled but pkg is not used'
+		echo 'ravensw-backup is enabled but ravensw is not used'
 		rc=2
 	else
 		backup_pkg_all $bak

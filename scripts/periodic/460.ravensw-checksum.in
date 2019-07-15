@@ -80,13 +80,13 @@ rc=0
 
 if check_yesno_period security_status_pkg_checksum_enable
 then
-	pkgcmd=@prefix@/sbin/pkg
+	pkgcmd=@prefix@/sbin/ravensw
 
 	echo
 	echo 'Checking for packages with mismatched checksums:'
 
 	if ! ${pkgcmd} -N >/dev/null 2>&1 ; then
-		echo 'pkg-checksum is enabled but pkg is not used'
+		echo 'ravensw-checksum is enabled but ravensw is not used'
 		rc=2
 	else
 	    checksum_pkg_all

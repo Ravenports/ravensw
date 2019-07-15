@@ -51,7 +51,7 @@ security_daily_compat_var security_status_pkgaudit_jails
 security_daily_compat_var security_status_pkgaudit_expiry
 
 # Compute RAVENSW_DBDIR from the config file.
-pkgcmd=@prefix@/sbin/pkg
+pkgcmd=@prefix@/sbin/ravensw
 RAVENSW_DBDIR=`${pkgcmd} config RAVENSW_DBDIR`
 auditfile="${RAVENSW_DBDIR}/vuln.xml"
 
@@ -176,7 +176,7 @@ then
 	echo 'Checking for packages with security vulnerabilities:'
 
 	if ! ${pkgcmd} -N >/dev/null 2>&1 ; then
-		echo 'pkg-audit is enabled but pkg is not used'
+		echo 'ravensw-audit is enabled but ravensw is not used'
 		rc=2
 	else
 		case "${security_status_pkgaudit_quiet}" in
