@@ -51,7 +51,7 @@ Of these,
 .Pa meta.txz
 must exist at the apex of the repository filesystem.
 This is a well-known name that is hard-wired into 
-.Xr pkg 8 .
+.Xr ravensw 8 .
 .Pp
 .Pa meta.txz
 contains at least one file:
@@ -88,10 +88,10 @@ similarly contains at least one file
 which is a YAML document listing selected metadata for each of the
 packages in the repository.
 This is the key file containing the working data used by
-.Xr pkg 8
+.Xr ravensw 8
 and includes the run-time dependencies for each package,
 plus shared library dependencies and similar data that are used by
-.Xr pkg 8
+.Xr ravensw 8
 to solve package dependency problems.
 .Pp
 In addition to the files already mentioned, the
@@ -196,18 +196,16 @@ Force quiet output.
 See
 .Xr ravensw.conf 5 .
 .Sh SEE ALSO
-.Xr pkg_printf 3 ,
-.Xr pkg_repos 3 ,
-.Xr pkg-repository 5 ,
+.Xr ravensw-repository 5 ,
 .Xr ravensw.conf 5 ,
-.Xr pkg 8 ,
-.Xr pkg-add 8 ,
-.Xr pkg-alias 8 ,
-.Xr pkg-annotate 8 ,
-.Xr pkg-audit 8 ,
+.Xr ravensw 8 ,
+.Xr ravensw-add 8 ,
+.Xr ravensw-alias 8 ,
+.Xr ravensw-annotate 8 ,
+.Xr ravensw-audit 8 ,
 .Xr pkg-autoremove 8 ,
-.Xr pkg-backup 8 ,
-.Xr pkg-check 8 ,
+.Xr ravensw-backup 8 ,
+.Xr ravensw-check 8 ,
 .Xr pkg-clean 8 ,
 .Xr pkg-config 8 ,
 .Xr pkg-create 8 ,

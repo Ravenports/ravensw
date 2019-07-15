@@ -55,7 +55,7 @@ The ABI of the package you want to install.
 Default: derived from the ABI of the /bin/sh binary.
 .It Cm ALIAS: key/value list
 Define local aliases for various
-.Xr pkg 8
+.Xr ravensw 8
 standard command lines.
 Whenever the
 .Em key
@@ -68,7 +68,7 @@ substitute the
 text verbatim.
 The replacement can consist of any sequence of text, which should form
 a syntactically correct
-.Xr pkg 8
+.Xr ravensw 8
 command line when substituted in and followed by any remaining tokens from
 the original command line.
 Default: not set.
@@ -179,7 +179,7 @@ Wait time in seconds to regain a lock if it is not available.
 Default: 1.
 .It Cm METALOG: string
 If set,
-.Xr pkg 8
+.Xr ravensw 8
 will write a METALOG of the extracted files.
 .It Cm NAMESERVER: string
 Hostname or IPv4 or IPv6 address of name server to use for DNS
@@ -218,7 +218,7 @@ activate plugin support.
 Default: YES.
 .It Cm PKG_ENV: Key/Value list
 This tells
-.Xr pkg 8
+.Xr ravensw 8
 to set key/values to be passed in the environment.
 This allows control over underlying libraries like
 .Xr fetch 3 ,
@@ -229,7 +229,7 @@ and
 Default: not set.
 .It Cm PKG_PLUGINS_DIR: string
 Directory which
-.Xr pkg 8
+.Xr ravensw 8
 will load plugins from.
 Default:
 .Pa /raven/lib/ravensw
@@ -245,7 +245,7 @@ Accept directories listed like plain files in plist.
 Default: NO.
 .It Cm PLUGINS: array
 List of plugins that
-.Xr pkg 8
+.Xr ravensw 8
 should load.
 Default: not set.
 .It Cm PLUGINS_CONF_DIR: string
@@ -532,7 +532,7 @@ alias: {
 .Ed
 .Pp
 To bootstrap
-.Xr pkg 8
+.Xr ravensw 8
 using a private repository (Assuming a
 .Xr pkg 7
 new enough to support the
@@ -558,23 +558,21 @@ Note that
 uses
 .Ev PACKAGESITE
 for the URL to download
-.Xr pkg 8
+.Xr ravensw 8
 from, and subsequently passes it in the environment to
 .Xr pkg-static 8 ,
 which ignores it (possibly with a deprecation warning that should be
 ignored), and reads the configuration files instead.
 .Sh SEE ALSO
-.Xr pkg_printf 3 ,
-.Xr pkg_repos 3 ,
-.Xr pkg-repository 5 ,
-.Xr pkg 8 ,
-.Xr pkg-add 8 ,
-.Xr pkg-alias 8 ,
-.Xr pkg-annotate 8 ,
-.Xr pkg-audit 8 ,
+.Xr ravensw-repository 5 ,
+.Xr ravensw 8 ,
+.Xr ravensw-add 8 ,
+.Xr ravensw-alias 8 ,
+.Xr ravensw-annotate 8 ,
+.Xr ravensw-audit 8 ,
 .Xr pkg-autoremove 8 ,
-.Xr pkg-backup 8 ,
-.Xr pkg-check 8 ,
+.Xr ravensw-backup 8 ,
+.Xr ravensw-check 8 ,
 .Xr pkg-clean 8 ,
 .Xr pkg-config 8 ,
 .Xr pkg-create 8 ,

@@ -16,16 +16,16 @@
 .\" $FreeBSD$
 .\"
 .Dd February 1, 2015
-.Dt PKG-REPOSITORY 5
+.Dt RAVENSW-REPOSITORY 5
 .Os
 .Sh NAME
-.Nm "package repository"
+.Nm "ravensw repository"
 .Nd format and operation of package repositories used by
-.Xr pkg 8 .
+.Xr ravensw 8 .
 .Sh DESCRIPTION
 .Nm "Package repositories"
 used by the
-.Xr pkg 8
+.Xr ravensw 8
 program consist of one or more collections of
 .Dq package tarballs
 together with package catalogues and optionally various other
@@ -43,7 +43,7 @@ may be employed.
 Encoding the
 .Sy ABI
 value into the repository URL allows
-.Nm pkg
+.Nm ravensw
 to automatically select the correct package collection by expanding the
 special token
 .Cm ${ABI}
@@ -51,12 +51,12 @@ in
 .Pa ravensw.conf .
 .Pp
 Repositories may be mirrored over several sites:
-.Nm pkg
+.Nm ravensw
 has built-in support for discovering available mirrors dynamically
 given a common URL by several mechanisms.
 .Sh FILESYSTEM ORGANIZATION
 Only very minimal constraints on repository layout are prescribed by
-.Nm pkg .
+.Nm ravensw .
 The following constraints are all that must be met:
 .Bl -bullet
 .It
@@ -90,10 +90,8 @@ Where a package may be applicable to more than one
 (e.g., it contains only text files) symbolic or hard links, URL mappings
 or other techniques may be utilised to avoid duplication of storage.
 .Pp
-Although no specific filesystem organization is required, the usual
-convention (inherited from
-.Xr pkg-install 8 )
-is to create a filesystem hierarchy thus:
+Although no specific filesystem organization is required, the
+convention is inherited from BSD to create a filesystem hierarchy thus:
 .Bl -tag -width "REPOSITORY"
 .It Pa $REPOSITORY_ROOT/All
 One directory that contains every package available from the
@@ -105,20 +103,19 @@ This directory may contain several different versions of each package
 accumulated over time, but the repository catalogue will only record
 the latest version for each distinct package name.
 .It Pa $REPOSITORY_ROOT/Latest/
-May contains symbolic links to the latest versions of packages in the
+Previously contained symbolic links to the latest versions of packages in the
 .Pa All
 directory.
 Symbolic links contain a
 .Sq latest link
 style name only, without version.
-As the whole
+The
 .Sq latest link
-concept is rendered obsolete by
-.Nm pkg ,
-this will usually contain only the
-.Pa pkg.txz
+concept has rendered obsolete by binary package managers
+so this will usually contain only the
+.Pa ravensw.tzst
 link, used for bootstrapping
-.Nm pkg
+.Nm ravensw
 itself on a new system.
 .It Pa $REPOSITORY_ROOT/packagesite.txz
 Contains one
@@ -126,15 +123,6 @@ Contains one
 document, which is the concatenation of the
 .Pa +MANIFEST
 files from each of the packages in the repository.
-This is used by
-.Nm pkg-1.1
-or later.
-.It Pa $REPOSITORY_ROOT/repo.txz
-(Deprecated).
-Contains the package manifest data as above, but pre-loaded into
-an SQLite database.
-This is supplied for backwards compatibility with
-.Nm pkg-1.0 .
 .It Pa $REPOSITORY_ROOT/filesite.txz
 (Optional).
 Contains a YAML document listing all of the files contained in all
@@ -153,7 +141,7 @@ There are no other constraints: package sets are not required to be
 either complete (i.e., with all dependencies satisfied) or
 self-consistent within a single repository.
 .Sh REPOSITORY ACCESS METHODS
-.Nm pkg
+.Nm ravensw
 uses standard network protocols for repository access.
 Any URL scheme understood by the
 .Xr fetch 3
@@ -220,7 +208,7 @@ one copy of the repository catalogue will be downloaded to apply to
 all mirror sites.
 .Sh WORKING WITH MULTIPLE REPOSITORIES
 Where several different repositories are configured
-.Nm pkg
+.Nm ravensw
 will search amongst them all in the order specified by the
 .Cm PRIORITY
 settings in the
@@ -228,15 +216,15 @@ settings in the
 files, unless directed to use a single repository by the
 .Fl r
 flag to
-.Xr pkg-fetch 8 ,
-.Xr pkg-install 8 ,
-.Xr pkg-upgrade 8 ,
-.Xr pkg-search 8
+.Xr ravensw-fetch 8 ,
+.Xr ravensw-install 8 ,
+.Xr ravensw-upgrade 8 ,
+.Xr ravensw-search 8
 or
-.Xr pkg-rquery 8 .
+.Xr ravensw-rquery 8 .
 .Pp
 Where several different versions of the same package are available,
-.Nm pkg
+.Nm ravensw
 will select the one with the highest version to install or to upgrade
 an installed package to, even if a lower numbered version can be found
 in a repository earlier in the list.
@@ -247,7 +235,7 @@ and
 .Pa example-1.0.1
 are available in configured repositories, then
 .Bd -literal -offset indent
-pkg install example-1.0.0
+ravensw install example-1.0.0
 .Ed
 .Pp
 will actually result in
@@ -256,7 +244,7 @@ being installed.
 To override this behaviour, on first installation of the package
 select the repository with the appropriate version:
 .Bd -literal -offset indent
-pkg install -r repo-a example-1.0.0
+ravensw install -r repo-a example-1.0.0
 .Ed
 .Pp
 and then to make updates to that package
@@ -269,37 +257,35 @@ in
 .Pa ravensw.conf .
 .Pp
 .Sh SEE ALSO
-.Xr pkg_printf 3 ,
-.Xr pkg_repos 3 ,
 .Xr ravensw.conf 5 ,
-.Xr pkg 8 ,
-.Xr pkg-add 8 ,
-.Xr pkg-alias 8 ,
-.Xr pkg-annotate 8 ,
-.Xr pkg-audit 8 ,
-.Xr pkg-autoremove 8 ,
-.Xr pkg-backup 8 ,
-.Xr pkg-check 8 ,
-.Xr pkg-clean 8 ,
-.Xr pkg-config 8 ,
-.Xr pkg-create 8 ,
-.Xr pkg-delete 8 ,
-.Xr pkg-fetch 8 ,
-.Xr pkg-info 8 ,
-.Xr pkg-install 8 ,
-.Xr pkg-lock 8 ,
-.Xr pkg-query 8 ,
-.Xr pkg-register 8 ,
-.Xr pkg-repo 8 ,
-.Xr pkg-rquery 8 ,
-.Xr pkg-search 8 ,
-.Xr pkg-set 8 ,
-.Xr pkg-shell 8 ,
-.Xr pkg-shlib 8 ,
-.Xr pkg-ssh 8 ,
-.Xr pkg-stats 8 ,
-.Xr pkg-update 8 ,
-.Xr pkg-updating 8 ,
-.Xr pkg-upgrade 8 ,
-.Xr pkg-version 8 ,
-.Xr pkg-which 8
+.Xr ravensw 8 ,
+.Xr ravensw-add 8 ,
+.Xr ravensw-alias 8 ,
+.Xr ravensw-annotate 8 ,
+.Xr ravensw-audit 8 ,
+.Xr ravensw-autoremove 8 ,
+.Xr ravensw-backup 8 ,
+.Xr ravensw-check 8 ,
+.Xr ravensw-clean 8 ,
+.Xr ravensw-config 8 ,
+.Xr ravensw-create 8 ,
+.Xr ravensw-delete 8 ,
+.Xr ravensw-fetch 8 ,
+.Xr ravensw-info 8 ,
+.Xr ravensw-install 8 ,
+.Xr ravensw-lock 8 ,
+.Xr ravensw-query 8 ,
+.Xr ravensw-register 8 ,
+.Xr ravensw-repo 8 ,
+.Xr ravensw-rquery 8 ,
+.Xr ravensw-search 8 ,
+.Xr ravensw-set 8 ,
+.Xr ravensw-shell 8 ,
+.Xr ravensw-shlib 8 ,
+.Xr ravensw-ssh 8 ,
+.Xr ravensw-stats 8 ,
+.Xr ravensw-update 8 ,
+.Xr ravensw-updating 8 ,
+.Xr ravensw-upgrade 8 ,
+.Xr ravensw-version 8 ,
+.Xr ravensw-which 8
