@@ -63,7 +63,7 @@ packing_init(struct packing **pack, const char *path)
 	archive_write_set_format_pax_restricted((*pack)->awrite);
 	
 	ext = PKG_FORMAT_EXT;
-	if (archive_write_add_filter_zstd(a) != ARCHIVE_OK) {
+	if (archive_write_add_filter_zstd((*pack)->awrite) != ARCHIVE_OK) {
 		archive_read_close((*pack)->aread);
 		archive_read_free((*pack)->aread);
 		archive_write_close((*pack)->awrite);
