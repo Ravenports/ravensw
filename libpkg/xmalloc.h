@@ -39,7 +39,7 @@ static inline char *xstrdup(const char *str)
 
 static inline char *xstrndup(const char *str, size_t n)
 {
-	char *s = strndup(str, n);
+	char *s = port_strndup(str, n);
 	if (s == NULL)
 		abort();
 	return (s);

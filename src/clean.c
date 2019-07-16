@@ -166,7 +166,7 @@ populate_sums(struct pkgdb *db)
 	while (pkgdb_it_next(it, &p, PKG_LOAD_BASIC) == EPKG_OK) {
 		pkg_get(p, PKG_CKSUM, &sum);
 		slen = MIN(strlen(sum), PKG_FILE_CKSUM_CHARS);
-		cksum = strndup(sum, slen);
+		cksum = port_strndup(sum, slen);
 		k = kh_put_sum(suml, cksum, &ret);
 		if (ret != 0)
 			kh_value(suml, k) = cksum;
