@@ -1241,7 +1241,7 @@ ports_parse_plist(struct pkg *pkg, const char *plist, const char *stage)
 		return (EPKG_FATAL);
 	}
 
-	while ((linelen = getline(&line, &linecap, plist_f)) > 0) {
+	while ((linelen = FXGETLINE(&line, &linecap, plist_f)) > 0) {
 		if (line[linelen - 1] == '\n')
 			line[linelen - 1] = '\0';
 		ret = plist_parse_line(pplist, line);

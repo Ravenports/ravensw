@@ -175,7 +175,7 @@ exec_updating(int argc, char **argv)
 		}
 	}
 
-	while ((linelen = getline(&line, &linecap, fd)) > 0) {
+	while ((linelen = FXGETLINE(&line, &linecap, fd)) > 0) {
 		if (strspn(line, "0123456789:") == 9) {
 			dateline = strdup(line);
 			found = 0;
