@@ -72,6 +72,10 @@ extern "C" {
 #define OSMAJOR ((__NetBSD_Version__ + 1000000) / 100000000)
 #endif
 
+#ifdef __sun__
+#define __EXTENSIONS__
+#endif
+
 #ifndef __DECONST
 #define __DECONST(type, var)    ((type)(uintptr_t)(const void *)(var))
 #endif
