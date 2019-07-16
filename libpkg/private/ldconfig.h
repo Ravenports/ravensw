@@ -33,8 +33,6 @@
 #include "pkg_config.h"
 #endif
 
-#include <sys/cdefs.h>
-
 #ifdef HAVE_ELF_HINTS_H
 #include <elf-hints.h>
 #else
