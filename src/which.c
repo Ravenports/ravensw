@@ -270,7 +270,7 @@ get_match(char **pathabs, char **path, char *filename)
 	const char *d;
 	int len;
 
-	while ((d = strsep(path, ":")) != NULL) {
+	while ((d = port_strsep(path, ":")) != NULL) {
 		if (snprintf(candidate, sizeof(candidate), "%s/%s", d,
 		    filename) >= (int)sizeof(candidate))
 			continue;

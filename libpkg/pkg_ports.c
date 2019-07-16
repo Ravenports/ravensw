@@ -466,7 +466,7 @@ comment_key(struct plist *p, char *line, struct file_attr *a __unused)
 		/* OPTIONS:+OPTION -OPTION */
 		if (line[0] != '\0') {
 			line_options2 = line_options = xstrdup(line);
-			while ((option = strsep(&line_options, " ")) != NULL) {
+			while ((option = port_strsep(&line_options, " ")) != NULL) {
 				if ((option[0] == '+' || option[0] == '-') &&
 				    option[1] != '\0' && isupper(option[1]))
 					pkg_addoption(p->pkg, option + 1,
@@ -500,7 +500,7 @@ parse_post(struct plist *p)
 		return;
 
 	p->post_patterns.buf = xstrdup(env);
-	while ((token = strsep(&p->post_patterns.buf, " \t")) != NULL) {
+	while ((token = port_strsep(&p->post_patterns.buf, " \t")) != NULL) {
 		if (token[0] == '\0')
 			continue;
 		if (p->post_patterns.len >= p->post_patterns.cap) {

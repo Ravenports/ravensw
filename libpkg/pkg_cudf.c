@@ -439,10 +439,10 @@ pkg_jobs_cudf_parse_output(struct pkg_jobs *j, FILE *f)
 	while ((linelen = getline(&line, &linecap, f)) > 0) {
 		/* Split line, cut spaces */
 		begin = line;
-		param = strsep(&begin, ": \t");
+		param = port_strsep(&begin, ": \t");
 		value = begin;
 		while(begin != NULL)
-			value = strsep(&begin, " \t");
+			value = port_strsep(&begin, " \t");
 
 		if (strcmp(param, "package") == 0) {
 			if (cur_pkg.uid != NULL) {

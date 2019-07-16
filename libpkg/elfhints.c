@@ -290,7 +290,7 @@ int shlib_list_from_rpath(const char *rpath_str, const char *dirpath)
 	strlcat(buf, cstart, buflen);
 
 	i = 0;
-	while ((c = strsep(&buf, ":")) != NULL) {
+	while ((c = port_strsep(&buf, ":")) != NULL) {
 		if (strlen(c) > 0)
 			dirlist[i++] = c;
 	}
@@ -482,7 +482,7 @@ read_elf_hints(const char *hintsfile, int must_exist)
 	dirlist = strtab + hdr->dirlist;
 
 	if (*dirlist != '\0')
-		while ((p = strsep(&dirlist, ":")) != NULL)
+		while ((p = port_strsep(&dirlist, ":")) != NULL)
 			add_dir(hintsfile, p, 1);
 }
 

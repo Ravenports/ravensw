@@ -823,7 +823,7 @@ mkdirat_p(int fd, const char *path)
 	walk = walkorig = xstrdup(path);
 	pathdone[0] = '\0';
 
-	while ((next = strsep(&walk, "/")) != NULL) {
+	while ((next = port_strsep(&walk, "/")) != NULL) {
 		if (*next == '\0')
 			continue;
 		strlcat(pathdone, next, sizeof(pathdone));

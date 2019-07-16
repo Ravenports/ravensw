@@ -40,6 +40,7 @@ SRCS=	backup.c \
 	utils.c \
 	fetch.c \
 	port_humanize_number.c \
+	port_strsep.c \
 	port_strndup.c \
 	port_vasprintf.c \
 	pkg_attributes.c \

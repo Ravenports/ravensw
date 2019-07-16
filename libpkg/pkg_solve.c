@@ -1472,7 +1472,7 @@ pkg_solve_parse_sat_output(FILE *f, struct pkg_solve_problem *problem)
 		else if (got_sat) {
 			begin = line;
 			do {
-				var_str = strsep(&begin, " \t");
+				var_str = port_strsep(&begin, " \t");
 				/* Skip unexpected lines */
 				if (var_str == NULL || (!isdigit(*var_str) && *var_str != '-'))
 					continue;
@@ -1483,7 +1483,7 @@ pkg_solve_parse_sat_output(FILE *f, struct pkg_solve_problem *problem)
 		else if (strncmp(line, "v ", 2) == 0) {
 			begin = line + 2;
 			do {
-				var_str = strsep(&begin, " \t");
+				var_str = port_strsep(&begin, " \t");
 				/* Skip unexpected lines */
 				if (var_str == NULL || (!isdigit(*var_str) && *var_str != '-'))
 					continue;

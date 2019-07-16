@@ -303,7 +303,7 @@ hash_indexfile(const char *indexfilename)
 
 		l = line;
 
-		version = strsep(&l, "|");
+		version = port_strsep(&l, "|");
 		name = version;
 		version = strrchr(version, '-');
 		if (version == NULL)
@@ -643,7 +643,7 @@ category_new(char *categorypath, const char *category)
 
 	k = kh_put_categories(categories, cat->name, &ret);
 	kh_value(categories, k) = cat;
-	while ((d = strsep(&results, " \n")) != NULL) {
+	while ((d = port_strsep(&results, " \n")) != NULL) {
 		key = strdup(d);
 		k = kh_put_ports(cat->ports, key, &ret);
 		if (k != kh_end(cat->ports))
@@ -724,7 +724,7 @@ port_version(UT_string *cmd, const char *portsdir, const char *origin,
 
 		if (exec_buf(cmd, argv) > 0) {
 			output = utstring_body(cmd);
-			while ((walk = strsep(&output, "\n")) != NULL) {
+			while ((walk = port_strsep(&output, "\n")) != NULL) {
 				name = walk;
 				walk = strrchr(walk, '-');
 				if (walk == NULL)
