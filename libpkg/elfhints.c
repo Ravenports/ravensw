@@ -156,19 +156,19 @@ add_dir(const char *hintsfile, const char *name, int trusted)
 	/* Do some security checks */
 	if (!trusted && !insecure) {
 		if (stat(name, &stbuf) == -1) {
-			warn("%s", name);
+			port_warn("%s", name);
 			return;
 		}
 		if (stbuf.st_uid != 0) {
-			warnx("%s: ignoring directory not owned by root", name);
+			port_warnx("%s: ignoring directory not owned by root", name);
 			return;
 		}
 		if ((stbuf.st_mode & S_IWOTH) != 0) {
-			warnx("%s: ignoring world-writable directory", name);
+			port_warnx("%s: ignoring world-writable directory", name);
 			return;
 		}
 		if ((stbuf.st_mode & S_IWGRP) != 0) {
-			warnx("%s: ignoring group-writable directory", name);
+			port_warnx("%s: ignoring group-writable directory", name);
 			return;
 		}
 	}
@@ -431,7 +431,7 @@ read_dirs_from_file(const char *hintsfile, const char *listfile)
 		}
 		/* Now we had better be at the end of the line. */
 		if (*cp != '\0')
-			warnx("%s:%d: trailing characters ignored",
+			port_warnx("%s:%d: trailing characters ignored",
 			    listfile, linenum);
 
 		sp = xstrdup(sp);
@@ -497,7 +497,7 @@ update_elf_hints(const char *hintsfile, int argc, char **argv, int merge)
 		struct stat	s;
 
 		if (stat(argv[i], &s) == -1)
-			warn("warning: %s", argv[i]);
+			port_warn("warning: %s", argv[i]);
 		else if (S_ISREG(s.st_mode))
 			read_dirs_from_file(hintsfile, argv[i]);
 		else

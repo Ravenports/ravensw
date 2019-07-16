@@ -45,11 +45,11 @@
 #endif
 
 #ifndef NS_INT16SZ
-#define NS_INT16SZ      2       /*%< #/bytes of data in a u_int16_t */
+#define NS_INT16SZ      2       /*%< #/bytes of data in a uint16_t */
 #endif
 
 #ifndef NS_INT32SZ
-#define NS_INT32SZ      4       /*%< #/bytes of data in a u_int32_t */
+#define NS_INT32SZ      4       /*%< #/bytes of data in a uint32_t */
 #endif
 
 /*%
@@ -58,8 +58,8 @@
 #ifndef NS_GET16
 #define NS_GET16(s, cp) do { \
         register const u_char *t_cp = (const u_char *)(cp); \
-        (s) = ((u_int16_t)t_cp[0] << 8) \
-            | ((u_int16_t)t_cp[1]) \
+        (s) = ((uint16_t)t_cp[0] << 8) \
+            | ((uint16_t)t_cp[1]) \
             ; \
         (cp) += NS_INT16SZ; \
 } while (0)
@@ -68,10 +68,10 @@
 #ifndef NS_GET32
 #define NS_GET32(l, cp) do { \
         register const u_char *t_cp = (const u_char *)(cp); \
-        (l) = ((u_int32_t)t_cp[0] << 24) \
-            | ((u_int32_t)t_cp[1] << 16) \
-            | ((u_int32_t)t_cp[2] << 8) \
-            | ((u_int32_t)t_cp[3]) \
+        (l) = ((uint32_t)t_cp[0] << 24) \
+            | ((uint32_t)t_cp[1] << 16) \
+            | ((uint32_t)t_cp[2] << 8) \
+            | ((uint32_t)t_cp[3]) \
             ; \
         (cp) += NS_INT32SZ; \
 } while (0)

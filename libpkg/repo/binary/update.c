@@ -534,7 +534,7 @@ pkg_repo_binary_update_proceed(const char *name, struct pkg_repo *repo,
 		goto cleanup;
 
 	in_trans = true;
-	while ((linelen = getline(&line, &linecap, f)) > 0) {
+	while ((linelen = port_getline(&line, &linecap, f)) > 0) {
 		cnt++;
 		totallen += linelen;
 		if ((cnt % 10 ) == 0)

@@ -373,7 +373,7 @@ create_dir(struct pkg *pkg, struct pkg_dir *d)
 {
 	struct stat st;
 
-#if HAVE_MKDIRAT
+#ifdef HAVE_MKDIRAT
 	if (mkdirat(pkg->rootfd, RELATIVE_PATH(d->path), 0755) == -1)
 		if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(d->path)))
 			return (EPKG_FATAL);
