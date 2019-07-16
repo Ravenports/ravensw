@@ -84,6 +84,14 @@ extern "C" {
 #define MAXHOSTNAMELEN	256
 #endif
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC	0
+#endif
+
+#ifndef O_DIRECTORY
+#define O_DIRECTORY	0
+#endif
+
 /* Special exit status for worker processes indicating that a restart
  * is desired -- eg. after a child has updated pkg(8) itself.  Don't
  * clash with any of the sysexits values */
