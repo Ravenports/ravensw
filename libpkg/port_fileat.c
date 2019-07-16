@@ -26,7 +26,6 @@
 
 #include <sys/param.h>
 
-#include <bsd_compat.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <pthread.h>
