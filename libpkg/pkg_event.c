@@ -385,7 +385,7 @@ pipeevent(struct pkg_event *ev)
 	default:
 		break;
 	}
-	dprintf(ctx.eventpipe, "%s\n", utstring_body(msg));
+	port_dprintf(ctx.eventpipe, "%s\n", utstring_body(msg));
 	utstring_free(msg);
 	utstring_free(buf);
 }

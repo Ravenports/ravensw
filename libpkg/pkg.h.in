@@ -61,11 +61,13 @@ extern "C" {
 /* The OS major version at the time of compilation */
 #ifdef __FreeBSD__
 #define OSMAJOR	__FreeBSD__
+#define USE_HINTSFILE
 #endif
 
 /* Not supported under DragonFly */
 #ifdef __DragonFly__
 #undef OSMAJOR
+#define USE_HINTSFILE
 #endif
 
 #ifdef __NetBSD_Version__
@@ -1729,6 +1731,7 @@ char *port_strndup(const char *str, size_t n);
 int   port_vasprintf(char **strp, const char *fmt, va_list args);
 int   port_humanize_number(char *buf, size_t len, int64_t quotient,
          const char *suffix, int scale, int flags);
+int   port_dprintf(int fd, const char *fmt, ...);
 
 /* Values for port_humanize_number's flags parameter. */
 #define HN_DECIMAL	0x01
@@ -1754,7 +1757,7 @@ ssize_t   port_getline(char ** restrict linep, size_t * restrict linecapp,
 	     FILE * restrict fp);
 mode_t    port_getmode(const void *, mode_t);
 void     *port_setmode(const char *);
-long long strtonum(const char *nptr, long long minval, long long maxval,
+long long port_strtonum(const char *nptr, long long minval, long long maxval,
                    const char **errstr);
 
 #ifdef __cplusplus

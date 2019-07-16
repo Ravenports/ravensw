@@ -461,7 +461,7 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 
 		pkg_debug(1, "SSH> recv: %s", line);
 		if (strncmp(line, "ok:", 3) == 0) {
-			*sz = strtonum(line + 4, 0, LONG_MAX, &errstr);
+			*sz = port_strtonum(line + 4, 0, LONG_MAX, &errstr);
 			if (errstr) {
 				goto ssh_cleanup;
 			}

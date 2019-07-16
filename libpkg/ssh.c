@@ -126,7 +126,7 @@ pkg_sshserve(int fd)
 			continue;
 		}
 
-		mtime = strtonum(age, 0, LONG_MAX, &errstr);
+		mtime = port_strtonum(age, 0, LONG_MAX, &errstr);
 		if (errstr) {
 			printf("ko: bad number %s: %s\n", age, errstr);
 			continue;

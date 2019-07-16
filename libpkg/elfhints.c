@@ -305,9 +305,13 @@ int shlib_list_from_rpath(const char *rpath_str, const char *dirpath)
 }
 
 int 
-shlib_list_from_elf_hints(const char *hintsfile)
+shlib_list_from_elf_hints(const char *hintsfile
+#ifndef USE_HINTSFILE
+__unused
+#endif
+)
 {
-#if defined __FreeBSD__ || defined __DragonFly__
+#ifdef USE_HINTSFILE
 	read_elf_hints(hintsfile, 1);
 #endif
 #if defined __linux__

@@ -271,10 +271,12 @@ dns_getsrvinfo(const char *zone)
 }
 
 int
-set_nameserver(const char *nsname) {
+set_nameserver(const char *nsname
 #ifndef HAVE___RES_SETSERVERS
+__unused) {
 	return (-1);
 #else
+) {
 	struct __res_state res;
 	union res_sockaddr_union u[MAXNS];
 	struct addrinfo *answer = NULL;

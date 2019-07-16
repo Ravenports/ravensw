@@ -395,7 +395,7 @@ __unused
 	if (pkg_object_bool(pkg_config_get("IGNORE_OSVERSION")))
 		return (true);
 	if ((fbsd_version = pkg_kv_get(&pkg->annotations, "FreeBSD_version")) != NULL) {
-		fbsdver = strtonum(fbsd_version, 1, INT_MAX, &errstr);
+		fbsdver = port_strtonum(fbsd_version, 1, INT_MAX, &errstr);
 		if (errstr != NULL) {
 			pkg_emit_error("Invalid FreeBSD version %s for package %s",
 			    fbsd_version, pkg->name);

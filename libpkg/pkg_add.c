@@ -687,7 +687,7 @@ retry:
 			attempt_to_merge(pkg->rootfd, f->config, local, merge);
 			if (f->config->status == MERGE_SUCCESS)
 				cfdata = f->config->newcontent;
-			dprintf(fd, "%s", cfdata);
+			port_dprintf(fd, "%s", cfdata);
 			if (f->config->newcontent != NULL)
 				free(f->config->newcontent);
 		} else {

@@ -2993,7 +2993,7 @@ pkg_vdprintf(int fd, const char * restrict format, va_list ap)
 	if (buf)
 		buf = pkg_utstring_vprintf(buf, format, ap);
 	if (buf && utstring_len(buf) > 0) {
-		count = dprintf(fd, "%s", utstring_body(buf));
+		count = port_dprintf(fd, "%s", utstring_body(buf));
 	} else 
 		count = -1;
 	if (buf)

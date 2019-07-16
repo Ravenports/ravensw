@@ -191,7 +191,7 @@ parse_major_release(const char *src, long long *release)
 	}
 
 	*eos = '\0';
-	*release = strtonum(parsed, 1, LONG_LONG_MAX, &errstr);
+	*release = port_strtonum(parsed, 1, LONG_LONG_MAX, &errstr);
 	if (errstr != NULL) {
 		pkg_emit_error("failed to parse major release version from %s: %s", src, errstr);
 		ret = EPKG_FATAL;
