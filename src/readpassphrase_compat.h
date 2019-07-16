@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <errno.h>
 #include <pwd.h>
 #include <signal.h>
 #include <string.h>
