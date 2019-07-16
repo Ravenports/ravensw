@@ -44,7 +44,7 @@
 static const int maxscale = 7;
 
 int
-humanize_number(char *buf, size_t len, int64_t quotient,
+port_humanize_number(char *buf, size_t len, int64_t quotient,
     const char *suffix, int scale, int flags)
 {
 	const char *prefixes, *sep;
