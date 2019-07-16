@@ -427,7 +427,7 @@ pkg_repo_binary_parse_conflicts(FILE *f, sqlite3 *sqlite)
 	pkg_debug(4, "pkg_parse_conflicts_file: running '%s'", conflicts_clean_sql);
 	(void)sql_exec(sqlite, conflicts_clean_sql);
 
-	while ((linelen = FXGETLINE(&linebuf, &linecap, f)) > 0) {
+	while ((linelen = getline(&linebuf, &linecap, f)) > 0) {
 		p = linebuf;
 		origin = port_strsep(&p, ":");
 		/* Check dependencies number */
@@ -534,7 +534,7 @@ pkg_repo_binary_update_proceed(const char *name, struct pkg_repo *repo,
 		goto cleanup;
 
 	in_trans = true;
-	while ((linelen = FXGETLINE(&line, &linecap, f)) > 0) {
+	while ((linelen = getline(&line, &linecap, f)) > 0) {
 		cnt++;
 		totallen += linelen;
 		if ((cnt % 10 ) == 0)

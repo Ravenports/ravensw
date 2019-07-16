@@ -436,7 +436,7 @@ pkg_jobs_cudf_parse_output(struct pkg_jobs *j, FILE *f)
 
 	memset(&cur_pkg, 0, sizeof(cur_pkg));
 
-	while ((linelen = FXGETLINE(&line, &linecap, f)) > 0) {
+	while ((linelen = getline(&line, &linecap, f)) > 0) {
 		/* Split line, cut spaces */
 		begin = line;
 		param = port_strsep(&begin, ": \t");

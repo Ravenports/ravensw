@@ -67,7 +67,7 @@ pkg_sshserve(int fd)
 
 	printf("ok: pkg "PKGVERSION"\n");
 	for (;;) {
-		if ((linelen = FXGETLINE(&line, &linecap, stdin)) < 0)
+		if ((linelen = getline(&line, &linecap, stdin)) < 0)
 			break;
 
 		if (linelen == 0)
