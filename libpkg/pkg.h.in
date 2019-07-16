@@ -1713,8 +1713,10 @@ int pkg_get_dbdirfd(void);
  * portability functions
  ********************************/
 
-int port_humanize_number(char *buf, size_t len, int64_t quotient,
-    const char *suffix, int scale, int flags);
+char *port_strndup(const char *str, size_t n);
+int   port_vasprintf(char **strp, const char *fmt, va_list args);
+int   port_humanize_number(char *buf, size_t len, int64_t quotient,
+      const char *suffix, int scale, int flags);
 
 /* Values for port_humanize_number's flags parameter. */
 #define HN_DECIMAL	0x01
@@ -1726,8 +1728,6 @@ int port_humanize_number(char *buf, size_t len, int64_t quotient,
 /* Values for port_humanize_number's scale parameter. */
 #define HN_GETSCALE	0x10
 #define HN_AUTOSCALE	0x20
-
-char *port_strndup(const char *str, size_t n);
 
 #ifdef __cplusplus
 }

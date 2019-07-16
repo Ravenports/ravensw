@@ -418,7 +418,7 @@ pkg_emit_error(const char *fmt, ...)
 	ev.type = PKG_EVENT_ERROR;
 
 	va_start(ap, fmt);
-	vasprintf(&ev.e_pkg_error.msg, fmt, ap);
+	port_vasprintf(&ev.e_pkg_error.msg, fmt, ap);
 	va_end(ap);
 
 	pkg_emit_event(&ev);
@@ -434,7 +434,7 @@ pkg_emit_notice(const char *fmt, ...)
 	ev.type = PKG_EVENT_NOTICE;
 
 	va_start(ap, fmt);
-	vasprintf(&ev.e_pkg_notice.msg, fmt, ap);
+	port_vasprintf(&ev.e_pkg_notice.msg, fmt, ap);
 	va_end(ap);
 
 	pkg_emit_event(&ev);
@@ -450,7 +450,7 @@ pkg_emit_developer_mode(const char *fmt, ...)
 	ev.type = PKG_EVENT_DEVELOPER_MODE;
 
 	va_start(ap, fmt);
-	vasprintf(&ev.e_pkg_error.msg, fmt, ap);
+	port_vasprintf(&ev.e_pkg_error.msg, fmt, ap);
 	va_end(ap);
 
 	pkg_emit_event(&ev);
@@ -840,7 +840,7 @@ pkg_plugin_error(struct pkg_plugin *p, const char *fmt, ...)
 	ev.e_plugin_error.plugin = p;
 
 	va_start(ap, fmt);
-	vasprintf(&ev.e_plugin_error.msg, fmt, ap);
+	port_vasprintf(&ev.e_plugin_error.msg, fmt, ap);
 	va_end(ap);
 
 	pkg_emit_event(&ev);
@@ -857,7 +857,7 @@ pkg_plugin_info(struct pkg_plugin *p, const char *fmt, ...)
 	ev.e_plugin_info.plugin = p;
 
 	va_start(ap, fmt);
-	vasprintf(&ev.e_plugin_info.msg, fmt, ap);
+	port_vasprintf(&ev.e_plugin_info.msg, fmt, ap);
 	va_end(ap);
 
 	pkg_emit_event(&ev);
@@ -960,7 +960,7 @@ pkg_debug(int level, const char *fmt, ...)
 	ev.type = PKG_EVENT_DEBUG;
 	ev.e_debug.level = level;
 	va_start(ap, fmt);
-	vasprintf(&ev.e_debug.msg, fmt, ap);
+	port_vasprintf(&ev.e_debug.msg, fmt, ap);
 	va_end(ap);
 
 	pkg_emit_event(&ev);
@@ -996,7 +996,7 @@ pkg_emit_progress_start(const char *fmt, ...)
 	ev.type = PKG_EVENT_PROGRESS_START;
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		vasprintf(&ev.e_progress_start.msg, fmt, ap);
+		port_vasprintf(&ev.e_progress_start.msg, fmt, ap);
 		va_end(ap);
 	} else {
 		ev.e_progress_start.msg = NULL;

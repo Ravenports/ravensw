@@ -51,7 +51,7 @@ static inline int xasprintf(char **ret, const char *fmt, ...)
 	int i;
 
 	va_start(ap, fmt);
-	i = vasprintf(ret, fmt, ap);
+	i = port_vasprintf(ret, fmt, ap);
 	va_end(ap);
 
 	if (i < 0 || *ret == NULL)

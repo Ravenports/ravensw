@@ -30,7 +30,7 @@
 
 /* musl libc apparently does not have ALLPERMS */
 #ifndef ALLPERMS
-#define     ALLPERMS        (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+#define ALLPERMS        (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 #endif
 
 #include <assert.h>
