@@ -143,7 +143,7 @@ cc-check-functions gmtime_r isnan localtime_r strchrnul strerror_r
 cc-check-includes stdint.h inttypes.h
 
 # check for pkg itself
-cc-check-functions arc4random arc4random_stir basename_r chflagsat \
+cc-check-functions arc4random arc4random_stir chflagsat \
 	closefrom dirfd eaccess fopencookie fstatfs funopen strnstr \
 	strtofflags strtonum sysconf utimensat __res_setservers unlinkat \
 	linkat faccessat fstatat openat mkdirat readlinkat symlinkat \
@@ -177,7 +177,7 @@ cc-check-includes link.h machine/endian.h osreldate.h readpassphrase.h \
 	sys/procctl.h sys/statfs.h sys/statvfs.h
 
 # for compat
-cc-check-includes paths
+cc-check-includes paths.h
 
 #endian stuff
 foreach header [list endian.h sys/endian.h] {
