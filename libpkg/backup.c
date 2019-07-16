@@ -124,9 +124,9 @@ pkgdb_dump(struct pkgdb *db, const char *dest)
 		}
 
 		/* Could we create the Sqlite DB file? */
-		if (eaccess(dirname(dest), W_OK)) {
+		if (eaccess(port_dirname(dest), W_OK)) {
 			pkg_fatal_errno("Unable to access '%s'",
-			    dirname(dest));
+			    port_dirname(dest));
 		}
 	}
 

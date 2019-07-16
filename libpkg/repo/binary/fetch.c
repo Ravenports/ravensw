@@ -40,8 +40,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#include <libgen.h>
-
 #include "pkg.h"
 #include "private/event.h"
 #include "private/utils.h"
@@ -167,7 +165,7 @@ pkg_repo_binary_try_fetch(struct pkg_repo *repo, struct pkg *pkg,
 
 	/* Create the dirs in cachedir */
 	dir = xstrdup(dest);
-	if ((path = dirname(dir)) == NULL) {
+	if ((path = port_dirname(dir)) == NULL) {
 		pkg_emit_errno("dirname", dest);
 		retcode = EPKG_FATAL;
 		goto cleanup;

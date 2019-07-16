@@ -38,7 +38,6 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <assert.h>
-#include <libgen.h>
 #include <string.h>
 #include <fcntl.h>
 #include <glob.h>
@@ -476,13 +475,13 @@ create_symlinks(struct pkg *pkg, struct pkg_file *f, const char *target)
 retry:
 	if (symlinkat(target, pkg->rootfd, RELATIVE_PATH(f->temppath)) == -1) {
 		if (!tried_mkdir) {
-			if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(dirname(f->path))))
+			if (!mkdirat_p(pkg->rootfd, RELATIVE_PATH(port_dirname(f->path))))
 #else
 
 	snprintf(fullpath, sizeof(fullpath), "%s/%s",
 		 pkg->rootpath, RELATIVE_PATH(f->temppath));
 	snprintf(basepath, sizeof(basepath), "%s/%s",
-		 pkg->rootpath, RELATIVE_PATH(dirname(f->path)));
+		 pkg->rootpath, RELATIVE_PATH(port_dirname(f->path)));
 	if (strlen(fullpath) > MAXPATHLEN - 1)
 		pkg_fatal_errno("Symlink path exceeds limit(%d): %s",
 				MAXPATHLEN, fullpath);
@@ -560,7 +559,7 @@ retry:
 	    pkg->rootfd, RELATIVE_PATH(f->temppath), 0) == -1) {
 		if (!tried_mkdir) {
 			if (!mkdirat_p(pkg->rootfd,
-			    RELATIVE_PATH(dirname(f->path))))
+			    RELATIVE_PATH(port_dirname(f->path))))
 #else
 	char linkpath1[MAXPATHLEN * 2];
 	char linkpath2[MAXPATHLEN * 2];
@@ -571,7 +570,7 @@ retry:
 	snprintf(linkpath2, sizeof(linkpath2), "%s/%s",
 		 pkg->rootpath, RELATIVE_PATH(f->temppath));
 	snprintf(link_dir2, sizeof(link_dir2), "%s/%s",
-		 pkg->rootpath, RELATIVE_PATH(dirname(f->path)));
+		 pkg->rootpath, RELATIVE_PATH(port_dirname(f->path)));
 
 	if (strlen(linkpath1) > MAXPATHLEN - 1)
 		pkg_fatal_errno("Hardlink path exceeds limit(%d): %s",
@@ -640,7 +639,7 @@ create_regfile(struct pkg *pkg, struct pkg_file *f, struct archive *a,
 	snprintf(fullpath, sizeof(fullpath), "%s/%s",
 		 pkg->rootpath, RELATIVE_PATH(f->temppath));
 	snprintf(basepath, sizeof(basepath), "%s/%s",
-		 pkg->rootpath, RELATIVE_PATH(dirname(f->path)));
+		 pkg->rootpath, RELATIVE_PATH(port_dirname(f->path)));
 	if (strlen(fullpath) > MAXPATHLEN - 1)
 		pkg_fatal_errno("Symlink path exceeds limit(%d): %s",
 				MAXPATHLEN, fullpath);
@@ -655,7 +654,7 @@ retry:
 		if (!tried_mkdir) {
 #ifdef HAVE_MKDIRAT
 			if (!mkdirat_p(pkg->rootfd,
-			    RELATIVE_PATH(dirname(f->path)))) {
+			    RELATIVE_PATH(port_dirname(f->path)))) {
 #else
 			if (mkdirp(basepath, 0755) == -1) {
 #endif
@@ -1015,7 +1014,7 @@ pkg_add_check_pkg_archive(struct pkgdb *db, struct pkg *pkg,
 	fromstdin = (strcmp(path, "-") == 0);
 	strlcpy(bd, path, sizeof(bd));
 	if (!fromstdin) {
-		basedir = dirname(bd);
+		basedir = port_dirname(bd);
 		strlcpy(bd, basedir, sizeof(bd));
 		if ((ext = strrchr(path, '.')) == NULL) {
 			pkg_emit_error("%s has no extension", path);

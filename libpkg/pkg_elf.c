@@ -44,7 +44,6 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <gelf.h>
-#include <libgen.h>
 #if defined(HAVE_LINK_H) && !defined(__DragonFly__) && defined(HAVE_LIBELF)
 #include <link.h>
 #endif
@@ -421,7 +420,7 @@ analyse_elf(struct pkg *pkg, const char *fpath)
 			rpath = elf_strptr(e, sh_link, dyn->d_un.d_val);
 	}
 	if (rpath != NULL)
-		shlib_list_from_rpath(rpath, dirname(fpath));
+		shlib_list_from_rpath(rpath, port_dirname(fpath));
 
 	/* Now find all of the NEEDED shared libraries. */
 

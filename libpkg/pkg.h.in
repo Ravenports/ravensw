@@ -72,10 +72,6 @@ extern "C" {
 #define OSMAJOR ((__NetBSD_Version__ + 1000000) / 100000000)
 #endif
 
-#ifdef __sun__
-#define __EXTENSIONS__
-#endif
-
 #ifndef __DECONST
 #define __DECONST(type, var)    ((type)(uintptr_t)(const void *)(var))
 #endif
@@ -1726,6 +1722,7 @@ int pkg_get_dbdirfd(void);
  * portability functions
  ********************************/
 
+char *port_dirname(const char *path);
 char *port_strsep(char **stringp, const char *delim);
 char *port_strndup(const char *str, size_t n);
 int   port_vasprintf(char **strp, const char *fmt, va_list args);
