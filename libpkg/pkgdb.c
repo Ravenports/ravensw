@@ -978,7 +978,7 @@ _dbdir_access(const char *path, int mode)
 {
 	int dfd = pkg_get_dbdirfd();
 
-	return (faccessat(dfd, _dbdir_trim_path(path), mode, 0));
+	return (port_faccessat(dfd, _dbdir_trim_path(path), mode, 0));
 }
 
 static int
@@ -1002,7 +1002,7 @@ _dbdir_unlink(const char *path)
 {
 	int dfd = pkg_get_dbdirfd();
 
-	return (unlinkat(dfd, _dbdir_trim_path(path), 0));
+	return (port_unlinkat(dfd, _dbdir_trim_path(path), 0));
 }
 
 static int
@@ -1105,12 +1105,12 @@ retry:
 				goto retry;
 			}
 		}
-		if (faccessat(dbdirfd, "local.sqlite", R_OK, AT_EACCESS) != 0) {
+		if (port_faccessat(dbdirfd, "local.sqlite", R_OK, AT_EACCESS) != 0) {
 			if (errno != ENOENT) {
 				pkg_emit_nolocaldb();
 				pkgdb_close(db);
 				return (EPKG_ENODB);
-			} else if ((faccessat(dbdirfd, ".", W_OK, AT_EACCESS) != 0)) {
+			} else if ((port_faccessat(dbdirfd, ".", W_OK, AT_EACCESS) != 0)) {
 				/*
 				 * If we need to create the db but cannot
 				 * write to it, fail early

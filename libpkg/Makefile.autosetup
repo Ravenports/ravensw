@@ -48,6 +48,7 @@ SRCS=	backup.c \
 	port_getline.c \
 	port_mode.c \
 	port_strtonum.c \
+	port_fileat.c \
 	pkg_attributes.c \
 	pkg_delete.c \
 	pkg_jobs.c \

@@ -126,7 +126,7 @@ delete_dellist(int fd, const char *cachedir,  dl_list *dl, int total)
 		}
 		if (S_ISDIR(st.st_mode))
 			flag = AT_REMOVEDIR;
-		if (unlinkat(fd, relpath, flag) == -1) {
+		if (port_unlinkat(fd, relpath, flag) == -1) {
 			port_warn("unlink(%s)", file);
 			retcode = EX_SOFTWARE;
 		}
@@ -274,7 +274,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 			/* Dereference the symlink and check it for being
 			 * recognized checksum file, or delete the symlink
 			 * later. */
-			if ((link_len = readlinkat(fd, ent->d_name, link_buf,
+			if ((link_len = port_readlinkat(fd, ent->d_name, link_buf,
 			    sizeof(link_buf))) == -1)
 				continue;
 			link_buf[link_len - 1] = '\0';

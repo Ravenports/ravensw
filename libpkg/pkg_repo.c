@@ -807,7 +807,7 @@ pkg_repo_fetch_meta(struct pkg_repo *repo, time_t *t)
 	if ((rc = pkg_repo_archive_extract_archive(fd, "meta", repo,
 	    metafd, &sc)) != EPKG_OK) {
 		close(metafd);
-		unlinkat(dbdirfd, filepath, 0);
+		port_unlinkat(dbdirfd, filepath, 0);
 		close (fd);
 		return (rc);
 	}
@@ -899,7 +899,7 @@ cleanup:
 		pkg_repo_signatures_free(sc);
 
 	if (rc != EPKG_OK)
-		unlinkat(dbdirfd, filepath, 0);
+		port_unlinkat(dbdirfd, filepath, 0);
 
 	return (rc);
 }

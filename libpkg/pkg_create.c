@@ -259,7 +259,7 @@ static void
 pkg_load_from_file(int fd, struct pkg *pkg, pkg_attr attr, const char *path)
 {
 
-	if (faccessat(fd, path, F_OK, 0) == 0) {
+	if (port_faccessat(fd, path, F_OK, 0) == 0) {
 		pkg_debug(1, "Reading: '%s'", path);
 		pkg_set_from_fileat(fd, pkg, attr, path, false);
 	}
@@ -276,7 +276,7 @@ pkg_load_message_from_file(int fd, struct pkg *pkg, const char *path)
 	assert(pkg != NULL);
 	assert(path != NULL);
 
-	if (faccessat(fd, path, F_OK, 0) == -1) {
+	if (port_faccessat(fd, path, F_OK, 0) == -1) {
 		return (EPKG_FATAL);
 	}
 
@@ -355,7 +355,7 @@ pkg_load_metadata(struct pkg *pkg, const char *mfile, const char *md_dir,
 	}
 
 	for (i = 0; scripts[i] != NULL; i++) {
-		if (faccessat(mfd, scripts[i], F_OK, 0) == 0)
+		if (port_faccessat(mfd, scripts[i], F_OK, 0) == 0)
 			pkg_addscript_fileat(mfd, pkg, scripts[i]);
 	}
 

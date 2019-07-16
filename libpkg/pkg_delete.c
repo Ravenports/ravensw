@@ -234,7 +234,7 @@ rmdir_p(struct pkgdb *db, struct pkg *pkg, char *dir, const char *prefix_r)
 	}
 #endif
 
-	if (unlinkat(pkg->rootfd, dir, AT_REMOVEDIR) == -1) {
+	if (port_unlinkat(pkg->rootfd, dir, AT_REMOVEDIR) == -1) {
 		if (errno != ENOTEMPTY && errno != EBUSY && errno != EEXIST)
 			pkg_emit_errno("unlinkat", dir);
 		/* If the directory was already removed by a bogus script, continue removing parents */
@@ -315,7 +315,7 @@ pkg_delete_file(struct pkg *pkg, struct pkg_file *file, unsigned force)
 	}
 #endif
 	pkg_debug(1, "Deleting file: '%s'", path);
-	if (unlinkat(pkg->rootfd, path, 0) == -1) {
+	if (port_unlinkat(pkg->rootfd, path, 0) == -1) {
 		if (force < 2) {
 			if (errno == ENOENT)
 				pkg_emit_file_missing(pkg, file);

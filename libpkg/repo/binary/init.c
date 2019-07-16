@@ -325,7 +325,7 @@ pkg_repo_binary_open(struct pkg_repo *repo, unsigned mode)
 		pkg_repo_binary_get_filename(pkg_repo_name(repo)));
 
 	/* Always want read mode here */
-	if (faccessat(dbdirfd, filepath, R_OK | mode, 0) != 0) {
+	if (port_faccessat(dbdirfd, filepath, R_OK | mode, 0) != 0) {
 		return (EPKG_ENOACCESS);
 	}
 
@@ -415,7 +415,7 @@ pkg_repo_binary_create(struct pkg_repo *repo)
 	snprintf(filepath, sizeof(filepath), "%s",
 		pkg_repo_binary_get_filename(pkg_repo_name(repo)));
 	/* Should never ever happen */
-	if (faccessat(dbdirfd, filepath, R_OK, 0) == 0)
+	if (port_faccessat(dbdirfd, filepath, R_OK, 0) == 0)
 		return (EPKG_CONFLICT);
 
 	pkgdb_syscall_overload();

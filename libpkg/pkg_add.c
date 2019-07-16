@@ -385,7 +385,7 @@ create_dir(struct pkg *pkg, struct pkg_dir *d)
 			pkg_fatal_errno("Fail to stat directory %s", d->path);
 		}
 		if (fstatat(pkg->rootfd, RELATIVE_PATH(d->path), &st, AT_SYMLINK_NOFOLLOW) == 0) {
-			unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
+			port_unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
 		}
 		if (mkdirat(pkg->rootfd, RELATIVE_PATH(d->path), 0755) == -1) {
 			pkg_fatal_errno("Fail to create directory %s", d->path);
@@ -413,7 +413,7 @@ create_dir(struct pkg *pkg, struct pkg_dir *d)
 			pkg_fatal_errno("Fail to stat directory %s", d->path);
 		}
 		if (fstatat(pkg->rootfd, RELATIVE_PATH(d->path), &st, AT_SYMLINK_NOFOLLOW) == 0) {
-			unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
+			port_unlinkat(pkg->rootfd, RELATIVE_PATH(d->path), 0);
 		}
 		if (mkdir(fullpath, 0755) == -1) {
 			pkg_fatal_errno("Fail to create directory %s", d->path);
@@ -885,7 +885,7 @@ pkg_extract_finalize(struct pkg *pkg)
 				    AT_SYMLINK_NOFOLLOW);
 			}
 #endif
-			unlinkat(pkg->rootfd, RELATIVE_PATH(fto), 0);
+			port_unlinkat(pkg->rootfd, RELATIVE_PATH(fto), 0);
 		}
 		if (renameat(pkg->rootfd, RELATIVE_PATH(f->temppath),
 		    pkg->rootfd, RELATIVE_PATH(fto)) == -1) {
@@ -1143,7 +1143,7 @@ pkg_rollback_pkg(struct pkg *p)
 
 	while (pkg_files(p, &f) == EPKG_OK) {
 		if (*f->temppath != '\0') {
-			unlinkat(p->rootfd, f->temppath, 0);
+			port_unlinkat(p->rootfd, f->temppath, 0);
 		}
 	}
 }
@@ -1523,7 +1523,7 @@ pkg_add_fromdir(struct pkg *pkg, const char *src)
 #endif
 
 		if (S_ISLNK(st.st_mode)) {
-			if ((link_len = readlinkat(fromfd,
+			if ((link_len = port_readlinkat(fromfd,
 			    RELATIVE_PATH(f->path), target,
 			    sizeof(target))) == -1) {
 				kh_destroy_hls(hardlinks);

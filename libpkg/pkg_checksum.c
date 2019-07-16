@@ -785,7 +785,7 @@ pkg_checksum_symlinkat(int fd, const char *path, pkg_checksum_type_t type)
 	char linkbuf[MAXPATHLEN];
 	int linklen;
 
-	if ((linklen = readlinkat(fd, path, linkbuf, sizeof(linkbuf) - 1)) == -1) {
+	if ((linklen = port_readlinkat(fd, path, linkbuf, sizeof(linkbuf) - 1)) == -1) {
 		pkg_emit_errno("pkg_checksum_symlinkat", "readlink failed");
 		return (NULL);
 	}

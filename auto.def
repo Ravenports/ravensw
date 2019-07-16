@@ -145,8 +145,8 @@ cc-check-includes stdint.h inttypes.h
 # check for pkg itself
 cc-check-functions arc4random arc4random_stir chflagsat \
 	closefrom dirfd eaccess fopencookie fstatfs funopen strnstr \
-	strtofflags sysconf utimensat __res_setservers unlinkat \
-	linkat faccessat fstatat openat mkdirat readlinkat symlinkat \
+	strtofflags sysconf utimensat __res_setservers \
+	linkat fstatat openat mkdirat symlinkat \
 	fflagstostr futimes
 
 if {![cc-check-functions fts_open]} {

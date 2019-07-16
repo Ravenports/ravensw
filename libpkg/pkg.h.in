@@ -94,6 +94,10 @@ extern "C" {
 #define O_DIRECTORY	0
 #endif
 
+#ifndef __unused
+# define __unused __attribute__ ((__unused__))
+#endif
+
 /* Special exit status for worker processes indicating that a restart
  * is desired -- eg. after a child has updated pkg(8) itself.  Don't
  * clash with any of the sysexits values */
@@ -1733,6 +1737,7 @@ int   port_humanize_number(char *buf, size_t len, int64_t quotient,
          const char *suffix, int scale, int flags);
 int   port_dprintf(int fd, const char *fmt, ...);
 
+
 /* Values for port_humanize_number's flags parameter. */
 #define HN_DECIMAL	0x01
 #define HN_NOSPACE	0x02
@@ -1758,7 +1763,11 @@ ssize_t   port_getline(char ** restrict linep, size_t * restrict linecapp,
 mode_t    port_getmode(const void *, mode_t);
 void     *port_setmode(const char *);
 long long port_strtonum(const char *nptr, long long minval, long long maxval,
-                   const char **errstr);
+             const char **errstr);
+int       port_unlinkat(int fd, const char *path, int flag);
+int       port_faccessat(int fd, const char *path, int mode, int flag);
+ssize_t   port_readlinkat(int fd, const char *restrict path, char *restrict buf,
+	     size_t bufsize);
 
 #ifdef __cplusplus
 }

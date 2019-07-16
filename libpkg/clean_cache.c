@@ -70,14 +70,14 @@ rm_rf(int basefd, const char *path)
 		if (S_ISDIR(st.st_mode))
 			rm_rf(dirfd, e->d_name);
 		else
-			unlinkat(dirfd, e->d_name, 0);
+			port_unlinkat(dirfd, e->d_name, 0);
 	}
 	closedir(d);
 	if (basefd == -1)
 		return;
 	if (fstatat(basefd, path, &st, AT_SYMLINK_NOFOLLOW) != 0)
 		return;
-	unlinkat(basefd, path, S_ISDIR(st.st_mode) ? AT_REMOVEDIR : 0);
+	port_unlinkat(basefd, path, S_ISDIR(st.st_mode) ? AT_REMOVEDIR : 0);
 }
 
 void
