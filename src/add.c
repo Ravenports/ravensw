@@ -27,7 +27,6 @@
 
 #include <sys/param.h>
 
-#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,7 +139,7 @@ exec_add(int argc, char **argv)
 	for (i = 0; i < argc; i++) {
 		if (is_url(argv[i]) == EPKG_OK) {
 			snprintf(path, sizeof(path), "%s/%s.XXXXX",
-			    getenv("TMPDIR") != NULL ? getenv("TMPDIR") : "/tmp", basename(argv[i]));
+			    getenv("TMPDIR") != NULL ? getenv("TMPDIR") : "/tmp", port_basename(argv[i]));
 			if ((retcode = pkg_fetch_file(NULL, argv[i], path, 0, 0, 0)) != EPKG_OK)
 				break;
 
