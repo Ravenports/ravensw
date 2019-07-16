@@ -152,7 +152,7 @@ parse_mode(const char *str)
 	    strstr(str, "a+") || strstr(str, "a-"))
 		return (NULL);
 
-	return (setmode(str));
+	return (port_setmode(str));
 }
 
 
@@ -415,7 +415,7 @@ setmod(struct plist *p, char *line, struct file_attr *a __unused)
 		pkg_emit_error("%s wrong mode value", line);
 		return (EPKG_FATAL);
 	}
-	p->perm = getmode(set, 0);
+	p->perm = port_getmode(set, 0);
 	return (EPKG_OK);
 }
 
@@ -819,7 +819,7 @@ parse_attributes(const ucl_object_t *o, struct file_attr **a)
 					pkg_emit_error("Bad format for the mode attribute: %s", ucl_object_tostring(cur));
 					return;
 				}
-				(*a)->mode = getmode(set, 0);
+				(*a)->mode = port_getmode(set, 0);
 				free(set);
 			} else {
 				pkg_emit_error("Expecting a string for the mode attribute, ignored");
@@ -1047,7 +1047,7 @@ parse_keyword_args(char *args, char *keyword)
 	if (group != NULL && *group != '\0')
 		attr->group = xstrdup(group);
 	if (set != NULL) {
-		attr->mode = getmode(set, 0);
+		attr->mode = port_getmode(set, 0);
 		free(set);
 	}
 	attr->fflags = fset;

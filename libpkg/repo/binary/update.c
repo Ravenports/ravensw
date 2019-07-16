@@ -427,7 +427,7 @@ pkg_repo_binary_parse_conflicts(FILE *f, sqlite3 *sqlite)
 	pkg_debug(4, "pkg_parse_conflicts_file: running '%s'", conflicts_clean_sql);
 	(void)sql_exec(sqlite, conflicts_clean_sql);
 
-	while ((linelen = getline(&linebuf, &linecap, f)) > 0) {
+	while ((linelen = port_getline(&linebuf, &linecap, f)) > 0) {
 		p = linebuf;
 		origin = port_strsep(&p, ":");
 		/* Check dependencies number */
