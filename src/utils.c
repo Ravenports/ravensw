@@ -160,7 +160,7 @@ vquery_yesno(bool deft, const char *msg, va_list ap)
 	printf("%s", out);
 
 	for (;;) {
-		if ((linelen = getline(&line, &linecap, stdin)) != -1) {
+		if ((linelen = port_getline(&line, &linecap, stdin)) != -1) {
 
 			if (linelen == 1 && line[0] == '\n') {
 				if (default_yes)
@@ -244,7 +244,7 @@ query_select(const char *msg, const char **opts, int ncnt, int deft)
 	}
 
 	i = deft;
-	while (getline(&str, &n, stdin) == -1) {
+	while (port_getline(&str, &n, stdin) == -1) {
 		if (errno == EINTR)
 			continue;
 		else

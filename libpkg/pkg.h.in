@@ -1750,6 +1750,9 @@ int   port_humanize_number(char *buf, size_t len, int64_t quotient,
 #define port_warnx(format, args...) \
 	fprintf(stderr, format "\n", ## args)
 
+ssize_t port_getline(char ** restrict linep, size_t * restrict linecapp,
+	FILE * restrict fp);
+
 #ifdef __cplusplus
 }
 #endif

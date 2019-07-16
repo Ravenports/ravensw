@@ -1465,7 +1465,7 @@ pkg_solve_parse_sat_output(FILE *f, struct pkg_solve_problem *problem)
 	ssize_t linelen;
 	bool got_sat = false, done = false;
 
-	while ((linelen = getline(&line, &linecap, f)) > 0) {
+	while ((linelen = port_getline(&line, &linecap, f)) > 0) {
 		if (strncmp(line, "SAT", 3) == 0) {
 			got_sat = true;
 		}

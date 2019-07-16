@@ -223,7 +223,7 @@ add_vulnerable_upgrades(struct pkg_jobs	*jobs, struct pkgdb *db)
 		break;
 	}
 
-	while ((linelen = getline(&line, &linecap, in)) > 0) {
+	while ((linelen = port_getline(&line, &linecap, in)) > 0) {
 		if (line[linelen - 1] == '\n') {
 			line[linelen - 1] = '\0';
 		}

@@ -45,6 +45,7 @@ SRCS=	backup.c \
 	port_vasprintf.c \
 	port_dirname.c \
 	port_basename.c \
+	port_getline.c \
 	pkg_attributes.c \
 	pkg_delete.c \
 	pkg_jobs.c \

@@ -790,7 +790,7 @@ pkg_repo_sign(char *path, char **argv, int argc, UT_string **sig, UT_string **ce
 	if (*cert == NULL)
 		utstring_new(*cert);
 
-	while ((linelen = getline(&line, &linecap, fp)) > 0 ) {
+	while ((linelen = port_getline(&line, &linecap, fp)) > 0 ) {
 		if (strcmp(line, "SIGNATURE\n") == 0) {
 			buf = *sig;
 			continue;

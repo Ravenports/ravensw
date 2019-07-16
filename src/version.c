@@ -203,7 +203,7 @@ do_testpattern(unsigned int opt, int argc, char ** restrict argv)
 	if (!pattern_from_stdin && !pkgname_from_stdin)
 		return (fnmatch(argv[1], argv[0], 0));
 
-	while ((linelen = getline(&line, &linecap, stdin)) > 0) {
+	while ((linelen = port_getline(&line, &linecap, stdin)) > 0) {
 		line[linelen - 1] = '\0'; /* Strip trailing newline */
 
 		if ((pattern_from_stdin && (fnmatch(argv[1], line, 0) == 0)) ||
@@ -298,7 +298,7 @@ hash_indexfile(const char *indexfilename)
 	if (!indexfile)
 		port_err(EX_NOINPUT, "Unable to open %s", indexfilename);
 
-	while (getline(&line, &linecap, indexfile) > 0) {
+	while (port_getline(&line, &linecap, indexfile) > 0) {
 		/* line is pkgname|portdir|... */
 
 		l = line;
