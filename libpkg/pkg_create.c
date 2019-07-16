@@ -29,7 +29,6 @@
 
 #include <sys/stat.h>
 
-#include <errno.h>
 #include <regex.h>
 #include <fcntl.h>
 

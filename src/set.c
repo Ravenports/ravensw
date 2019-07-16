@@ -26,7 +26,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -126,7 +125,7 @@ exec_set(int argc, char **argv)
 			sets |= AUTOMATIC;
 			newautomatic = optarg[0] - '0';
 			if (newautomatic != 0 && newautomatic != 1)
-				errx(EX_USAGE, "Wrong value for -A. "
+				port_errx(EX_USAGE, "Wrong value for -A. "
 				    "Expecting 0 or 1, got: %s",
 				    optarg);
 			break;
@@ -148,7 +147,7 @@ exec_set(int argc, char **argv)
 			match = MATCH_ALL;
 			changed = "origin";
 			if (!check_change_values(optarg, &oldvalue, &newvalue, '/')) {
-				 errx(EX_USAGE, "Wrong format for -o. "
+				 port_errx(EX_USAGE, "Wrong format for -o. "
 					 "Expecting oldorigin:neworigin, got: %s",
 					 optarg);
 			}
@@ -159,7 +158,7 @@ exec_set(int argc, char **argv)
 			match = MATCH_ALL;
 			changed = "name";
 			if (!check_change_values(optarg, &oldvalue, &newvalue, '\0')) {
-				 errx(EX_USAGE, "Wrong format for -n. "
+				 port_errx(EX_USAGE, "Wrong format for -n. "
 					 "Expecting oldname:newname, got: %s",
 					 optarg);
 			}
@@ -171,7 +170,7 @@ exec_set(int argc, char **argv)
 			sets |= VITAL;
 			newvital = optarg[0] - '0';
 			if (newvital != 0 && newvital != 1)
-				errx(EX_USAGE, "Wrong value for -v. "
+				port_errx(EX_USAGE, "Wrong value for -v. "
 				    "Expecting 0 or 1, got: %s",
 				    optarg);
 			break;
@@ -213,14 +212,14 @@ exec_set(int argc, char **argv)
 		if (match == MATCH_ALL)
 			return (EX_OK);
 		if (!quiet)
-			warnx("No packages installed.  Nothing to do!");
+			port_warnx("No packages installed.  Nothing to do!");
 		return (EX_OK);
 	} else if (retcode == EPKG_ENOACCESS) {
 		free(newvalue);
-		warnx("Insufficient privileges to modify the package database");
+		port_warnx("Insufficient privileges to modify the package database");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK) {
-		warnx("Error accessing package database");
+		port_warnx("Error accessing package database");
 		free(newvalue);
 		return (EX_SOFTWARE);
 	}
@@ -233,14 +232,14 @@ exec_set(int argc, char **argv)
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_EXCLUSIVE) != EPKG_OK) {
 		pkgdb_close(db);
 		free(newvalue);
-		warnx("Cannot get an exclusive lock on a database, it is locked by another process");
+		port_warnx("Cannot get an exclusive lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
 	if (pkgdb_transaction_begin(db, NULL) != EPKG_OK) {
 		pkgdb_close(db);
 		free(newvalue);
-		warnx("Cannot start transaction for update");
+		port_warnx("Cannot start transaction for update");
 		return (EX_TEMPFAIL);
 	}
 

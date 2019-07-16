@@ -35,8 +35,6 @@
 
 #include <sys/queue.h>
 
-#include <err.h>
-#include <errno.h>
 #include <getopt.h>
 #include <pkg.h>
 #include <stdio.h>
@@ -114,14 +112,14 @@ exec_updating(int argc, char **argv)
 	/* checking date format */
 	if (date != NULL)
 		if (strlen(date) != 8 || strspn(date, "0123456789") != 8)
-			err(EX_DATAERR, "Invalid date format");
+			port_err(EX_DATAERR, "Invalid date format");
 
 	if (pkgdb_open(&db, PKGDB_DEFAULT) != EPKG_OK)
 		return (EX_IOERR);
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
@@ -136,20 +134,20 @@ exec_updating(int argc, char **argv)
 
 	fd = fopen(updatingfile, "r");
 	if (fd == NULL) {
-		warnx("Unable to open: %s", updatingfile);
+		port_warnx("Unable to open: %s", updatingfile);
 		goto cleanup;
 	}
 
 #ifdef HAVE_CAPSICUM
 	cap_rights_init(&rights, CAP_READ);
 	if (cap_rights_limit(fileno(fd), &rights) < 0 && errno != ENOSYS ) {
-		warn("cap_rights_limit() failed");
+		port_warn("cap_rights_limit() failed");
 		fclose(fd);
 		return (EX_SOFTWARE);
 	}
 
 	if (cap_enter() < 0 && errno != ENOSYS) {
-		warn("cap_enter() failed");
+		port_warn("cap_enter() failed");
 		fclose(fd);
 		return (EX_SOFTWARE);
 	}

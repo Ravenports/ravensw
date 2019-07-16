@@ -40,7 +40,6 @@
 #include <assert.h>
 #include <libgen.h>
 #include <string.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
 #include <pwd.h>

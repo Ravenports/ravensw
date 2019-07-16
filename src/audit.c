@@ -34,8 +34,6 @@
 #include <sys/mman.h>
 
 #include <archive.h>
-#include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <getopt.h>
@@ -169,11 +167,11 @@ exec_audit(int argc, char **argv)
 
 	if (pkg_audit_load(audit, audit_file) != EPKG_OK) {
 		if (errno == ENOENT)
-			warnx("vulnxml file %s does not exist. "
+			port_warnx("vulnxml file %s does not exist. "
 					"Try running 'pkg audit -F' first",
 					audit_file);
 		else
-			warn("unable to open vulnxml file %s",
+			port_warn("unable to open vulnxml file %s",
 					audit_file);
 
 		pkg_audit_free(audit);
@@ -190,7 +188,7 @@ exec_audit(int argc, char **argv)
 				version++;
 			}
 			if (pkg_new(&pkg, PKG_FILE) != EPKG_OK)
-				err(EX_OSERR, "malloc");
+				port_err(EX_OSERR, "malloc");
 			if (version != NULL)
 				pkg_set(pkg, PKG_NAME, name, PKG_VERSION, version);
 			else
@@ -214,12 +212,12 @@ exec_audit(int argc, char **argv)
 			kh_destroy_pkgs(check);
 			return (EX_OK);
 		} else if (ret == EPKG_ENOACCESS) {
-			warnx("Insufficient privileges to read the package database");
+			port_warnx("Insufficient privileges to read the package database");
 			pkg_audit_free(audit);
 			kh_destroy_pkgs(check);
 			return (EX_NOPERM);
 		} else if (ret != EPKG_OK) {
-			warnx("Error accessing the package database");
+			port_warnx("Error accessing the package database");
 			pkg_audit_free(audit);
 			kh_destroy_pkgs(check);
 			return (EX_IOERR);
@@ -235,12 +233,12 @@ exec_audit(int argc, char **argv)
 			pkgdb_close(db);
 			pkg_audit_free(audit);
 			kh_destroy_pkgs(check);
-			warnx("Cannot get a read lock on a database, it is locked by another process");
+			port_warnx("Cannot get a read lock on a database, it is locked by another process");
 			return (EX_TEMPFAIL);
 		}
 
 		if ((it = pkgdb_query(db, NULL, MATCH_ALL)) == NULL) {
-			warnx("Error accessing the package database");
+			port_warnx("Error accessing the package database");
 			ret = EX_IOERR;
 		}
 		else {
@@ -268,7 +266,7 @@ exec_audit(int argc, char **argv)
 	/* Now we have vulnxml loaded and check list formed */
 #ifdef HAVE_CAPSICUM
 	if (cap_enter() < 0 && errno != ENOSYS) {
-		warn("cap_enter() failed");
+		port_warn("cap_enter() failed");
 		pkg_audit_free(audit);
 		kh_destroy_pkgs(check);
 		return (EPKG_FATAL);
@@ -307,7 +305,7 @@ exec_audit(int argc, char **argv)
 			   affected, vuln);
 	}
 	else {
-		warnx("cannot process vulnxml");
+		port_warnx("cannot process vulnxml");
 		ret = EX_SOFTWARE;
 		kh_destroy_pkgs(check);
 	}

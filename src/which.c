@@ -30,7 +30,6 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
@@ -133,7 +132,7 @@ exec_which(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
@@ -229,7 +228,7 @@ exec_which(int argc, char **argv)
 					while(pkg_files(pkg, &file) == EPKG_OK) {
 						pkg_asprintf(&match, "%Fn", file);
 						if (match == NULL)
-							err(EX_DATAERR, "pkg_asprintf");
+							port_err(EX_DATAERR, "pkg_asprintf");
 						if(!fnmatch(kv_A(patterns, i), match, 0))
 							printf("%s\n", match);
 						free(match);

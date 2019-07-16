@@ -40,7 +40,6 @@
 #endif
 
 #include <assert.h>
-#include <err.h>
 #include <getopt.h>
 #include <pkg.h>
 #include <stdbool.h>
@@ -51,7 +50,6 @@
 #include <kvec.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <errno.h>
 
 #include "pkgcli.h"
 
@@ -123,13 +121,13 @@ delete_dellist(int fd, const char *cachedir,  dl_list *dl, int total)
 		if (fstatat(fd, relpath, &st, AT_SYMLINK_NOFOLLOW) == -1) {
 			++processed;
 			progressbar_tick(processed, total);
-			warn("can't stat %s", file);
+			port_warn("can't stat %s", file);
 			continue;
 		}
 		if (S_ISDIR(st.st_mode))
 			flag = AT_REMOVEDIR;
 		if (unlinkat(fd, relpath, flag) == -1) {
-			warn("unlink(%s)", file);
+			port_warn("unlink(%s)", file);
 			retcode = EX_SOFTWARE;
 		}
 		free(file);
@@ -222,7 +220,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 	d = fdopendir(tmpfd);
 	if (d == NULL) {
 		close(tmpfd);
-		warnx("Impossible to open the directory %s", dir);
+		port_warnx("Impossible to open the directory %s", dir);
 		return (0);
 	}
 
@@ -240,7 +238,7 @@ recursive_analysis(int fd, struct pkgdb *db, const char *dir,
 			nbfiles++;
 			newfd = openat(fd, ent->d_name, O_DIRECTORY|O_CLOEXEC, 0);
 			if (newfd == -1) {
-				warnx("Impossible to open the directory %s",
+				port_warnx("Impossible to open the directory %s",
 				    path);
 				continue;
 			}
@@ -352,22 +350,22 @@ exec_clean(int argc, char **argv)
 	cachedir = pkg_object_string(pkg_config_get("RAVENSW_CACHEDIR"));
 	cachefd = open(cachedir, O_DIRECTORY|O_CLOEXEC);
 	if (cachefd == -1) {
-		warn("Impossible to open %s", cachedir);
+		port_warn("Impossible to open %s", cachedir);
 		return (errno == ENOENT ? EX_OK : EX_IOERR);
 	}
 
 	retcode = pkgdb_access(PKGDB_MODE_READ, PKGDB_DB_REPO);
 
 	if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to clean old packages");
+		port_warnx("Insufficient privileges to clean old packages");
 		close(cachefd);
 		return (EX_NOPERM);
 	} else if (retcode == EPKG_ENODB) {
-		warnx("No package database installed.  Nothing to do!");
+		port_warnx("No package database installed.  Nothing to do!");
 		close(cachefd);
 		return (EX_OK);
 	} else if (retcode != EPKG_OK) {
-		warnx("Error accessing the package database");
+		port_warnx("Error accessing the package database");
 		close(cachefd);
 		return (EX_SOFTWARE);
 	}
@@ -382,7 +380,7 @@ exec_clean(int argc, char **argv)
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
 		close(cachefd);
-		warnx("Cannot get a read lock on a database, it is locked by "
+		port_warnx("Cannot get a read lock on a database, it is locked by "
 		    "another process");
 		return (EX_TEMPFAIL);
 	}
@@ -391,13 +389,13 @@ exec_clean(int argc, char **argv)
 		cap_rights_init(&rights, CAP_READ, CAP_LOOKUP, CAP_FSTATFS,
 		    CAP_FSTAT, CAP_UNLINKAT);
 		if (cap_rights_limit(cachefd, &rights) < 0 && errno != ENOSYS ) {
-			warn("cap_rights_limit() failed");
+			port_warn("cap_rights_limit() failed");
 			close(cachefd);
 			return (EX_SOFTWARE);
 		}
 
 		if (cap_enter() < 0 && errno != ENOSYS) {
-			warn("cap_enter() failed");
+			port_warn("cap_enter() failed");
 			close(cachefd);
 			return (EX_SOFTWARE);
 		}

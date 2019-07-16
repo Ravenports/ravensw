@@ -47,8 +47,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
-#include <errno.h>
 #include <getopt.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -197,13 +195,13 @@ usage(const char *conffile, const char *reposdir, FILE *out, enum pkg_usage_reas
 			fprintf(out, "\t%-15s%s\n", cmd[i].name, cmd[i].desc);
 
 		if (!pkg_initialized() && pkg_ini(conffile, reposdir, 0) != EPKG_OK)
-			errx(EX_SOFTWARE, "Cannot parse configuration file!");
+			port_errx(EX_SOFTWARE, "Cannot parse configuration file!");
 
 		plugins_enabled = pkg_object_bool(pkg_config_get("PKG_ENABLE_PLUGINS"));
 
 		if (plugins_enabled) {
 			if (pkg_plugins_init() != EPKG_OK)
-				errx(EX_SOFTWARE, "Plugins cannot be loaded");
+				port_errx(EX_SOFTWARE, "Plugins cannot be loaded");
 
 			fprintf(out, "\nCommands provided by plugins:\n");
 
@@ -247,7 +245,7 @@ exec_help(int argc, char **argv)
 	for (i = 0; i < cmd_len; i++) {
 		if (strcmp(cmd[i].name, argv[1]) == 0) {
 			if (asprintf(&manpage, "/usr/bin/man pkg-%s", cmd[i].name) == -1)
-				errx(EX_SOFTWARE, "cannot allocate memory");
+				port_errx(EX_SOFTWARE, "cannot allocate memory");
 
 			system(manpage);
 			free(manpage);
@@ -262,7 +260,7 @@ exec_help(int argc, char **argv)
 		DL_FOREACH(plugins, c) {
 			if (strcmp(c->name, argv[1]) == 0) {
 				if (asprintf(&manpage, "/usr/bin/man pkg-%s", c->name) == -1)
-					errx(EX_SOFTWARE, "cannot allocate memory");
+					port_errx(EX_SOFTWARE, "cannot allocate memory");
 
 				system(manpage);
 				free(manpage);
@@ -290,7 +288,7 @@ exec_help(int argc, char **argv)
 	}
 
 	/* Command name not found */
-	warnx("'%s' is not a valid command.\n", argv[1]);
+	port_warnx("'%s' is not a valid command.\n", argv[1]);
 
 	fprintf(stderr, "See '" PKG_EXEC_NAME
 		" help' for more information on the commands.\n");
@@ -408,17 +406,17 @@ do_activation_test(int argc)
 
 	switch (pkg_status(&count)) {
 	case PKG_STATUS_UNINSTALLED: /* This case shouldn't ever happen... */
-		errx(EX_UNAVAILABLE, "can't execute " PKG_EXEC_NAME "\n");
+		port_errx(EX_UNAVAILABLE, "can't execute " PKG_EXEC_NAME "\n");
 		/* NOTREACHED */
 	case PKG_STATUS_NODB:
-		errx(EX_UNAVAILABLE, "package database non-existent");
+		port_errx(EX_UNAVAILABLE, "package database non-existent");
 		/* NOTREACHED */
 	case PKG_STATUS_NOPACKAGES:
-		errx(EX_UNAVAILABLE, "no packages registered");
+		port_errx(EX_UNAVAILABLE, "no packages registered");
 		/* NOTREACHED */
 	case PKG_STATUS_ACTIVE:
 		if (argc == 0) {
-			warnx("%d packages installed", count);
+			port_warnx("%d packages installed", count);
 			exit(EX_OK);
 		}
 		break;
@@ -436,7 +434,7 @@ export_arg_option (char *arg)
 		*eqp = '\0';
 
 		if ((opt = getenv (arg)) != NULL) {
-			warnx("option %s is defined in the environment to '%s' but command line "
+			port_warnx("option %s is defined in the environment to '%s' but command line "
 					"option redefines it", arg, opt);
 			setenv(arg, eqp + 1, 1);
 		}
@@ -472,11 +470,11 @@ start_process_worker(char *const *save_argv)
 			return;
 		} else {
 			if (child_pid == -1)
-				err(EX_OSERR, "Failed to fork worker process");
+				port_err(EX_OSERR, "Failed to fork worker process");
 
 			while (waitpid(child_pid, &status, 0) == -1) {
 				if (errno != EINTR)
-					err(EX_OSERR, "Child process pid=%d", (int)child_pid);
+					port_err(EX_OSERR, "Child process pid=%d", (int)child_pid);
 			}
 
 			ret = WEXITSTATUS(status);
@@ -538,7 +536,7 @@ expand_aliases(int argc, char ***argv)
 	veclen = sizeof(char *) * (spaces + argc + 1);
 	buf = malloc(veclen + arglen);
 	if (buf == NULL)
-		err(EX_OSERR, "expanding aliases");
+		port_err(EX_OSERR, "expanding aliases");
 
 	newargv = (char **) buf;
 	args = (char *) (buf + veclen);
@@ -643,7 +641,7 @@ main(int argc, char **argv)
 	 * line concept. */
 
 	if (setenv("POSIXLY_CORRECT", "1",  1) == -1)
-		err(EX_SOFTWARE, "setenv() failed");
+		port_err(EX_SOFTWARE, "setenv() failed");
 
 	save_argv = argv;
 
@@ -738,7 +736,7 @@ main(int argc, char **argv)
 
 	if (chroot_path != NULL) {
 		if (chroot(chroot_path) == -1) {
-			err(EX_SOFTWARE, "chroot failed");
+			port_err(EX_SOFTWARE, "chroot failed");
 		}
 	}
 
@@ -746,37 +744,37 @@ main(int argc, char **argv)
 	if (jail_str != NULL) {
 		jid = jail_getid(jail_str);
 		if (jid < 0)
-			errx(1, "%s", jail_errmsg);
+			port_errx(1, "%s", jail_errmsg);
 
 		if (jail_attach(jid) == -1)
-			err(1, "jail_attach(%s)", jail_str);
+			port_err(1, "jail_attach(%s)", jail_str);
 	}
 
 	if (jail_str != NULL || chroot_path != NULL)
 		if (chdir("/") == -1)
-			errx(EX_SOFTWARE, "chdir() failed");
+			port_errx(EX_SOFTWARE, "chdir() failed");
 #endif
 
 	if (rootdir != NULL) {
 		if (realpath(rootdir, realrootdir) == NULL)
-			err(EX_SOFTWARE, "Invalid rootdir");
+			port_err(EX_SOFTWARE, "Invalid rootdir");
 		if (chdir(rootdir) == -1)
-			errx(EX_SOFTWARE, "chdir() failed");
+			port_errx(EX_SOFTWARE, "chdir() failed");
 		if (pkg_set_rootdir(realrootdir) != EPKG_OK)
 			exit(EX_SOFTWARE);
 	}
 
 	if (pkg_ini(conffile, reposdir, init_flags) != EPKG_OK)
-		errx(EX_SOFTWARE, "Cannot parse configuration file!");
+		port_errx(EX_SOFTWARE, "Cannot parse configuration file!");
 
 	if (debug > 0)
 		pkg_set_debug_level(debug);
 
 	if (atexit(&pkg_shutdown) != 0)
-		errx(EX_SOFTWARE, "register pkg_shutdown() to run at exit");
+		port_errx(EX_SOFTWARE, "register pkg_shutdown() to run at exit");
 
 	if (!pkg_compiled_for_same_os_major())
-		warnx("Warning: Major OS version upgrade detected.  Running "
+		port_warnx("Warning: Major OS version upgrade detected.  Running "
 		    "\"pkg-static install -f pkg\" recommended");
 
 
@@ -786,10 +784,10 @@ main(int argc, char **argv)
 		struct pkg_plugin	*p = NULL;
 
 		if (pkg_plugins_init() != EPKG_OK)
-			errx(EX_SOFTWARE, "Plugins cannot be loaded");
+			port_errx(EX_SOFTWARE, "Plugins cannot be loaded");
 
 		if (atexit(&pkg_plugins_shutdown) != 0)
-			errx(EX_SOFTWARE,
+			port_errx(EX_SOFTWARE,
                             "register pkg_plugins_shutdown() to run at exit");
 
 		/* load commands plugins */
@@ -835,7 +833,7 @@ main(int argc, char **argv)
 				    "-f", (void *)NULL);
 				/* NOTREACHED */
 			} else
-				errx(EXIT_FAILURE, "pkg(7) bootstrapper not"
+				port_errx(EXIT_FAILURE, "pkg(7) bootstrapper not"
 				    " found at /usr/sbin/pkg.");
 		}
 	}

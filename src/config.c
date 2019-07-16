@@ -25,7 +25,6 @@
  */
 
 #include <ctype.h>
-#include <err.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <sysexits.h>
@@ -64,7 +63,7 @@ exec_config(int argc, char **argv)
 
 	conf = pkg_config_get(key);
 	if (conf == NULL) {
-		warnx("No such configuration options: %s", key);
+		port_warnx("No such configuration options: %s", key);
 		return (EX_SOFTWARE);
 	}
 

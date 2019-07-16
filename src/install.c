@@ -31,7 +31,6 @@
 
 #include <sys/types.h>
 
-#include <err.h>
 #include <getopt.h>
 #include <libgen.h>
 #include <stdbool.h>
@@ -185,7 +184,7 @@ exec_install(int argc, char **argv)
 	}
 
 	if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to install packages");
+		port_warnx("Insufficient privileges to install packages");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK)
 		return (EX_IOERR);
@@ -204,7 +203,7 @@ exec_install(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, lock_type) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an advisory lock on a database, it is locked by another process");
+		port_warnx("Cannot get an advisory lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

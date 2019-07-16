@@ -28,7 +28,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
@@ -137,13 +136,13 @@ exec_delete(int argc, char **argv)
 				       PKGDB_DB_LOCAL);
 
 	if (retcode == EPKG_ENODB) {
-		warnx("No packages installed.  Nothing to do!");
+		port_warnx("No packages installed.  Nothing to do!");
 		return (EX_OK);
 	} else if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to delete packages");
+		port_warnx("Insufficient privileges to delete packages");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK) {
-		warnx("Error accessing the package database");
+		port_warnx("Error accessing the package database");
 		return (EX_SOFTWARE);
 	}
 
@@ -152,7 +151,7 @@ exec_delete(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, lock_type) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an advisory lock on a database, it is locked by another process");
+		port_warnx("Cannot get an advisory lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

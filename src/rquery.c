@@ -30,7 +30,6 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <getopt.h>
 #include <inttypes.h>
 #include <utstring.h>
@@ -209,7 +208,7 @@ exec_rquery(int argc, char **argv)
 
 	ret = pkgdb_access(PKGDB_MODE_READ, PKGDB_DB_REPO);
 	if (ret == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to query the package database");
+		port_warnx("Insufficient privileges to query the package database");
 		if (sqlcond != NULL)
 			utstring_free(sqlcond);
 		return (EX_NOPERM);

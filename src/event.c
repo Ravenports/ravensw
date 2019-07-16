@@ -45,17 +45,15 @@
 #include <sys/capsicum.h>
 #endif
 
-#include <err.h>
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
 #include <signal.h>
 #include <kvec.h>
 
 #include <utstring.h>
+#include <pkg.h>
 
-#include "pkg.h"
 #include "pkgcli.h"
 
 #define STALL_TIME 5
@@ -96,7 +94,7 @@ cleanup_handler(int dummy __unused)
 
 	if (kv_size(cleanup_list) == 0)
 		return;
-	warnx("\nsignal received, cleaning up");
+	port_warnx("\nsignal received, cleaning up");
 	for (i = 0; i < kv_size(cleanup_list); i++) {
 		ev = kv_A(cleanup_list, i);
 		ev->cb(ev->data);
@@ -190,7 +188,7 @@ event_sandboxed_call(pkg_sandbox_cb func, int fd, void *ud)
 
 	switch(pid) {
 	case -1:
-		warn("fork failed");
+		port_warn("fork failed");
 		return (EPKG_FATAL);
 		break;
 	case 0:
@@ -199,7 +197,7 @@ event_sandboxed_call(pkg_sandbox_cb func, int fd, void *ud)
 		/* Parent process */
 		while (waitpid(pid, &status, 0) == -1) {
 			if (errno != EINTR) {
-				warn("Sandboxed process pid=%d", (int)pid);
+				port_warn("Sandboxed process pid=%d", (int)pid);
 				ret = -1;
 				break;
 			}
@@ -220,13 +218,13 @@ event_sandboxed_call(pkg_sandbox_cb func, int fd, void *ud)
 	rl_zero.rlim_cur = rl_zero.rlim_max = 0;
 #ifndef __sun__
 	if (setrlimit(RLIMIT_NPROC, &rl_zero) == -1)
-		err(EXIT_FAILURE, "Unable to setrlimit(RLIMIT_NPROC)");
+		port_err(EXIT_FAILURE, "Unable to setrlimit(RLIMIT_NPROC)");
 #endif
 
 	/* Here comes child process */
 #ifdef HAVE_CAPSICUM
 	if (cap_enter() < 0 && errno != ENOSYS) {
-		warn("cap_enter() failed");
+		port_warn("cap_enter() failed");
 		return (EPKG_FATAL);
 	}
 #endif
@@ -247,7 +245,7 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 	char *buf = NULL;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) {
-		warn("socketpair failed");
+		port_warn("socketpair failed");
 		return (EPKG_FATAL);
 	}
 
@@ -255,7 +253,7 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 
 	switch(pid) {
 	case -1:
-		warn("fork failed");
+		port_warn("fork failed");
 		return (EPKG_FATAL);
 		break;
 	case 0:
@@ -269,7 +267,7 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 		 */
 		buf = malloc(BUFSIZ);
 		if (buf == NULL) {
-			warn("malloc failed");
+			port_warn("malloc failed");
 			return (EPKG_FATAL);
 		}
 		allocated_len = BUFSIZ;
@@ -278,7 +276,7 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 				allocated_len *= 2;
 				buf = realloc(buf, allocated_len);
 				if (buf == NULL) {
-					warn("realloc failed");
+					port_warn("realloc failed");
 					return (EPKG_FATAL);
 				}
 			}
@@ -286,7 +284,7 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 			r = read(pair[1], buf + off, allocated_len - off);
 			if (r == -1 && errno != EINTR) {
 				free(buf);
-				warn("read failed");
+				port_warn("read failed");
 				return (EPKG_FATAL);
 			}
 			else if (r > 0) {
@@ -298,13 +296,13 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 		*len = off;
 		*result = buf;
 		if (*result == NULL) {
-			warn("malloc failed");
+			port_warn("malloc failed");
 			kill(pid, SIGTERM);
 			ret = EPKG_FATAL;
 		}
 		while (waitpid(pid, &status, 0) == -1) {
 			if (errno != EINTR) {
-				warn("Sandboxed process pid=%d", (int)pid);
+				port_warn("Sandboxed process pid=%d", (int)pid);
 				ret = -1;
 				break;
 			}
@@ -330,12 +328,12 @@ event_sandboxed_get_string(pkg_sandbox_cb func, char **result, int64_t *len,
 	rl_zero.rlim_cur = rl_zero.rlim_max = 0;
 #ifndef __sun__
 	if (setrlimit(RLIMIT_NPROC, &rl_zero) == -1)
-		err(EXIT_FAILURE, "Unable to setrlimit(RLIMIT_NPROC)");
+		port_err(EXIT_FAILURE, "Unable to setrlimit(RLIMIT_NPROC)");
 #endif
 
 #ifdef HAVE_CAPSICUM
 	if (cap_enter() < 0 && errno != ENOSYS) {
-		warn("cap_enter() failed");
+		port_warn("cap_enter() failed");
 		return (EPKG_FATAL);
 	}
 #endif
@@ -556,18 +554,18 @@ event_callback(void *data, struct pkg_event *ev)
 
 	switch(ev->type) {
 	case PKG_EVENT_ERRNO:
-		warnx("%s(%s): %s", ev->e_errno.func, ev->e_errno.arg,
+		port_warnx("%s(%s): %s", ev->e_errno.func, ev->e_errno.arg,
 		    strerror(ev->e_errno.no));
 		break;
 	case PKG_EVENT_ERROR:
-		warnx("%s", ev->e_pkg_error.msg);
+		port_warnx("%s", ev->e_pkg_error.msg);
 		break;
 	case PKG_EVENT_NOTICE:
 		if (!quiet)
 			printf("%s\n", ev->e_pkg_notice.msg);
 		break;
 	case PKG_EVENT_DEVELOPER_MODE:
-		warnx("DEVELOPER_MODE: %s", ev->e_pkg_error.msg);
+		port_warnx("DEVELOPER_MODE: %s", ev->e_pkg_error.msg);
 		break;
 	case PKG_EVENT_UPDATE_ADD:
 		if (quiet || !isatty(STDOUT_FILENO))
@@ -745,7 +743,7 @@ event_callback(void *data, struct pkg_event *ev)
 		    "the repositories\n", ev->e_not_found.pkg_name);
 		break;
 	case PKG_EVENT_MISSING_DEP:
-		warnx("Missing dependency '%s'",
+		port_warnx("Missing dependency '%s'",
 		    pkg_dep_name(ev->e_missing_dep.dep));
 		break;
 	case PKG_EVENT_NOREMOTEDB:
@@ -772,13 +770,13 @@ event_callback(void *data, struct pkg_event *ev)
 		    ev->e_file_missing.file);
 		break;
 	case PKG_EVENT_PLUGIN_ERRNO:
-		warnx("%s: %s(%s): %s",
+		port_warnx("%s: %s(%s): %s",
 		    pkg_plugin_get(ev->e_plugin_errno.plugin, PKG_PLUGIN_NAME),
 		    ev->e_plugin_errno.func, ev->e_plugin_errno.arg,
 		    strerror(ev->e_plugin_errno.no));
 		break;
 	case PKG_EVENT_PLUGIN_ERROR:
-		warnx("%s: %s",
+		port_warnx("%s: %s",
 		    pkg_plugin_get(ev->e_plugin_error.plugin, PKG_PLUGIN_NAME),
 		    ev->e_plugin_error.msg);
 		break;

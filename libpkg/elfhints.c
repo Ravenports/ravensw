@@ -33,8 +33,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -179,7 +177,7 @@ add_dir(const char *hintsfile, const char *name, int trusted)
 		if (strcmp(dirs[i], name) == 0)
 			return;
 	if (ndirs >= MAXDIRS)
-		errx(1, "\"%s\": Too many directories in path", hintsfile);
+		port_errx(1, "\"%s\": Too many directories in path", hintsfile);
 	dirs[ndirs++] = name;
 }
 
@@ -408,7 +406,7 @@ read_dirs_from_file(const char *hintsfile, const char *listfile)
 	int	 linenum;
 
 	if ((fp = fopen(listfile, "r")) == NULL)
-		err(1, "%s", listfile);
+		port_err(1, "%s", listfile);
 
 	linenum = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
@@ -457,12 +455,12 @@ read_elf_hints(const char *hintsfile, int must_exist)
 	if ((fd = open(hintsfile, O_RDONLY)) == -1) {
 		if (errno == ENOENT && !must_exist)
 			return;
-		err(1, "Cannot open \"%s\"", hintsfile);
+		port_err(1, "Cannot open \"%s\"", hintsfile);
 	}
 	if (fstat(fd, &s) == -1)
-		err(1, "Cannot stat \"%s\"", hintsfile);
+		port_err(1, "Cannot stat \"%s\"", hintsfile);
 	if (s.st_size > MAXFILESIZE)
-		errx(1, "\"%s\" is unreasonably large", hintsfile);
+		port_errx(1, "\"%s\" is unreasonably large", hintsfile);
 	/*
 	 * We use a read-write, private mapping so that we can null-terminate
 	 * some strings in it without affecting the underlying file.
@@ -470,14 +468,14 @@ read_elf_hints(const char *hintsfile, int must_exist)
 	mapbase = mmap(NULL, s.st_size, PROT_READ|PROT_WRITE,
 	    MAP_PRIVATE, fd, 0);
 	if (mapbase == MAP_FAILED)
-		err(1, "Cannot mmap \"%s\"", hintsfile);
+		port_err(1, "Cannot mmap \"%s\"", hintsfile);
 	close(fd);
 
 	hdr = (struct elfhints_hdr *)mapbase;
 	if (hdr->magic != ELFHINTS_MAGIC)
-		errx(1, "\"%s\": invalid file format", hintsfile);
+		port_errx(1, "\"%s\": invalid file format", hintsfile);
 	if (hdr->version != 1)
-		errx(1, "\"%s\": unrecognized file version (%d)", hintsfile,
+		port_errx(1, "\"%s\": unrecognized file version (%d)", hintsfile,
 		    hdr->version);
 
 	strtab = (char *)mapbase + hdr->strtab;
@@ -519,11 +517,11 @@ write_elf_hints(const char *hintsfile)
 
 	xasprintf(&tempname, "%s.XXXXXX", hintsfile);
 	if ((fd = mkstemp(tempname)) ==  -1)
-		err(1, "mkstemp(%s)", tempname);
+		port_err(1, "mkstemp(%s)", tempname);
 	if (fchmod(fd, 0444) == -1)
-		err(1, "fchmod(%s)", tempname);
+		port_err(1, "fchmod(%s)", tempname);
 	if ((fp = fdopen(fd, "wb")) == NULL)
-		err(1, "fdopen(%s)", tempname);
+		port_err(1, "fdopen(%s)", tempname);
 
 	hdr.magic = ELFHINTS_MAGIC;
 	hdr.version = 1;
@@ -543,19 +541,19 @@ write_elf_hints(const char *hintsfile)
 
 	/* Write the header. */
 	if (fwrite(&hdr, 1, sizeof hdr, fp) != sizeof hdr)
-		err(1, "%s: write error", tempname);
+		port_err(1, "%s: write error", tempname);
 	/* Write the strings. */
 	if (ndirs > 0) {
 		if (fputs(dirs[0], fp) == EOF)
-			err(1, "%s: write error", tempname);
+			port_err(1, "%s: write error", tempname);
 		for (i = 1;  i < ndirs;  i++)
 			if (fprintf(fp, ":%s", dirs[i]) < 0)
-				err(1, "%s: write error", tempname);
+				port_err(1, "%s: write error", tempname);
 	}
 	if (putc('\0', fp) == EOF || fclose(fp) == EOF)
-		err(1, "%s: write error", tempname);
+		port_err(1, "%s: write error", tempname);
 
 	if (rename(tempname, hintsfile) == -1)
-		err(1, "rename %s to %s", tempname, hintsfile);
+		port_err(1, "rename %s to %s", tempname, hintsfile);
 	free(tempname);
 }

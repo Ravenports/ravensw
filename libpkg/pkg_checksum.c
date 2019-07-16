@@ -27,7 +27,6 @@
 #include <sys/stat.h>
 
 #include <fcntl.h>
-#include <errno.h>
 #include "pkg.h"
 #include "private/pkg.h"
 #include "private/event.h"

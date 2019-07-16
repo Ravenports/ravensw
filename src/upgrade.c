@@ -32,12 +32,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <sysexits.h>
 #include <unistd.h>
-#include <errno.h>
 #include <signal.h>
 #include <khash.h>
 #include <utstring.h>
@@ -90,12 +88,12 @@ check_vulnerable(struct pkg_audit *audit, struct pkgdb *db, int sock)
 
 	out = fdopen(sock, "w");
 	if (out == NULL) {
-		warn("unable to open stream");
+		port_warn("unable to open stream");
 		return;
 	}
 
 	if ((it = pkgdb_query(db, NULL, MATCH_ALL)) == NULL) {
-		warnx("Error accessing the package database");
+		port_warnx("Error accessing the package database");
 		pkg_audit_free(audit);
 		fclose(out);
 		return;
@@ -128,7 +126,7 @@ check_vulnerable(struct pkg_audit *audit, struct pkgdb *db, int sock)
 
 
 	if (pkg_audit_load(audit, NULL) != EPKG_OK) {
-		warn("unable to open vulnxml file");
+		port_warn("unable to open vulnxml file");
 		fclose(out);
 		pkg_audit_free(audit);
 		kh_destroy_pkgs(check);
@@ -139,7 +137,7 @@ check_vulnerable(struct pkg_audit *audit, struct pkgdb *db, int sock)
 
 #ifdef HAVE_CAPSICUM
 	if (cap_enter() < 0 && errno != ENOSYS) {
-		warn("cap_enter() failed");
+		port_warn("cap_enter() failed");
 		pkg_audit_free(audit);
 		kh_destroy_pkgs(check);
 		fclose(out);
@@ -163,7 +161,7 @@ check_vulnerable(struct pkg_audit *audit, struct pkgdb *db, int sock)
 		fflush(out);
 	}
 	else {
-		warnx("cannot process vulnxml");
+		port_warnx("cannot process vulnxml");
 		kh_destroy_pkgs(check);
 	}
 
@@ -193,7 +191,7 @@ add_vulnerable_upgrades(struct pkg_jobs	*jobs, struct pkgdb *db)
 
 	/* Create socketpair to execute audit check in a detached mode */
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) == -1)  {
-		warnx("Cannot create socketpair");
+		port_warnx("Cannot create socketpair");
 
 		return (EPKG_FATAL);
 	}
@@ -208,7 +206,7 @@ add_vulnerable_upgrades(struct pkg_jobs	*jobs, struct pkgdb *db)
 		exit(EXIT_SUCCESS);
 		break;
 	case -1:
-		warnx("Cannot fork");
+		port_warnx("Cannot fork");
 		return (EPKG_FATAL);
 	default:
 		/* Parent code */
@@ -217,7 +215,7 @@ add_vulnerable_upgrades(struct pkg_jobs	*jobs, struct pkgdb *db)
 		in = fdopen(sp[1], "r");
 
 		if (in == NULL) {
-			warnx("Cannot create stream");
+			port_warnx("Cannot create stream");
 			close(sp[1]);
 
 			return (EPKG_FATAL);
@@ -236,7 +234,7 @@ add_vulnerable_upgrades(struct pkg_jobs	*jobs, struct pkgdb *db)
 		}
 
 		if (pkg_jobs_add(jobs, MATCH_EXACT, &line, 1) == EPKG_FATAL) {
-			warnx("Cannot update %s which is vulnerable", line);
+			port_warnx("Cannot update %s which is vulnerable", line);
 			/* TODO: assume it non-fatal for now */
 		}
 	}
@@ -248,14 +246,14 @@ add_vulnerable_upgrades(struct pkg_jobs	*jobs, struct pkgdb *db)
 			continue;
 		}
 		else {
-			warnx("Cannot wait");
+			port_warnx("Cannot wait");
 
 			return (EPKG_FATAL);
 		}
 	}
 
 	if (ret != EPKG_OK) {
-		warn("Cannot get the complete list of vulnerable packages");
+		port_warn("Cannot get the complete list of vulnerable packages");
 	}
 
 	return (ret);
@@ -363,7 +361,7 @@ exec_upgrade(int argc, char **argv)
 	}
 
 	if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privilege to upgrade packages");
+		port_warnx("Insufficient privilege to upgrade packages");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK)
 		return (EX_IOERR);
@@ -380,7 +378,7 @@ exec_upgrade(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, lock_type) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an advisory lock on a database, it is locked by another process");
+		port_warnx("Cannot get an advisory lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

@@ -34,7 +34,6 @@
 #endif
 
 #include <assert.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <spawn.h>

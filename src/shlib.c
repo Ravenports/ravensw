@@ -26,7 +26,6 @@
 
 #include <sys/param.h>
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <pkg.h>
@@ -176,7 +175,7 @@ exec_shlib(int argc, char **argv)
 	}
 
 	if (argc >= 2) {
-		warnx("multiple libraries per run not allowed");
+		port_warnx("multiple libraries per run not allowed");
 		return (EX_USAGE);
 	}
 
@@ -191,7 +190,7 @@ exec_shlib(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

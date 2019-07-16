@@ -25,7 +25,6 @@
 #define READPASSPHRASE_COMPAT_H
 
 #include <ctype.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>

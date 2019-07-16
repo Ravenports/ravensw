@@ -43,6 +43,7 @@ extern "C" {
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <errno.h>
 
 /* The expected name of the pkg(8) binary executable. */
 #ifndef PKG_EXEC_NAME
@@ -1728,6 +1729,15 @@ int   port_humanize_number(char *buf, size_t len, int64_t quotient,
 /* Values for port_humanize_number's scale parameter. */
 #define HN_GETSCALE	0x10
 #define HN_AUTOSCALE	0x20
+
+#define port_err(exitcode, format, args...) \
+	port_errx(exitcode, format ": %s", ## args, strerror(errno))
+#define port_errx(exitcode, format, args...) {\
+	port_warnx(format, ## args); exit(exitcode); }
+#define port_warn(format, args...) \
+	port_warnx(format ": %s", ## args, strerror(errno))
+#define port_warnx(format, args...) \
+	fprintf(stderr, format "\n", ## args)
 
 #ifdef __cplusplus
 }

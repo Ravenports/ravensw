@@ -36,8 +36,6 @@
 #include <sys/capsicum.h>
 #endif
 
-#include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <pkg.h>
@@ -215,7 +213,7 @@ exec_info(int argc, char **argv)
 			else if (strcasecmp(optarg, "ucl") == 0)
 				opt |= INFO_RAW_UCL;
 			else
-				errx(EX_USAGE, "Invalid format '%s' for the "
+				port_errx(EX_USAGE, "Invalid format '%s' for the "
 				    "raw output, expecting json, json-compact "
 				    "or yaml", optarg);
 			break;
@@ -265,7 +263,7 @@ exec_info(int argc, char **argv)
 
 	if (file != NULL) {
 		if ((fd = open(file, O_RDONLY)) == -1) {
-			warn("Unable to open %s", file);
+			port_warn("Unable to open %s", file);
 			return (EX_IOERR);
 		}
 
@@ -273,13 +271,13 @@ exec_info(int argc, char **argv)
 #ifdef HAVE_CAPSICUM
 		cap_rights_init(&rights, CAP_READ, CAP_FSTAT);
 		if (cap_rights_limit(fd, &rights) < 0 && errno != ENOSYS ) {
-			warn("cap_rights_limit() failed");
+			port_warn("cap_rights_limit() failed");
 			close(fd);
 			return (EX_SOFTWARE);
 		}
 
 		if (cap_enter() < 0 && errno != ENOSYS) {
-			warn("cap_enter() failed");
+			port_warn("cap_enter() failed");
 			close(fd);
 			return (EX_SOFTWARE);
 		}
@@ -305,7 +303,7 @@ exec_info(int argc, char **argv)
 
 	ret = pkgdb_access(PKGDB_MODE_READ, PKGDB_DB_LOCAL);
 	if (ret == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to query the package database");
+		port_warnx("Insufficient privileges to query the package database");
 		return (EX_NOPERM);
 	} else if (ret == EPKG_ENODB) {
 		if (match == MATCH_ALL)
@@ -313,7 +311,7 @@ exec_info(int argc, char **argv)
 		if (origin_search)
 			return (EX_OK);
 		if (!quiet)
-			warnx("No packages installed");
+			port_warnx("No packages installed");
 		return (EX_UNAVAILABLE);
 	} else if (ret != EPKG_OK)
 		return (EX_IOERR);
@@ -324,7 +322,7 @@ exec_info(int argc, char **argv)
 	drop_privileges();
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
@@ -510,7 +508,7 @@ exec_info(int argc, char **argv)
 
 		if (retcode == EX_OK && !gotone && match != MATCH_ALL) {
 			if (!quiet)
-				warnx("No package(s) matching %s", argv[i]);
+				port_warnx("No package(s) matching %s", argv[i]);
 			retcode = EX_SOFTWARE;
 		}
 

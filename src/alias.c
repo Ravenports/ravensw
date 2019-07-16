@@ -26,8 +26,6 @@
 
 #include <sys/param.h>
 
-#include <err.h>
-#include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <string.h>
@@ -108,7 +106,7 @@ exec_alias(int argc, char **argv)
 			else
 				printf("%-20s '%s'\n", argv[i], pkg_object_string(alias));
 		} else {
-			warnx("No such alias: '%s'", argv[i]);
+			port_warnx("No such alias: '%s'", argv[i]);
 			ret = EX_UNAVAILABLE;
 		}
 	}

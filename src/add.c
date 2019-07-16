@@ -27,8 +27,6 @@
 
 #include <sys/param.h>
 
-#include <err.h>
-#include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,7 +121,7 @@ exec_add(int argc, char **argv)
 			       PKGDB_MODE_CREATE,
 			       PKGDB_DB_LOCAL);
 	if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to add packages");
+		port_warnx("Insufficient privileges to add packages");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK)
 		return (EX_IOERR);
@@ -133,7 +131,7 @@ exec_add(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_EXCLUSIVE) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an exclusive lock on a database, it is locked by another process");
+		port_warnx("Cannot get an exclusive lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
@@ -157,9 +155,9 @@ exec_add(int argc, char **argv)
 			   testing for that at the moment */
 
 			if (strcmp(file, "-") != 0 && access(file, F_OK) != 0) {
-				warn("%s", file);
+				port_warn("%s", file);
 				if (errno == ENOENT)
-					warnx("Was 'pkg install %s' meant?", file);
+					port_warnx("Was 'pkg install %s' meant?", file);
 				utstring_printf(failedpkgs, "%s", argv[i]);
 				if (i != argc - 1)
 					utstring_printf(failedpkgs, ", ");

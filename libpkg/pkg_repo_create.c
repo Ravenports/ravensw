@@ -50,7 +50,6 @@
 #include <stdbool.h>
 #include <sysexits.h>
 #include <unistd.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <math.h>
 #include <poll.h>

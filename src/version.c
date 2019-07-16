@@ -33,8 +33,6 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
-#include <err.h>
-#include <errno.h>
 #include <getopt.h>
 #include <fcntl.h>
 #include <pkg.h>
@@ -232,7 +230,7 @@ have_ports(const char **portsdir, bool show_error)
 
 	*portsdir = pkg_object_string(pkg_config_get("PORTSDIR"));
 	if (*portsdir == NULL)
-		err(1, "Cannot get portsdir config entry!");
+		port_err(1, "Cannot get portsdir config entry!");
 
 	snprintf(portsdirmakefile, sizeof(portsdirmakefile),
 		 "%s/Makefile", *portsdir);
@@ -240,7 +238,7 @@ have_ports(const char **portsdir, bool show_error)
 	have_ports = (stat(portsdirmakefile, &sb) == 0 && S_ISREG(sb.st_mode));
 
 	if (show_error && !have_ports)
-		warnx("Cannot find ports tree: unable to open %s",
+		port_warnx("Cannot find ports tree: unable to open %s",
 		      portsdirmakefile);
 
 	return (have_ports);
@@ -262,13 +260,13 @@ indexfilename(char *filebuf, size_t filebuflen)
 		indexdir = pkg_object_string(pkg_config_get("PORTSDIR"));
 
 		if (indexdir == NULL)
-			err(EX_SOFTWARE, "Cannot get either INDEXDIR or "
+			port_err(EX_SOFTWARE, "Cannot get either INDEXDIR or "
 			    "PORTSDIR config entry!");
 	}
 
 	indexfile = pkg_object_string(pkg_config_get("INDEXFILE"));
 	if (indexfile == NULL)
-		err(EX_SOFTWARE, "Cannot get INDEXFILE config entry!");
+		port_err(EX_SOFTWARE, "Cannot get INDEXFILE config entry!");
 
 	strlcpy(filebuf, indexdir, filebuflen);
 
@@ -298,7 +296,7 @@ hash_indexfile(const char *indexfilename)
 
 	indexfile = fopen(indexfilename, "r");
 	if (!indexfile)
-		err(EX_NOINPUT, "Unable to open %s", indexfilename);
+		port_err(EX_NOINPUT, "Unable to open %s", indexfilename);
 
 	while (getline(&line, &linecap, indexfile) > 0) {
 		/* line is pkgname|portdir|... */
@@ -309,7 +307,7 @@ hash_indexfile(const char *indexfilename)
 		name = version;
 		version = strrchr(version, '-');
 		if (version == NULL)
-			errx(EX_IOERR, "Invalid INDEX file format: %s",
+			port_errx(EX_IOERR, "Invalid INDEX file format: %s",
 			    indexfilename);
 		version[0] = '\0';
 		version++;
@@ -322,7 +320,7 @@ hash_indexfile(const char *indexfilename)
 
 		if (entry == NULL || entry->version == NULL ||
 		    entry->name == NULL)
-			err(EX_SOFTWARE, "Out of memory while reading %s",
+			port_err(EX_SOFTWARE, "Out of memory while reading %s",
 			    indexfilename);
 
 		if (index == NULL)
@@ -341,7 +339,7 @@ hash_indexfile(const char *indexfilename)
 	fclose(indexfile);
 
 	if (index == NULL)
-		errx(EX_DATAERR, "No valid entries found in '%s'",
+		port_errx(EX_DATAERR, "No valid entries found in '%s'",
 		    indexfilename);
 
 	return (index);
@@ -401,7 +399,7 @@ have_indexfile(const char **indexfile, char *filebuf, size_t filebuflen,
 		have_indexfile = false;
 
 	if (show_error && !have_indexfile)
-		warn("Can't access %s", *indexfile);
+		port_warn("Can't access %s", *indexfile);
 	
 	return (have_indexfile);
 }
@@ -431,7 +429,7 @@ do_source_index(unsigned int opt, char limchar, char *pattern, match_t match,
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
 		free_index(index);
-		warnx("Cannot get a read lock on the database. "
+		port_warnx("Cannot get a read lock on the database. "
 		      "It is locked by another process");
 		return (EX_TEMPFAIL);
 	}
@@ -504,7 +502,7 @@ do_source_remote(unsigned int opt, char limchar, char *pattern, match_t match,
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database. "
+		port_warnx("Cannot get a read lock on a database. "
 		      "It is locked by another process");
 		return (EX_TEMPFAIL);
 	}
@@ -570,12 +568,12 @@ exec_buf(UT_string *res, char **argv) {
 	posix_spawn_file_actions_t actions;
 
 	if (pipe(pfd) < 0) {
-		warn("pipe()");
+		port_warn("pipe()");
 		return (0);
 	}
 
 	if ((spawn_err = posix_spawn_file_actions_init(&actions)) != 0) {
-		warnx("%s:%s", argv[0], strerror(spawn_err));
+		port_warnx("%s:%s", argv[0], strerror(spawn_err));
 		return (0);
 	}
 
@@ -588,7 +586,7 @@ exec_buf(UT_string *res, char **argv) {
 	    (spawn_err = posix_spawnp(&pid, argv[0], &actions, NULL,
 	    argv, environ)) != 0) {
 		posix_spawn_file_actions_destroy(&actions);
-		warnx("%s:%s", argv[0], strerror(spawn_err));
+		port_warnx("%s:%s", argv[0], strerror(spawn_err));
 		return (0);
 	}
 	posix_spawn_file_actions_destroy(&actions);
@@ -762,14 +760,14 @@ do_source_ports(unsigned int opt, char limchar, char *pattern, match_t match,
 	}
 
 	if (chdir(portsdir) != 0)
-		err(EX_SOFTWARE, "Cannot chdir to %s\n", portsdir); 
+		port_err(EX_SOFTWARE, "Cannot chdir to %s\n", portsdir); 
 
 	if (pkgdb_open(&db, PKGDB_DEFAULT) != EPKG_OK)
 		return (EX_IOERR);
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database. "
+		port_warnx("Cannot get a read lock on a database. "
 		      "It is locked by another process");
 		return (EX_TEMPFAIL);
 	}
@@ -981,7 +979,7 @@ exec_version(int argc, char **argv)
 				opt |= VERSION_SOURCE_REMOTE;
 				break;
 			default:
-				warnx("Invalid VERSION_SOURCE"
+				port_warnx("Invalid VERSION_SOURCE"
 				    " in configuration.");
 			}
 		}

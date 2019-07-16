@@ -29,7 +29,6 @@
 
 #include <sys/types.h>
 
-#include <err.h>
 #include <getopt.h>
 #include <libgen.h>
 #include <stdbool.h>
@@ -148,7 +147,7 @@ exec_fetch(int argc, char **argv)
 	retcode = pkgdb_access(mode, PKGDB_DB_REPO);
 
 	if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to access repo catalogue");
+		port_warnx("Insufficient privileges to access repo catalogue");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK)
 		return (EX_IOERR);
@@ -157,7 +156,7 @@ exec_fetch(int argc, char **argv)
 		retcode = pkgdb_access(PKGDB_MODE_READ, PKGDB_DB_LOCAL);
 
 		if (retcode == EPKG_ENOACCESS) {
-			warnx("Insufficient privileges to access the package database");
+			port_warnx("Insufficient privileges to access the package database");
 			return (EX_NOPERM);
 		} else if (retcode != EPKG_OK)
 			return (EX_IOERR);
@@ -173,7 +172,7 @@ exec_fetch(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

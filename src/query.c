@@ -30,7 +30,6 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <getopt.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -954,11 +953,11 @@ exec_query(int argc, char **argv)
 
 	ret = pkgdb_access(PKGDB_MODE_READ, PKGDB_DB_LOCAL);
 	if (ret == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to query the package database");
+		port_warnx("Insufficient privileges to query the package database");
 		return (EX_NOPERM);
 	} else if (ret == EPKG_ENODB) {
 		if (!quiet)
-			warnx("No packages installed");
+			port_warnx("No packages installed");
 		return (EX_OK);
 	} else if (ret != EPKG_OK)
 		return (EX_IOERR);
@@ -970,7 +969,7 @@ exec_query(int argc, char **argv)
 	drop_privileges();
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

@@ -37,7 +37,6 @@
 
 #include <ctype.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <fetch.h>

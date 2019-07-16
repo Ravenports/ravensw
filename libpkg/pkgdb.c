@@ -40,7 +40,6 @@
 #include <sys/mount.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <regex.h>
 #include <grp.h>
 #include <stdlib.h>

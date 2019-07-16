@@ -40,7 +40,6 @@
 #include <dirent.h>
 #endif
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,7 +98,7 @@ pkg_create_matches(int argc, char **argv, match_t match,
 	/* XXX: get rid of hardcoded timeouts */
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
@@ -116,14 +115,14 @@ pkg_create_matches(int argc, char **argv, match_t match,
 		foundone = false;
 		while ((ret = pkgdb_it_next(it, &pkg, query_flags)) == EPKG_OK) {
 			if ((e = malloc(sizeof(struct pkg_entry))) == NULL)
-				err(1, "malloc(pkg_entry)");
+				port_err(1, "malloc(pkg_entry)");
 			e->pkg = pkg;
 			pkg = NULL;
 			DL_APPEND(pkg_head, e);
 			foundone = true;
 		}
 		if (!foundone) {
-			warnx("No installed package matching \"%s\" found\n",
+			port_warnx("No installed package matching \"%s\" found\n",
 			    argv[i]);
 			retcode++;
 		}
@@ -263,7 +262,7 @@ exec_create(int argc, char **argv)
 	}
 
 	if (metadatadir == NULL && manifest == NULL && rootdir != NULL) {
-		warnx("Do not specify a rootdir without also specifying "
+		port_warnx("Do not specify a rootdir without also specifying "
 		    "either a metadatadir or manifest");
 		usage_create();
 		return (EX_USAGE);

@@ -29,7 +29,6 @@
 #include <sys/mman.h>
 
 #include <archive.h>
-#include <err.h>
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <stdio.h>

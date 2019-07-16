@@ -26,7 +26,6 @@
 
 #include <sys/wait.h>
 
-#include <errno.h>
 #include <fcntl.h>
 #include <spawn.h>
 #include <string.h>

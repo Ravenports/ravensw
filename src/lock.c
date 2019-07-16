@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,7 +104,7 @@ do_lock_unlock(struct pkgdb *db, int match, const char *pkgname,
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_EXCLUSIVE) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an exclusive lock on database. "
+		port_warnx("Cannot get an exclusive lock on database. "
 		      "It is locked by another process");
 		return (EX_TEMPFAIL);
 	}
@@ -269,13 +268,13 @@ exec_lock_unlock(int argc, char **argv, enum action action)
 		if (match == MATCH_ALL)
 			return (EX_OK);
 		if (!quiet)
-			warnx("No packages installed.  Nothing to do!");
+			port_warnx("No packages installed.  Nothing to do!");
 		return (EX_OK);
 	} else if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to modify the package database");
+		port_warnx("Insufficient privileges to modify the package database");
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK) {
-		warnx("Error accessing the package database");
+		port_warnx("Error accessing the package database");
 		return (EX_SOFTWARE);
 	}
 

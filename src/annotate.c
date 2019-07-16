@@ -30,7 +30,6 @@
 
 #include <sys/types.h>
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,7 +175,7 @@ read_input(void)
 			if (feof(stdin))
 				break;
 			if (ferror(stdin))
-				err(EX_NOINPUT, "Failed to read stdin");
+				port_err(EX_NOINPUT, "Failed to read stdin");
 		}
 		utstring_printf(input, "%c", ch);
 	}
@@ -301,15 +300,15 @@ exec_annotate(int argc, char **argv)
 			goto cleanup;
 		}
 		if (!quiet)
-			warnx("No packages installed.  Nothing to do!");
+			port_warnx("No packages installed.  Nothing to do!");
 		exitcode = EX_OK;
 		goto cleanup;
 	} else if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to modify the package database");
+		port_warnx("Insufficient privileges to modify the package database");
 		exitcode = EX_NOPERM;
 		goto cleanup;
 	} else if (retcode != EPKG_OK) {
-		warnx("Error accessing the package database");
+		port_warnx("Error accessing the package database");
 		exitcode = EX_SOFTWARE;
 		goto cleanup;
 	}
@@ -323,7 +322,7 @@ exec_annotate(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, lock_type) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an exclusive lock on a database, it is locked by another process");
+		port_warnx("Cannot get an exclusive lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

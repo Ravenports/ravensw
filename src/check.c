@@ -30,7 +30,6 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 
-#include <err.h>
 #include <assert.h>
 #include <getopt.h>
 #include <sysexits.h>
@@ -135,7 +134,7 @@ add_missing_dep(struct pkg_dep *d, struct deps_entry **dh, int *nbpkgs)
 	}
 
 	if ((e = calloc(1, sizeof(struct deps_entry))) == NULL)
-		err(1, "calloc(deps_entry)");
+		port_err(1, "calloc(deps_entry)");
 
 	e->name = strdup(name);
 
@@ -170,7 +169,7 @@ fix_deps(struct pkgdb *db, struct deps_entry *dh, int nbpkgs)
 	assert(nbpkgs > 0);
 
 	if ((pkgs = calloc(nbpkgs, sizeof (char *))) == NULL)
-		err(1, "calloc()");
+		port_err(1, "calloc()");
 
 	DL_FOREACH(dh, e)
 		pkgs[i++] = e->name;
@@ -208,7 +207,7 @@ fix_deps(struct pkgdb *db, struct deps_entry *dh, int nbpkgs)
 	if (rc) {
 		if (pkgdb_access(PKGDB_MODE_WRITE, PKGDB_DB_LOCAL) ==
 		    EPKG_ENOACCESS) {
-			warnx("Insufficient privileges to modify the package "
+			port_warnx("Insufficient privileges to modify the package "
 			      "database");
 
 			goto cleanup;
@@ -381,18 +380,18 @@ exec_check(int argc, char **argv)
 
 	if (ret == EPKG_ENODB) {
 		if (!quiet)
-			warnx("No packages installed.  Nothing to do!");
+			port_warnx("No packages installed.  Nothing to do!");
 		return (EX_OK);
 	} else if (ret == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to access the package database");
+		port_warnx("Insufficient privileges to access the package database");
 		return (EX_NOPERM);
 	} else if (ret != EPKG_OK) {
-		warnx("Error accessing the package database");
+		port_warnx("Error accessing the package database");
 		return (EX_SOFTWARE);
 	}
 
 	if (pkgdb_access(PKGDB_MODE_WRITE, PKGDB_DB_LOCAL) == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges");
+		port_warnx("Insufficient privileges");
 		return (EX_NOPERM);
 	}
 
@@ -402,7 +401,7 @@ exec_check(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_ADVISORY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get an advisory lock on a database, it is locked by another process");
+		port_warnx("Cannot get an advisory lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 
@@ -417,7 +416,7 @@ exec_check(int argc, char **argv)
 		}
 		nbactions = pkgdb_it_count(it);
 		if (nbactions == 0 && match != MATCH_ALL) {
-			warnx("No packages matching: %s", argv[i]);
+			port_warnx("No packages matching: %s", argv[i]);
 			rc = EXIT_FAILURE;
 			goto cleanup;
 		}

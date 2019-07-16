@@ -28,7 +28,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,7 +94,7 @@ match_optarg(const cliopt *optlist, const char *opt)
 		if (strncmp(opt, optlist[i].option, optlen) != 0)
 			continue;
 		if (matched > 0) {
-			warnx("\"%s\" is ambiguous. Was "
+			port_warnx("\"%s\" is ambiguous. Was "
 			      "\"%s\" or \"%s\" meant?", opt,
 			      optlist[matched].option, optlist[i].option);
 			key = '\0';
@@ -131,7 +130,7 @@ search_label_opt(const char *optionarg)
 		break;
 	default:
 		usage_search();
-		errx(EX_USAGE, "Unknown search/label option: %s", optionarg);
+		port_errx(EX_USAGE, "Unknown search/label option: %s", optionarg);
 		/* NOTREACHED */
 	}
 	return field;
@@ -209,7 +208,7 @@ modifier_opt(const char *optionarg)
 		break;
 	default:
 		usage_search();
-		errx(EX_USAGE, "Unkown modifier option %s", optionarg);
+		port_errx(EX_USAGE, "Unkown modifier option %s", optionarg);
 		/* NOTREACHED */
 	}
 	return opt;
@@ -351,7 +350,7 @@ exec_search(int argc, char **argv)
 			else if (strcasecmp(optarg, "ucl") == 0)
 				opt |= INFO_RAW_UCL;
 			else
-				errx(EX_USAGE, "Invalid format '%s' for the "
+				port_errx(EX_USAGE, "Invalid format '%s' for the "
 				    "raw output, expecting json, json-compact "
 				    "or yaml", optarg);
 			break;
@@ -411,11 +410,11 @@ exec_search(int argc, char **argv)
 	ret = pkgdb_access(PKGDB_MODE_READ, PKGDB_DB_REPO);
 	switch(ret) {
 	case EPKG_ENOACCESS:
-		warnx("Insufficient privileges to query the package database");
+		port_warnx("Insufficient privileges to query the package database");
 		return (EX_NOPERM);
 	case EPKG_ENODB:
 		if (!auto_update) {
-			warnx("Unable to open remote repository catalogues. Try running '%s update' first.", getprogname());
+			port_warnx("Unable to open remote repository catalogues. Try running '%s update' first.", getprogname());
 			return (EX_IOERR);
 		}
 		break;

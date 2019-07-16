@@ -29,7 +29,6 @@
 
 #include <sys/param.h>
 
-#include <err.h>
 #include <stdio.h>
 #include <pkg.h>
 #include <sysexits.h>
@@ -84,7 +83,7 @@ exec_register(int argc, char **argv)
 	};
 
 	if (pkg_new(&pkg, PKG_INSTALLED) != EPKG_OK)
-		err(EX_OSERR, "malloc");
+		port_err(EX_OSERR, "malloc");
 
 	while ((ch = getopt_long(argc, argv, "+Adf:i:lM:m:t", longopts, NULL)) != -1) {
 		switch (ch) {
@@ -114,7 +113,7 @@ exec_register(int argc, char **argv)
 			location = optarg;
 			break;
 		default:
-			warnx("Unrecognised option -%c\n", ch);
+			port_warnx("Unrecognised option -%c\n", ch);
 			usage_register();
 			pkg_free(pkg);
 			return (EX_USAGE);
@@ -126,7 +125,7 @@ exec_register(int argc, char **argv)
 			       PKGDB_MODE_CREATE,
 			       PKGDB_DB_LOCAL);
 	if (retcode == EPKG_ENOACCESS) {
-		warnx("Insufficient privileges to register packages");
+		port_warnx("Insufficient privileges to register packages");
 		pkg_free(pkg);
 		return (EX_NOPERM);
 	} else if (retcode != EPKG_OK) {
@@ -152,7 +151,7 @@ exec_register(int argc, char **argv)
 	 */
 
 	if (mfile != NULL && mdir != NULL) {
-		warnx("Cannot use both -m and -M together");
+		port_warnx("Cannot use both -m and -M together");
 		usage_register();
 		pkg_free(pkg);
 		return (EX_USAGE);
@@ -160,14 +159,14 @@ exec_register(int argc, char **argv)
 
 
 	if (mfile == NULL && mdir == NULL) {
-		warnx("One of either -m or -M flags is required");
+		port_warnx("One of either -m or -M flags is required");
 		usage_register();
 		pkg_free(pkg);
 		return (EX_USAGE);
 	}
 
 	if (testing_mode && input_path != NULL) {
-		warnx("-i incompatible with -t option");
+		port_warnx("-i incompatible with -t option");
 		usage_register();
 		pkg_free(pkg);
 		return (EX_USAGE);
@@ -188,7 +187,7 @@ exec_register(int argc, char **argv)
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_EXCLUSIVE) != EPKG_OK) {
 		pkgdb_close(db);
 		pkg_free(pkg);
-		warnx("Cannot get an exclusive lock on a database, it is locked by another process");
+		port_warnx("Cannot get an exclusive lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

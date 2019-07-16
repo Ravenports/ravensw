@@ -39,7 +39,6 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <assert.h>
-#include <errno.h>
 #include <search.h>
 #include <stdbool.h>
 #include <stdlib.h>

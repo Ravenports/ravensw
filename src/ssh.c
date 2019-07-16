@@ -36,8 +36,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <err.h>
-#include <errno.h>
 
 #include <pkg.h>
 
@@ -70,20 +68,20 @@ exec_ssh(int argc, char **argv __unused)
 		restricted = "/";
 
 	if ((fd = open(restricted, O_DIRECTORY|O_RDONLY|O_CLOEXEC)) < 0) {
-		warn("Impossible to open the restricted directory");
+		port_warn("Impossible to open the restricted directory");
 		return (EX_SOFTWARE);
 	}
 
 #ifdef HAVE_CAPSICUM
 	cap_rights_init(&rights, CAP_READ, CAP_FSTATAT, CAP_FCNTL);
 	if (cap_rights_limit(fd, &rights) < 0 && errno != ENOSYS ) {
-		warn("cap_rights_limit() failed");
+		port_warn("cap_rights_limit() failed");
 		close(fd);
 		return (EX_SOFTWARE);
 	}
 
 	if (cap_enter() < 0 && errno != ENOSYS) {
-		warn("cap_enter() failed");
+		port_warn("cap_enter() failed");
 		close(fd);
 		return (EX_SOFTWARE);
 	}

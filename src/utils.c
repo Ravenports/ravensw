@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <err.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <string.h>
@@ -44,7 +43,6 @@
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <pwd.h>
 #include <pkg.h>
 #include <grp.h>
@@ -1023,13 +1021,13 @@ drop_privileges(void)
 	if (geteuid() == 0) {
 		nobody = getpwnam("nobody");
 		if (nobody == NULL)
-			err(EXIT_FAILURE, "Unable to drop privileges");
+			port_err(EXIT_FAILURE, "Unable to drop privileges");
 		setgroups(1, &nobody->pw_gid);
 		/* setgid also sets egid and setuid also sets euid */
 		if (setgid(nobody->pw_gid) == -1)
-			err(EXIT_FAILURE, "Unable to setgid");
+			port_err(EXIT_FAILURE, "Unable to setgid");
 		if (setuid(nobody->pw_uid) == -1)
-			err(EXIT_FAILURE, "Unable to setuid");
+			port_err(EXIT_FAILURE, "Unable to setuid");
 	}
 }
 

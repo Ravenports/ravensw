@@ -29,7 +29,6 @@
 #include "pkg_config.h"
 #endif
 
-#include <err.h>
 #include <getopt.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -96,7 +95,7 @@ exec_stats(int argc, char **argv)
 
 	if (pkgdb_obtain_lock(db, PKGDB_LOCK_READONLY) != EPKG_OK) {
 		pkgdb_close(db);
-		warnx("Cannot get a read lock on a database, it is locked by another process");
+		port_warnx("Cannot get a read lock on a database, it is locked by another process");
 		return (EX_TEMPFAIL);
 	}
 

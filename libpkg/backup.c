@@ -28,7 +28,6 @@
 #include <assert.h>
 #include <libgen.h>
 #include <string.h>
-#include <errno.h>
 
 #include "pkg.h"
 #include "private/event.h"
