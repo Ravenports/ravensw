@@ -24,6 +24,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "pkg_config.h"
+#endif
+
+#if !HAVE_EACCESS
+#define eaccess(_p, _m) access(_p, _m)
+#endif
+
 #include <sys/param.h>
 
 #include <stdio.h>

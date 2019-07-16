@@ -95,8 +95,20 @@ extern "C" {
 #endif
 
 #ifndef __unused
-# define __unused __attribute__ ((__unused__))
+# define __unused	__attribute__ ((__unused__))
 #endif
+
+#ifndef MIN
+#define	MIN(A,B)	((A)<(B)?(A):(B))
+#endif
+#ifndef MAX
+#define	MAX(A,B)	((A)>(B)?(A):(B))
+#endif
+
+#ifndef AT_EACCESS
+#define AT_EACCESS	0x100
+#endif
+
 
 /* Special exit status for worker processes indicating that a restart
  * is desired -- eg. after a child has updated pkg(8) itself.  Don't

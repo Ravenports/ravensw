@@ -24,6 +24,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "pkg_config.h"
+#endif
+
 #include <sys/param.h>
 
 #include <assert.h>
@@ -102,8 +106,10 @@ port_faccessat(int fd, const char *path, int mode, int flag)
 		return ret;
 
 	if (flag & AT_EACCESS) {
+#if HAVE_EACCESS
 		ret = eaccess(path, mode);
 	} else {
+#endif
 		ret = access(path, mode);
 	}
 
