@@ -33,6 +33,9 @@
 #ifdef __sun__
 # define _POSIX_PTHREAD_SEMANTICS 1
 #endif
+#ifndef HAVE_MKDIRAT /* only on sunos */
+#include <libgen.h>
+#endif
 
 #include <stdlib.h>	/* for arc4random_uniform */
 #include <archive.h>
@@ -582,7 +585,7 @@ retry:
 retry:
 	if (link(linkpath1, linkpath2) == -1) {
 		if (!tried_mkdir) {
-			if (mkdirp (link_dir2, 0755) == -1)
+			if (mkdirp(link_dir2, 0755) == -1)
 #endif
 				return (EPKG_FATAL);
 			tried_mkdir = true;

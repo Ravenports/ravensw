@@ -45,8 +45,7 @@ struct elfhints_hdr
 	uint32_t version; /* File version (1) */
 	uint32_t strtab; /* Offset of string table in file */
 	uint32_t strsize; /* Size of string table */
-	uint32_t dirlist; /* Offset of directory list in
-	 string table */
+	uint32_t dirlist; /* Offset of directory list in string table */
 	uint32_t dirlistlen; /* strlen(dirlist) */
 	uint32_t spare[26]; /* Room for expansion */
 };
@@ -62,7 +61,9 @@ struct elfhints_hdr
 
 extern int	insecure;	/* -i flag, needed here for elfhints.c */
 
-__BEGIN_DECLS
+#if defined(__cplusplus)
+extern "C" {
+#endif
 void		shlib_list_init(void);
 void		rpath_list_init(void);
 const char     *shlib_list_find_by_name(const char *);
@@ -74,6 +75,9 @@ void		shlib_list_from_stage(const char *);
 
 void		list_elf_hints(const char *);
 void		update_elf_hints(const char *, int, char **, int);
-__END_DECLS
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif
