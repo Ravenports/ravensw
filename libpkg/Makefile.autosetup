@@ -13,23 +13,28 @@ SRCS=	backup.c \
 	pkg_manifest.c \
 	pkg_repo_update.c \
 	pkgdb_iterator.c \
-	scripts.c diff.c \
+	scripts.c \
+	diff.c \
 	packing.c \
 	pkg_config.c \
 	pkg_event.c \
 	pkg_object.c \
 	pkg_repo.c \
 	pkgdb_query.c \
-	sha256.c dns_utils.c \
+	sha256.c \
+	dns_utils.c \
 	pkg_add.c \
 	pkg_create.c \
-	pkg_jobs_conflicts.c pkg_ports.c \
+	pkg_jobs_conflicts.c \
+	pkg_ports.c \
 	pkg_solve.c \
 	pkgdb.c \
-	ssh.c elfhints.c \
+	ssh.c \
+	elfhints.c \
 	pkg_arch.c \
 	pkg_cudf.c \
-	pkg_jobs_universe.c  pkg_printf.c \
+	pkg_jobs_universe.c \
+	pkg_printf.c \
 	pkg_status.c \
 	plugins.c \
 	utils.c \
