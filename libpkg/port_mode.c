@@ -34,7 +34,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -43,9 +42,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "un-namespace.h"
-#include "libc_private.h"
 
 #define	SET_LEN	6		/* initial # of bitcmd struct to malloc */
 #define	SET_LEN_INCR 4		/* # of bitcmd structs to add as needed */
@@ -62,7 +58,6 @@ typedef struct bitcmd {
 #define	CMD2_OBITS	0x08
 #define	CMD2_UBITS	0x10
 
-static mode_t	 getumask(void);
 static BITCMD	*addcmd(BITCMD *, mode_t, mode_t, mode_t, mode_t);
 static void	 compress_mode(BITCMD *);
 
@@ -141,7 +136,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 	if (set >= endset) {						\
 		BITCMD *newset;						\
 		setlen += SET_LEN_INCR;					\
-		newset = reallocarray(saveset, setlen, sizeof(BITCMD));	\
+		newset = realloc(saveset, setlen * sizeof(BITCMD));     \
 		if (newset == NULL)					\
 			goto out;					\
 		set = newset + (set - saveset);				\
@@ -158,6 +153,7 @@ port_setmode(const char *p)
 	int serrno;
 	char op, *ep;
 	BITCMD *set, *saveset, *endset;
+	sigset_t signset, sigoset;
 	mode_t mask, perm, permXbits, who;
 	long perml;
 	int equalopdone;
@@ -170,9 +166,15 @@ port_setmode(const char *p)
 
 	/*
 	 * Get a copy of the mask for the permissions that are mask relative.
-	 * Flip the bits, we want what's not set.
+	 * Flip the bits, we want what's not set.  Since it's possible that
+	 * the caller is opening files inside a signal handler, protect them
+	 * as best we can.
 	 */
-	mask = ~getumask();
+	sigfillset(&signset);
+	(void)sigprocmask(SIG_BLOCK, &signset, &sigoset);
+	(void)umask(mask = umask(0));
+	mask = ~mask;
+	(void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
 
 	setlen = SET_LEN + 2;
 
@@ -318,35 +320,6 @@ out:
 	free(saveset);
 	errno = serrno;
 	return NULL;
-}
-
-static mode_t
-getumask(void)
-{
-	sigset_t sigset, sigoset;
-	size_t len;
-	mode_t mask;
-	u_short smask;
-
-	/*
-	 * First try requesting the umask without temporarily modifying it.
-	 * Note that this does not work if the sysctl
-	 * security.bsd.unprivileged_proc_debug is set to 0.
-	 */
-	len = sizeof(smask);
-	if (sysctl((int[4]){ CTL_KERN, KERN_PROC, KERN_PROC_UMASK, 0 },
-	    4, &smask, &len, NULL, 0) == 0)
-		return (smask);
-
-	/*
-	 * Since it's possible that the caller is opening files inside a signal
-	 * handler, protect them as best we can.
-	 */
-	sigfillset(&sigset);
-	(void)__libc_sigprocmask(SIG_BLOCK, &sigset, &sigoset);
-	(void)umask(mask = umask(0));
-	(void)__libc_sigprocmask(SIG_SETMASK, &sigoset, NULL);
-	return (mask);
 }
 
 static BITCMD *
