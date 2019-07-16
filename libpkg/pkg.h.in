@@ -1723,6 +1723,7 @@ int pkg_get_dbdirfd(void);
  ********************************/
 
 char *port_dirname(const char *path);
+char *port_basename(const char *path);
 char *port_strsep(char **stringp, const char *delim);
 char *port_strndup(const char *str, size_t n);
 int   port_vasprintf(char **strp, const char *fmt, va_list args);
