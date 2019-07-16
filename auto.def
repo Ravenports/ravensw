@@ -177,7 +177,7 @@ cc-check-includes link.h machine/endian.h osreldate.h readpassphrase.h \
 	sys/procctl.h sys/statfs.h sys/statvfs.h
 
 # for compat
-cc-check-includes dirent.h
+cc-check-includes paths
 
 #endian stuff
 foreach header [list endian.h sys/endian.h] {

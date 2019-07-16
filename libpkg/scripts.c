@@ -35,12 +35,16 @@
 
 #include <assert.h>
 #include <fcntl.h>
-#include <paths.h>
 #include <spawn.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
 #include <utstring.h>
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#else
+#include "private/port_paths.h"
+#endif
 
 #include "pkg.h"
 #include "private/pkg.h"

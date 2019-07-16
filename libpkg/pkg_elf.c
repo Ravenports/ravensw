@@ -48,13 +48,17 @@
 #if defined(HAVE_LINK_H) && !defined(__DragonFly__) && defined(HAVE_LIBELF)
 #include <link.h>
 #endif
-#include <paths.h>
 #include <stdbool.h>
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
 #ifdef HAVE_LIBELF
 #include <libelf.h>
+#endif
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#else
+#include "private/port_paths.h"
 #endif
 
 #include "pkg.h"

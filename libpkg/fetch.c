@@ -40,8 +40,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <fetch.h>
-#include <paths.h>
 #include <poll.h>
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#else
+#include "private/port_paths.h"
+#endif
 
 #include "pkg.h"
 #include "private/event.h"

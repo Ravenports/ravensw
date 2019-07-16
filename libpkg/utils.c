@@ -42,9 +42,13 @@
 #include <utlist.h>
 #include <ctype.h>
 #include <fnmatch.h>
-#include <paths.h>
 #include <float.h>
 #include <math.h>
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#else
+#include "private/port_paths.h"
+#endif
 
 #include "pkg.h"
 #include "private/event.h"

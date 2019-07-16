@@ -40,12 +40,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>
 #include <pkg.h>
 #include <grp.h>
+
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#else
+#include "private/port_paths.h"
+#endif
 
 #include "utlist.h"
 #include "pkgcli.h"
