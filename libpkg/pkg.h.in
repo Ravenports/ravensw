@@ -1778,6 +1778,17 @@ int   port_dprintf(int fd, const char *fmt, ...);
 #define port_warnx(format, args...) \
 	fprintf(stderr, format "\n", ## args)
 
+#define port_timersub(a, b, result) \
+    do { \
+        (result)->tv_sec = (a)->tv_sec - (b)->tv_sec; \
+        (result)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
+        if ((result)->tv_usec < 0) { \
+            (result)->tv_sec--; \
+            (result)->tv_usec += 1000000; \
+        } \
+    } while (0)
+#endif
+
 ssize_t   port_getline(char ** restrict linep, size_t * restrict linecapp,
 	     FILE * restrict fp);
 mode_t    port_getmode(const void *, mode_t);

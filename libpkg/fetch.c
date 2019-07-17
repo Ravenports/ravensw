@@ -220,7 +220,7 @@ ssh_read(void *data, char *buf, int len)
 				errno = ETIMEDOUT;
 				return (-1);
 			}
-			timersub(&timeout, &now, &delta);
+			port_timersub(&timeout, &now, &delta);
 			deltams = delta.tv_sec * 1000 +
 			    delta.tv_usec / 1000;
 		}
