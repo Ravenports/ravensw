@@ -109,6 +109,14 @@ extern "C" {
 #define AT_EACCESS	0x100
 #endif
 
+#ifndef S_ISTXT
+# ifdef S_ISVTX
+#define S_ISTXT	S_ISVTX
+# else
+#define S_ISTXT	0
+# endif
+#endif
+
 
 /* Special exit status for worker processes indicating that a restart
  * is desired -- eg. after a child has updated pkg(8) itself.  Don't

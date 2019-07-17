@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "pkg.h"
+
 #define	SET_LEN	6		/* initial # of bitcmd struct to malloc */
 #define	SET_LEN_INCR 4		/* # of bitcmd structs to add as needed */
 

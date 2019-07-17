@@ -28,19 +28,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef S_ISTXT
-# ifdef S_ISVTX
-#define S_ISTXT	S_ISVTX
-# else
-#define S_ISTXT	0
-# endif
-#endif
-
-/* musl libc apparently does not have ALLPERMS */
-#ifndef ALLPERMS
-#define ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
-#endif
-
 #include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
@@ -54,6 +41,11 @@
 #include "pkg.h"
 #include <private/pkg_printf.h>
 #include <private/pkg.h>
+
+/* musl libc apparently does not have ALLPERMS */
+#ifndef ALLPERMS
+#define ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+#endif
 
 /*
  * Format codes
