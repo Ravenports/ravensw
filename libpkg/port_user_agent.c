@@ -7,8 +7,11 @@
 #endif
 
 #include <stdlib.h>
-#if defined(HAVE_PROGRAM_INVOCATION_SHORT_NAME)
+#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
 #include <errno.h>
+#endif
+#ifdef HAVE_GETEXECNAME
+#include <string.h>
 #endif
 #include "pkg.h.in"
 
@@ -25,7 +28,7 @@ user_agent(void) {
               string, but basename expects to be able to modify its arg. */
            char *n = strdup(e);
            if (n != NULL) {
-               progname = basename(n);
+               progname = port_basename(n);
            }
        }
 #elif defined(HAVE_PROGRAM_INVOCATION_SHORT_NAME)
