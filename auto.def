@@ -219,6 +219,7 @@ if {[string match *-solaris* [get-define host]]} {
 		} else {
 			define system_type "bsd"
 		}
+	}
 }
 
 cc-with { -libs { -ljail} } {
