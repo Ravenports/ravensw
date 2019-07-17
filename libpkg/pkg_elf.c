@@ -43,15 +43,12 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <gelf.h>
-#if defined(HAVE_LINK_H) && !defined(__DragonFly__) && defined(HAVE_LIBELF)
-#include <link.h>
-#endif
 #include <stdbool.h>
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
 #ifdef HAVE_LIBELF
+#include <gelf.h>
 #include <libelf.h>
 #endif
 #ifdef HAVE_PATHS_H
