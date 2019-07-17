@@ -36,6 +36,8 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include "pkg.h"
+
 static pthread_mutex_t file_at_lock = PTHREAD_MUTEX_INITIALIZER;
 static int file_at_dfd = -1;
 static char saved_cwd[MAXPATHLEN];
@@ -92,6 +94,15 @@ file_chdir_unlock(int dfd)
 	pthread_mutex_unlock(&file_at_lock);
 }
 
+int port_eaccess(const char *path, int mode)
+{
+#ifdef HAVE_EACCESS
+	return(eaccess(path, mode));
+#else
+	return(access(path, mode));
+#endif
+}
+
 int
 port_faccessat(int fd, const char *path, int mode, int flag)
 {
@@ -106,12 +117,11 @@ port_faccessat(int fd, const char *path, int mode, int flag)
 		return ret;
 
 	if (flag & AT_EACCESS) {
-#if HAVE_EACCESS
-		ret = eaccess(path, mode);
+		ret = port_eaccess(path, mode);
 	} else {
-#endif
 		ret = access(path, mode);
 	}
+	ret = access(path, mode);
 
 	file_chdir_unlock(fd);
 	return ret;

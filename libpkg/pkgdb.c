@@ -36,10 +36,6 @@
 #include "pkg_config.h"
 #endif
 
-#if !HAVE_EACCESS
-#define eaccess(_p, _m) access(_p, _m)
-#endif
-
 #include <sys/param.h>
 #include <sys/mount.h>
 
@@ -801,23 +797,23 @@ pkgdb_check_access(unsigned mode, const char* dbdir, const char *dbname)
 
 	switch(mode & (PKGDB_MODE_READ|PKGDB_MODE_WRITE)) {
 	case 0:		/* Existence test */
-		retval = eaccess(dbpath, F_OK);
+		retval = port_eaccess(dbpath, F_OK);
 		break;
 	case PKGDB_MODE_READ:
-		retval = eaccess(dbpath, R_OK);
+		retval = port_eaccess(dbpath, R_OK);
 		break;
 	case PKGDB_MODE_WRITE:
-		retval = eaccess(dbpath, W_OK);
+		retval = port_eaccess(dbpath, W_OK);
 		if (retval != 0 && errno == ENOENT) {
 			mkdirs(dbdir);
-			retval = eaccess(dbpath, W_OK);
+			retval = port_eaccess(dbpath, W_OK);
 		}
 		break;
 	case PKGDB_MODE_READ|PKGDB_MODE_WRITE:
-		retval = eaccess(dbpath, R_OK|W_OK);
+		retval = port_eaccess(dbpath, R_OK|W_OK);
 		if (retval != 0 && errno == ENOENT) {
 			mkdirs(dbdir);
-			retval = eaccess(dbpath, W_OK);
+			retval = port_eaccess(dbpath, W_OK);
 		}
 		break;
 	}

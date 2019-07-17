@@ -28,10 +28,6 @@
 #include "pkg_config.h"
 #endif
 
-#if !HAVE_EACCESS
-#define eaccess(_p, _m) access(_p, _m)
-#endif
-
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -80,7 +76,7 @@ pkg_status(int *count)
 	o = pkg_config_get("RAVENSW_DBDIR");
 	snprintf(dbpath, sizeof(dbpath), "%s/local.sqlite", pkg_object_string(o));
 
-	if (eaccess(dbpath, R_OK) == -1)
+	if (port_eaccess(dbpath, R_OK) == -1)
 		return (PKG_STATUS_NODB);
 	
 	/* Try opening the DB and preparing and running a simple query. */

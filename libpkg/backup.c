@@ -29,10 +29,6 @@
 #include "pkg_config.h"
 #endif
 
-#if !HAVE_EACCESS
-#define eaccess(_p, _m) access(_p, _m)
-#endif
-
 #include <assert.h>
 #include <libgen.h>
 #include <string.h>
@@ -126,13 +122,13 @@ pkgdb_dump(struct pkgdb *db, const char *dest)
 	sqlite3	*backup;
 	int	 ret;
 
-	if (eaccess(dest, W_OK)) {
+	if (port_eaccess(dest, W_OK)) {
 		if (errno != ENOENT) {
 			pkg_fatal_errno("Unable to access '%s'", dest);
 		}
 
 		/* Could we create the Sqlite DB file? */
-		if (eaccess(port_dirname(dest), W_OK)) {
+		if (port_eaccess(port_dirname(dest), W_OK)) {
 			pkg_fatal_errno("Unable to access '%s'",
 			    port_dirname(dest));
 		}
@@ -160,7 +156,7 @@ pkgdb_load(struct pkgdb *db, const char *src)
 	sqlite3	*restore;
 	int	 ret;
 
-	if (eaccess(src, R_OK)) {
+	if (port_eaccess(src, R_OK)) {
 		pkg_fatal_errno("Unable to access '%s'", src);
 	}
 
