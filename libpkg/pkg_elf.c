@@ -831,19 +831,18 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	GElf_Shdr shdr;
 	Elf_Data *data;
 	Elf_Scn *scn = NULL;
-	int fd, i;
+	int fd;
 	int ret = EPKG_OK;
 	const char *arch, *abi, *endian_corres_str, *wordsize_corres_str, *fpu;
 
+#ifdef HAVE_ELF_NOTES
+	int i;
 	const char *abi_files[] = {
 		getenv("ABI_FILE"),
 		_PATH_UNAME,
-#ifdef __sun__
-		_PATH_LIBC64,
-#else
 		_PATH_BSHELL,
-#endif
 	};
+#endif
 	struct elf_info ei;
 
 	arch = NULL;
@@ -909,10 +908,11 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 #else
 	/* hardcode Solaris:10, notes not inserted by sun linker */
 	char *solaris = "Solaris";
-	int solversion = 10 * 100000;
+	int solmajor   = 10
+	int solversion = solmajor * 100000;
 	ei.osname = solaris;
 	ei.osversion = &solversion;
-	xasprintf(&ei->strversion, "%d", version / 100000);
+	xasprintf(&ei->strversion, "%d", solmajor);
 #endif /* HAVE_ELF_NOTES */
 
 	snprintf(dest, sz, "%s:%s", ei.osname, ei.strversion);
