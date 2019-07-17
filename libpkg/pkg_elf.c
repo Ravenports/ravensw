@@ -912,7 +912,7 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	int solversion = solmajor * 100000;
 	ei.osname = solaris;
 	ei.osversion = &solversion;
-	xasprintf(&ei->strversion, "%d", solmajor);
+	xasprintf(&ei.strversion, "%d", solmajor);
 #endif /* HAVE_ELF_NOTES */
 
 	snprintf(dest, sz, "%s:%s", ei.osname, ei.strversion);
