@@ -174,7 +174,7 @@ if {![cc-check-functions __res_query]} {
 	}
 }
 
-cc-check-includes link.h machine/endian.h osreldate.h readpassphrase.h \
+cc-check-includes machine/endian.h osreldate.h readpassphrase.h \
 	sys/procctl.h sys/statfs.h sys/statvfs.h
 
 # for compat
@@ -192,22 +192,20 @@ foreach header [list endian.h sys/endian.h] {
 
 if {[string match *-darwin* [get-define host]]} {
 	define libabidir libmachista
-	define waflags ""
-	define nowaflags ""
 	define machista libmachista
 } else {
 # libelf
-	define-feature libelf 0
-	define libabidir "libelf"
-	define waflags "-Wl,-whole-archive"
-	define nowaflags "-Wl,-no-whole-archive"
 	define machista ""
 
 	cc-with { -libs { -lelf_pic }} {
-		if {![cc-check-functions elf_version]} {
+		if {[cc-check-functions elf_version]} {
+			define-feature libelf
+			define libabidir "libelf"
+		} else {
 			user-error "Unable to find libelf_pic"
 		}
 	}
+	cc-check-includes libelf/libelf.h
 }
 
 cc-with { -libs { -ljail} } {
