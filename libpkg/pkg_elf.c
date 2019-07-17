@@ -35,6 +35,8 @@
 #include <endian.h>
 #elif HAVE_MACHINE_ENDIAN_H
 #include <machine/endian.h>
+#else
+#include "port_endian.h"
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -848,10 +850,10 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 
 #ifdef __sun__
 	/* hardcode Solaris:10, notes not inserted by sun linker */
-	const char *solaris = "Solaris";
-	const solversion = 10 * 100000;
+	char *solaris = "Solaris";
+	int solversion = 10 * 100000;
 	ei.osname = solaris;
-	ei.osversion = *solversion;
+	ei.osversion = &solversion;
 	xasprintf(&ei->strversion, "%d", version / 100000);
 #else
 	if (elf_version(EV_CURRENT) == EV_NONE) {
