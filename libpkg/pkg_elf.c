@@ -908,7 +908,7 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 #else
 	/* hardcode Solaris:10, notes not inserted by sun linker */
 	char *solaris = "Solaris";
-	int solmajor   = 10
+	int solmajor   = 10;
 	int solversion = solmajor * 100000;
 	ei.osname = solaris;
 	ei.osversion = &solversion;
