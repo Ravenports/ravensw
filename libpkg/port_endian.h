@@ -3,7 +3,9 @@
  */
 
 #ifndef PORT_ENDIAN_H
-#define PORT_SYS_ENDIAN_H
+#define PORT_ENDIAN_H
+
+#include <stdint.h>
 
 /* Alignment-agnostic encode/decode bytestream to/from little/big endian. */
 
