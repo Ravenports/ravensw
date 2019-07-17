@@ -1801,6 +1801,8 @@ int       port_eaccess(const char *path, int mode);
 ssize_t   port_readlinkat(int fd, const char *restrict path, char *restrict buf,
 	     size_t bufsize);
 
+const char* user_agent(void);
+
 #ifdef __cplusplus
 }
 #endif

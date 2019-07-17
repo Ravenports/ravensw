@@ -749,7 +749,7 @@ event_callback(void *data, struct pkg_event *ev)
 	case PKG_EVENT_NOREMOTEDB:
 		fprintf(stderr, "Unable to open remote database \"%s\". "
 		    "Try running '%s update' first.\n", ev->e_remotedb.repo,
-		    getprogname());
+		    user_agent());
 		break;
 	case PKG_EVENT_NOLOCALDB:
 		fprintf(stderr, "Local package database nonexistent!\n");

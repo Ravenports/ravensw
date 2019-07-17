@@ -62,7 +62,7 @@ pkg_status(int *count)
 	   $LOCALBASE/sbin/ravensw. Portability:
 	   assumes setprogname() has been called */
 
-	progname = getprogname();
+	progname = user_agent();
 	if (progname == NULL)
 		return (PKG_STATUS_UNINSTALLED);
 

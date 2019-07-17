@@ -466,7 +466,7 @@ start_process_worker(char *const *save_argv)
 		if (child_pid == 0) {
 			/* Load the new Pkg image */
 			if (ret == EX_NEEDRESTART)
-				execvp(getprogname(), save_argv);
+				execvp(user_agent(), save_argv);
 			return;
 		} else {
 			if (child_pid == -1)

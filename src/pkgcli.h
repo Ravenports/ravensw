@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include <utstring.h>
 
-#define pkg_warnx(fmt, ...) pkg_fprintf(stderr, "%S: " fmt, getprogname(), __VA_ARGS__, -1)
+#define pkg_warnx(fmt, ...) pkg_fprintf(stderr, "%S: " fmt, user_agent(), __VA_ARGS__, -1)
 
 extern bool quiet;
 extern int nbactions;
