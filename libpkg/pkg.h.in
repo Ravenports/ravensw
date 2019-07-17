@@ -1787,7 +1787,6 @@ int   port_dprintf(int fd, const char *fmt, ...);
             (result)->tv_usec += 1000000; \
         } \
     } while (0)
-#endif
 
 ssize_t   port_getline(char ** restrict linep, size_t * restrict linecapp,
 	     FILE * restrict fp);
