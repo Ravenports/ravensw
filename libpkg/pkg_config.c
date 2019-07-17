@@ -1319,7 +1319,7 @@ pkg_repo_free(struct pkg_repo *r)
 	free(r->pubkey);
 	free(r->meta);
 	if (r->ssh != NULL) {
-		FXPRINTF(r->ssh, "quit\n");
+		FXFPRINTF(r->ssh, "quit\n");
 		FXCLOSE(r->ssh);
 	}
 	LL_FOREACH_SAFE(r->env, kv, tmp) {
