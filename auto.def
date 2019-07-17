@@ -208,6 +208,19 @@ if {[string match *-darwin* [get-define host]]} {
 	cc-check-includes libelf/libelf.h
 }
 
+if {[string match *-solaris* [get-define host]]} {
+	define system_type "solaris"
+} else {
+	if {[string match *-linux* [get-define host]]} {
+		define system_type "linux"
+	} else {
+		if {[string match *-darwin* [get-define host]]} {
+			define system_type "macos"
+		} else {
+			define system_type "bsd"
+		}
+}
+
 cc-with { -libs { -ljail} } {
 	if {[cc-check-functions jail_getid]} {
 		define-feature libjail

@@ -84,6 +84,14 @@ SRCS+=		pkg_elf.c
 LOCAL_CFLAGS+=	@PKG_LIBLDNS_CFLAGS@
 @endif
 
+@if system_type == solaris
+LOCAL_CFLAGS+=	-D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
+@endif
+
+@if system_type == linux
+LOCAL_CFLAGS+=	-D_GNU_SOURCE=1
+@endif
+
 include $(MK)/pic-lib.mk
 
 $(SHOBJS): $(top_builddir)/pkg_config.h
