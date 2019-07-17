@@ -40,6 +40,7 @@ extern "C" {
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/file.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -1769,6 +1770,15 @@ int   port_dprintf(int fd, const char *fmt, ...);
 #define HN_GETSCALE	0x10
 #define HN_AUTOSCALE	0x20
 
+/* Values for portable flock */
+
+#if !defined(LOCK_SH) && !defined(LOCK_EX) && !defined(LOCK_NB) &&!defined(LOCK_UN)
+#define LOCK_SH		0x01
+#define LOCK_EX		0x02
+#define LOCK_NB		0x04
+#define LOCK_UN		0x08
+#endif
+
 #define port_err(exitcode, format, args...) \
 	port_errx(exitcode, format ": %s", ## args, strerror(errno))
 #define port_errx(exitcode, format, args...) {\
@@ -1801,6 +1811,7 @@ int       port_fchmodat(int dirfd, const char* path, mode_t mode, int flags);
 int       port_eaccess(const char *path, int mode);
 ssize_t   port_readlinkat(int fd, const char *restrict path, char *restrict buf,
 	     size_t bufsize);
+int       port_flock(int fd, int operation);
 
 const char* user_agent(void);
 

@@ -37,7 +37,6 @@
 #endif
 #include <sys/wait.h>
 #include <sys/socket.h>
-#include <sys/file.h>
 #include <sys/time.h>
 
 #include <archive_entry.h>
@@ -286,7 +285,7 @@ pkg_create_repo_worker(struct pkg_fts_item *start, size_t nelts,
 			}
 			mlen = utstring_len(b);
 
-			if (flock(mfd, LOCK_EX) == -1) {
+			if (port_flock(mfd, LOCK_EX) == -1) {
 				pkg_emit_errno("pkg_create_repo_worker", "flock");
 				ret = EPKG_FATAL;
 				goto cleanup;
@@ -302,16 +301,16 @@ pkg_create_repo_worker(struct pkg_fts_item *start, size_t nelts,
 			if (writev(mfd, iov, 2) == -1) {
 				pkg_emit_errno("pkg_create_repo_worker", "write");
 				ret = EPKG_FATAL;
-				flock(mfd, LOCK_UN);
+				port_flock(mfd, LOCK_UN);
 				goto cleanup;
 			}
 
-			flock(mfd, LOCK_UN);
+			port_flock(mfd, LOCK_UN);
 
 			if (ffd != -1) {
 				FILE *fl;
 
-				if (flock(ffd, LOCK_EX) == -1) {
+				if (port_flock(ffd, LOCK_EX) == -1) {
 					pkg_emit_errno("pkg_create_repo_worker", "flock");
 					ret = EPKG_FATAL;
 					goto cleanup;
@@ -321,7 +320,7 @@ pkg_create_repo_worker(struct pkg_fts_item *start, size_t nelts,
 				pkg_emit_filelist(pkg, fl);
 				fclose(fl);
 
-				flock(ffd, LOCK_UN);
+				port_flock(ffd, LOCK_UN);
 			}
 
 			r = snprintf(digestbuf, sizeof(digestbuf), "%s:%s:%ld:%ld:%ld:%s\n",
