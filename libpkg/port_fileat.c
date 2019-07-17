@@ -29,6 +29,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <assert.h>
 #include <fcntl.h>
