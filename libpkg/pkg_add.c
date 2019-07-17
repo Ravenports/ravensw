@@ -317,7 +317,7 @@ __unused
 	}
 
 	/* zfs drops the setuid on fchownat */
-	if (fchmodat(fd, RELATIVE_PATH(path), perm, AT_SYMLINK_NOFOLLOW) == -1) {
+	if (port_fchmodat(fd, RELATIVE_PATH(path), perm, AT_SYMLINK_NOFOLLOW) == -1) {
 		if (errno == ENOTSUP) {
 			/* 
 			 * Executing fchmodat on a symbolic link results in
@@ -334,7 +334,7 @@ __unused
 				pkg_fatal_errno("Fail to get file status %s", path);
 			}
 			if (!S_ISLNK(st.st_mode)) {
-				if (fchmodat(fd, RELATIVE_PATH(path), perm, 0) == -1) {
+				if (port_fchmodat(fd, RELATIVE_PATH(path), perm, 0) == -1) {
 					pkg_fatal_errno("Fail to chmod(fallback) %s", path);
 				}
 			}

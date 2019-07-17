@@ -1797,6 +1797,7 @@ long long port_strtonum(const char *nptr, long long minval, long long maxval,
              const char **errstr);
 int       port_unlinkat(int fd, const char *path, int flag);
 int       port_faccessat(int fd, const char *path, int mode, int flag);
+int       port_fchmodat(int dirfd, const char* path, mode_t mode, int flags);
 int       port_eaccess(const char *path, int mode);
 ssize_t   port_readlinkat(int fd, const char *restrict path, char *restrict buf,
 	     size_t bufsize);

@@ -159,3 +159,33 @@ port_unlinkat(int fd, const char *path, int flag)
 	file_chdir_unlock(fd);
 	return ret;
 }
+
+int
+port_fchmodat(int dirfd, const char* path, mode_t mode, int flags)
+{
+	int fd;
+	int result;
+	int save_errno;
+
+	if (flags & AT_SYMLINK_NOFOLLOW) {
+		errno = ENOTSUP;
+		return (-1);
+	}
+
+	fd = openat(dirfd, path, 0);
+	if (fd == -1) {
+		/* errno set by openat */
+		return (-1);
+	}
+
+	if ((ret = file_chdir_lock(fd) != 0))
+		return ret;
+
+	result = fchmod(fd, mode);
+	save_errno = errno;
+	if (close(fd) == -1) {
+		errno = save_errno;
+	}
+	file_chdir_unlock(fd);
+	return (result);
+}
