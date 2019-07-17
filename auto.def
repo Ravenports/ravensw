@@ -213,11 +213,13 @@ if {[string match *-solaris* [get-define host]]} {
 } else {
 	if {[string match *-linux* [get-define host]]} {
 		define system_type "linux"
+		define-feature elf_notes
 	} else {
 		if {[string match *-darwin* [get-define host]]} {
 			define system_type "macos"
 		} else {
 			define system_type "bsd"
+			define-feature elf_notes
 		}
 	}
 }

@@ -726,6 +726,7 @@ aeabi_parse_arm_attributes(void *data, size_t length)
 #undef MOVE
 }
 
+#ifdef HAVE_ELF_NOTES
 static bool
 elf_note_analyse(Elf_Data *data, GElf_Ehdr *elfhdr, struct elf_info *ei)
 {
@@ -809,17 +810,18 @@ elf_note_analyse(Elf_Data *data, GElf_Ehdr *elfhdr, struct elf_info *ei)
 	} else {
 		if (ei->osversion != NULL)
 			*ei->osversion = version;
-#if defined(__DragonFly__)
+# if defined(__DragonFly__)
 		xasprintf(&ei->strversion, "%d.%d", version / 100000, (((version / 100 % 1000)+1)/2)*2);
-#elif defined(__NetBSD__)
+# elif defined(__NetBSD__)
 		xasprintf(&ei->strversion, "%d", (version + 1000000) / 100000000);
-#else
+# else
 		xasprintf(&ei->strversion, "%d", version / 100000);
-#endif
+# endif
 	}
 
 	return (true);
 }
+#endif /* HAVE_ELF_NOTES */
 
 static int
 pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
@@ -848,14 +850,7 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	memset(&ei, 0, sizeof(ei));
 	ei.osversion = osversion;
 
-#ifdef __sun__
-	/* hardcode Solaris:10, notes not inserted by sun linker */
-	char *solaris = "Solaris";
-	int solversion = 10 * 100000;
-	ei.osname = solaris;
-	ei.osversion = &solversion;
-	xasprintf(&ei->strversion, "%d", version / 100000);
-#else
+#ifdev HAVE_ELF_NOTES
 	if (elf_version(EV_CURRENT) == EV_NONE) {
 		pkg_emit_error("ELF library initialization failed: %s",
 		    elf_errmsg(-1));
@@ -911,7 +906,14 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 		pkg_emit_error("failed to get the note section");
 		goto cleanup;
 	}
-#endif /* ELF NOTE support */
+#else
+	/* hardcode Solaris:10, notes not inserted by sun linker */
+	char *solaris = "Solaris";
+	int solversion = 10 * 100000;
+	ei.osname = solaris;
+	ei.osversion = &solversion;
+	xasprintf(&ei->strversion, "%d", version / 100000);
+#endif /* HAVE_ELF_NOTES */
 
 	snprintf(dest, sz, "%s:%s", ei.osname, ei.strversion);
 
