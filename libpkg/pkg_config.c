@@ -41,6 +41,7 @@
 #endif
 #include <ucl.h>
 #include <sysexits.h>
+#include <fetch.h>
 
 #include "pkg.h"
 #include "private/pkg.h"
@@ -1318,8 +1319,8 @@ pkg_repo_free(struct pkg_repo *r)
 	free(r->pubkey);
 	free(r->meta);
 	if (r->ssh != NULL) {
-		fprintf(r->ssh, "quit\n");
-		pclose(r->ssh);
+		FXPRINTF(r->ssh, "quit\n");
+		FXCLOSE(r->ssh);
 	}
 	LL_FOREACH_SAFE(r->env, kv, tmp) {
 		LL_DELETE(r->env, kv);
