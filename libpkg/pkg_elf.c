@@ -850,7 +850,7 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	memset(&ei, 0, sizeof(ei));
 	ei.osversion = osversion;
 
-#ifdev HAVE_ELF_NOTES
+#ifdef HAVE_ELF_NOTES
 	if (elf_version(EV_CURRENT) == EV_NONE) {
 		pkg_emit_error("ELF library initialization failed: %s",
 		    elf_errmsg(-1));
