@@ -2210,7 +2210,7 @@ mode_val(UT_string *buf, mode_t mode, struct percent_esc *p)
 	if (p->flags & PP_ALTERNATE_FORM1) {
 		char	modebuf[12];
 
-		strmode(mode, modebuf);
+		port_strmode(mode, modebuf);
 
 		return (string_val(buf, modebuf, p));
 	} else {

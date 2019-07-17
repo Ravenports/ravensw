@@ -1793,6 +1793,7 @@ ssize_t   port_getline(char ** restrict linep, size_t * restrict linecapp,
 	     FILE * restrict fp);
 mode_t    port_getmode(const void *, mode_t);
 void     *port_setmode(const char *);
+void      port_strmode(mode_t mode, char *p);
 long long port_strtonum(const char *nptr, long long minval, long long maxval,
              const char **errstr);
 int       port_unlinkat(int fd, const char *path, int flag);
