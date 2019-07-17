@@ -85,7 +85,7 @@ LOCAL_CFLAGS+=	@PKG_LIBLDNS_CFLAGS@
 @endif
 
 @if system_type == solaris
-LOCAL_CFLAGS+=	-D__EXTENSIONS__
+LOCAL_CFLAGS+=	-D__EXTENSIONS__ -D_XPG4_2
 @endif
 
 @if system_type == linux

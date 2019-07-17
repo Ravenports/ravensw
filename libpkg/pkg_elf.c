@@ -848,9 +848,10 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 
 #ifdef __sun__
 	/* hardcode Solaris:10, notes not inserted by sun linker */
-	constant char *solaris = "Solaris";
+	const char *solaris = "Solaris";
+	const solversion = 10 * 100000;
 	ei.osname = solaris;
-	ei.osversion = 10 * 100000;
+	ei.osversion = *solversion;
 	xasprintf(&ei->strversion, "%d", version / 100000);
 #else
 	if (elf_version(EV_CURRENT) == EV_NONE) {
