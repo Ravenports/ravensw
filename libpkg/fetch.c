@@ -369,7 +369,7 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 	  ssh_close
 	};
 #else
-# ifdef FOPENCOOKIE
+# ifdef HAVE_FOPENCOOKIE
 	cookie_io_functions_t ssh_cookie_functions =
 	{
 	  ssh_read,
