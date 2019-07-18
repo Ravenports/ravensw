@@ -713,10 +713,20 @@ main(int argc, char **argv)
 	umask(022);
 	pkg_event_register(&event_callback, &debug);
 
-#ifndef __sun__
 	/* reset getopt for the next call */
+	/* There is not standard for this across platforms */
+#ifdef HAVE_DECLS_OPTRESET
+	/* BSD */
 	optreset = 1;
 	optind = 1;
+#else
+# ifdef __linux __
+	/* glibc */
+	optind = 0;
+# else
+	/* solaris and everyone else */
+	optind = 1;
+# endif
 #endif
 
 	if (debug == 0 && version == 0 && !ptraced())
