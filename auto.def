@@ -118,6 +118,10 @@ foreach fct [list memmove usleep pread pwrite] {
 	}
 }
 
+cc-with { -includes unistd.h getopt.h } {
+	cc-check-decls optind
+}
+
 cc-with { -includes fcntl.h } {
 	cc-check-decls F_CLOSEM
 }
