@@ -368,6 +368,16 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 	  NULL,
 	  ssh_close
 	};
+#else
+# ifdef FOPENCOOKIE
+	cookie_io_functions_t ssh_cookie_functions =
+	{
+	  ssh_read,
+	  ssh_write,
+	  NULL,
+	  ssh_close
+	}
+# endif
 #endif
 
 	ssh_args = pkg_object_string(pkg_config_get("PKG_SSH_ARGS"));
@@ -433,9 +443,13 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 		set_nonblocking(repo->sshio.in);
 
 #ifdef USE_ESTREAM
-		repo->ssh = es_fopencookie ((void *)repo, "rb", ssh_cookie_functions);
-#else
+		repo->ssh = es_fopencookie ((void *)repo, "a+", ssh_cookie_functions);
+#elsif defined(HAVE_FOPENCOOKIE)
+		repo->ssh = fopencookie((void *)repo, "a+", ssh_cookie_functions);
+#elsif defined(HAVE_FUNOPEN)
 		repo->ssh = funopen(repo, ssh_read, ssh_write, NULL, ssh_close);
+#else
+#error No equivalent of funopen available.
 #endif
 		if (repo->ssh == NULL) {
 			pkg_emit_errno("Failed to open stream", "start_ssh");
