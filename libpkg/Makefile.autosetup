@@ -42,13 +42,14 @@ SRCS=	backup.c \
 	port_humanize_number.c \
 	port_strsep.c \
 	port_strndup.c \
+	port_strcasestr.c \
+	port_strmode.c \
+	port_strtonum.c \
 	port_vasprintf.c \
 	port_dirname.c \
 	port_basename.c \
 	port_getline.c \
 	port_mode.c \
-	port_strmode.c \
-	port_strtonum.c \
 	port_fileat.c \
 	port_dprintf.c \
 	port_user_agent.c \
