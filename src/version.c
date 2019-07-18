@@ -271,9 +271,9 @@ indexfilename(char *filebuf, size_t filebuflen)
 	port_strlcpy(filebuf, indexdir, filebuflen);
 
 	if (filebuf[0] != '\0' && filebuf[strlen(filebuf) - 1] != '/')
-		strlcat(filebuf, "/", filebuflen);
+		port_strlcat(filebuf, "/", filebuflen);
 
-	strlcat(filebuf, indexfile, filebuflen);
+	port_strlcat(filebuf, indexfile, filebuflen);
 
 	return (filebuf);
 }

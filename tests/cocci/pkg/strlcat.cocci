@@ -8,6 +8,6 @@
 expression E, E1, S;
 @@
 
-- strlcat(E, E1, S);
-+ if (strlcat(E, E1, S) >= S)
-+ 	pkg_emit_errno("strlcat", TEXT(S));
+- port_strlcat(E, E1, S);
++ if (port_strlcat(E, E1, S) >= S)
++ 	pkg_emit_errno("port_strlcat", TEXT(S));

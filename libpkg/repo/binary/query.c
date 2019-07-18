@@ -116,7 +116,7 @@ pkg_repo_binary_query(struct pkg_repo *repo, const char *pattern, match_t match)
 	utstring_new(sql);
 	comp = pkgdb_get_pattern_query(pattern, match);
 	if (comp && comp[0])
-		strlcat(basesql, comp, sizeof(basesql));
+		port_strlcat(basesql, comp, sizeof(basesql));
 
 	utstring_printf(sql, basesql, repo->name);
 

@@ -830,17 +830,17 @@ mkdirat_p(int fd, const char *path)
 	while ((next = port_strsep(&walk, "/")) != NULL) {
 		if (*next == '\0')
 			continue;
-		strlcat(pathdone, next, sizeof(pathdone));
+		port_strlcat(pathdone, next, sizeof(pathdone));
 		if (mkdirat(fd, pathdone, 0755) == -1) {
 			if (errno == EEXIST) {
-				strlcat(pathdone, "/", sizeof(pathdone));
+				port_strlcat(pathdone, "/", sizeof(pathdone));
 				continue;
 			}
 			pkg_errno("Fail to create /%s", pathdone);
 			free(walkorig);
 			return (false);
 		}
-		strlcat(pathdone, "/", sizeof(pathdone));
+		port_strlcat(pathdone, "/", sizeof(pathdone));
 	}
 	free(walkorig);
 	return (true);

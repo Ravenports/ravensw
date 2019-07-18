@@ -1807,6 +1807,7 @@ int   port_dprintf(int fd, const char *fmt, ...);
 ssize_t   port_getline(char ** restrict linep, size_t * restrict linecapp,
 	     FILE * restrict fp);
 size_t    port_strlcpy(char *dst, const char *src, size_t dsize);
+size_t    port_strlcat(char *dst, const char *src, size_t dsize);
 mode_t    port_getmode(const void *, mode_t);
 void     *port_setmode(const char *);
 void      port_strmode(mode_t mode, char *p);

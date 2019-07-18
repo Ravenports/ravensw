@@ -105,8 +105,8 @@ shlib_list_add(kh_shlib_t **shlib_list, const char *dir,
 	sl = xcalloc(1, sizeof(struct shlib) + path_len);
 
 	port_strlcpy(sl->path, dir, path_len);
-	dir_len = strlcat(sl->path, "/", path_len);
-	strlcat(sl->path, shlib_file, path_len);
+	dir_len = port_strlcat(sl->path, "/", path_len);
+	port_strlcat(sl->path, shlib_file, path_len);
 	
 	sl->name = sl->path + dir_len;
 
@@ -284,10 +284,10 @@ int shlib_list_from_rpath(const char *rpath_str, const char *dirpath)
 	cstart = rpath_str;
 	while ( (c = strstr(cstart, ORIGIN)) != NULL ) {
 		strncat(buf, cstart, c - cstart);
-		strlcat(buf, dirpath, buflen);
+		port_strlcat(buf, dirpath, buflen);
 		cstart = c + strlen(ORIGIN);
 	}
-	strlcat(buf, cstart, buflen);
+	port_strlcat(buf, cstart, buflen);
 
 	i = 0;
 	while ((c = port_strsep(&buf, ":")) != NULL) {

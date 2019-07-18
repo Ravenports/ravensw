@@ -43,6 +43,7 @@ SRCS=	backup.c \
 	port_strsep.c \
 	port_strndup.c \
 	port_strcasestr.c \
+	port_strlcat.c \
 	port_strlcpy.c \
 	port_strmode.c \
 	port_strtonum.c \

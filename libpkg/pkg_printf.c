@@ -2046,7 +2046,7 @@ gen_format(char *buf, size_t buflen, unsigned flags, const char *tail)
 	buf[bp++] = '*';
 	buf[bp] = '\0';
 
-	strlcat(buf, tail, buflen);
+	port_strlcat(buf, tail, buflen);
 
 	return (buf);
 }

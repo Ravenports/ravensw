@@ -76,9 +76,9 @@ append_yesno(bool r, char *yesnomsg, size_t len)
 
 	if (msglen > len - sizeof yes) {
 		yesnomsg[len - sizeof trunc - sizeof yes] = '\0';
-		strlcat(yesnomsg, trunc, len);
+		port_strlcat(yesnomsg, trunc, len);
 	}
-	strlcat(yesnomsg, r ? yes : no, len);
+	port_strlcat(yesnomsg, r ? yes : no, len);
 }
 
 bool
