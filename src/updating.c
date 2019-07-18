@@ -189,7 +189,7 @@ exec_updating(int argc, char **argv)
 			if (strstr(line, "AFFECTS") != NULL) {
 				SLIST_FOREACH(port, &origins, next) {
 					if (caseinsensitive) {
-						if ((tmp = strcasestr(line, port->origin)) != NULL) {
+						if ((tmp = port_strcasestr(line, port->origin)) != NULL) {
 							break;
 						}
 					} else {
