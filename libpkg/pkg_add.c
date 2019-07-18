@@ -1015,10 +1015,10 @@ pkg_add_check_pkg_archive(struct pkgdb *db, struct pkg *pkg,
 	 * whatever, there's no valid directory to search.
 	 */
 	fromstdin = (strcmp(path, "-") == 0);
-	strlcpy(bd, path, sizeof(bd));
+	port_strlcpy(bd, path, sizeof(bd));
 	if (!fromstdin) {
 		basedir = port_dirname(bd);
-		strlcpy(bd, basedir, sizeof(bd));
+		port_strlcpy(bd, basedir, sizeof(bd));
 		if ((ext = strrchr(path, '.')) == NULL) {
 			pkg_emit_error("%s has no extension", path);
 			return (EPKG_FATAL);

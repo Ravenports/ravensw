@@ -712,16 +712,16 @@ pkg_addfile_attr(struct pkg *pkg, const char *path, const char *sum,
 	}
 
 	f = xcalloc(1, sizeof(*f));
-	strlcpy(f->path, path, sizeof(f->path));
+	port_strlcpy(f->path, path, sizeof(f->path));
 
 	if (sum != NULL)
 		f->sum = xstrdup(sum);
 
 	if (uname != NULL)
-		strlcpy(f->uname, uname, sizeof(f->uname));
+		port_strlcpy(f->uname, uname, sizeof(f->uname));
 
 	if (gname != NULL)
-		strlcpy(f->gname, gname, sizeof(f->gname));
+		port_strlcpy(f->gname, gname, sizeof(f->gname));
 
 	if (perm != 0)
 		f->perm = perm;
@@ -753,7 +753,7 @@ pkg_addconfig_file(struct pkg *pkg, const char *path, const char *content)
 		}
 	}
 	f = xcalloc(1, sizeof(*f));
-	strlcpy(f->path, path, sizeof(f->path));
+	port_strlcpy(f->path, path, sizeof(f->path));
 
 	if (content != NULL)
 		f->content = xstrdup(content);
@@ -822,13 +822,13 @@ pkg_adddir_attr(struct pkg *pkg, const char *path, const char *uname,
 	}
 
 	d = xcalloc(1, sizeof(*d));
-	strlcpy(d->path, path, sizeof(d->path));
+	port_strlcpy(d->path, path, sizeof(d->path));
 
 	if (uname != NULL)
-		strlcpy(d->uname, uname, sizeof(d->uname));
+		port_strlcpy(d->uname, uname, sizeof(d->uname));
 
 	if (gname != NULL)
-		strlcpy(d->gname, gname, sizeof(d->gname));
+		port_strlcpy(d->gname, gname, sizeof(d->gname));
 
 	if (perm != 0)
 		d->perm = perm;

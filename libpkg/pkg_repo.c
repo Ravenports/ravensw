@@ -541,7 +541,7 @@ pkg_repo_archive_extract_archive(int fd, const char *file,
 			s = xcalloc(1, sizeof(struct sig_cert));
 			s->sig = sig;
 			s->siglen = siglen;
-			strlcpy(s->name, "signature", sizeof(s->name));
+			port_strlcpy(s->name, "signature", sizeof(s->name));
 			HASH_ADD_STR(sc, name, s);
 		}
 	}
@@ -943,7 +943,7 @@ pkg_repo_parse_fingerprint(ucl_object_t *obj)
 
 	f = xcalloc(1, sizeof(struct fingerprint));
 	f->type = fct;
-	strlcpy(f->hash, fp, sizeof(f->hash));
+	port_strlcpy(f->hash, fp, sizeof(f->hash));
 
 	return (f);
 }

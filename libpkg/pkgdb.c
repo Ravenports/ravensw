@@ -781,7 +781,7 @@ pkgdb_check_access(unsigned mode, const char* dbdir, const char *dbname)
 	if (dbname != NULL)
 		snprintf(dbpath, sizeof(dbpath), "%s/%s", dbdir, dbname);
 	else
-		strlcpy(dbpath, dbdir, sizeof(dbpath));
+		port_strlcpy(dbpath, dbdir, sizeof(dbpath));
 
 	install_as_user = (getenv("INSTALL_AS_USER") != NULL);
 

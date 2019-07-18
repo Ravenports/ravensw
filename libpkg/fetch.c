@@ -617,12 +617,12 @@ pkg_fetch_file_to_fd(struct pkg_repo *repo, const char *url, int dest,
 		}
 
 		if (repo != NULL && repo->mirror_type == SRV && repo->srv != NULL) {
-			strlcpy(u->host, srv_current->host, sizeof(u->host));
+			port_strlcpy(u->host, srv_current->host, sizeof(u->host));
 			u->port = srv_current->port;
 		}
 		else if (repo != NULL && repo->mirror_type == HTTP && repo->http != NULL) {
-			strlcpy(u->scheme, http_current->url->scheme, sizeof(u->scheme));
-			strlcpy(u->host, http_current->url->host, sizeof(u->host));
+			port_strlcpy(u->scheme, http_current->url->scheme, sizeof(u->scheme));
+			port_strlcpy(u->host, http_current->url->host, sizeof(u->host));
 			snprintf(docpath, sizeof(docpath), "%s%s", http_current->url->doc, doc);
 			u->doc = docpath;
 			u->port = http_current->url->port;

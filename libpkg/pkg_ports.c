@@ -171,10 +171,10 @@ setprefix(struct plist *p, char *line, struct file_attr *a __unused)
 {
 	/* if no arguments then set default prefix */
 	if (line[0] == '\0') {
-		strlcpy(p->prefix, p->pkg->prefix, sizeof(p->prefix));
+		port_strlcpy(p->prefix, p->pkg->prefix, sizeof(p->prefix));
 	}
 	else
-		strlcpy(p->prefix, line, sizeof(p->prefix));
+		port_strlcpy(p->prefix, line, sizeof(p->prefix));
 
 	if (p->pkg->prefix == NULL)
 		p->pkg->prefix = xstrdup(line);
@@ -614,7 +614,7 @@ meta_exec(struct plist *p, char *line, struct file_attr *a, exec_t type)
 				regcomp(&preg, "[[:space:]]\"(/[^\"]+)",
 				    REG_EXTENDED);
 				while (regexec(&preg, buf, 2, pmatch, 0) == 0) {
-					strlcpy(path, &buf[pmatch[1].rm_so],
+					port_strlcpy(path, &buf[pmatch[1].rm_so],
 					    pmatch[1].rm_eo - pmatch[1].rm_so + 1);
 					buf+=pmatch[1].rm_eo;
 					if (!strcmp(path, "/dev/null"))
@@ -626,7 +626,7 @@ meta_exec(struct plist *p, char *line, struct file_attr *a, exec_t type)
 				regcomp(&preg, "[[:space:]](/[[:graph:]/]+)",
 				    REG_EXTENDED);
 				while (regexec(&preg, buf, 2, pmatch, 0) == 0) {
-					strlcpy(path, &buf[pmatch[1].rm_so],
+					port_strlcpy(path, &buf[pmatch[1].rm_so],
 					    pmatch[1].rm_eo - pmatch[1].rm_so + 1);
 					buf+=pmatch[1].rm_eo;
 					if (!strcmp(path, "/dev/null"))
@@ -731,7 +731,7 @@ populate_keywords(struct plist *p)
 	for (i = 0; keyacts[i].key != NULL; i++) {
 		k = xcalloc(1, sizeof(struct keyword));
 		a = xmalloc(sizeof(struct action));
-		strlcpy(k->keyword, keyacts[i].key, sizeof(k->keyword));
+		port_strlcpy(k->keyword, keyacts[i].key, sizeof(k->keyword));
 		a->perform = keyacts[i].action;
 		DL_APPEND(k->actions, a);
 		HASH_ADD_STR(p->keywords, keyword, k);
@@ -1151,7 +1151,7 @@ plist_parse_line(struct plist *plist, char *line)
 		}
 	} else {
 		buf = line;
-		strlcpy(plist->last_file, buf, sizeof(plist->last_file));
+		port_strlcpy(plist->last_file, buf, sizeof(plist->last_file));
 
 		/* remove spaces at the begining and at the end */
 		while (isspace(buf[0]))
@@ -1175,7 +1175,7 @@ plist_new(struct pkg *pkg, const char *stage)
 
 	p->pkg = pkg;
 	if (pkg->prefix != NULL)
-		strlcpy(p->prefix, pkg->prefix, sizeof(p->prefix));
+		port_strlcpy(p->prefix, pkg->prefix, sizeof(p->prefix));
 	p->slash = p->prefix[strlen(p->prefix) - 1] == '/' ? "" : "/";
 	p->stage = stage;
 	p->uname = xstrdup("root");

@@ -540,7 +540,7 @@ expand_aliases(int argc, char ***argv)
 
 	newargv = (char **) buf;
 	args = (char *) (buf + veclen);
-	strlcpy(args, alias_value, arglen);
+	port_strlcpy(args, alias_value, arglen);
 
 	newargc = 0;
 	while(args != NULL) {

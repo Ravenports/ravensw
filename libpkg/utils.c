@@ -64,7 +64,7 @@ mkdirs(const char *_path)
 	char path[MAXPATHLEN];
 	char *p;
 
-	strlcpy(path, _path, sizeof(path));
+	port_strlcpy(path, _path, sizeof(path));
 	p = path;
 	if (*p == '/')
 		p++;
@@ -810,7 +810,7 @@ pkg_absolutepath(const char *src, char *dest, size_t dest_size, bool fromroot) {
 	}
 
 	if (dest_len == 0) {
-		if (strlcpy(dest, "/", dest_size) >= dest_size)
+		if (port_strlcpy(dest, "/", dest_size) >= dest_size)
 			return (NULL);
 	}
 

@@ -164,7 +164,7 @@ exec_which(int argc, char **argv)
 					retcode = EX_OSERR;
 					goto cleanup;
 				}
-				strlcpy(p, path, pathlen);
+				port_strlcpy(p, path, pathlen);
 
 				match = NULL;
 				savedpath=p;
@@ -197,7 +197,7 @@ exec_which(int argc, char **argv)
 			pkg_absolutepath(argv[0], pathabs, sizeof(pathabs), false);
 			kv_push(char *, patterns, strdup(pathabs));
 		} else if (!search) {
-			if (strlcpy(pathabs, argv[0], sizeof(pathabs)) >= sizeof(pathabs)) {
+			if (port_strlcpy(pathabs, argv[0], sizeof(pathabs)) >= sizeof(pathabs)) {
 				retcode = EX_USAGE;
 				goto cleanup;
                         }
@@ -279,7 +279,7 @@ get_match(char **pathabs, char **path, char *filename)
 			*pathabs = malloc(len);
 			if (*pathabs == NULL)
 				return (EX_OSERR);
-			strlcpy(*pathabs, candidate, len);
+			port_strlcpy(*pathabs, candidate, len);
 			return (EX_OK);
 		}
 	}

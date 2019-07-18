@@ -78,7 +78,7 @@ ATF_TC_BODY(parse_plist, tc)
 	ATF_REQUIRE(plist->pkg == p);
 	ATF_REQUIRE_EQ(plist->prefix[0], '\0');
 
-	strlcpy(buf, "@cwd /myprefix", BUFSIZ);
+	port_strlcpy(buf, "@cwd /myprefix", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(p->prefix, "/myprefix");
 
@@ -87,55 +87,55 @@ ATF_TC_BODY(parse_plist, tc)
 	ATF_REQUIRE_STREQ(plist->uname, "root");
 	ATF_REQUIRE_STREQ(plist->gname, "wheel");
 
-	strlcpy(buf, "@owner bob", BUFSIZ);
+	port_strlcpy(buf, "@owner bob", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->uname, "bob");
 
-	strlcpy(buf, "@group sponge", BUFSIZ);
+	port_strlcpy(buf, "@group sponge", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->gname, "sponge");
 
-	strlcpy(buf, "@group", BUFSIZ);
+	port_strlcpy(buf, "@group", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->gname, "wheel");
 
-	strlcpy(buf, "@owner", BUFSIZ);
+	port_strlcpy(buf, "@owner", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->uname, "root");
 
-	strlcpy(buf, "@cwd plop", BUFSIZ);
+	port_strlcpy(buf, "@cwd plop", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->prefix, "plop");
 
-	strlcpy(buf, "@cwd", BUFSIZ);
+	port_strlcpy(buf, "@cwd", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->prefix, "/myprefix");
 	ATF_REQUIRE_STREQ(plist->slash, "/");
 
-	strlcpy(buf, "@cwd /another/prefix/", BUFSIZ);
+	port_strlcpy(buf, "@cwd /another/prefix/", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_STREQ(plist->prefix, "/another/prefix/");
 	ATF_REQUIRE_STREQ(plist->slash, "");
 
 	ATF_REQUIRE_EQ(0, plist->perm);
-	strlcpy(buf, "@mode 0755", BUFSIZ);
+	port_strlcpy(buf, "@mode 0755", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_EQ(0755, plist->perm);
 
-	strlcpy(buf, "@mode", BUFSIZ);
+	port_strlcpy(buf, "@mode", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_OK, plist_parse_line(plist, buf));
 	ATF_REQUIRE_EQ(0, plist->perm);
 
-	strlcpy(buf, "@blabla", BUFSIZ);
+	port_strlcpy(buf, "@blabla", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_FATAL, plist_parse_line(plist, buf));
 
-	strlcpy(buf, "nonexisting/file", BUFSIZ);
+	port_strlcpy(buf, "nonexisting/file", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_FATAL, plist_parse_line(plist, buf));
 
-	strlcpy(buf, "@dir nonexisting", BUFSIZ);
+	port_strlcpy(buf, "@dir nonexisting", BUFSIZ);
 	ATF_REQUIRE_EQ(EPKG_FATAL, plist_parse_line(plist, buf));
 
-	strlcpy(buf, "@dirrm nonexisting", BUFSIZ);
+	port_strlcpy(buf, "@dirrm nonexisting", BUFSIZ);
 
 	pkg_free(p);
 	plist_free(plist);

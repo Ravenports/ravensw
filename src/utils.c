@@ -104,7 +104,7 @@ query_tty_yesno(bool r, const char *msg, ...)
 
 	tty = fdopen(tty_fd, "r+");
 
-	strlcpy(yesnomsg, msg, sizeof(yesnomsg));
+	port_strlcpy(yesnomsg, msg, sizeof(yesnomsg));
 	append_yesno(default_yes || r, yesnomsg, sizeof yesnomsg);
 
 	va_start(ap, msg);
@@ -153,7 +153,7 @@ vquery_yesno(bool deft, const char *msg, va_list ap)
 	if (yes)
 		return (true);
 
-	strlcpy(yesnomsg, msg, sizeof(yesnomsg));
+	port_strlcpy(yesnomsg, msg, sizeof(yesnomsg));
 	append_yesno(default_yes || r, yesnomsg, sizeof yesnomsg);
 
 	pkg_vasprintf(&out, yesnomsg, ap);

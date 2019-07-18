@@ -104,7 +104,7 @@ shlib_list_add(kh_shlib_t **shlib_list, const char *dir,
 
 	sl = xcalloc(1, sizeof(struct shlib) + path_len);
 
-	strlcpy(sl->path, dir, path_len);
+	port_strlcpy(sl->path, dir, path_len);
 	dir_len = strlcat(sl->path, "/", path_len);
 	strlcat(sl->path, shlib_file, path_len);
 	

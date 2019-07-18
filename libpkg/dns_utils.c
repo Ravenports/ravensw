@@ -235,7 +235,7 @@ dns_getsrvinfo(const char *zone)
 		res[n]->port = port;
 		res[n]->next = NULL;
 		res[n]->finalweight = 0;
-		strlcpy(res[n]->host, host, sizeof(res[n]->host));
+		port_strlcpy(res[n]->host, host, sizeof(res[n]->host));
 
 		p += len;
 		n++;
@@ -405,7 +405,7 @@ dns_getsrvinfo(const char *zone)
 			res[i].weight = ldns_rdf2native_int16(ldns_rr_rdf(rr, 1));
 			res[i].port = ldns_rdf2native_int16(ldns_rr_rdf(rr, 2));
 			host = ldns_rdf2str(ldns_rr_rdf(rr, 3));
-			strlcpy(res[i].host, host, sizeof(res[i].host));
+			port_strlcpy(res[i].host, host, sizeof(res[i].host));
 			free(host);
 		}
 	}

@@ -82,7 +82,7 @@ pkg_deps_parse_formula(const char *in)
 					/* Spaces after the name */
 					cur_item = xcalloc(1, sizeof(*cur_item));
 					cur_item->name = xmalloc(p - c + 1);
-					strlcpy(cur_item->name, c, p - c + 1);
+					port_strlcpy(cur_item->name, c, p - c + 1);
 					next_state = st_parse_after_name;
 				}
 			}
@@ -93,7 +93,7 @@ pkg_deps_parse_formula(const char *in)
 				else {
 					cur_item = xcalloc(1, sizeof(*cur_item));
 					cur_item->name = xmalloc(p - c + 1);
-					strlcpy(cur_item->name, c, p - c + 1);
+					port_strlcpy(cur_item->name, c, p - c + 1);
 					state = st_parse_after_name;
 				}
 			}
@@ -210,7 +210,7 @@ pkg_deps_parse_formula(const char *in)
 				if (p - c > 0) {
 					cur_ver = xcalloc(1, sizeof(*cur_ver));
 					cur_ver->ver = xmalloc(p - c + 1);
-					strlcpy(cur_ver->ver, c, p - c + 1);
+					port_strlcpy(cur_ver->ver, c, p - c + 1);
 					cur_ver->op = cur_op;
 					assert(cur_item != NULL);
 					DL_APPEND(cur_item->versions, cur_ver);
@@ -244,7 +244,7 @@ pkg_deps_parse_formula(const char *in)
 			else {
 				if (p - c > 0) {
 					cur_opt->opt = xmalloc(p - c + 1);
-					strlcpy(cur_opt->opt, c, p - c + 1);
+					port_strlcpy(cur_opt->opt, c, p - c + 1);
 					assert(cur_item != NULL);
 					DL_APPEND(cur_item->options, cur_opt);
 					state = st_skip_spaces;

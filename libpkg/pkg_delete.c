@@ -140,7 +140,7 @@ pkg_add_dir_to_del(struct pkg *pkg, const char *file, const char *dir)
 	char *tmp;
 	size_t i, len, len2;
 
-	strlcpy(path, file != NULL ? file : dir, MAXPATHLEN);
+	port_strlcpy(path, file != NULL ? file : dir, MAXPATHLEN);
 
 	if (file != NULL) {
 		tmp = strrchr(path, '/');

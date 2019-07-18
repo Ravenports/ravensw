@@ -201,7 +201,7 @@ pkg_jobs_maybe_match_file(struct job_pattern *jp, const char *pattern)
 				jp->flags |= PKG_PATTERN_FLAG_FILE;
 				jp->path = pkg_path;
 				jp->pattern = xmalloc(len);
-				strlcpy(jp->pattern, pattern, len);
+				port_strlcpy(jp->pattern, pattern, len);
 
 				return (true);
 			}
@@ -791,7 +791,7 @@ pkg_jobs_guess_upgrade_candidate(struct pkg_jobs *j, const char *pattern)
 	if (olen != len) {
 		/* Try exact pattern without numbers */
 		cpy = xmalloc(len + 1);
-		strlcpy(cpy, pos, len + 1);
+		port_strlcpy(cpy, pos, len + 1);
 		if (pkg_jobs_try_remote_candidate(j, cpy, opattern, MATCH_EXACT) != EPKG_OK) {
 			free(cpy);
 			cpy = sqlite3_mprintf(" WHERE name REGEXP ('^' || %.*Q || '[0-9.]*$')",

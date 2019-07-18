@@ -260,7 +260,7 @@ pkg_audit_fetch(const char *src, const char *dest)
 	if (tmpdir == NULL)
 		tmpdir = "/tmp";
 
-	strlcpy(tmp, tmpdir, sizeof(tmp));
+	port_strlcpy(tmp, tmpdir, sizeof(tmp));
 	strlcat(tmp, "/vuln.xml.bz2.XXXXXXXX", sizeof(tmp));
 
 	if (dest != NULL) {

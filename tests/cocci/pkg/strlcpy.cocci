@@ -8,6 +8,6 @@
 expression E, E1, S;
 @@
 
-- strlcpy(E, E1, S);
-+ if (strlcpy(E, E1, S) >= S)
-+ 	pkg_emit_errno("strlcpy", TEXT(S));
+- port_strlcpy(E, E1, S);
++ if (port_strlcpy(E, E1, S) >= S)
++ 	pkg_emit_errno("port_strlcpy", TEXT(S));

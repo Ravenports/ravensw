@@ -268,7 +268,7 @@ indexfilename(char *filebuf, size_t filebuflen)
 	if (indexfile == NULL)
 		port_err(EX_SOFTWARE, "Cannot get INDEXFILE config entry!");
 
-	strlcpy(filebuf, indexdir, filebuflen);
+	port_strlcpy(filebuf, indexdir, filebuflen);
 
 	if (filebuf[0] != '\0' && filebuf[strlen(filebuf) - 1] != '/')
 		strlcat(filebuf, "/", filebuflen);

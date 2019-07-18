@@ -250,7 +250,7 @@ host_os_info(char *osname, size_t sz, long long *major_version)
 		return EPKG_FATAL;
 	}
 
-	strlcpy(osname, ut.sysname, sz);
+	port_strlcpy(osname, ut.sysname, sz);
 
 	/* Parse the major release version */
 	return parse_major_release(ut.release, major_version);
@@ -401,7 +401,7 @@ pkg_get_myarch(char *dest, size_t sz, int *osversion __unused)
 
 	/* Produce the result */
 	xasprintf(&spec, "%s:%lld:%s", os_name, major_version, cpu_name);
-	strlcpy(dest, spec, sz);
+	port_strlcpy(dest, spec, sz);
 
 cleanup:
 	free(spec);

@@ -400,12 +400,12 @@ pkg_create_repo_read_pipe(int fd, struct digest_list_entry **dlist)
 				case s_set_origin:
 					dig = xcalloc(1, sizeof(*dig));
 					dig->origin = xmalloc(i - start + 1);
-					strlcpy(dig->origin, &buf[start], i - start + 1);
+					port_strlcpy(dig->origin, &buf[start], i - start + 1);
 					state = s_set_digest;
 					break;
 				case s_set_digest:
 					dig->digest = xmalloc(i - start + 1);
-					strlcpy(dig->digest, &buf[start], i - start + 1);
+					port_strlcpy(dig->digest, &buf[start], i - start + 1);
 					state = s_set_mpos;
 					break;
 				case s_set_mpos:
@@ -422,7 +422,7 @@ pkg_create_repo_read_pipe(int fd, struct digest_list_entry **dlist)
 					break;
 				case s_set_checksum:
 					dig->checksum =  xmalloc(i - start + 1);
-					strlcpy(dig->digest, &buf[start], i - start + 1);
+					port_strlcpy(dig->digest, &buf[start], i - start + 1);
 					state = s_set_origin;
 					break;
 				}
@@ -434,7 +434,7 @@ pkg_create_repo_read_pipe(int fd, struct digest_list_entry **dlist)
 				}
 				else if (state == s_set_checksum) {
 					dig->checksum =  xmalloc(i - start + 1);
-					strlcpy(dig->checksum, &buf[start], i - start + 1);
+					port_strlcpy(dig->checksum, &buf[start], i - start + 1);
 				}
 				assert(dig->origin != NULL);
 				assert(dig->digest != NULL);

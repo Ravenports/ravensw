@@ -185,14 +185,14 @@ shlib_valid_abi(const char *fpath, GElf_Ehdr *hdr, const char *abi)
 				/* Abi line is likely invalid */
 				if (t == NULL)
 					return (true);
-				strlcpy(arch, p + 1, MIN((long)sizeof(arch), t - p));
+				port_strlcpy(arch, p + 1, MIN((long)sizeof(arch), t - p));
 				break;
 			case 2:
 				t = strchr(p + 1, ':');
 				if (t == NULL)
-					strlcpy(wordsize, p + 1, sizeof(wordsize));
+					port_strlcpy(wordsize, p + 1, sizeof(wordsize));
 				else
-					strlcpy(wordsize, p + 1, MIN((long)sizeof(wordsize), t - p));
+					port_strlcpy(wordsize, p + 1, MIN((long)sizeof(wordsize), t - p));
 				break;
 			}
 		}
@@ -513,7 +513,7 @@ pkg_analyse_files(struct pkgdb *db __unused, struct pkg *pkg, const char *stage)
 				goto cleanup;
 			}
 		} else {
-			strlcpy(fpath, file->path, sizeof(fpath));
+			port_strlcpy(fpath, file->path, sizeof(fpath));
 		}
 
 		ret = analyse_elf(pkg, fpath);
@@ -1079,12 +1079,12 @@ pkg_arch_to_legacy(const char *arch, char *dest, size_t sz)
 	for (arch_trans = machine_arch_translation; arch_trans->elftype != NULL;
 	    arch_trans++) {
 		if (strcmp(arch + i, arch_trans->archid) == 0) {
-			strlcpy(dest + i, arch_trans->elftype,
+			port_strlcpy(dest + i, arch_trans->elftype,
 			    sz - (arch + i - dest));
 			return (0);
 		}
 	}
-	strlcpy(dest + i, arch + i, sz - (arch + i  - dest));
+	port_strlcpy(dest + i, arch + i, sz - (arch + i  - dest));
 
 	return (0);
 }
@@ -1128,7 +1128,7 @@ pkg_get_myarch(char *dest, size_t sz, int *osversion)
 	for (arch_trans = machine_arch_translation; arch_trans->elftype != NULL;
 	    arch_trans++) {
 		if (strcmp(arch_tweak, arch_trans->elftype) == 0) {
-			strlcpy(arch_tweak, arch_trans->archid,
+			port_strlcpy(arch_tweak, arch_trans->archid,
 			    sz - (arch_tweak - dest));
 			break;
 		}

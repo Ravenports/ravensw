@@ -194,7 +194,7 @@ extract_filename_sum(const char *fname, char sum[])
 	if (dot_pos - dash_pos != PKG_FILE_CKSUM_CHARS + 1)
 		return (false);
 
-	strlcpy(sum, dash_pos + 1, PKG_FILE_CKSUM_CHARS + 1);
+	port_strlcpy(sum, dash_pos + 1, PKG_FILE_CKSUM_CHARS + 1);
 	return (true);
 }
 

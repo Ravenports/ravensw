@@ -478,7 +478,7 @@ connect_evpipe(const char *evpipe) {
 		}
 		memset(&sock, 0, sizeof(struct sockaddr_un));
 		sock.sun_family = AF_UNIX;
-		if (strlcpy(sock.sun_path, evpipe, sizeof(sock.sun_path)) >=
+		if (port_strlcpy(sock.sun_path, evpipe, sizeof(sock.sun_path)) >=
 		    sizeof(sock.sun_path)) {
 			pkg_emit_error("Socket path too long: %s", evpipe);
 			close(ctx.eventpipe);

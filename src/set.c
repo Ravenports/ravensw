@@ -64,7 +64,7 @@ check_change_values(const char *opt, char **oldv, char **newv, char guard)
 		return (false);
 
 	*oldv = malloc(semicolon - opt + 1);
-	strlcpy(*oldv, opt, semicolon - opt + 1);
+	port_strlcpy(*oldv, opt, semicolon - opt + 1);
 	*newv = strdup(semicolon + 1);
 
 	if (guard != '\0') {
