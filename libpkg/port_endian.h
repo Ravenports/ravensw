@@ -9,20 +9,30 @@
 
 /* Alignment-agnostic encode/decode bytestream to/from little/big endian. */
 
-static __inline uint16_t
-be16dec(const void *pp)
-{
-	uint8_t const *p = (uint8_t const *)pp;
-
-	return ((p[0] << 8) | p[1]);
-}
-
 static __inline uint32_t
 be32dec(const void *pp)
 {
 	uint8_t const *p = (uint8_t const *)pp;
 
 	return (((unsigned)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+}
+
+static __inline uint32_t
+le32dec(const void *pp)
+{
+	uint8_t const *p = (uint8_t const *)pp;
+
+	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
+}
+
+
+ #if 0 /* unused */
+static __inline uint16_t
+be16dec(const void *pp)
+{
+	uint8_t const *p = (uint8_t const *)pp;
+
+	return ((p[0] << 8) | p[1]);
 }
 
 static __inline uint64_t
@@ -39,14 +49,6 @@ le16dec(const void *pp)
 	uint8_t const *p = (uint8_t const *)pp;
 
 	return ((p[1] << 8) | p[0]);
-}
-
-static __inline uint32_t
-le32dec(const void *pp)
-{
-	uint8_t const *p = (uint8_t const *)pp;
-
-	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
 }
 
 static __inline uint64_t
@@ -114,5 +116,6 @@ le64enc(void *pp, uint64_t u)
 	le32enc(p, (uint32_t)(u & 0xffffffffU));
 	le32enc(p + 4, (uint32_t)(u >> 32));
 }
+# endif /* hide */
 
 #endif
