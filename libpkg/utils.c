@@ -515,7 +515,9 @@ process_spawn_pipe(FILE *inout[2], const char *command)
 			dup2(pipes[2], STDIN_FILENO);
 			close(pipes[2]);
 		}
+#ifdef HAVE_CLOSEFROM
 		closefrom(STDERR_FILENO + 1);
+#endif
 
 		execve(_PATH_BSHELL, argv, environ);
 
