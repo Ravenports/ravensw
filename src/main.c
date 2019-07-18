@@ -720,7 +720,7 @@ main(int argc, char **argv)
 	optreset = 1;
 	optind = 1;
 #else
-# ifdef __linux __
+# ifdef __linux__
 	/* glibc */
 	optind = 0;
 # else
