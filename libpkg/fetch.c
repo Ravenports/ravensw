@@ -173,7 +173,7 @@ pkg_fetch_file(struct pkg_repo *repo, const char *url, char *dest, time_t t,
 	return (retcode);
 }
 
-#ifdef USE_ESTREAM
+#if defined(USE_ESTREAM) || defined(HAVE_FOPENCOOKIE)
 static ssize_t
 ssh_read(void *data, void *buf, size_t len)
 #else
@@ -310,7 +310,7 @@ ssh_writev(int fd, struct iovec *iov, int iovcnt)
 	return (total);
 }
 
-#ifdef USE_ESTREAM
+#if defined(USE_ESTREAM) || defined(HAVE_FOPENCOOKIE)
 static ssize_t
 ssh_write(void *data, const void *buf, size_t l)
 #else
@@ -376,7 +376,7 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 	  ssh_write,
 	  NULL,
 	  ssh_close
-	}
+	};
 # endif
 #endif
 
