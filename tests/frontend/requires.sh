@@ -37,7 +37,7 @@ EOF
 	    -s exit:0 \
 	    pkg repo .
 
-	OUTPUT="Updating local1 repository catalogue...
+	OUTPUT="Updating local1 repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done

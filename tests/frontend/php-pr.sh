@@ -237,7 +237,7 @@ php53-fileinfo-5.3.40
 php53-gd-5.3.27
 "
 
-OUTPUT="Updating local repository catalogue...
+OUTPUT="Updating local repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done
@@ -267,7 +267,7 @@ Number of packages to be reinstalled: 1
 		pkg -o REPOS_DIR="${TMPDIR}" -o RAVENSW_CACHEDIR="${TMPDIR}" install -n php53-fileinfo
 
 
-OUTPUT="Updating local repository catalogue...
+OUTPUT="Updating local repository catalog...
 local repository is up to date.
 All repositories are up to date.
 Checking for upgrades (3 candidates):  done

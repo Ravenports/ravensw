@@ -144,12 +144,12 @@ local2: {
 }
 EOF
 
-OUTPUT="Updating local1 repository catalogue...
+OUTPUT="Updating local1 repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done
 local1 repository update completed. 2 packages processed.
-Updating local2 repository catalogue...
+Updating local2 repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done

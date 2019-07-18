@@ -223,7 +223,7 @@ local: {
 }
 EOF
 
-	OUTPUT="Updating local repository catalogue...
+	OUTPUT="Updating local repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done

@@ -70,7 +70,7 @@ pkgcli_update(bool force, bool strict, const char *reponame)
 		}
 
 		if (!quiet)
-			printf("Updating %s repository catalogue...\n",
+			printf("Updating %s repository catalog...\n",
 			    pkg_repo_name(r));
 
 		retcode = pkg_update(r, force);
@@ -169,7 +169,7 @@ exec_update(int argc, char **argv)
 			   PKGDB_DB_REPO);
 	if (ret == EPKG_ENOACCESS) {
 		port_warnx("Insufficient privileges to update the repository "
-		      "catalogue.");
+		      "catalog.");
 		return (EX_NOPERM);
 	} else if (ret != EPKG_OK)
 		return (EX_IOERR);

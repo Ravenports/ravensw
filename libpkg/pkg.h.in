@@ -842,7 +842,7 @@ int pkg_is_installed(struct pkgdb *db, const char *name);
  * Create a repository database.
  * @param path The path where the repository live.
  * @param output_dir The path where the package repository should be created.
- * @param force If true, rebuild the repository catalogue from scratch
+ * @param force If true, rebuild the repository catalog from scratch
  * @param filesite If true, create a list of all files in repo
  * @param metafile Open meta from the specified file
  * @param legacy Create legacy (1.2 compatible) repo
@@ -1186,7 +1186,7 @@ int pkg_load_metadata(struct pkg *, const char *, const char *, const char *, co
 
 /**
  * Download the latest repo db file and checks its signature if any
- * @param force Always download the repo catalogue
+ * @param force Always download the repo catalog
  */
 int pkg_update(struct pkg_repo *repo, bool force);
 

@@ -185,12 +185,12 @@ EOF
 
 
 
-OUTPUT_CASE1="Updating repoA repository catalogue...
+OUTPUT_CASE1="Updating repoA repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done
 repoA repository update completed. 4 packages processed.
-Updating repoB repository catalogue...
+Updating repoB repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done
@@ -223,9 +223,9 @@ ${JAILED}[4/4] Extracting pkgA-1.0:  done
 
 
 
-OUTPUT_CASE2="Updating repoA repository catalogue...
+OUTPUT_CASE2="Updating repoA repository catalog...
 repoA repository is up to date.
-Updating repoB repository catalogue...
+Updating repoB repository catalog...
 repoB repository is up to date.
 All repositories are up to date.
 Checking for upgrades (1 candidates):  done

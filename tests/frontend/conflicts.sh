@@ -124,7 +124,7 @@ EOF
 		-s exit:0 \
 		pkg -C ./ravensw.conf update -f
 
-OUTPUT="Updating local repository catalogue...
+OUTPUT="Updating local repository catalog...
 local repository is up to date.
 All repositories are up to date.
 Checking for upgrades (2 candidates):  done
@@ -210,7 +210,7 @@ local: {
 }
 EOF
 
-OUTPUT="Updating local repository catalogue...
+OUTPUT="Updating local repository catalog...
 ${JAILED}Fetching meta.txz:  done
 ${JAILED}Fetching packagesite.txz:  done
 Processing entries:  done

@@ -60,15 +60,15 @@ _pkg_subcommands() {
 		'query:query information about installed packages'
 		'plugins:list available plugins'
 		'register:register a package with the local database'
-		'repo:create a package repository catalogue'
-		'rquery:query information in repository catalogues'
-		'search:perform a search of package repository catalogues'
+		'repo:create a package repository catalog'
+		'rquery:query information in repository catalogs'
+		'search:perform a search of package repository catalogs'
 		'set:modify information about packages in the local database'
 		'shell:open a debug shell'
 		'shlib:list packages that link against a specific shared library'
 		'stats:display package database statistics'
 		'unlock:unlock a package, allowing modification or deletion'
-		'update:update package repository catalogues'
+		'update:update package repository catalogs'
 		'updating:display UPDATING information for a package'
 		'upgrade:perform upgrades of packaged software distributions'
 		'version:display versions of installed packages'
@@ -327,7 +327,7 @@ _pkg_args() {
 				'(-q --quiet)'{-q,--quiet}'[force quiet output]' \
 				'(-o --output)'{-o+,--output=}'[place files in a subdirectory named `All'\'' of the specified directory]: : _files -/' \
 				'(-d --dependencies)'{-d,--dependencies}'[fetch dependencies as well]' \
-				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalogue]' \
+				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalog]' \
 				- '(all)' \
 				'(-i --case-insensitive -C --case-sensitive)'{-a,--all}'[process all packages]' \
 				- patterns \
@@ -380,7 +380,7 @@ _pkg_args() {
 			_arguments -A '-*' -s \
 				'(-A --automatic)'{-A,--automatic}'[mark the installed packages as automatic]' \
 				'(-r --repository)'{-r+,--repository=}'[specify the repository to install packages from]:repository:->repositories' \
-				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalogue]' \
+				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalog]' \
 				'(-I --no-install-scripts)'{-I,--no-install-scripts}"[don't execute any pre/post-install scripts]" \
 				'(-M --ignore-missing)'{-M,--ignore-missing}'[ignore missing dependencies]' \
 				'(-n --dry-run -y --yes)'{-y,--yes}'[assume yes when asked for confirmation]' \
@@ -465,7 +465,7 @@ _pkg_args() {
 			;;
 		(rquery)
 			_arguments -A '-*' -C -s \
-				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalogue]' \
+				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalog]' \
 				'(-r --repository)'{-r+,--repository=}'[specify the repository to search]:repository:->repositories' \
 				'(-I --index-line)'{-I,--index-line}'[print corresponding line from ports index file]' \
 				${words[(r)(-I|--index-line)]+!}':output format:->query' \
@@ -495,12 +495,12 @@ _pkg_args() {
 				'(-x --regex -g --glob -e --exact)'{-e,--exact}'[process packages that match the string exactly]' \
 				'(-i --case-insensitive -C --case-sensitive)'{-C,--case-sensitive}'[case sensitive pattern matching]' \
 				'(-i --case-insensitive -C --case-sensitive)'{-i,--case-insensitive}'[case insensitive pattern matching]' \
-				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalogue]' \
+				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalog]' \
 				'(-r --repository)'{-r+,--repository=}'[specify the repository to search]:repository:->repositories' \
 				'1:available package:_pkg_available_name' \
 				- set1 \
 				'(-L --label)'{-L+,--label=}'[select which identifying label is printed for each matched package]:field:( $label_opts )' \
-				'(-S --search)'{-S+,--search=}'[specify the field to search the repository catalogue on]:field:( $label_opts )' \
+				'(-S --search)'{-S+,--search=}'[specify the field to search the repository catalog on]:field:( $label_opts )' \
 				\*{-Q+,--query-modifier=}'[add an additional field to the result]:modifier:( $modifier_opts )' \
 				- set2 \
 				'(-D --description -c --comment)'{-c,--comment}'[use pattern matching on comments text]' \
@@ -580,7 +580,7 @@ _pkg_args() {
 				'(-f --force)'{-f,--force}'[upgrade/reinstall everything]' \
 				'(-i --case-insensitive -C --case-sensitive)'{-C,--case-sensitive}'[case sensitive pattern matching]' \
 				'(-i --case-insensitive -C --case-sensitive)'{-i,--case-insensitive}'[case insensitive pattern matching]' \
-				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalogue]' \
+				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalog]' \
 				'(-I --no-install-scripts)'{-I,--no-install-scripts}"[don't execute any pre/post-install scripts]" \
 				'(-q --quiet)'{-q,--quiet}'[be quiet]' \
 				'(-r --repository)'{-r+,--repository=}'[specify the repository to upgrade from]:repository:->repositories' \
@@ -602,7 +602,7 @@ _pkg_args() {
 				'(-q --quiet)'{-q,--quiet}'[be quiet]' \
 				'(-v --verbose)'{-v,--verbose}'[be verbose]' \
 				${words[(r)(-*[PI]*|--(index|ports))]+!}'(-r --repository)'{-r+,--repository=}'[specify the repository to ]:repository:->repositories' \
-				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalogue]' \
+				'(-U --no-repo-update)'{-U,--no-repo-update}'[suppress the automatic update of the repo catalog]' \
 				'(-L --not-like -l --like)'{-l+,--like=}'[display only the packages with a given status flag]:flag:((\< = \>))' \
 				'(-l --like -L --not-like)'{-L+,--not-like=}'[display only the packages without a given status flag]:flag:((\< = \>))' \
 				'(-O --match-origin)'{-M+,--match-origin=}'[display only packages matching specified origin]:origin' \

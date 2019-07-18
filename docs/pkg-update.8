@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm "ravensw update"
-.Nd update the local catalogues of the enabled package repositories
+.Nd update the local catalogs of the enabled package repositories
 .Sh SYNOPSIS
 .Nm
 .Op Fl fq
@@ -30,12 +30,12 @@
 .Op Cm --repository Ar reponame
 .Sh DESCRIPTION
 .Nm
-is used for updating the local copy of the repository catalogues
+is used for updating the local copy of the repository catalogs
 from the remote package repository databases.
-Updates to catalogues are normally downloaded only when the master
+Updates to catalogs are normally downloaded only when the master
 copy on the remote package repository is newer than the local copy.
 .Pp
-The repository catalogues to be updated are defined in the
+The repository catalogs to be updated are defined in the
 .Xr ravensw.conf 5
 file or by the entries in
 .Pa /raven/etc/ravensw/repos .
@@ -43,7 +43,7 @@ See
 .Xr ravensw.conf 5
 for details.
 .Pp
-It is best practice to ensure your package repository catalogues are
+It is best practice to ensure your package repository catalogs are
 up to date before doing any package installation (via
 .Xr ravensw-install 8 )
 or upgrades (via
@@ -56,13 +56,13 @@ By default invoking either of
 or
 .Nm ravensw upgrade
 will cause repository
-catalogues to be updated automatically, unless disabled by setting
+catalogs to be updated automatically, unless disabled by setting
 .Ev REPO_AUTOUPDATE
 to false in
 .Xr ravensw.conf 5 .
 .Pp
 .Ss Signed repositories
-If the repository catalogue is signed and
+If the repository catalog is signed and
 .Ev PUBKEY
 is defined for the repository, the signature will be verified after download.
 See
@@ -75,10 +75,10 @@ The following options are supported by
 .It Fl q , Cm --quiet
 Force quiet output.
 .It Fl f , Cm --force
-Force a full download of the repository catalogue without regard to the
-respective ages of the local and remote copies of the catalogue.
+Force a full download of the repository catalog without regard to the
+respective ages of the local and remote copies of the catalog.
 .It Fl r Ar reponame , Cm --repository Ar reponame
-Download the catalogue for the named repository only.
+Download the catalog for the named repository only.
 This will update only the named repository, irrespective of the configured
 .Dq active
 status from
