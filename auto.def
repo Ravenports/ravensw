@@ -175,16 +175,17 @@ if {![cc-check-functions __res_query]} {
 		if {[cc-check-functions __res_query]} {
 			define-feature LIBRESOLV
 		}
-	}
-}
-
-if {![cc-check-functions res_query]} {
-	cc-with { -libs { -lresolv }} {
-		if {[cc-check-functions res_query]} {
-			define-feature LIBRESOLV
+	} else {
+		if {![cc-check-functions res_query]} {
+			cc-with { -libs { -lresolv }} {
+				if {[cc-check-functions res_query]} {
+					define-feature LIBRESOLV
+				}
+			}
 		}
 	}
 }
+
 
 cc-check-includes machine/endian.h osreldate.h readpassphrase.h \
 	sys/procctl.h sys/statfs.h sys/statvfs.h
