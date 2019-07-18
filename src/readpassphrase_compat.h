@@ -26,13 +26,18 @@
 
 #include <ctype.h>
 #include <fcntl.h>
-#include <paths.h>
 #include <errno.h>
 #include <pwd.h>
 #include <signal.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#else
+#include "private/port_paths.h"
+#endif
 
 #define RPP_ECHO_OFF 0x00 /* Turn off echo (default). */
 #define RPP_ECHO_ON 0x01 /* Leave echo on. */

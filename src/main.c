@@ -244,7 +244,7 @@ exec_help(int argc, char **argv)
 
 	for (i = 0; i < cmd_len; i++) {
 		if (strcmp(cmd[i].name, argv[1]) == 0) {
-			if (asprintf(&manpage, "/usr/bin/man pkg-%s", cmd[i].name) == -1)
+			if (port_asprintf(&manpage, "/usr/bin/man pkg-%s", cmd[i].name) == -1)
 				port_errx(EX_SOFTWARE, "cannot allocate memory");
 
 			system(manpage);
@@ -259,7 +259,7 @@ exec_help(int argc, char **argv)
 	if (plugins_enabled) {
 		DL_FOREACH(plugins, c) {
 			if (strcmp(c->name, argv[1]) == 0) {
-				if (asprintf(&manpage, "/usr/bin/man pkg-%s", c->name) == -1)
+				if (port_asprintf(&manpage, "/usr/bin/man pkg-%s", c->name) == -1)
 					port_errx(EX_SOFTWARE, "cannot allocate memory");
 
 				system(manpage);

@@ -129,7 +129,7 @@ exec_updating(int argc, char **argv)
 			retcode = EX_CONFIG;
 			goto cleanup;
 		}
-		asprintf(&updatingfile, "%s/UPDATING", portsdir);
+		port_asprintf(&updatingfile, "%s/UPDATING", portsdir);
 	}
 
 	fd = fopen(updatingfile, "r");

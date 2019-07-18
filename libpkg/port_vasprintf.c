@@ -38,3 +38,15 @@ port_vasprintf(char **strp, const char *fmt, va_list args)
         return status;
     }
 }
+
+int
+port_asprintf(char **strp, const char *fmt, ...)
+{
+    va_list args;
+    int status;
+
+    va_start(args, fmt);
+    status = port_vasprintf(strp, fmt, args);
+    va_end(args);
+    return status;
+}
