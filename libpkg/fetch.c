@@ -444,9 +444,9 @@ start_ssh(struct pkg_repo *repo, struct url *u, off_t *sz)
 
 #ifdef USE_ESTREAM
 		repo->ssh = es_fopencookie ((void *)repo, "a+", ssh_cookie_functions);
-#elsif defined(HAVE_FOPENCOOKIE)
+#elif defined(HAVE_FOPENCOOKIE)
 		repo->ssh = fopencookie((void *)repo, "a+", ssh_cookie_functions);
-#elsif defined(HAVE_FUNOPEN)
+#elif defined(HAVE_FUNOPEN)
 		repo->ssh = funopen(repo, ssh_read, ssh_write, NULL, ssh_close);
 #else
 #error No equivalent of funopen available.
