@@ -210,6 +210,9 @@ if {[string match *-darwin* [get-define host]]} {
 
 if {[string match *-solaris* [get-define host]]} {
 	define system_type "solaris"
+	# -lresolv conftest fails due to missing machine/endian header (?)
+	# so just hardcode it. we need to link to it
+	define-feature LIBRESOLV
 } else {
 	if {[string match *-linux* [get-define host]]} {
 		define system_type "linux"
