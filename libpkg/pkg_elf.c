@@ -835,21 +835,22 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	int ret = EPKG_OK;
 	const char *arch, *abi, *endian_corres_str, *wordsize_corres_str, *fpu;
 
-#ifdef HAVE_ELF_NOTES
 	int i;
 	const char *abi_files[] = {
 		getenv("ABI_FILE"),
 		_PATH_UNAME,
+#ifdef __sun__
+		_PATH_LIBC64,
+#else
 		_PATH_BSHELL,
-	};
 #endif
+	};
 	struct elf_info ei;
 
 	arch = NULL;
 	memset(&ei, 0, sizeof(ei));
 	ei.osversion = osversion;
 
-#ifdef HAVE_ELF_NOTES
 	if (elf_version(EV_CURRENT) == EV_NONE) {
 		pkg_emit_error("ELF library initialization failed: %s",
 		    elf_errmsg(-1));
@@ -883,6 +884,7 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	}
 
 
+#ifdef HAVE_ELF_NOTES
 	while ((scn = elf_nextscn(elf, scn)) != NULL) {
 		if (gelf_getshdr(scn, &shdr) != &shdr) {
 			ret = EPKG_FATAL;
@@ -899,12 +901,6 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 			elf_note_analyse(data, &elfhdr, &ei);
 		}
 	}
-
-	if (ei.osname == NULL) {
-		ret = EPKG_FATAL;
-		pkg_emit_error("failed to get the note section");
-		goto cleanup;
-	}
 #else
 	/* hardcode Solaris:10, notes not inserted by sun linker */
 	char *solaris = "Solaris";
@@ -914,6 +910,12 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	ei.osversion = &solversion;
 	xasprintf(&ei.strversion, "%d", solmajor);
 #endif /* HAVE_ELF_NOTES */
+
+	if (ei.osname == NULL) {
+		ret = EPKG_FATAL;
+		pkg_emit_error("failed to get the note section");
+		goto cleanup;
+	}
 
 	snprintf(dest, sz, "%s:%s", ei.osname, ei.strversion);
 
