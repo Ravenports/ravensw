@@ -39,7 +39,7 @@ ATF_TC_HEAD(check_symlinks, tc)
 
 ATF_TC_BODY(check_symlinks, tc)
 {
-	unsigned char *sum;
+	const char *sum;
 
 	ATF_REQUIRE_EQ(symlink("foo", "bar"), 0);
 
@@ -75,7 +75,7 @@ ATF_TC_HEAD(check_files, tc)
 ATF_TC_BODY(check_files, tc)
 {
 	FILE *f;
-	unsigned char *sum;
+	const char *sum;
 
 	f = fopen("foo", "w");
 	fprintf(f, "bar\n");

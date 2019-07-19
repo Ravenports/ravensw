@@ -78,17 +78,23 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/external/klib \
 		@PKG_ATF_C_CFLAGS@ \
 		-DTESTING
 
-LIBS=	\
-	-L$(top_builddir)/libpkg -lpkg_flat \
-	-lm \
-	@EXTRA_LIBS@
+LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
+LIBREPO_PIC=	-L$(top_builddir)/libpkg/repo/binary -lrepo-binary_pic
+SQLITE_PIC=	-L$(top_builddir)/external/sqlite -lsqlite_pic
+OTHER_LIBS=	@EXTRA_LIBS@
 
-@if HAVE_PKG_LIBARCHIVE
-LIBS+=	@PKG_LIBARCHIVE_LDFLAGS@ @PKG_LIBARCHIVE_LIBS_STATIC@
-@else
-LIBS+=	-L/usr/lib -larchive -lbz2 -lz -llzma
-@endif
-OTHER_LIBS=	-lssl -lcrypto -pthread
+LIBS+=		${SQLITE_PIC}
+LIBS+=		-larchive
+LIBS+=		-lexpat_pic
+LIBS+=		-lzstd_pic
+LIBS+=		-llinenoise_pic
+LIBS+=		-lucl_pic
+LIBS+=		-lb2_pic
+LIBS+=		-lpicosat_pic
+LIBS+=		-lfetch_pic
+LIBS+=		-lssl_pic
+LIBS+=		-lcrypto_pic
+OTHER_LIBS=	-lm -pthread
 @if HAVE_LIBFTS
 OTHER_LIBS+=	-lfts
 @endif
@@ -99,7 +105,15 @@ OTHER_LIBS+=	-ldl
 OTHER_LIBS+=	-lresolv
 @endif
 
-LOCAL_LDFLAGS=	$(LIBS) $(OTHER_LIBS)
+@if libabidir == libelf
+LIBS+=		-lelf_pic
+@endif
+
+@if system_type == solaris
+OTHER_LIBS+=	-lsocket -lrt -lgen
+@endif
+
+LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBREPO_PIC) $(LIBS) $(OTHER_LIBS)
 LOCAL_LDFLAGS+=	@PKG_ATF_C_LDFLAGS@ @PKG_ATF_C_LIBS@
 
 all: $(TESTS) Kyuafile ${TESTS_SHELL} frontend/Kyuafile
