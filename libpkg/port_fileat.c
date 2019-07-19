@@ -72,9 +72,9 @@ file_chdir_lock(int dfd)
 	ret = fchdir(dfd);
 	if (ret != 0) {
 		pthread_mutex_unlock(&file_at_lock);
-		return ret;
+		return(ret);
 	} else {
-		return ret;
+		return(ret);
 	}
 }
 
@@ -108,24 +108,18 @@ int
 port_faccessat(int fd, const char *path, int mode, int flag)
 {
 	int ret;
-	char saved_cwd[MAXPATHLEN];
-	const char *cwd;
-
-	if ((cwd = getcwd(saved_cwd, sizeof(saved_cwd))) == NULL)
-		return (-1);
 
 	if ((ret = file_chdir_lock(fd) != 0))
-		return ret;
+		return(ret);
 
 	if (flag & AT_EACCESS) {
 		ret = port_eaccess(path, mode);
 	} else {
 		ret = access(path, mode);
 	}
-	ret = access(path, mode);
 
 	file_chdir_unlock(fd);
-	return ret;
+	return(ret);
 }
 
 ssize_t
@@ -135,12 +129,12 @@ port_readlinkat(int fd, const char *restrict path, char *restrict buf,
 	int ret;
 
 	if ((ret = file_chdir_lock(fd) != 0))
-		return ret;
+		return(ret);
 
 	ret = readlink(path, buf, bufsize);
 
 	file_chdir_unlock(fd);
-	return ret;
+	return(ret);
 }
 
 int
@@ -149,7 +143,7 @@ port_unlinkat(int fd, const char *path, int flag)
 	int ret;
 
 	if ((ret = file_chdir_lock(fd) != 0))
-		return ret;
+		return(ret);
 
 	if (flag & AT_REMOVEDIR) {
 		ret = rmdir(path);
@@ -158,41 +152,30 @@ port_unlinkat(int fd, const char *path, int flag)
 	}
 
 	file_chdir_unlock(fd);
-	return ret;
+	return(ret);
 }
 
 int
-port_fchmodat(int dirfd, const char* path, mode_t mode, int flags)
+port_fchmodat(int fd, const char* path, mode_t mode, int flag)
 {
-#ifdef __linux__
-/* troubleshooting to see if this is culprit */
-	return(fchmodat(dirfd, path, mode, flags));
-#else
-	int fd;
-	int result;
-	int save_errno;
+	int ret;
 
-	if (flags & AT_SYMLINK_NOFOLLOW) {
+#ifdef __sun__
+	if (flag & AT_SYMLINK_NOFOLLOW) {
 		errno = ENOTSUP;
 		return(-1);
 	}
-
-	fd = openat(dirfd, path, 0);
-	if (fd == -1) {
-		/* errno set by openat */
-		return(-1);
-	}
-
-	if ((result = file_chdir_lock(fd) != 0))
-		return(result);
-
-	result = fchmod(fd, mode);
-	save_errno = errno;
-	file_chdir_unlock(fd);
-
-	if (close(fd) == -1) {
-		errno = save_errno;
-	}
-	return(result);
 #endif
+
+	if ((ret = file_chdir_lock(fd) != 0))
+		return(ret);
+
+	if (flag & AT_SYMLINK_NOFOLLOW) {
+		ret = lchmod(path, mode);
+	else {
+		ret = chmod(path, mode);
+	}
+
+	file_chdir_unlock(fd);
+	return(ret);
 }
