@@ -160,7 +160,7 @@ port_fchmodat(int fd, const char* path, mode_t mode, int flag)
 {
 	int ret;
 
-#ifdef __sun__
+#if defined(__sun__) || defined(__linux__)
 	if (flag & AT_SYMLINK_NOFOLLOW) {
 		errno = ENOTSUP;
 		return(-1);
