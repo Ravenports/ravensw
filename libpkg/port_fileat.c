@@ -172,7 +172,7 @@ port_fchmodat(int fd, const char* path, mode_t mode, int flag)
 
 	if (flag & AT_SYMLINK_NOFOLLOW) {
 		ret = lchmod(path, mode);
-	else {
+	} else {
 		ret = chmod(path, mode);
 	}
 
