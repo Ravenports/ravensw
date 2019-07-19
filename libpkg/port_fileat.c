@@ -166,7 +166,7 @@ port_fchmodat(int dirfd, const char* path, mode_t mode, int flags)
 {
 #ifdef __linux__
 /* troubleshooting to see if this is culprit */
-	return(fchmodat(dirfd, path, mode, flags);
+	return(fchmodat(dirfd, path, mode, flags));
 #else
 	int fd;
 	int result;
