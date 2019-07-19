@@ -839,10 +839,12 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	int i;
 	const char *abi_files[] = {
 		getenv("ABI_FILE"),
-		_PATH_UNAME,
 #ifdef __sun__
+		/* uname, etc, is compiled at 32-bit
+		 * Use the 64-bit libc to force detection of amd64 */
 		_PATH_LIBC64,
 #else
+		_PATH_UNAME,
 		_PATH_BSHELL,
 #endif
 	};
