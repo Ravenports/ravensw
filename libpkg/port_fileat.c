@@ -184,9 +184,10 @@ port_fchmodat(int dirfd, const char* path, mode_t mode, int flags)
 
 	result = fchmod(fd, mode);
 	save_errno = errno;
+	file_chdir_unlock(fd);
+
 	if (close(fd) == -1) {
 		errno = save_errno;
 	}
-	file_chdir_unlock(fd);
 	return(result);
 }
