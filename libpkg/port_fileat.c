@@ -164,6 +164,10 @@ port_unlinkat(int fd, const char *path, int flag)
 int
 port_fchmodat(int dirfd, const char* path, mode_t mode, int flags)
 {
+#ifdef __linux__
+/* troubleshooting to see if this is culprit */
+	return(fchmodat(dirfd, path, mode, flags);
+#else
 	int fd;
 	int result;
 	int save_errno;
@@ -190,4 +194,5 @@ port_fchmodat(int dirfd, const char* path, mode_t mode, int flags)
 		errno = save_errno;
 	}
 	return(result);
+#endif
 }
