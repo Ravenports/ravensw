@@ -61,13 +61,13 @@ struct pkg_entry *pkg_head = NULL;
 void
 usage_create(void)
 {
-	fprintf(stderr, "Usage: " PKG_EXEC_NAME " create [-Ohnqv] [-f format] [-o outdir] "
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " create [-Ohnqv] [-o outdir] "
 		"[-p plist] [-r rootdir] -m metadatadir\n");
-	fprintf(stderr, "Usage: " PKG_EXEC_NAME " create [-Ohnqv] [-f format] [-o outdir] "
+	fprintf(stderr, "Usage: " PKG_EXEC_NAME " create [-Ohnqv] [-o outdir] "
 		"[-r rootdir] -M manifest\n");
-	fprintf(stderr, "       " PKG_EXEC_NAME " create [-Ohgnqvx] [-f format] [-o outdir] "
+	fprintf(stderr, "       " PKG_EXEC_NAME " create [-Ohgnqvx] [-o outdir] "
 		"[-r rootdir] pkg-name ...\n");
-	fprintf(stderr, "       " PKG_EXEC_NAME " create [-Ohnqv] [-f format] [-o outdir] "
+	fprintf(stderr, "       " PKG_EXEC_NAME " create [-Ohnqv] [-o outdir] "
 		"[-r rootdir] -a\n\n");
 	fprintf(stderr, SEE_HELP "create'.\n");
 }

@@ -464,7 +464,6 @@ _pkg () {
 	    COMPREPLY=(
 		'-r[Root directory] -/'
 		'-m[Manifest directory] -/'
-		'-f[format]'
 		'-o[Ouput directory] -/'
 		'(-g -x -X)-a[Process all packages]'
 		'(-x -X -a)-g[Process packages that match the glob pattern]'
