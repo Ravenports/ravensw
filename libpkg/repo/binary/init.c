@@ -313,7 +313,7 @@ pkg_repo_binary_open(struct pkg_repo *repo, unsigned mode)
 	if ((fd = openat(dbdirfd, filepath, O_RDONLY)) != -1) {
 		if (pkg_repo_meta_load(fd, &repo->meta) != EPKG_OK) {
 			pkg_emit_error("Repository %s load error: "
-					"meta cannot be loaded %s", pkg_repo_name(repo),
+					"meta cannot be loaded (%s)", pkg_repo_name(repo),
 					strerror(errno));
 			close(fd);
 			return (EPKG_FATAL);
