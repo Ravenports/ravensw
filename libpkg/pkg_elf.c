@@ -902,6 +902,12 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 			elf_note_analyse(data, &elfhdr, &ei);
 		}
 	}
+
+	if (ei.osname == NULL) {
+		ret = EPKG_FATAL;
+		pkg_emit_error("failed to get the note section");
+		goto cleanup;
+	}
 #else
 	/* hardcode Solaris:10, notes not inserted by sun linker */
 	char *solaris = "Solaris";
@@ -911,12 +917,6 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	ei.osversion = &solversion;
 	xasprintf(&ei.strversion, "%d", solmajor);
 #endif /* HAVE_ELF_NOTES */
-
-	if (ei.osname == NULL) {
-		ret = EPKG_FATAL;
-		pkg_emit_error("failed to get the note section");
-		goto cleanup;
-	}
 
 	snprintf(dest, sz, "%s:%s", ei.osname, ei.strversion);
 
