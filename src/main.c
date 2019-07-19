@@ -157,14 +157,14 @@ usage(const char *conffile, const char *reposdir, FILE *out, enum pkg_usage_reas
 		va_start(vp, reason);
 		arg = va_arg(vp, const char *);
 		va_end(vp);
-		fprintf(out, "pkg: unknown command: %s\n", arg);
+		fprintf(out, PKG_EXEC_NAME ": unknown command: %s\n", arg);
 		goto out;
 	}
 	else if (reason == PKG_USAGE_INVALID_ARGUMENTS) {
 		va_start(vp, reason);
 		arg = va_arg(vp, const char *);
 		va_end(vp);
-		fprintf(out, "pkg: %s\n", arg);
+		fprintf(out, PKG_EXEC_NAME ": %s\n", arg);
 	}
 
 #ifdef HAVE_LIBJAIL
