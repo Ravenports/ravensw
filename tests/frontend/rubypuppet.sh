@@ -122,7 +122,7 @@ EOF
 #### NEW
 	rm repo1.conf
 	rm -f *.ucl
-	rm *.txz
+	rm *.tzst
 
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg rubygemrubyaugeas.new rubygem-ruby-augeas 1.0
 	cat << EOF >> rubygemrubyaugeas.new.ucl
@@ -224,8 +224,8 @@ local: {
 EOF
 
 	OUTPUT="Updating local repository catalog...
-${JAILED}Fetching meta.txz:  done
-${JAILED}Fetching packagesite.txz:  done
+${JAILED}Fetching meta.tzst:  done
+${JAILED}Fetching packagesite.tzst:  done
 Processing entries:  done
 local repository update completed. 5 packages processed.
 All repositories are up to date.

@@ -111,7 +111,7 @@ EOF
 
 	rm repo1.conf
 	rm -f *.ucl
-	rm *.txz
+	rm *.tzst
 
 	cat << EOF > php53.new.ucl
 name: php53
@@ -238,8 +238,8 @@ php53-gd-5.3.27
 "
 
 OUTPUT="Updating local repository catalog...
-${JAILED}Fetching meta.txz:  done
-${JAILED}Fetching packagesite.txz:  done
+${JAILED}Fetching meta.tzst:  done
+${JAILED}Fetching packagesite.tzst:  done
 Processing entries:  done
 local repository update completed. 4 packages processed.
 All repositories are up to date.

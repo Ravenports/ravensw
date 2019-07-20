@@ -145,13 +145,13 @@ local2: {
 EOF
 
 OUTPUT="Updating local1 repository catalog...
-${JAILED}Fetching meta.txz:  done
-${JAILED}Fetching packagesite.txz:  done
+${JAILED}Fetching meta.tzst:  done
+${JAILED}Fetching packagesite.tzst:  done
 Processing entries:  done
 local1 repository update completed. 2 packages processed.
 Updating local2 repository catalog...
-${JAILED}Fetching meta.txz:  done
-${JAILED}Fetching packagesite.txz:  done
+${JAILED}Fetching meta.tzst:  done
+${JAILED}Fetching packagesite.tzst:  done
 Processing entries:  done
 local2 repository update completed. 2 packages processed.
 All repositories are up to date.

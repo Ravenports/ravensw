@@ -211,8 +211,8 @@ local: {
 EOF
 
 OUTPUT="Updating local repository catalog...
-${JAILED}Fetching meta.txz:  done
-${JAILED}Fetching packagesite.txz:  done
+${JAILED}Fetching meta.tzst:  done
+${JAILED}Fetching packagesite.tzst:  done
 Processing entries:  done
 local repository update completed. 1 packages processed.
 All repositories are up to date.

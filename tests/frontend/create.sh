@@ -50,8 +50,8 @@ preparetestcredentials() {
 }
 
 basic_validation() {
-	test -f test-1.txz || atf_fail "Package not created"
-	xz -t test-1.txz || atf_fail "XZ integrity check failed"
+	test -f test-1.tzst || atf_fail "Package not created"
+	xz -t test-1.tzst || atf_fail "XZ integrity check failed"
 }
 
 create_with_hardlink_body() {
@@ -83,7 +83,7 @@ create_from_plist_body() {
 		-o match:"-rw-r--r-- .*root[ /]+wheel.* /file1$" \
 		-e ignore \
 		-s exit:0 \
-		tar tvf test-1.txz
+		tar tvf test-1.tzst
 }
 
 create_from_plist_set_owner_body() {
@@ -101,7 +101,7 @@ create_from_plist_set_owner_body() {
 		-o match:"-rw-r--r-- .*plop[ /]+wheel.* /file1$" \
 		-e ignore \
 		-s exit:0 \
-		tar tvf test-1.txz
+		tar tvf test-1.tzst
 }
 
 create_from_plist_set_group_body() {
@@ -119,7 +119,7 @@ create_from_plist_set_group_body() {
 		-o match:"-rw-r--r-- .*root[ /]+bla.* /file1$" \
 		-e ignore \
 		-s exit:0 \
-		tar tvf test-1.txz
+		tar tvf test-1.tzst
 }
 
 create_from_plist_gather_mode_body() {
@@ -139,7 +139,7 @@ create_from_plist_gather_mode_body() {
 		-o match:"-rwxrwxrwx .*plop[ /]+bla.* /file1$" \
 		-e ignore \
 		-s exit:0 \
-		tar tvf test-1.txz
+		tar tvf test-1.tzst
 }
 
 create_from_plist_set_mode_body() {
@@ -157,7 +157,7 @@ create_from_plist_set_mode_body() {
 		-o match:"-rwxr-sr-x .*root[ /]+wheel.* /file1$" \
 		-e ignore \
 		-s exit:0 \
-		tar tvf test-1.txz
+		tar tvf test-1.tzst
 }
 
 create_from_plist_mini_body() {
@@ -175,7 +175,7 @@ create_from_plist_mini_body() {
 		-o match:"-rw-r--r-- .*plop[ /]+wheel.* /file1$" \
 		-e ignore \
 		-s exit:0 \
-		tar tvf test-1.txz
+		tar tvf test-1.tzst
 }
 
 create_from_plist_dirrm_body() {
@@ -211,7 +211,7 @@ aline"
 		-o inline:"+COMPACT_MANIFEST\n+MANIFEST\n" \
 		-e empty \
 		-s exit:0 \
-		tar tf test-1.txz
+		tar tf test-1.tzst
 
 	atf_check \
 		-o empty \
@@ -330,7 +330,7 @@ EOF
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		pkg info -R --raw-format=ucl -F test-1.txz
+		pkg info -R --raw-format=ucl -F test-1.tzst
 }
 
 create_from_manifest_and_plist_body() {
@@ -368,7 +368,7 @@ EOF
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		pkg info -R --raw-format=ucl -F test-1.txz
+		pkg info -R --raw-format=ucl -F test-1.tzst
 }
 
 create_from_plist_pkg_descr_body() {
@@ -383,7 +383,7 @@ Message
 
 "
 	atf_check pkg create -m . -r ${TMPDIR}
-	atf_check -o inline:"${OUTPUT}" pkg info -D -F ./test-1.txz
+	atf_check -o inline:"${OUTPUT}" pkg info -D -F ./test-1.tzst
 
 cat << EOF > ./+DISPLAY
 [
@@ -402,7 +402,7 @@ message upgrade
 '
 
 	atf_check pkg create -m . -r ${TMPDIR}
-	atf_check -o inline:"${OUTPUT}" pkg info -D -F ./test-1.txz
+	atf_check -o inline:"${OUTPUT}" pkg info -D -F ./test-1.tzst
 
 }
 
@@ -421,7 +421,7 @@ create_from_plist_hash_body() {
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		ls test-1-*.txz
+		ls test-1-*.tzst
 }
 
 create_from_plist_with_keyword_and_message_body() {
@@ -454,6 +454,6 @@ on install
 
 '
 	atf_check pkg -o PLIST_KEYWORDS_DIR=. create -m . -r ${TMPDIR} -p test.plist
-	atf_check -o inline:"${OUTPUT}" pkg info -D -F ./test-1.txz
+	atf_check -o inline:"${OUTPUT}" pkg info -D -F ./test-1.tzst
 
 }

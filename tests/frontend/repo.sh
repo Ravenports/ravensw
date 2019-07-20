@@ -29,7 +29,7 @@ EOF
 		-s exit:0 \
 		pkg repo .
 
-	ln -s test-1.txz test.txz
+	ln -s test-1.tzst test.tzst
 
 	atf_check \
 		-o inline:"Creating repository in .:  done\nPacking files for repository:  done\n" \
@@ -41,11 +41,11 @@ EOF
 		atf_pass
 	fi
 
-	nb=$(tar -xf digests.txz -O digests | wc -l)
+	nb=$(tar -xf digests.tzst -O digests | wc -l)
 	atf_check_equal $nb 2
 
 	mkdir Latest
-	ln -s test-1.txz Latest/test.txz
+	ln -s test-1.tzst Latest/test.tzst
 
 	atf_check \
 		-o inline:"Creating repository in .:  done\nPacking files for repository:  done\n" \
@@ -53,7 +53,7 @@ EOF
 		-s exit:0 \
 		pkg repo .
 
-	nb=$(tar -xf digests.txz -O digests | wc -l)
+	nb=$(tar -xf digests.tzst -O digests | wc -l)
 	atf_check_equal $nb 2
 
 }

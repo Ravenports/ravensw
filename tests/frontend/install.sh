@@ -122,7 +122,7 @@ EOF
 	atf_check -o ignore \
 		-e inline:"${PROGNAME}: PRE-INSTALL script failed\n" \
 		-s exit:3 \
-		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.txz
+		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.tzst
 }
 
 post_script_ignored_body()
@@ -143,5 +143,5 @@ EOF
 	atf_check -o ignore \
 		-e inline:"${PROGNAME}: POST-INSTALL script failed\n" \
 		-s exit:0 \
-		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.txz
+		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.tzst
 }
