@@ -103,7 +103,7 @@ static struct config_entry c[] = {
 	{
 		PKG_STRING,
 		"RAVENSW_CACHEDIR",
-		"/var/cache/pkg",
+		"/var/cache/ravensw",
 		"Directory containing cache of downloaded packages",
 	},
 	{

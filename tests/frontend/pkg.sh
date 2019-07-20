@@ -13,7 +13,7 @@ pkg_no_database_body() {
 
 	atf_check \
 	    -o empty \
-	    -e inline:"pkg: package database non-existent\n" \
+	    -e inline:"package database non-existent\n" \
 	    -s exit:69 \
 	    env -i PATH="${PATH}" DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" pkg -o RAVENSW_DBDIR=/dev/null -N
 }
@@ -22,7 +22,7 @@ pkg_config_defaults_body()
 {
 	atf_check \
 	    -o match:'^ *RAVENSW_DBDIR = "/var/db/ravensw";$' \
-	    -o match:'^ *RAVENSW_CACHEDIR = "/var/cache/pkg";$' \
+	    -o match:'^ *RAVENSW_CACHEDIR = "/var/cache/ravensw";$' \
 	    -o match:'^ *PORTSDIR = "/usr/d?ports";$' \
 	    -o match:'^ *HANDLE_RC_SCRIPTS = false;$' \
 	    -o match:'^ *DEFAULT_ALWAYS_YES = false;$' \
@@ -31,7 +31,7 @@ pkg_config_defaults_body()
 	    -o match:'^ *SYSLOG = true;$' \
 	    -o match:'^ *ALTABI = "[a-zA-Z0-9]+:[a-z\.A-Z0-9]+:[a-zA-Z0-9]+:[a-zA-Z0-9:]+";$' \
 	    -o match:'^ *DEVELOPER_MODE = false;$' \
-	    -o match:'^ *VULNXML_SITE = "http://vuxml.freebsd.org/freebsd/vuln.xml.bz2";$' \
+	    -o match:'^ *VULNXML_SITE = "http://www.ravenports.com/vuln/vuln.xml.bz2";$' \
 	    -o match:'^ *FETCH_RETRY = 3;$' \
 	    -o match:'^ *PKG_PLUGINS_DIR = ".*lib/ravensw/";$' \
 	    -o match:'^ *PKG_ENABLE_PLUGINS = true;$' \
@@ -69,7 +69,7 @@ files:
 EOF
 	atf_check \
 	    -o empty \
-	    -e inline:"pkg: Bad format in manifest for key: files\n" \
+	    -e inline:"Bad format in manifest for key: files\n" \
 	    -s exit:70 \
 	    pkg create -q -m testpkg/.metadir -r testpkg
 }

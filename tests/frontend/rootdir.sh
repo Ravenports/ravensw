@@ -17,5 +17,5 @@ rootdir_body() {
 		-o inline:"`${RP} ${TMPDIR}`/var/db/ravensw\n" \
 		-e empty \
 		-s exit:0 \
-		pkg -r "${TMPDIR}" config pkg_dbdir
+		pkg -r "${TMPDIR}" config ravensw_dbdir
 }

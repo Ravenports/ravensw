@@ -40,7 +40,7 @@ EOF
 
 	atf_check \
 		-o empty \
-		-e inline:"pkg: Cannot delete vital package: test!\npkg: If you are sure you want to remove test, \npkg: unset the 'vital' flag with: pkg set -v 0 test\n" \
+		-e inline:"Cannot delete vital package: test!\nIf you are sure you want to remove test, \nunset the 'vital' flag with: pkg set -v 0 test\n" \
 		-s exit:3 \
 		pkg -r ${TMPDIR}/target delete -qy test
 	atf_check \
