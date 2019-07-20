@@ -120,7 +120,7 @@ EOF
 		pkg create -M test.ucl
 
 	atf_check -o ignore \
-		-e inline:"${PROGNAME}: PRE-INSTALL script failed\n" \
+		-e inline:"pkg: PRE-INSTALL script failed\n" \
 		-s exit:3 \
 		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.tzst
 }
@@ -141,7 +141,7 @@ EOF
 		pkg create -M test.ucl
 
 	atf_check -o ignore \
-		-e inline:"${PROGNAME}: POST-INSTALL script failed\n" \
+		-e inline:"pkg: POST-INSTALL script failed\n" \
 		-s exit:0 \
 		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.tzst
 }
