@@ -36,7 +36,7 @@
 #elif HAVE_MACHINE_ENDIAN_H
 #include <machine/endian.h>
 #endif
-#if !(defined HAVE_BE32DEC || defined HAVE_LE32DEC)
+#if !(defined HAVE_DECL_BE32DEC || defined HAVE_DECL_LE32DEC)
 #include "port_endian.h"
 #endif
 #include <sys/types.h>
