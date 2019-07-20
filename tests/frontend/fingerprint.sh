@@ -6,8 +6,6 @@ tests_init \
 	fingerprint
 
 fingerprint_body() {
-        atf_skip_on Darwin Test fails on Darwin
-        atf_skip_on Linux Test fails on Linux
 
 	atf_check -o ignore -e ignore \
 		openssl genrsa -out repo.key 2048
@@ -28,7 +26,7 @@ fingerprint_body() {
 read -t 2 sum
 [ -z "\$sum" ] && exit 1
 echo SIGNATURE
-echo -n \$sum | /usr/bin/openssl dgst -sign repo.key -sha256 -binary
+echo -n \$sum | /raven/bin/openssl dgst -sign repo.key -sha256 -binary
 echo
 echo CERT
 cat repo.pub
