@@ -99,7 +99,7 @@ EOF
 	atf_check \
 		-o ignore \
 		-s exit:0 \
-		pkg install -r repo1 -fy pkg-1
+		pkg install -r repo1 -fy ravensw:standard-1
 
 	atf_check \
 		-o match:".*New version of ravensw detected.*" \
