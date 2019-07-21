@@ -49,8 +49,8 @@ autoupgrade_multirepo_head() {
 
 autoupgrade_multirepo_body() {
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg1 pkg 1
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg2 pkg 1.1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg1 ravensw:standard 1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg2 ravensw:standard 1.1
 
 	atf_check \
 		-o match:".*Installing.*\.\.\.$" \
@@ -102,7 +102,7 @@ EOF
 		pkg install -r repo1 -fy pkg-1
 
 	atf_check \
-		-o match:".*New version of pkg detected.*" \
+		-o match:".*New version of ravensw detected.*" \
 		-s exit:0 \
 		pkg upgrade -y
 

@@ -588,7 +588,7 @@ static bool
 new_pkg_version(struct pkg_jobs *j)
 {
 	struct pkg *p;
-	const char *uid = "ravensw-single-standard";
+	const char *uid = "ravensw:standard";
 	pkg_flags old_flags;
 	bool ret = false;
 	struct pkg_job_universe_item *nit, *cit;

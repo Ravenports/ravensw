@@ -756,7 +756,7 @@ event_callback(void *data, struct pkg_event *ev)
 		break;
 	case PKG_EVENT_NEWPKGVERSION:
 		newpkgversion = true;
-		printf("New version of pkg detected; it needs to be "
+		printf("New version of " PKG_EXEC_NAME " detected; it needs to be "
 		    "installed first.\n");
 		break;
 	case PKG_EVENT_FILE_MISMATCH:
