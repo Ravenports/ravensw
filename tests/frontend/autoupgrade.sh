@@ -9,8 +9,8 @@ tests_init \
 autoupgrade_body() {
 	atf_skip_on Linux Test fails on Linux
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg1 pkg 1
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg2 pkg 1_1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg1 ravensw:standard 1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg2 ravensw:standard 1_1
 
 	atf_check \
 		-o match:".*Installing.*\.\.\.$" \
@@ -38,7 +38,7 @@ local: {
 EOF
 
 	atf_check \
-		-o match:".*New version of pkg detected.*" \
+		-o match:".*New version of ravensw detected.*" \
 		-s exit:1 \
 		pkg -o REPOS_DIR="$TMPDIR" -o RAVENSW_CACHEDIR="$TMPDIR" upgrade -n
 }
