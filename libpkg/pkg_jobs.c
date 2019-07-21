@@ -1917,7 +1917,7 @@ pkg_jobs_execute(struct pkg_jobs *j)
 				goto cleanup;
 			}
 			if (ps->type == PKG_SOLVED_DELETE &&
-			    (strcmp(p->name, "ravensw-single-standard") == 0) &&
+			    (strcmp(p->name, "ravensw:standard") == 0) &&
 			    (flags & PKG_DELETE_FORCE) == 0) {
 				if (j->patterns->match == MATCH_ALL) {
 					continue;
