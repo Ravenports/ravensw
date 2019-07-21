@@ -550,6 +550,7 @@ pkg_repo_archive_extract_archive(int fd, const char *file,
 				&cbdata, (char **)&sig, &siglen) == EPKG_OK && sig != NULL &&
 				siglen > 0) {
 			if (pkg_repo_parse_sigkeys(sig, siglen, &sc) == EPKG_FATAL) {
+				free(sig);
 				return (EPKG_FATAL);
 			}
 			free(sig);

@@ -759,9 +759,11 @@ load_repo_file(int dfd, const char *repodir, const char *repofile,
 
 	myarch = pkg_object_string(pkg_config_get("ABI"));
 	ucl_parser_register_variable (p, "ABI", myarch);
+	free(myarch);
 
 	myarch_legacy = pkg_object_string(pkg_config_get("ALTABI"));
 	ucl_parser_register_variable (p, "ALTABI", myarch_legacy);
+	free(myarch_legacy);
 
 	pkg_debug(1, "PKgConfig: loading %s/%s", repodir, repofile);
 	fd = openat(dfd, repofile, O_RDONLY);
@@ -779,6 +781,7 @@ load_repo_file(int dfd, const char *repodir, const char *repofile,
 	close(fd);
 
 	obj = ucl_parser_get_object(p);
+	ucl_parser_free(p);
 	if (obj == NULL)
 		return;
 
