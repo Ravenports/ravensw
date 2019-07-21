@@ -1917,7 +1917,7 @@ pkg_jobs_execute(struct pkg_jobs *j)
 				goto cleanup;
 			}
 			if (ps->type == PKG_SOLVED_DELETE &&
-			    (strcmp(p->name, "ravensw:standard") == 0) &&
+			    (strcmp(p->origin, "ravensw:standard") == 0) &&
 			    (flags & PKG_DELETE_FORCE) == 0) {
 				if (j->patterns->match == MATCH_ALL) {
 					continue;
@@ -1926,7 +1926,7 @@ pkg_jobs_execute(struct pkg_jobs *j)
 					 * Like FreeBSD, skip request to uninstall pkg itself.
 					 * Unlike FreeBSD, don't mark this attempt as a fatal error.
 					 */
-					pkg_emit_error("Cannot delete pkg itself without force flag");
+					pkg_emit_error("Cannot delete ravensw itself without force flag");
 					retcode = EPKG_OK;
 					break;
 				}

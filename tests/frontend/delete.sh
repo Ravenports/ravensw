@@ -11,7 +11,7 @@ tests_init \
 
 delete_all_body() {
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "foo" "foo" "1"
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg" "pkg" "1"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg" "ravensw:standard" "1"
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "1"
 
 	atf_check -o ignore pkg register -M foo.ucl
@@ -22,7 +22,7 @@ delete_all_body() {
 }
 
 delete_pkg_body() {
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg" "pkg" "1"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg" "ravensw:standard" "1"
 	atf_check -o ignore pkg register -M pkg.ucl
 	atf_check -o ignore -e ignore -s exit:3 pkg delete -y pkg
 	atf_check -o ignore -e ignore pkg delete -yf pkg
