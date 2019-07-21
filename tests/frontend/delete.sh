@@ -24,8 +24,8 @@ delete_all_body() {
 delete_pkg_body() {
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg" "ravensw:standard" "1"
 	atf_check -o ignore pkg register -M pkg.ucl
-	atf_check -o ignore -e ignore -s exit:3 pkg delete -y pkg
-	atf_check -o ignore -e ignore pkg delete -yf pkg
+	atf_check -o ignore -e ignore -s exit:0 -o match:"Cannot delete ravensw itself without force flag" pkg delete -y ravensw:standard
+	atf_check -o ignore -e ignore pkg delete -yf ravensw:standard
 }
 
 simple_delete_body() {
