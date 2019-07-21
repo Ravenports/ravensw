@@ -15,7 +15,7 @@ pkg_no_database_body() {
 	    -o empty \
 	    -e inline:"package database non-existent\n" \
 	    -s exit:69 \
-	    env -i PATH="${PATH}" DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" pkg -o RAVENSW_DBDIR=/dev/null -N
+	    env -i PATH="${PATH}" DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}" ravensw -o RAVENSW_DBDIR=/dev/null -N
 }
 
 pkg_config_defaults_body()
