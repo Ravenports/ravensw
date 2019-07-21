@@ -278,9 +278,8 @@ pkg_repo_meta_extract_signature_pubkey(int fd, void *ud)
 	}
 
 	close(cb->tfd);
-	/*
-	 * XXX: do not free resources here since the sandbox is terminated anyway
-	 */
+	archive_read_close(a);
+	archive_read_free(a);
 	return (rc);
 }
 /*
