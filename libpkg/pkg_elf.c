@@ -1048,6 +1048,9 @@ cleanup:
 	if (elf != NULL)
 		elf_end(elf);
 
+	free(ei.osname);
+	free(ei.strversion);
+
 	close(fd);
 	return (ret);
 }
