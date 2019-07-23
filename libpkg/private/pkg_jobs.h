@@ -33,7 +33,7 @@
 #include "private/utils.h"
 #include "private/pkg.h"
 #include "pkg.h"
-#include "tree.h"
+#include "avltree.h"
 
 struct pkg_jobs;
 struct job_pattern;
@@ -93,9 +93,9 @@ struct pkg_jobs_universe {
 };
 
 struct pkg_jobs_conflict_item {
+	struct avl_node avl;
 	uint64_t hash;
 	struct pkg_job_universe_item *item;
-	TREE_ENTRY(pkg_jobs_conflict_item) entry;
 };
 
 struct pkg_jobs {
@@ -113,7 +113,7 @@ struct pkg_jobs {
 	bool need_fetch;
 	const char *reponame;
 	const char *destdir;
-	TREE_HEAD(, pkg_jobs_conflict_item) *conflict_items;
+	struct avl_tree *conflict_items;
 	struct job_pattern *patterns;
 	bool conservative;
 	bool pinning;

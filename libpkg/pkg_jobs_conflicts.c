@@ -46,8 +46,6 @@ struct pkg_conflict_chain {
 };
 
 
-TREE_DEFINE(pkg_jobs_conflict_item, entry);
-
 static struct sipkey *
 pkg_conflicts_sipkey_init(void)
 {
@@ -203,10 +201,14 @@ pkg_conflicts_register(struct pkg *p1, struct pkg *p2, enum pkg_conflict_type ty
 
 
 static int
-pkg_conflicts_item_cmp(struct pkg_jobs_conflict_item *a,
-	struct pkg_jobs_conflict_item *b)
+pkg_conflicts_item_cmp(struct avl_node *a, struct avl_node *b, void *aux __unused)
 {
-	return (b->hash - a->hash);
+	struct pkg_jobs_conflict_item *aa, *bb;
+
+	aa = avl_get_entry(a, struct pkg_jobs_conflict_item, avl);
+	bb = avl_get_entry(b, struct pkg_jobs_conflict_item, avl);
+
+	return ((bb->hash > aa->hash) - (aa->hash > bb->hash));
 }
 
 /*
@@ -412,18 +414,20 @@ pkg_conflicts_check_all_paths(struct pkg_jobs *j, const char *path,
 	const char *uid1, *uid2;
 	struct pkg_jobs_conflict_item *cit, test;
 	struct pkg_conflict *c;
+	struct avl_node *cursor;
 	uint64_t hv;
 
 	hv = siphash24(path, strlen(path), k);
 	test.hash = hv;
-	cit = TREE_FIND(j->conflict_items, pkg_jobs_conflict_item, entry, &test);
+	cursor = avl_search(j->conflict_items, &test.avl, pkg_conflicts_item_cmp);
+	cit = avl_get_entry(cursor, struct pkg_jobs_conflict_item, avl);
 
 	if (cit == NULL) {
 		/* New entry */
 		cit = xcalloc(1, sizeof(*cit));
 		cit->hash = hv;
 		cit->item = it;
-		TREE_INSERT(j->conflict_items, pkg_jobs_conflict_item, entry, cit);
+		avl_insert(j->conflict_items, &cit->avl, pkg_conflicts_item_cmp);
 	}
 	else {
 		/* Check the same package */
@@ -524,9 +528,8 @@ pkg_conflicts_append_chain(struct pkg_job_universe_item *it,
 	/* Ensure that we have a tree initialized */
 	if (j->conflict_items == NULL) {
 		j->conflict_items = xmalloc(sizeof(*j->conflict_items));
-		TREE_INIT(j->conflict_items, pkg_conflicts_item_cmp);
+		avl_init(j->conflict_items, NULL);
 	}
-
 	/* Find local package */
 	cur = it->prev;
 	while (cur != it) {

@@ -81,8 +81,10 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/external/klib \
 LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
 LIBREPO_PIC=	-L$(top_builddir)/libpkg/repo/binary -lrepo-binary_pic
 SQLITE_PIC=	-L$(top_builddir)/external/sqlite -lsqlite_pic
+AVLTREE_PIC=	-L$(top_builddir)/external/avltree -lavltree_pic
 OTHER_LIBS=	@EXTRA_LIBS@
 
+LIBS+=		${AVLTREE_PIC}
 LIBS+=		${SQLITE_PIC}
 LIBS+=		-larchive
 LIBS+=		-lexpat_pic
