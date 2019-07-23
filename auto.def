@@ -287,7 +287,8 @@ make-template tests/frontend/test_environment.sh.in
 make-template Makefile.autosetup Makefile
 
 foreach dir [list external libpkg libpkg/repo libpkg/repo/binary src \
-	external/sqlite external/libmachista tests docs scripts] {
+	external/sqlite external/libmachista external/avltree \
+	tests docs scripts] {
 	make-template $dir/Makefile.autosetup $dir/Makefile
 }
 

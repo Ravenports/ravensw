@@ -1,0 +1,8 @@
+include @builddir@/mk/defs.mk
+LIB=	avltree
+SRCS=	avltree.c
+
+LOCAL_CFLAGS=	-D_AVL_SEPARATE_PARENT_BF \
+		-D_AVL_NEXT_POINTER
+
+include $(MK)/pic-lib.mk

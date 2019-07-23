@@ -46,6 +46,7 @@ scripts/sbin/pkg2ng
 /compat/Makefile
 /docs/Makefile
 /external/Makefile
+/external/avltree/Makefile
 /external/libmachista/Makefile
 /external/sqlite/shell.c
 /external/sqlite/sqlite3.[ch]
