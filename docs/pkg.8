@@ -19,7 +19,7 @@
 .Os
 .\" ---------------------------------------------------------------------------
 .Sh NAME
-.Nm ravensw ,
+.Nm ravensw
 .Nd manipulate packages
 .\" ---------------------------------------------------------------------------
 .Sh SYNOPSIS
@@ -107,36 +107,9 @@ as its package management system or not.
 Example usage:
 .Bd -literal -offset indent
   if ravensw -N >/dev/null 2>&1; then
-    # ravensw-specifics
+    # ravensw functional
   else
-    # pkg_install-specifics
-  fi
-.Ed
-.Pp
-The
-.Fl N
-flag was first released in the
-.Pa /usr/sbin/pkg
-bootstrapper
-in
-.Fx 8.4 ,
-but was missing from
-.Fx 9.1 .
-It may not be enough to just call
-.Nm Fl N ,
-as the bootstrapper may be invoked, or an error returned
-from
-.Nm .
-The following script is the safest way to detect if
-.Nm
-is installed and activated:
-.Bd -literal -offset indent
-  if TMPDIR=/dev/null ASSUME_ALWAYS_YES=yes \\
-       PACKAGESITE=file:///nonexistent \\
-       pkg info -x 'pkg(-devel)?$' >/dev/null 2>&1; then
-    # pkgng-specifics
-  else
-    # pkg_install-specifics
+    # ravensw missing or non-functional
   fi
 .Ed
 .It Fl j Ao jail name or id Ac , Cm --jail Ao jail name or id Ac
@@ -151,6 +124,8 @@ and
 .Em id
 matches
 .Dq Cm jls Ar jid .
+This option is only supported on
+.Fx currently .
 See
 .Xr jail 8
 and
@@ -198,33 +173,14 @@ Currently supported protocols are FTP, HTTP and HTTPS.
 Add, modify or delete tag-value style annotations on packages.
 .It Ic alias
 List the command line aliases.
-.It Ic audit
-Audit installed packages against known vulnerabilities.
 .It Ic autoremove
 Delete packages which were automatically installed as dependencies and are not required any more.
 .It Ic backup
 Dump the local package database to a file specified on the command-line.
-.It Ic bootstrap
-This is for compatibility with the
-.Xr pkg 7
-bootstrapper.
-If
-.Nm
-is already installed, nothing is done.
-.Pp
-If invoked with the
-.Fl f
-flag an attempt will be made to reinstall
-.Nm
-from remote repository.
 .It Ic check
 Sanity checks installed packages.
 .It Ic clean
 Clean the local cache of fetched remote packages.
-.It Ic convert
-Convert to and from the old
-.Xr pkg_add 1
-format.
 .It Ic create
 Create a package.
 .It Ic delete
@@ -241,12 +197,8 @@ Downloading a package is tried from each package repository in turn,
 until the package is successfully fetched.
 .It Ic lock
 Prevent modification or deletion of a package.
-.It Ic plugins
-List the available plugins.
 .It Ic query
 Query information about installed packages.
-.It Ic register
-Register a package in the database.
 .It Ic repo
 Create a local package repository for remote usage.
 .It Ic rquery
@@ -268,8 +220,6 @@ Unlocks packages, allowing them to be modified or deleted.
 .It Ic update
 Update the available remote repositories as listed in
 .Xr ravensw.conf 5 .
-.It Ic updating
-Display UPDATING entries of installed packages.
 .It Ic upgrade
 Upgrade a package to a newer version.
 .It Ic version
@@ -304,22 +254,18 @@ See
 .\" ---------------------------------------------------------------------------
 .Sh EXAMPLES
 Search for a package:
-.Dl $ ravensw search perl
+.Dl $ ravensw search joe
 .Pp
 Install a package:
 .Dl Installing must specify a unique origin or version otherwise it will try installing all matches.
 .Pp
-.Dl % ravensw install perl-5.14
+.Dl % ravensw install joe-single-standard
 .Pp
 List installed packages:
 .Dl $ ravensw info
 .Pp
 Upgrade from remote repository:
 .Dl % ravensw upgrade
-.Pp
-Change the origin for an installed package:
-.Dl % ravensw set -o lang/perl5.12:lang/perl5.14
-.Dl % ravensw install -Rf lang/perl5.14
 .Pp
 List non-automatic packages:
 .Dl $ ravensw query -e '%a = 0' %o
@@ -328,7 +274,7 @@ List automatic packages:
 .Dl $ ravensw query -e '%a = 1' %o
 .Pp
 Delete an installed package:
-.Dl % ravensw delete perl-5.14
+.Dl % ravensw delete "joe*"
 .Pp
 Remove unneeded dependencies:
 .Dl % ravensw autoremove
@@ -336,21 +282,18 @@ Remove unneeded dependencies:
 Change a package from automatic to non-automatic, which will prevent
 .Ic autoremove
 from removing it:
-.Dl % ravensw set -A 0 perl-5.14
+.Dl % ravensw set -A 0 joe-single-standard
 .Pp
 Change a package from non-automatic to automatic, which will make
 .Ic autoremove
 allow it be removed once nothing depends on it:
-.Dl % ravensw set -A 1 perl-5.14
+.Dl % ravensw set -A 1 joe-single-standard
 .Pp
 Create package file from an installed package:
-.Dl % ravensw create -o /usr/ports/packages/All perl-5.14
+.Dl % ravensw create -o /var/ravenports/primary/packages/All joe-single-standard
 .Pp
 Determine which package installed a file:
-.Dl $ ravensw which /usr/local/bin/perl
-.Pp
-Audit installed packages for security advisories:
-.Dl $ ravensw audit
+.Dl $ ravensw which /raven/bin/joe
 .Pp
 Check installed packages for checksum mismatches:
 .Dl # ravensw check -s -a
@@ -364,7 +307,6 @@ Check for missing dependencies:
 .Xr ravensw-add 8 ,
 .Xr ravensw-alias 8 ,
 .Xr ravensw-annotate 8 ,
-.Xr ravensw-audit 8 ,
 .Xr ravensw-autoremove 8 ,
 .Xr ravensw-backup 8 ,
 .Xr ravensw-check 8 ,
@@ -377,7 +319,6 @@ Check for missing dependencies:
 .Xr ravensw-install 8 ,
 .Xr ravensw-lock 8 ,
 .Xr ravensw-query 8 ,
-.Xr ravensw-register 8 ,
 .Xr ravensw-repo 8 ,
 .Xr ravensw-rquery 8 ,
 .Xr ravensw-search 8 ,
@@ -387,33 +328,20 @@ Check for missing dependencies:
 .Xr ravensw-ssh 8 ,
 .Xr ravensw-stats 8 ,
 .Xr ravensw-update 8 ,
-.Xr ravensw-updating 8 ,
 .Xr ravensw-upgrade 8 ,
 .Xr ravensw-version 8 ,
 .Xr ravensw-which 8
 .El
 .\" ---------------------------------------------------------------------------
 .Sh HISTORY
+The pkg command first appeared in
+.Fx 9.1 .
 The
 .Nm
-command first appeared in
-.Fx 9.1 .
+program reimplemented most of pkg in Ada, replacing
+.Fx ports-specific code and adapting it for Ravenports.
 .\" ---------------------------------------------------------------------------
 .Sh AUTHORS AND CONTRIBUTORS
-.An Baptiste Daroussin Aq bapt@FreeBSD.org ,
-.An Julien Laffaye Aq jlaffaye@FreeBSD.org ,
-.An Philippe Pepiot Aq phil@philpep.org ,
-.An Will Andrews Aq will@FreeBSD.org ,
-.An Marin Atanasov Nikolov Aq dnaeon@gmail.com ,
-.An Yuri Pankov Aq yuri.pankov@gmail.com ,
-.An Alberto Villa Aq avilla@FreeBSD.org ,
-.An Brad Davis Aq brd@FreeBSD.org ,
-.An Matthew Seaman Aq matthew@FreeBSD.org ,
-.An Bryan Drewery Aq bryan@shatow.net ,
-.An Eitan Adler Aq eadler@FreeBSD.org ,
-.An Romain Tarti\`ere Aq romain@FreeBSD.org ,
-.An Vsevolod Stakhov Aq vsevolod@FreeBSD.org ,
-.An Alexandre Perrin Aq alex@kaworu.ch ,
 .An John Marino Aq draco@marino.st
 .\" ---------------------------------------------------------------------------
 .Sh BUGS

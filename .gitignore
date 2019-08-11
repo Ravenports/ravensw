@@ -116,3 +116,4 @@ scripts/sbin/pkg2ng
 /tests/pkg_printf
 /tests/pkg_validation
 /tests/plist
+/ada_source/obj
