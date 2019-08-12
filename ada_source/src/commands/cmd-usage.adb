@@ -52,7 +52,7 @@ package body Cmd.Usage is
    --------------------------------------------------------------------
    --  display_error
    --------------------------------------------------------------------
-   procedure display_error (error_msg: String) is
+   procedure display_error (error_msg : String) is
    begin
       TIO.Put_Line (TIO.Standard_Error, progname & ": " & error_msg);
    end display_error;
@@ -779,7 +779,7 @@ package body Cmd.Usage is
          end if;
 
          if not comline.verb_all_packages and then
-           isblank (comline.verb_name_pattern)
+           IsBlank (comline.verb_name_pattern)
          then
             return alert ("Missing <pkg-name>");
          end if;
@@ -1054,7 +1054,7 @@ package body Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       else
-         if IsBlank(comline.query_format) then
+         if IsBlank (comline.query_format) then
             return alert ("Missing <query-format>");
          end if;
 
@@ -1090,7 +1090,7 @@ package body Cmd.Usage is
          return alert (USS (comline.error_message));
       else
          if not comline.verb_all_packages and then
-           IsBlank(comline.verb_name_pattern)
+           IsBlank (comline.verb_name_pattern)
          then
             return alert ("Missing <pkg-name>");
          end if;

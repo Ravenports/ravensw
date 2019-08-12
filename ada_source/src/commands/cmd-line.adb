@@ -1,7 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-with Ada.Command_line;
+with Ada.Command_Line;
 with Ada.Text_IO;
 
 with Core.Strings; use Core.Strings;
@@ -16,7 +16,7 @@ package body Cmd.Line is
    --------------------------------------------------------------------
    function parse_command_line return Cldata
    is
-      -- NV arguments
+      --  NV arguments
       type Clswitch is
         (nothing_pending,
          global_chroot,

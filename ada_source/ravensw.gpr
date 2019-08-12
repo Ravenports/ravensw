@@ -4,5 +4,9 @@ project Ravensw is
    for Object_Dir use "obj";
    for Main use ("ravensw.adb");
 
+   package Compiler is
+      for Switches ("ada") use ("-gnatyyaAbBcdefhiIklnOprsStx", "-gnatyyM100");
+   end Compiler;
+
 end Ravensw;
 
