@@ -142,6 +142,7 @@ private
 
    subtype ST_Debug_Level is Natural range 0 .. 4;
    subtype ST_Version is Natural range 0 .. 2;
+   subtype ST_Modifier_Index is Natural range 0 .. 20;
 
    package string_crate is new CON.Vectors
      (Element_Type => Text,
@@ -284,8 +285,8 @@ private
          version_behavior     : T_version := no_defined_behavior;
          version_exact_match  : Boolean := False;
          version_disp_origin  : Boolean := False;
-         version_match_char   : Character;
-         version_not_char     : Character;
+         version_match_char   : Character := Character'First;
+         version_not_char     : Character := Character'First;
          version_test1        : Text;
          version_test2        : Text;
          version_origin       : Text;
@@ -307,5 +308,11 @@ private
 
    --  Provide string equivalent to given command enumeration
    function convert_command_enum_to_label (command : Command_verb) return String;
+
+   --  Provide string equivalent to given search and label field enumeration
+   function convert_search_enum_to_label (field : T_Search_Field) return String;
+
+   --  Provide string equivalent to given search modifier enumeration
+   function convert_modifier_enum_to_label (index : ST_Modifier_Index) return String;
 
 end Cmd;

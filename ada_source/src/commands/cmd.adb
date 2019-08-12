@@ -43,4 +43,53 @@ package body Cmd is
       end case;
    end convert_command_enum_to_label;
 
+   --------------------------------------------------------------------
+   --  convert_search_enum_to_label
+   --------------------------------------------------------------------
+   function convert_search_enum_to_label (field : T_Search_Field) return String
+   is
+   begin
+      case field is
+         when no_search_field => return "";
+         when comment         => return "comment";
+         when description     => return "description";
+         when name            => return "name";
+         when origin          => return "origin";
+         when package_name    => return "pkg-name";
+      end case;
+   end convert_search_enum_to_label;
+
+
+   --------------------------------------------------------------------
+   --  convert_modifier_enum_to_label
+   --------------------------------------------------------------------
+   function convert_modifier_enum_to_label (index : ST_Modifier_Index) return String
+   is
+   begin
+      case index is
+         when  0 => return "annotations";
+         when  1 => return "arch";
+         when  2 => return "categories";
+         when  3 => return "comment";
+         when  4 => return "depends-on";
+         when  5 => return "description";
+         when  6 => return "full";
+         when  7 => return "licenses";
+         when  8 => return "maintainer";
+         when  9 => return "name";
+         when 10 => return "options";
+         when 11 => return "pkg-size";
+         when 12 => return "prefix";
+         when 13 => return "repository";
+         when 14 => return "required-by";
+         when 15 => return "shared-libs-required";
+         when 16 => return "shared-libs-provided";
+         when 17 => return "size";
+         when 18 => return "url";
+         when 19 => return "version";
+         when 20 => return "www";
+      end case;
+   end convert_modifier_enum_to_label;
+
+
 end Cmd;

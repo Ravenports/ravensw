@@ -31,13 +31,20 @@ package body Cmd.Usage is
          when cv_info =>       return verb_info (comline);
          when cv_install =>    return verb_install (comline);
          when cv_lock =>       return verb_lock (comline);
+         when cv_query =>      return verb_query (comline);
+         when cv_repo =>       return verb_repo (comline);
+         when cv_rquery =>     return verb_rquery (comline);
+         when cv_search =>     return verb_search (comline);
+         when cv_set =>        return verb_set (comline);
          when cv_shell =>      return True;
          when cv_shlib =>      return verb_shlib (comline);
          when cv_ssh =>        return verb_ssh (comline);
          when cv_stats =>      return verb_stats (comline);
          when cv_unlock =>     return verb_unlock (comline);
-         when cv_set =>        return verb_set (comline);
-           when others => return True;
+         when cv_update =>     return verb_update (comline);
+         when cv_upgrade =>    return verb_upgrade (comline);
+         when cv_version =>    return verb_version (comline);
+         when cv_which =>      return verb_which (comline);
       end case;
    end command_line_valid;
 
@@ -47,7 +54,7 @@ package body Cmd.Usage is
    --------------------------------------------------------------------
    procedure display_error (error_msg: String) is
    begin
-      TIO.Put_Line (progname & ": " & error_msg);
+      TIO.Put_Line (TIO.Standard_Error, progname & ": " & error_msg);
    end display_error;
 
 
@@ -58,11 +65,20 @@ package body Cmd.Usage is
    is
    begin
       if first_line then
-         TIO.Put_Line ("Usage: " & progname & " " & usage_msg);
+         TIO.Put_Line (TIO.Standard_Error, "Usage: " & progname & " " & usage_msg);
       else
-         TIO.Put_Line ("       " & progname & " " & usage_msg);
+         TIO.Put_Line (TIO.Standard_Error, "       " & progname & " " & usage_msg);
       end if;
    end display_usage;
+
+
+   --------------------------------------------------------------------
+   --  insert_carriage_return
+   --------------------------------------------------------------------
+   procedure insert_carriage_return is
+   begin
+      TIO.Put_Line (TIO.Standard_Error, "");
+   end insert_carriage_return;
 
 
    --------------------------------------------------------------------
@@ -73,11 +89,12 @@ package body Cmd.Usage is
       main_msg : constant String := "For more information on available commands and " &
         "options see '" & progname & " help'.";
    begin
-      TIO.Put_Line ("");
+      insert_carriage_return;
       case command is
-         when cv_unset => TIO.Put_Line (main_msg);
-         when others   => TIO.Put_Line ("For more information see '" & progname & " help " &
-                                       convert_command_enum_to_label (command) & "'.");
+         when cv_unset => TIO.Put_Line (TIO.Standard_Error, main_msg);
+         when others   => TIO.Put_Line (TIO.Standard_Error,
+                                        "For more information see '" & progname & " help " &
+                                          convert_command_enum_to_label (command) & "'.");
       end case;
    end display_help_suggestion;
 
@@ -597,7 +614,7 @@ package body Cmd.Usage is
       begin
          display_error (error_msg);
          display_usage (msg1, True);
-         display_usage (msg2, True);
+         display_usage (msg2, False);
          display_help_suggestion (cv_lock);
          return False;
       end alert;
@@ -630,7 +647,7 @@ package body Cmd.Usage is
       begin
          display_error (error_msg);
          display_usage (msg1, True);
-         display_usage (msg2, True);
+         display_usage (msg2, False);
          display_help_suggestion (cv_unlock);
          return False;
       end alert;
@@ -710,7 +727,7 @@ package body Cmd.Usage is
       begin
          display_error (error_msg);
          display_usage (msg, True);
-         TIO.Put_Line ("<library> should be a filename without leading path.");
+         TIO.Put_Line (TIO.Standard_Error, "<library> should be a filename without leading path.");
          display_help_suggestion (cv_shlib);
          return False;
       end alert;
@@ -770,5 +787,321 @@ package body Cmd.Usage is
          return True;
       end if;
    end verb_set;
+
+
+   --------------------------------------------------------------------
+   --  verb_search
+   --------------------------------------------------------------------
+   function verb_search (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "search [-eU] [-r repo] [-S search] [-L label] " &
+                                   "[-Q mod]... [-Cgix] <pkg-name>";
+         msg2 : constant String := "search [-cDdefopqRU] [-r repo] [-Cgix] <pattern>";
+         msg3 : constant String := "            ";
+         msg4 : constant String := "       Search and Label options:";
+         msg5 : constant String := "       Output Modifiers:";
+         max  : constant Natural := 75;
+         n    : Natural := msg3'Length;
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         insert_carriage_return;
+
+         --  List search and label fields
+         TIO.Put (TIO.Standard_Error, msg4);
+         for opt in T_Search_Field'Range loop
+            if opt /= T_Search_Field'First then
+               declare
+                  item : constant String := " " & convert_search_enum_to_label (opt);
+               begin
+                  if n + item'Length > max then
+                     insert_carriage_return;
+                     TIO.Put (TIO.Standard_Error, msg3);
+                     n := msg3'Length;
+                  end if;
+                  n := n + item'Length;
+                  TIO.Put (TIO.Standard_Error, item);
+               end;
+            end if;
+         end loop;
+         insert_carriage_return;
+
+         --  List search modifiers
+         TIO.Put (TIO.Standard_Error, msg5);
+         n := msg5'Length;
+         for opt in ST_Modifier_Index'Range loop
+            declare
+               item : constant String := " " & convert_modifier_enum_to_label (opt);
+            begin
+               if n + item'Length > max then
+                  insert_carriage_return;
+                  TIO.Put (TIO.Standard_Error, msg3);
+                  n := msg3'Length;
+               end if;
+               n := n + item'Length;
+               TIO.Put (TIO.Standard_Error, item);
+            end;
+         end loop;
+         insert_carriage_return;
+
+         --  Finally suggest help search
+         display_help_suggestion (cv_search);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         if IsBlank (comline.verb_name_pattern)
+         then
+            return alert ("Missing <pattern>");
+         end if;
+
+         return True;
+      end if;
+   end verb_search;
+
+
+   --------------------------------------------------------------------
+   --  verb_repo
+   --------------------------------------------------------------------
+   function verb_repo (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "repo [-lqL] [-o output-dir] <repo-path> " &
+           "[<rsa-key>|signing_command: <the command>]";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         display_help_suggestion (cv_repo);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         if IsBlank (comline.repo_path) then
+            return alert ("Missing <repo-path>");
+         end if;
+
+         return True;
+      end if;
+   end verb_repo;
+
+
+   --------------------------------------------------------------------
+   --  verb_which
+   --------------------------------------------------------------------
+   function verb_which (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "which [-mqgop] <file>";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         display_help_suggestion (cv_which);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         if IsBlank (comline.which_filename) then
+            return alert ("missing <file>");
+         end if;
+         return True;
+      end if;
+   end verb_which;
+
+
+   --------------------------------------------------------------------
+   --  verb_upgrade
+   --------------------------------------------------------------------
+   function verb_upgrade (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "upgrade [-fInFqUy] [-r reponame] [-Cgix] <pkg-name> ...";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         display_help_suggestion (cv_upgrade);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         return True;
+      end if;
+   end verb_upgrade;
+
+
+   --------------------------------------------------------------------
+   --  verb_update
+   --------------------------------------------------------------------
+   function verb_update (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "update [-fq] [-r reponame]";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         display_help_suggestion (cv_update);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         return True;
+      end if;
+   end verb_update;
+
+
+   --------------------------------------------------------------------
+   --  verb_version
+   --------------------------------------------------------------------
+   function verb_version (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "version [-IPR] [-hoqvU] [-l limchar] [-L limchar] " &
+           "[-Cegix pattern] [-r reponame] [-O origin|-n pkgname] [index]";
+         msg2 : constant String := "version -t <version1> <version2>";
+         msg3 : constant String := "version -T <pkgname> <pattern>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage (msg3, False);
+         display_help_suggestion (cv_version);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         case comline.version_match_char is
+            when Character'First => null;
+            when '<' | '>' | '=' | '?' | '!' => null;
+            when others => return alert ("Illegal character for -l switch");
+         end case;
+
+         case comline.version_not_char is
+            when Character'First => null;
+            when '<' | '>' | '=' | '?' | '!' => null;
+            when others => return alert ("Illegal character for -L switch");
+         end case;
+
+         if comline.version_behavior = test_versions then
+            if IsBlank (comline.version_test1) or else
+              IsBlank (comline.version_test2)
+            then
+               return alert ("--test-version requires 2 arguments");
+            end if;
+         end if;
+
+         if comline.version_behavior = compare_against_pattern then
+            if IsBlank (comline.version_test1) or else
+              IsBlank (comline.version_test2)
+            then
+               return alert ("--test-pattern requires 2 arguments");
+            end if;
+         end if;
+
+         return True;
+      end if;
+   end verb_version;
+
+
+   --------------------------------------------------------------------
+   --  verb_query
+   --------------------------------------------------------------------
+   function verb_query (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "query <query-format> <pkg-name>";
+         msg2 : constant String := "query [-a] <query-format>";
+         msg3 : constant String := "query -F <pkg-name> <query-format>";
+         msg4 : constant String := "query -e <evaluation> <query-format>";
+         msg5 : constant String := "query [-Cgix] <query-format> <pattern> <...>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage (msg3, False);
+         display_usage (msg4, False);
+         display_usage (msg5, False);
+         display_help_suggestion (cv_query);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         if IsBlank(comline.query_format) then
+            return alert ("Missing <query-format>");
+         end if;
+
+         return True;
+      end if;
+   end verb_query;
+
+
+   --------------------------------------------------------------------
+   --  verb_rquery
+   --------------------------------------------------------------------
+   function verb_rquery (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "rquery [-r reponame] -I|<query-format> <pkg-name>";
+         msg2 : constant String := "rquery [-a] [-r reponame] -I|<query-format>";
+         msg3 : constant String := "rquery -e <evaluation> [-r reponame] -I|<query-format>";
+         msg4 : constant String := "rquery [-Cgix] [-r reponame] -I|<query-format> " &
+                                   "<pattern> <...>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage (msg3, False);
+         display_usage (msg4, False);
+         display_help_suggestion (cv_query);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      else
+         if not comline.verb_all_packages and then
+           IsBlank(comline.verb_name_pattern)
+         then
+            return alert ("Missing <pkg-name>");
+         end if;
+         if not comline.rquery_index_line and then
+           IsBlank (comline.rquery_query_format)
+         then
+            return alert ("Missing -I or <query-format> (mutually exclusive)");
+         end if;
+
+         return True;
+      end if;
+   end verb_rquery;
 
 end Cmd.Usage;

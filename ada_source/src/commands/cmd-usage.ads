@@ -18,6 +18,9 @@ private
    --  Common routine to display final help suggestion
    procedure display_help_suggestion (command : Command_verb);
 
+   --  Adds a carriage return to standard error stream
+   procedure insert_carriage_return;
+
    --  Break each command into individual routines.  Any additional
    --  validation checks (if no parsing error exists) can be done here.
    function no_command_verb (comline : Cldata) return Boolean;
@@ -37,9 +40,17 @@ private
    function verb_install (comline: Cldata) return Boolean;
    function verb_lock (comline: Cldata) return Boolean;
    function verb_unlock (comline: Cldata) return Boolean;
+   function verb_query (comline: Cldata) return Boolean;
+   function verb_repo (comline: Cldata) return Boolean;
+   function verb_rquery (comline: Cldata) return Boolean;
+   function verb_search (comline: Cldata) return Boolean;
    function verb_set (comline: Cldata) return Boolean;
    function verb_shlib (comline: Cldata) return Boolean;
    function verb_ssh (comline: Cldata) return Boolean;
    function verb_stats (comline: Cldata) return Boolean;
+   function verb_update (comline: Cldata) return Boolean;
+   function verb_upgrade (comline: Cldata) return Boolean;
+   function verb_version (comline: Cldata) return Boolean;
+   function verb_which (comline: Cldata) return Boolean;
 
 end Cmd.Usage;

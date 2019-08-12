@@ -73,6 +73,8 @@ package body Cmd.Line is
       procedure check_annotate_stdin;
       procedure check_create_incompatibilities;
       procedure check_implied_info_all;
+      procedure check_implied_query_all;
+      procedure check_implied_rquery_all;
       procedure check_stats_default;
 
       expanded_args : string_crate.Vector;
@@ -1349,6 +1351,40 @@ package body Cmd.Line is
       end check_implied_info_all;
 
       ---------------------------------
+      --  check_implied_query_all
+      ---------------------------------
+      procedure check_implied_query_all is
+      begin
+         if result.command = cv_query then
+            if not result.verb_all_packages and then
+              not result.verb_shell_glob and then
+              not result.verb_use_regex and then
+              IsBlank (result.query_eval_condition) and then
+              IsBlank (result.verb_name_pattern)
+            then
+               result.verb_all_packages := True;
+            end if;
+         end if;
+      end check_implied_query_all;
+
+      ---------------------------------
+      --  check_implied_rquery_all
+      ---------------------------------
+      procedure check_implied_rquery_all is
+      begin
+         if result.command = cv_rquery then
+            if not result.verb_all_packages and then
+              not result.verb_shell_glob and then
+              not result.verb_use_regex and then
+              IsBlank (result.rquery_eval_cond) and then
+              IsBlank (result.verb_name_pattern)
+            then
+               result.verb_all_packages := True;
+            end if;
+         end if;
+      end check_implied_rquery_all;
+
+      ---------------------------------
       --  check_stats_default
       ---------------------------------
       procedure check_stats_default is
@@ -1363,6 +1399,8 @@ package body Cmd.Line is
       expanded_args.Iterate (translate_switch'Access);
       check_annotate_stdin;
       check_create_incompatibilities;
+      check_implied_rquery_all;
+      check_implied_query_all;
       check_implied_info_all;
       check_stats_default;
 
