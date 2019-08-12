@@ -34,6 +34,7 @@ package body Cmd.Line is
          create_manifest,
          create_outdir,
          create_rootdir,
+         create_plist,
          fetch_destdir,
          help,
          info_archive_file,
@@ -71,6 +72,8 @@ package body Cmd.Line is
       procedure set_error (error_msg : String);
       procedure check_annotate_stdin;
       procedure check_create_incompatibilities;
+      procedure check_implied_info_all;
+      procedure check_stats_default;
 
       expanded_args : string_crate.Vector;
       result        : Cldata;
@@ -396,6 +399,7 @@ package body Cmd.Line is
             ("set       ", cv_set),
             ("shell     ", cv_shell),
             ("shlib     ", cv_shlib),
+            ("ssh       ", cv_ssh),
             ("stats     ", cv_stats),
             ("unlock    ", cv_unlock),
             ("update    ", cv_update),
@@ -493,12 +497,18 @@ package body Cmd.Line is
                      if datum (datum'First) = hyphen then
                         set_error (error_rec & datum);
                      else
-                        result.add_packages.Append (datumtxt);
+                        result.verb_work_queue.Append (datumtxt);
                      end if;
                   end if;
 
                when cv_alias =>
-                  set_error (error_exp & datum);
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     result.verb_quiet := True;
+                  elsif datum = "-l" or else datum = "--list" then
+                     result.alias_list := True;
+                  else
+                     result.verb_work_queue.Append (datumtxt);
+                  end if;
 
                when cv_annotate =>
                   if datum = sws_quiet or else datum = swl_quiet then
@@ -661,7 +671,11 @@ package body Cmd.Line is
                   end if;
 
                when cv_config =>
-                  result.config_key.Append (datumtxt);
+                  if IsBlank (result.config_key) then
+                     result.config_key := datumtxt;
+                  else
+                     set_error ("Only one config key is permitted.");
+                  end if;
 
                when cv_create =>
                   if datum = sws_quiet or else datum = swl_quiet then
@@ -682,6 +696,8 @@ package body Cmd.Line is
                      last_cmd := create_outdir;
                   elsif datum = "-r" or else datum = "--root-dir" then
                      last_cmd := create_rootdir;
+                  elsif datum = "-p" or else datum = "--plist" then
+                     last_cmd := create_plist;
                   elsif datum = "-n" or else datum = "--no-clobber" then
                      result.create_ban_overwrite := True;
                   else
@@ -704,7 +720,7 @@ package body Cmd.Line is
                   elsif datum = "-R" or else datum = "--recursive" then
                      result.delete_rev_deps_too := True;
                   else
-                     handle_trailing_pkgname (datum, datumtxt);
+                     result.verb_work_queue.Append (datumtxt);
                   end if;
 
                when cv_fetch =>
@@ -979,6 +995,9 @@ package body Cmd.Line is
                      handle_trailing_pkgname (datum, datumtxt);
                   end if;
 
+               when cv_ssh =>
+                  set_error (error_exp & datum);
+
                when cv_stats =>
                   if datum = sws_quiet or else datum = swl_quiet then
                      result.verb_quiet := True;
@@ -1034,7 +1053,7 @@ package body Cmd.Line is
                      if datum (datum'First) = hyphen then
                         set_error (error_rec & datum);
                      else
-                        result.upgrade_queue.Append (datumtxt);
+                        result.verb_work_queue.Append (datumtxt);
                      end if;
                   end if;
 
@@ -1199,6 +1218,7 @@ package body Cmd.Line is
                when create_manifest    => result.create_manifest_file := datumtxt;
                when create_outdir      => result.create_output_dir    := datumtxt;
                when create_rootdir     => result.create_root_dir      := datumtxt;
+               when create_plist       => result.create_plist_file    := datumtxt;
                when fetch_destdir      => result.fetch_destdir        := datumtxt;
                when info_archive_file  => result.info_file_archive    := datumtxt;
                when query_filename     => result.query_file_archive   := datumtxt;
@@ -1248,6 +1268,7 @@ package body Cmd.Line is
          end if;
       end check_annotate_stdin;
 
+
       ---------------------------------
       --  check_create_incompatibilities
       ---------------------------------
@@ -1290,11 +1311,60 @@ package body Cmd.Line is
          end if;
       end check_create_incompatibilities;
 
+      ---------------------------------
+      --  check_implied_info_all
+      ---------------------------------
+      procedure check_implied_info_all is
+      begin
+         --  These command imply -a
+         --  ravensw info
+         --  ravensw info -q
+         if result.command = cv_info then
+            if not result.verb_all_packages and then
+              not result.verb_case_sensitive and then
+              not result.verb_case_blind and then
+              not result.verb_shell_glob and then
+              not result.verb_use_regex and then
+              not result.info_show_annotation and then
+              not result.info_full and then
+              not result.info_raw_manifest and then
+              not result.info_alter_return and then
+              not result.info_pkg_message and then
+              not result.info_comment and then
+              not result.info_fwd_deps and then
+              not result.info_rev_deps and then
+              not result.info_lock_status and then
+              not result.info_list_files and then
+              not result.info_shlibs_provided and then
+              not result.info_shlibs_used and then
+              not result.info_total_size and then
+              not result.info_search_origin and then
+              not result.info_install_prefix and then
+              result.verb_raw_format = no_raw_format and then
+              IsBlank (result.info_file_archive)
+            then
+               result.verb_all_packages := True;
+            end if;
+         end if;
+      end check_implied_info_all;
+
+      ---------------------------------
+      --  check_stats_default
+      ---------------------------------
+      procedure check_stats_default is
+      begin
+         if result.stats_behavior = no_database_stats then
+            result.stats_behavior := both_databases;
+         end if;
+      end check_stats_default;
+
    begin
       expand_command_line;
       expanded_args.Iterate (translate_switch'Access);
       check_annotate_stdin;
       check_create_incompatibilities;
+      check_implied_info_all;
+      check_stats_default;
 
       return result;
    end parse_command_line;

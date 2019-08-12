@@ -25,7 +25,6 @@
 .Op Fl a
 .Op Fl A Op Ar 01
 .Op Fl n Ar oldname:newname
-.Op Fl o Ar oldorigin:neworigin
 .Op Fl v Op Ar 01
 .Op Fl y
 .Op Fl Cgix
@@ -35,7 +34,6 @@
 .Op Cm --all
 .Op Cm --automatic Op Ar 01
 .Op Cm --change-name Ar oldname:newname
-.Op Cm --change-origin Ar oldorigin:neworigin
 .Op Cm --yes
 .Op Fl v Op Ar 01
 .Op Cm --{case-sensitive,glob,case-insensitive,regex}
@@ -75,20 +73,11 @@ This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
 .Pa ravensw.conf .
-.It Fl n Ar oldname:newname , Cm --change-name Ar oldname:newname
+.It Fl n Ar oldname,newname , Cm --change-name Ar oldname,newname
 Change the package name of a given dependency from
 .Ar oldname
 to
 .Ar newname .
-.It Fl o Ar oldorigin:neworigin , Cm --change-origin Ar oldorigin:neworigin
-Change the port origin of a given dependency from
-.Ar oldorigin
-to
-.Ar neworigin .
-This corresponds to the port directory that the package originated from.
-Typically, this is only needed for upgrading a library or package that
-has MOVED or when the default version of a major port dependency
-changes. (DEPRECATED)
 Also see
 .Xr ravensw-updating 8
 and

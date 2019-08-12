@@ -75,6 +75,7 @@ private
       cv_set,
       cv_shell,
       cv_shlib,
+      cv_ssh,
       cv_stats,
       cv_unlock,
       cv_update,
@@ -177,7 +178,8 @@ private
          verb_skip_catalog    : Boolean := False;
          verb_name_pattern    : Text;
          verb_repo_name       : Text;
-         verb_raw_format      : T_Raw_Format;
+         verb_raw_format      : T_Raw_Format := no_raw_format;
+         verb_work_queue      : string_crate.Vector;
 
          --  No unique configuration
          --  * autoremove
@@ -187,7 +189,8 @@ private
          add_mark_automatic   : Boolean := False;
          add_force_reinstall  : Boolean := False;
          add_accept_missing   : Boolean := False;
-         add_packages         : string_crate.Vector;
+
+         alias_list           : Boolean := False;
 
          annot_action         : T_Annotate_Action := no_annotate_action;
          annot_tag_name       : Text;
@@ -199,12 +202,13 @@ private
          check_dry_run        : Boolean := False;
          check_action         : T_Check_Action := unset_action;
 
-         config_key           : string_crate.Vector;
+         config_key           : Text;
 
          create_root_dir      : Text;
          create_output_dir    : Text;
          create_metadata_dir  : Text;
          create_manifest_file : Text;
+         create_plist_file    : Text;
          create_ban_overwrite : Boolean := False;
 
          delete_skip_script   : Boolean := False;
@@ -276,7 +280,6 @@ private
          upgrade_force        : Boolean := False;
          upgrade_skip_scripts : Boolean := False;
          upgrade_fetch_only   : Boolean := False;
-         upgrade_queue        : string_crate.Vector;
 
          version_behavior     : T_version := no_defined_behavior;
          version_exact_match  : Boolean := False;
@@ -302,6 +305,7 @@ private
 
       end record;
 
-
+   --  Provide string equivalent to given command enumeration
+   function convert_command_enum_to_label (command : Command_verb) return String;
 
 end Cmd;

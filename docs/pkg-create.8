@@ -95,8 +95,6 @@ Any number of packages may be created in one invocation of this style.
 Alternatively, a single package can be created from an arbitrary
 selection of files on your system, but this requires a
 .Ar metadatadir
-and optionally
-.Ar plist
 to be supplied.
 The package name will be derived from the
 .Pa +MANIFEST
@@ -186,22 +184,6 @@ Set
 as the output directory.
 If this option is not given, all created packages will
 be saved in the current directory.
-.It Fl p Ar plist , Cm --plist Ar plist
-Specify some package metadata using the legacy plist format from
-.Xr pkg_add 1 ,
-commonly found in
-.Pa pkg-plist
-files in the ports tree.
-Metadata from the
-.Ar plist
-file, if specified, will take precedence over any equivalents from
-the
-.Ar metadatadir .
-Only has any effect when used with
-.Ar metadatadir .
-See
-.Sx "PLIST FORMAT"
-for details.
 .It Fl q , Cm --quiet
 Force quiet output.
 This is the default, unless

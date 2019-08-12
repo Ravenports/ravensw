@@ -9,11 +9,37 @@ package Cmd.Usage is
 
 private
 
-   --  Common routine to display error message before usage.
-   procedure display_error (error_msg: Text);
+   --  Common routine to display error message (before usage).
+   procedure display_error (error_msg : String);
+
+   --  Common routine to display usage messages
+   procedure display_usage (usage_msg : String; first_line : Boolean);
+
+   --  Common routine to display final help suggestion
+   procedure display_help_suggestion (command : Command_verb);
 
    --  Break each command into individual routines.  Any additional
    --  validation checks (if no parsing error exists) can be done here.
    function no_command_verb (comline : Cldata) return Boolean;
+   function verb_add (comline : Cldata) return Boolean;
+   function verb_alias (comline : Cldata) return Boolean;
+   function verb_annotate (comline : Cldata) return Boolean;
+   function verb_autoremove (comline : Cldata) return Boolean;
+   function verb_backup (comline: Cldata) return Boolean;
+   function verb_check (comline: Cldata) return Boolean;
+   function verb_clean (comline: Cldata) return Boolean;
+   function verb_config (comline: Cldata) return Boolean;
+   function verb_create (comline: Cldata) return Boolean;
+   function verb_delete (comline: Cldata) return Boolean;
+   function verb_fetch (comline: Cldata) return Boolean;
+   function verb_help (comline: Cldata) return Boolean;
+   function verb_info (comline: Cldata) return Boolean;
+   function verb_install (comline: Cldata) return Boolean;
+   function verb_lock (comline: Cldata) return Boolean;
+   function verb_unlock (comline: Cldata) return Boolean;
+   function verb_set (comline: Cldata) return Boolean;
+   function verb_shlib (comline: Cldata) return Boolean;
+   function verb_ssh (comline: Cldata) return Boolean;
+   function verb_stats (comline: Cldata) return Boolean;
 
 end Cmd.Usage;
