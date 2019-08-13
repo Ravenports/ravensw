@@ -1,12 +1,9 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-with Ada.Text_IO;
 with Core.Strings; use Core.Strings;
 
 package body Cmd.Usage is
-
-   package TIO renames Ada.Text_IO;
 
    --------------------------------------------------------------------
    --  command_line_valid
@@ -32,6 +29,7 @@ package body Cmd.Usage is
          when cv_install =>    return verb_install (comline);
          when cv_lock =>       return verb_lock (comline);
          when cv_query =>      return verb_query (comline);
+         when cv_remove =>     return verb_delete (comline);
          when cv_repo =>       return verb_repo (comline);
          when cv_rquery =>     return verb_rquery (comline);
          when cv_search =>     return verb_search (comline);
@@ -858,7 +856,7 @@ package body Cmd.Usage is
       else
          if IsBlank (comline.verb_name_pattern)
          then
-            return alert ("Missing <pattern>");
+            return alert ("Missing <pattern> or <pkg-name>");
          end if;
 
          return True;

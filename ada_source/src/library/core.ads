@@ -9,7 +9,9 @@ package Core is
 
    subtype Text is SU.Unbounded_String;
 
-   progname : constant String := "ravensw";
+   progversion    : constant String := "2.0.0";
+   progname       : constant String := "ravensw";
+   install_prefix : constant String := "/raven";
    jail_supported : constant Boolean := False;   --  FreeBSD only
 
 end Core;

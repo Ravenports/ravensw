@@ -27,6 +27,7 @@ package body Cmd is
          when cv_install    => return "install";
          when cv_lock       => return "lock";
          when cv_query      => return "query";
+         when cv_remove     => return "remove";
          when cv_repo       => return "repo";
          when cv_rquery     => return "rquery";
          when cv_search     => return "search";

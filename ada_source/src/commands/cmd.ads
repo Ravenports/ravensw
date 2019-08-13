@@ -3,9 +3,12 @@
 
 with Core; use Core;
 
+with Ada.Text_IO;
 private with Ada.Containers.Vectors;
 
 package Cmd is
+
+   package TIO renames Ada.Text_IO;
 
    type Cldata is private;
 
@@ -69,6 +72,7 @@ private
       cv_install,
       cv_lock,
       cv_query,
+      cv_remove,
       cv_repo,
       cv_rquery,
       cv_search,
@@ -165,7 +169,7 @@ private
          command              : Command_verb := cv_unset;
          parse_error          : Boolean := False;
 
-         help_command         : Text;
+         help_command         : Command_verb := cv_unset;
 
          verb_quiet           : Boolean := False;
          verb_assume_yes      : Boolean := False;

@@ -2,14 +2,12 @@
 --  Reference: ../License.txt
 
 with Ada.Command_Line;
-with Ada.Text_IO;
 
 with Core.Strings; use Core.Strings;
 
 package body Cmd.Line is
 
    package ACL renames Ada.Command_Line;
-   package TIO renames Ada.Text_IO;
 
    --------------------------------------------------------------------
    --  parse_command_line
@@ -395,6 +393,7 @@ package body Cmd.Line is
             ("install   ", cv_install),
             ("lock      ", cv_lock),
             ("query     ", cv_query),
+            ("remove    ", cv_remove),
             ("repo      ", cv_repo),
             ("rquery    ", cv_rquery),
             ("search    ", cv_search),
@@ -706,7 +705,7 @@ package body Cmd.Line is
                      handle_trailing_pkgname (datum, datumtxt);
                   end if;
 
-               when cv_delete =>
+               when cv_delete | cv_remove =>
                   if datum = sws_quiet or else datum = swl_quiet then
                      result.verb_quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
@@ -747,8 +746,8 @@ package body Cmd.Line is
                   end if;
 
                when cv_help =>
-                  if IsBlank (result.help_command) then
-                     result.help_command := datumtxt;
+                  if result.help_command = cv_unset then
+                     last_cmd := help;
                   else
                      set_error ("The help command only takes one argument");
                   end if;
@@ -1210,7 +1209,6 @@ package body Cmd.Line is
                when global_option      => result.glob_option          := datumtxt;
                when global_jail        => result.glob_jail            := datumtxt;
                when generic_repo_name  => result.verb_repo_name       := datumtxt;
-               when help               => result.help_command         := datumtxt;
                when which_filename     => result.which_filename       := datumtxt;
                when lock_pkgname       => result.verb_name_pattern    := datumtxt;
                when backup_source      => result.backup_restore       := datumtxt;
@@ -1240,6 +1238,11 @@ package body Cmd.Line is
                when version_not_char   => result.version_not_char     := datum (datum'First);
                when version_origin     => result.version_origin       := datumtxt;
                when version_pkgname    => result.version_pkg_name     := datumtxt;
+               when help               =>
+                  result.help_command := get_command (datum);
+                  if result.help_command = cv_unset then
+                     set_error ("'" & datum & "' is not a recognized command");
+                  end if;
             end case;
             last_cmd := nothing_pending;
          end if;
