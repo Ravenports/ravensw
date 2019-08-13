@@ -1,4 +1,6 @@
 #!/usr/bin/env perl
+#
+# run as: /fix-xrefs pkg*.8 pkg*.5
 
 use strict;
 use warnings;
