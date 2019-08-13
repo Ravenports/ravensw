@@ -16,9 +16,13 @@ package body Cmd.Help is
    --------------------------------------------------------------------
    --  execute_help_command
    --------------------------------------------------------------------
-   function execute_help_command (comline : Cldata) return Boolean is
+   function execute_help_command (comline : Cldata) return Boolean
+   is
+      manprefix : constant String := install_prefix & "/share/man";
    begin
-      if comline.help_command = cv_unset then
+      if comline.help_command = cv_unset and then
+        comline.help_command2 = cv2_unset
+      then
          print_global_options;
          print_command_summary;
          TIO.Put_Line ("");
@@ -26,7 +30,18 @@ package body Cmd.Help is
                          " help <command>'.");
          return True;
       else
-         return show_man_page (comline.help_command);
+         case comline.help_command2 is
+            when cv2_unset =>
+               return show_man_page
+                 (manprefix & "/man8/ravensw-" &
+                    convert_command_enum_to_label (comline.help_command) & ".8.gz");
+            when cv2_main =>
+               return show_man_page (manprefix & "/man8/ravensw.8.gz");
+            when cv2_main_conf =>
+               return show_man_page (manprefix & "/man5/ravensw-ravensw.conf.5.gz");
+            when cv2_repository =>
+               return show_man_page (manprefix & "/man5/ravensw-repository.5.gz");
+         end case;
       end if;
    end execute_help_command;
 
@@ -129,14 +144,12 @@ package body Cmd.Help is
    --------------------------------------------------------------------
    --  show_man_page
    --------------------------------------------------------------------
-   function show_man_page (command : Command_verb) return Boolean
+   function show_man_page (manpage : String) return Boolean
    is
       function manprog return String;
 
-      mandoc  : constant String := install_prefix & "/bin/man";
-      sysman  : constant String := "/usr/bin/man";
-      manpage : constant String := install_prefix & "/share/man/man8/ravensw-" &
-                                   convert_command_enum_to_label (command) & ".8.gz";
+      mandoc     : constant String := install_prefix & "/bin/man";
+      sysman     : constant String := "/usr/bin/man";
       use_mandoc : Boolean := False;
 
       function manprog return String is

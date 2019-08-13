@@ -16,6 +16,6 @@ private
 
    --  Launch /raven/bin/man or /usr/bin/man to display man page of command
    --  Return true on success
-   function show_man_page (command : Command_verb) return Boolean;
+   function show_man_page (manpage : String) return Boolean;
 
 end Cmd.Help;

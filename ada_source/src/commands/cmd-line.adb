@@ -746,7 +746,9 @@ package body Cmd.Line is
                   end if;
 
                when cv_help =>
-                  if result.help_command = cv_unset then
+                  if result.help_command = cv_unset and then
+                    result.help_command2 = cv2_unset
+                  then
                      last_cmd := help;
                   else
                      set_error ("The help command only takes one argument");
@@ -1238,10 +1240,18 @@ package body Cmd.Line is
                when version_not_char   => result.version_not_char     := datum (datum'First);
                when version_origin     => result.version_origin       := datumtxt;
                when version_pkgname    => result.version_pkg_name     := datumtxt;
-               when help               =>
+               when help =>
                   result.help_command := get_command (datum);
                   if result.help_command = cv_unset then
-                     set_error ("'" & datum & "' is not a recognized command");
+                     if datum = progname then
+                        result.help_command2 := cv2_main;
+                     elsif datum = progname & ".conf" then
+                        result.help_command2 := cv2_main_conf;
+                     elsif datum = "repository" then
+                        result.help_command2 := cv2_repository;
+                     else
+                        set_error ("'" & datum & "' is not a recognized command");
+                     end if;
                   end if;
             end case;
             last_cmd := nothing_pending;

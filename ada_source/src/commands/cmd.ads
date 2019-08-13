@@ -1,7 +1,8 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-with Core; use Core;
+with Core;        use Core;
+with Core.Config; use Core.Config;
 
 with Ada.Text_IO;
 private with Ada.Containers.Vectors;
@@ -40,11 +41,6 @@ private
          version         : Boolean;
          www             : Boolean;
       end record;
-
-   type Pkg_init_flags is
-     (init_none,
-      init_use_ipv4,
-      init_use_ipv6);
 
    --  Commands in pkg(8) not supported (intentionally)
    --  cv_audit
@@ -87,6 +83,14 @@ private
       cv_version,
       cv_which
      );
+
+   type Command2_verb is
+     (cv2_unset,
+      cv2_main,
+      cv2_repository,
+      cv2_main_conf
+     );
+
 
    type T_Check_Action is
      (unset_action,
@@ -170,6 +174,7 @@ private
          parse_error          : Boolean := False;
 
          help_command         : Command_verb := cv_unset;
+         help_command2        : Command2_verb := cv2_unset;
 
          verb_quiet           : Boolean := False;
          verb_assume_yes      : Boolean := False;
