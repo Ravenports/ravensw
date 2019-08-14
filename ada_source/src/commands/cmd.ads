@@ -148,7 +148,6 @@ private
       ucl,
       yaml);
 
-   subtype ST_Debug_Level is Natural range 0 .. 4;
    subtype ST_Version is Natural range 0 .. 2;
    subtype ST_Modifier_Index is Natural range 0 .. 20;
 

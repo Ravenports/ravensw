@@ -44,6 +44,8 @@ package body Core.Config is
          return EPKG_FATAL;
       end if;
 
+      --  ...
+      return EPKG_OK;
    end pkg_ini;
 
 end Core.Config;

@@ -10,11 +10,11 @@ package body Core.Ucl is
    --------------------------------------------------------------------
    --  ucl_object_find_key
    --------------------------------------------------------------------
-   function ucl_object_find_key (obj : ucl_object_t_access;
-                                 key : String) return ucl_object_t_access
+   function ucl_object_find_key (obj : pkg_object;
+                                 key : String) return pkg_object
    is
       ckey   : ICS.chars_ptr;
-      result : ucl_object_t_access;
+      result : pkg_object;
    begin
       ckey := ICS.New_String (key);
       result := libucl.ucl_object_lookup (obj, ckey);

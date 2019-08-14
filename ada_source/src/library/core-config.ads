@@ -3,6 +3,7 @@
 
 with Core;         use Core;
 with Core.Strings; use Core.Strings;
+with Core.Pkg;     use Core.Pkg;
 with Core.Ucl;
 
 package Core.Config is
