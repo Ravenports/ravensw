@@ -279,7 +279,8 @@ package libucl is
       end case;
    end record;
    pragma Convention (C_Pass_By_Copy, anon_8);
-   pragma Unchecked_Union (anon_8);type ucl_object_s_trash_stack_array is array (0 .. 1) of access unsigned_char;
+   pragma Unchecked_Union (anon_8);
+   type ucl_object_s_trash_stack_array is array (0 .. 1) of access unsigned_char;
    type ucl_object_s is record
       value : aliased anon_8;  -- ucl.h:231
       key : Interfaces.C.Strings.chars_ptr;  -- ucl.h:232
@@ -853,7 +854,8 @@ package libucl is
   --  * 2) Size of objects
   --  * 3) Content of objects
 
-   function ucl_object_compare (o1 : access constant ucl_object_t; o2 : access constant ucl_object_t) return int;  -- ucl.h:779
+   function ucl_object_compare (o1 : access constant ucl_object_t;
+                                o2 : access constant ucl_object_t) return int;  -- ucl.h:779
    pragma Import (C, ucl_object_compare, "ucl_object_compare");
 
   --  * Compare objects `o1` and `o2` useful for sorting

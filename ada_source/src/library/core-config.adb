@@ -22,4 +22,28 @@ package body Core.Config is
       return pkg_ini (path, reposdir, init_none);
    end pkg_init;
 
+
+   --------------------------------------------------------------------
+   --  pkg_config_get
+   --------------------------------------------------------------------
+   function pkg_config_get (key : String) return Ucl.pkg_object is
+   begin
+      return Ucl.ucl_object_find_key (config_object, key);
+   end pkg_config_get;
+
+
+   --------------------------------------------------------------------
+   --  pkg_ini
+   --------------------------------------------------------------------
+   function pkg_ini
+     (path     : String;
+      reposdir : String;
+      flags    : Pkg_init_flags) return Pkg_Error_Type is
+   begin
+      if parsed then
+         return EPKG_FATAL;
+      end if;
+
+   end pkg_ini;
+
 end Core.Config;

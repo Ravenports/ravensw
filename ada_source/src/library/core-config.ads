@@ -1,7 +1,9 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Core;         use Core;
 with Core.Strings; use Core.Strings;
+with Core.Ucl;
 
 package Core.Config is
 
@@ -33,13 +35,13 @@ package Core.Config is
      (path     : String;
       reposdir : String) return Pkg_Error_Type;
 
-   function pkg_config_get (key : String) return Boolean;
-
-
+   --  Retrieve configure value given it's keep
+   function pkg_config_get (key : String) return Ucl.pkg_object;
 
 private
 
-   parsed : Boolean := False;
+   parsed        : Boolean := False;
+   config_object : Ucl.pkg_object;
 
    type Config_Entry is
       record
