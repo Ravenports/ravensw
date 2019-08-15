@@ -7,12 +7,13 @@ package body Core.Strings is
 
    package AS renames Ada.Strings;
 
+
    --------------------------------------------------------------------------------------------
    --  USS
    --------------------------------------------------------------------------------------------
    function USS (US : Text) return String is
    begin
-         return SU.To_String (US);
+      return SU.To_String (US);
    end USS;
 
 
@@ -87,5 +88,113 @@ package body Core.Strings is
    begin
       return S'Length = 0;
    end IsBlank;
+
+
+   --------------------------------------------------------------------------------------------
+   --  replace_all
+   --------------------------------------------------------------------------------------------
+   function replace_all (S : String; reject, shiny : Character) return String
+   is
+      rejectstr : constant String (1 .. 1) := (1 => reject);
+      returnstr : String := S;
+      focus     : Natural;
+   begin
+      loop
+         focus := AS.Fixed.Index (Source => returnstr, Pattern => rejectstr);
+         exit when focus = 0;
+         returnstr (focus) := shiny;
+      end loop;
+      return returnstr;
+   end replace_all;
+
+
+   --------------------------------------------------------------------------------------------
+   --  replace_substring
+   --------------------------------------------------------------------------------------------
+   function replace_substring (US : Text;
+                               old_string : String;
+                               new_string : String) return Text
+   is
+      back_marker  : Natural := SU.Index (Source => US, Pattern => old_string);
+      front_marker : Natural := back_marker + old_string'Length - 1;
+   begin
+      if back_marker = 0 then
+         return US;
+      end if;
+      return SU.Replace_Slice (Source => US,
+                               Low    => back_marker,
+                               High   => front_marker,
+                               By     => new_string);
+   end replace_substring;
+
+
+   --------------------------------------------------------------------------------------------
+   --  int2str
+   --------------------------------------------------------------------------------------------
+   function int2str (A : Integer) return String
+   is
+      raw : constant String := A'Img;
+      len : constant Natural := raw'Length;
+   begin
+      if A < 0 then
+         return raw;
+      else
+         return raw (2 .. len);
+      end if;
+   end int2str;
+
+
+   --------------------------------------------------------------------------------------------
+   --  int2text
+   --------------------------------------------------------------------------------------------
+   function int2text (A : Integer) return Text is
+   begin
+      return SUS (int2str (A));
+   end int2text;
+
+
+   --------------------------------------------------------------------------------------------
+   --  count_char
+   --------------------------------------------------------------------------------------------
+   function count_char (S : String; focus : Character) return Natural
+   is
+      result : Natural := 0;
+   begin
+      for x in S'Range loop
+         if S (x) = focus then
+            result := result + 1;
+         end if;
+      end loop;
+      return result;
+   end count_char;
+
+
+   --------------------------------------------------------------------------------------------
+   --  json_escape
+   --------------------------------------------------------------------------------------------
+   function json_escape (S : String) return String
+   is
+      num_quotes : Natural := count_char (S, ASCII.Quotation);
+      num_slash  : Natural := count_char (S, '\');
+   begin
+      if num_quotes + num_slash = 0 then
+         return S;
+      end if;
+      declare
+         result : String (1 .. S'Length + num_quotes + num_slash);
+         index  : Natural := result'First;
+      begin
+         for x in S'Range loop
+            if S (x) = ASCII.Quotation or else S (x) = '\' then
+               result (index) := '\';
+               index := index + 1;
+            end if;
+            result (index) := S (x);
+            index := index + 1;
+         end loop;
+         return result;
+      end;
+   end json_escape;
+
 
 end Core.Strings;

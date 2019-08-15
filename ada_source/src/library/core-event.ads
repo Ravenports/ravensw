@@ -58,10 +58,12 @@ package Core.Event is
       PKG_EVENT_NEW_ACTION,
       PKG_EVENT_MESSAGE,
       PKG_EVENT_FILE_MISSING,
-      --  PKG_EVENT_CLEANUP_CALLBACK_REGISTER,
-      --  PKG_EVENT_CLEANUP_CALLBACK_UNREGISTER,
+      PKG_EVENT_CLEANUP_CALLBACK_REGISTER,
+      PKG_EVENT_CLEANUP_CALLBACK_UNREGISTER,
       PKG_EVENT_CONFLICTS
      );
+
+   type Clean_Callback is access function (data : Text) return Boolean;
 
    type pkg_event (this_event : Event_Type) is
       record
@@ -81,7 +83,7 @@ package Core.Event is
             when PKG_EVENT_UPDATE_ADD |
                  PKG_EVENT_UPDATE_REMOVE =>
                total : Natural;
-               done  : Boolean;
+               done  : Natural;
             when PKG_EVENT_FETCH_BEGIN |
                  PKG_EVENT_FETCH_FINISHED =>
                url : Text;
@@ -146,6 +148,10 @@ package Core.Event is
                conflict_pkg1 : T_pkg;
                conflict_pkg2 : T_pkg;
                conflict_path : Text;
+            when PKG_EVENT_CLEANUP_CALLBACK_REGISTER |
+                 PKG_EVENT_CLEANUP_CALLBACK_UNREGISTER =>
+               cleanup_callback      : Clean_Callback;
+               cleanup_callback_data : Text;
             when PKG_EVENT_FETCHING |
                  PKG_EVENT_INTEGRITYCHECK_BEGIN |
                  PKG_EVENT_NEWPKGVERSION |
@@ -174,8 +180,8 @@ package Core.Event is
    procedure pkg_emit_already_installed (pkg : T_pkg);
    procedure pkg_emit_fetch_begin       (url : Text);
    procedure pkg_emit_fetch_finished    (url : Text);
-   procedure pkg_emit_update_add        (total : Natural; done : Boolean);
-   procedure pkg_emit_update_remove     (total : Natural; done : Boolean);
+   procedure pkg_emit_update_add        (total, done : Natural);
+   procedure pkg_emit_update_remove     (total, done : Natural);
    procedure pkg_emit_install_begin     (pkg : T_pkg);
    procedure pkg_emit_install_finished  (new_pkg : T_pkg; old_pkg : T_pkg);
    procedure pkg_emit_add_deps_begin    (pkg : T_pkg);
@@ -210,6 +216,8 @@ package Core.Event is
                                                conflicts : pkg_event_conflict_crate.Vector);
    procedure pkg_emit_package_not_found       (pkg_name : Text);
    procedure pkg_emit_incremental_update      (reponame : Text; processed : Boolean);
+   procedure pkg_register_cleanup_callback    (callback : Clean_Callback; callback_data : Text);
+   procedure pkg_unregister_cleanup_callback  (callback : Clean_Callback; callback_data : Text);
 
    function pkg_emit_query_yesno  (deft : Boolean; msg : Text) return Boolean;
    function pkg_emit_query_select (msg    : Text;

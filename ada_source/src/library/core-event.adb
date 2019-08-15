@@ -1,7 +1,14 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Characters.Latin_1;
+
+with Core.Strings;  use Core.Strings;
+with Core.Unix;
+
 package body Core.Event is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    --------------------------------------------------------------------
    --  pkg_event_register
@@ -116,7 +123,7 @@ package body Core.Event is
    --------------------------------------------------------------------
    --  pkg_emit_update_remove
    --------------------------------------------------------------------
-   procedure pkg_emit_update_remove (total : Natural; done : Boolean)
+   procedure pkg_emit_update_remove (total, done : Natural)
    is
       event  : pkg_event (this_event => PKG_EVENT_UPDATE_REMOVE);
    begin
@@ -129,7 +136,7 @@ package body Core.Event is
    --------------------------------------------------------------------
    --  pkg_emit_update_add
    --------------------------------------------------------------------
-   procedure pkg_emit_update_add (total : Natural; done : Boolean)
+   procedure pkg_emit_update_add (total, done : Natural)
    is
       event  : pkg_event (this_event => PKG_EVENT_UPDATE_ADD);
    begin
@@ -591,12 +598,126 @@ package body Core.Event is
 
 
    --------------------------------------------------------------------
+   --  pkg_register_cleanup_callback
+   --------------------------------------------------------------------
+   procedure pkg_register_cleanup_callback (callback : Clean_Callback; callback_data : Text)
+   is
+      event : pkg_event (this_event => PKG_EVENT_CLEANUP_CALLBACK_REGISTER);
+   begin
+      event.cleanup_callback      := callback;
+      event.cleanup_callback_data := callback_data;
+      pkg_emit_event_blind (event);
+   end pkg_register_cleanup_callback;
+
+
+   --------------------------------------------------------------------
+   --  pkg_unregister_cleanup_callback
+   --------------------------------------------------------------------
+   procedure pkg_unregister_cleanup_callback (callback : Clean_Callback; callback_data : Text)
+   is
+      event : pkg_event (this_event => PKG_EVENT_CLEANUP_CALLBACK_UNREGISTER);
+   begin
+      event.cleanup_callback      := callback;
+      event.cleanup_callback_data := callback_data;
+      pkg_emit_event_blind (event);
+   end pkg_unregister_cleanup_callback;
+
+
+   --------------------------------------------------------------------
    --  pipe_event
    --------------------------------------------------------------------
-   procedure pipe_event (event : pkg_event) is
+   procedure pipe_event (event : pkg_event)
+   is
+      function MT (single_quote_template : String) return Text;
+      function MT0 (dtype : String) return Text;
+      function MT1 (dtype, n1, v1 : String) return Text;
+      function MT2 (dtype, n1, v1, n2, v2 : String) return Text;
+      function TT (template : Text; token : String; unescaped_value : String) return Text;
+
+      msg  : Text;
+      tmpl : Text;
+      S1   : constant String := "%1%";
+      S2   : constant String := "%2%";
+      S3   : constant String := "%3%";
+      S4   : constant String := "%4%";
+
+      function MT (single_quote_template : String) return Text
+      is
+         DQ : String := replace_all (single_quote_template, LAT.Apostrophe, LAT.Quotation);
+      begin
+         return SUS (json_escape (DQ));
+      end MT;
+
+      function MT0 (dtype : String) return Text
+      is
+         SQ : String := "{'type': '" & dtype & "', 'data': {}}";
+         DQ : String := replace_all (SQ, LAT.Apostrophe, LAT.Quotation);
+      begin
+         return SUS (json_escape (DQ));
+      end MT0;
+
+      function MT1 (dtype, n1, v1 : String) return Text
+      is
+         SQ : String := "{'type': '" & dtype & "', 'data': {'" & n1 & "': '" & v1 & "'}}";
+         DQ : String := replace_all (SQ, LAT.Apostrophe, LAT.Quotation);
+      begin
+         return SUS (json_escape (DQ));
+      end MT1;
+
+      function MT2 (dtype, n1, v1, n2, v2 : String) return Text
+      is
+         SQ : String := "{'type': '" & dtype & "', 'data': {'" & n1 & "': '" & v1 &
+           "', '" & n2 & "': '" & v2 & "'}}";
+         DQ : String := replace_all (SQ, LAT.Apostrophe, LAT.Quotation);
+      begin
+         return SUS (json_escape (DQ));
+      end MT2;
+
+      function TT (template : Text; token : String; unescaped_value : String) return Text
+      is
+         value : String := json_escape (unescaped_value);
+      begin
+         return replace_substring (template, token, value);
+      end TT;
    begin
-      --  TODO: everything
-      null;
+      if context.eventpipe < 0 then
+         return;
+      end if;
+
+      case event.event is
+         when PKG_EVENT_ERRNO =>
+            tmpl := MT2 ("ERROR", "msg", S1 & '(' & S2 & "): " & S3, "errno", S4);
+            msg  := TT (TT (TT (TT (tmpl,
+                        S1, USS (event.err_function)),
+                        S2, USS (event.err_argument)),
+                        S3, Unix.strerror (event.err_number)),
+                        S4, int2str (event.err_number));
+         when PKG_EVENT_ERROR =>
+            tmpl := MT1 ("ERROR", "msg", S1);
+            msg  := TT (tmpl, S1, USS (event.message));
+         when PKG_EVENT_NOTICE =>
+            tmpl := MT1 ("NOTICE", "msg", S1);
+            msg  := TT (tmpl, S1, USS (event.message));
+         when PKG_EVENT_DEVELOPER_MODE =>
+            tmpl := MT1 ("ERROR", "msg", "DEVELOPER_MODE: " & S1);
+            msg  := TT (tmpl, S1, USS (event.message));
+         when PKG_EVENT_UPDATE_ADD =>
+            tmpl := MT2 ("INFO_UPDATE_ADD", "fetched", S1, "total", S2);
+            msg  := TT (TT (tmpl, S1, int2str (event.done)), S2, int2str (event.total));
+         when PKG_EVENT_UPDATE_REMOVE =>
+            tmpl := MT2 ("INFO_UPDATE_REMOVE", "fetched", S1, "total", S2);
+            msg  := TT (TT (tmpl, S1, int2str (event.done)), S2, int2str (event.total));
+         when PKG_EVENT_FETCH_BEGIN =>
+            tmpl := MT1 ("INFO_FETCH_BEGIN", "url", S1);
+            msg  := TT (tmpl, S1, USS (event.url));
+         when PKG_EVENT_FETCH_FINISHED =>
+            tmpl := MT1 ("INFO_FETCH_FINISHED", "url", S1);
+            msg  := TT (tmpl, S1, USS (event.url));
+--         when PKG_EVENT_INSTALL_BEGIN =>
+--            tmp1 := MT2 ("INFO_INSTALL_BEGIN", "pkgname", S1, "pkgversion", S2);
+--            msg  := TT (TT (tmpl, S1, int2str (event.pk)), S2, int2str (event.total));
+         when others => null;
+      end case;
    end pipe_event;
 
 

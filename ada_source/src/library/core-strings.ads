@@ -21,4 +21,22 @@ package Core.Strings is
    function IsBlank (US : Text)   return Boolean;
    function IsBlank (S  : String) return Boolean;
 
+   --  Replace single character with another single character (all found)
+   function replace_all (S : String; reject, shiny : Character) return String;
+
+   --  unpadded numeric image
+   function int2str  (A : Integer) return String;
+   function int2text (A : Integer) return Text;
+
+   --  Replace substring with another string
+   function replace_substring (US : Text;
+                               old_string : String;
+                               new_string : String) return Text;
+
+   --  Returns number of instances of a given character in a given string
+   function count_char (S : String; focus : Character) return Natural;
+
+   --  Escape " and \ characters by prefacing them with a \ character
+   function json_escape (S : String) return String;
+
 end Core.Strings;

@@ -105,4 +105,18 @@ package Core.Pkg is
       Index_Type   => Natural,
       "="          => SU."=");
 
+   type T_pkg_context is
+      record
+         eventpipe      : Integer        := -1;
+         debug_level    : ST_Debug_Level := ST_Debug_Level'First;
+         developer_mode : Boolean        := False;
+         pkg_rootdir    : Text;
+         --  int rootfd
+         --  int cachedirfd
+         --  int dbdirfd
+         --  int pkg_dbdirfd
+      end record;
+
+   context : T_pkg_context;
+
 end Core.Pkg;
