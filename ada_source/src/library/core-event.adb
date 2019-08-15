@@ -705,8 +705,10 @@ package body Core.Event is
       begin
          return replace_substring (template, token, value);
       end TT;
+
+      use type Unix.Unix_File_Descriptor;
    begin
-      if context.eventpipe < 0 then
+      if context.eventpipe = Unix.not_connected then
          return;
       end if;
 
@@ -892,11 +894,11 @@ package body Core.Event is
             begin
                event.req_pkg.rdepends.Iterate (print_depends'Access);
 
-               msg  := TT (TT (TT (TT (tmpl,
-                           S1, Printf.format_name (event.req_pkg)),
-                           S2, Printf.format_version (event.req_pkg)),
-                           S3, force_arg (event.force)),
-                           S4, USS (reqby));
+               msg := TT (TT (TT (TT (tmpl,
+                          S1, Printf.format_name (event.req_pkg)),
+                          S2, Printf.format_version (event.req_pkg)),
+                          S3, force_arg (event.force)),
+                          S4, USS (reqby));
             end;
 
          when PKG_EVENT_QUERY_SELECT =>
@@ -921,11 +923,11 @@ package body Core.Event is
             begin
                event.query_items.all.Iterate (print_items'Access);
 
-               msg  := TT (TT (TT (TT (tmpl,
-                           S1, USS (event.query_msg)),
-                           S2, int2str (event.query_ncount)),
-                           S3, int2str (event.query_deft)),
-                           S4, USS (array_contents));
+               msg := TT (TT (TT (TT (tmpl,
+                          S1, USS (event.query_msg)),
+                          S2, int2str (event.query_ncount)),
+                          S3, int2str (event.query_deft)),
+                          S4, USS (array_contents));
             end;
       end case;
 

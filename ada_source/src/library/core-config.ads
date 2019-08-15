@@ -287,4 +287,9 @@ private
        SUS ("Write out the METALOG to the specified file"))
      );
 
+   --  When provided a FIFO or socket, open file descriptor to it.
+   procedure connect_evpipe (event_pipe : String);
+
+   --  close_evpipe (?)
+
 end Core.Config;

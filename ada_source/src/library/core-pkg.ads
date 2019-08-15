@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 with Ada.Containers.Vectors;
+with Core.Unix;
 
 package Core.Pkg is
 
@@ -137,7 +138,7 @@ package Core.Pkg is
 
    type T_pkg_context is
       record
-         eventpipe      : Integer        := -1;
+         eventpipe      : Unix.Unix_File_Descriptor := Unix.not_connected;
          debug_level    : ST_Debug_Level := ST_Debug_Level'First;
          developer_mode : Boolean        := False;
          pkg_rootdir    : Text;

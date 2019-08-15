@@ -23,5 +23,12 @@ package body Core.Unix is
    end strerror;
 
 
+   --------------------------------------------------------------------
+   --  errno
+   --------------------------------------------------------------------
+   function errno return Integer is
+   begin
+      return last_errno;
+   end errno;
 
 end Core.Unix;
