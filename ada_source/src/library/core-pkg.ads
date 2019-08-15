@@ -35,6 +35,37 @@ package Core.Pkg is
    type T_pkg_timestamp is mod 2**64;
    type T_progress_tick is mod 2**64;
 
+   type T_message_type is
+     (PKG_MESSAGE_ALWAYS,
+      PKG_MESSAGE_INSTALL,
+      PKG_MESSAGE_REMOVE,
+      PKG_MESSAGE_UPGRADE);
+
+   type T_message is
+      record
+         contents        : Text;
+         minimum_version : Text;
+         maximum_version : Text;
+         message_type    : T_message_type;
+      end record;
+
+   package pkg_message_crate is new CON.Vectors
+     (Element_Type => T_message,
+      Index_Type   => Natural);
+
+   type T_pkg_dep is
+      record
+         origin       : Text;
+         name         : Text;
+         version      : Text;
+         uid          : Text;
+         locked       : Boolean;
+      end record;
+
+   package depends_crate is new CON.Vectors
+     (Element_Type => T_pkg_dep,
+      Index_Type   => Natural);
+
    type T_pkg is
       record
          direct       : Boolean;
@@ -54,7 +85,7 @@ package Core.Pkg is
          uid          : Text;
          digest       : Text;
          old_digest   : Text;
-         --   message
+         messages     : pkg_message_crate.Vector;
          prefix       : Text;
          comment      : Text;
          desc         : Text;
@@ -69,20 +100,13 @@ package Core.Pkg is
          flatsize     : T_pkg_size;
          old_flatsize : T_pkg_size;
          timestamp    : T_pkg_timestamp;
+         depends      : depends_crate.Vector;
+         rdepends     : depends_crate.Vector;
          --  ...
          rootpath     : Text;
       end record;
 
-   type T_pkg_dep is
-      record
-         origin       : Text;
-         name         : Text;
-         version      : Text;
-         uid          : Text;
-         locked       : Boolean;
-         --  alt_next, alt_prev
-         --  next, prev
-      end record;
+
 
    type T_pkg_file is
       record
@@ -101,6 +125,12 @@ package Core.Pkg is
       end record;
 
    package pkg_event_conflict_crate is new CON.Vectors
+     (Element_Type => Text,
+      Index_Type   => Natural,
+      "="          => SU."=");
+
+   --  Move to Core.Query later (?)
+   package pkg_query_items_crate is new CON.Vectors
      (Element_Type => Text,
       Index_Type   => Natural,
       "="          => SU."=");

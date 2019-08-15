@@ -129,16 +129,16 @@ package Core.Event is
                conflicting : Natural;
             when PKG_EVENT_INCREMENTAL_UPDATE =>
                reponame  : Text;
-               processed : Boolean;
+               processed : Natural;
             when PKG_EVENT_DEBUG =>
                debug_level : ST_Debug_Level;
                debug_msg   : Text;
             when PKG_EVENT_QUERY_YESNO =>
                qyesno_msg  : Text;
-               qyesno_deft : Boolean;
+               qyesno_deft : Natural;
             when PKG_EVENT_QUERY_SELECT =>
                query_msg    : Text;
-               query_items  : access Text;
+               query_items  : access pkg_query_items_crate.Vector;
                query_ncount : Natural;
                query_deft   : Natural;
             when PKG_EVENT_PROGRESS_TICK =>
@@ -215,13 +215,13 @@ package Core.Event is
                                                path : Text;
                                                conflicts : pkg_event_conflict_crate.Vector);
    procedure pkg_emit_package_not_found       (pkg_name : Text);
-   procedure pkg_emit_incremental_update      (reponame : Text; processed : Boolean);
+   procedure pkg_emit_incremental_update      (reponame : Text; processed : Natural);
    procedure pkg_register_cleanup_callback    (callback : Clean_Callback; callback_data : Text);
    procedure pkg_unregister_cleanup_callback  (callback : Clean_Callback; callback_data : Text);
 
-   function pkg_emit_query_yesno  (deft : Boolean; msg : Text) return Boolean;
+   function pkg_emit_query_yesno  (deft : Natural; msg : Text) return Boolean;
    function pkg_emit_query_select (msg    : Text;
-                                   items  : access Text;
+                                   items  : access pkg_query_items_crate.Vector;
                                    ncount : Natural;
                                    deft   : Natural) return Boolean;
 
@@ -238,5 +238,8 @@ private
 
    --  If configured, send event log through event pipe
    procedure pipe_event (event : pkg_event);
+
+   --  Event category for eventpipe
+   function evcat (et : Event_Type) return String;
 
 end Core.Event;
