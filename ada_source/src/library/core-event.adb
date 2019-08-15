@@ -930,7 +930,7 @@ package body Core.Event is
             end;
       end case;
 
-      --  TODO: print to pipe here
+      Unix.push_to_event_pipe (context.eventpipe, USS (msg));
    end pipe_event;
 
 

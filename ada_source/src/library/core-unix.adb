@@ -148,4 +148,18 @@ package body Core.Unix is
       end case;
    end connect_unix_socket;
 
+
+   --------------------------------------------------------------------
+   --  push_to_event_pipe
+   --------------------------------------------------------------------
+   procedure push_to_event_pipe (fd : File_Descriptor; message : String)
+   is
+      msg    : IC.Strings.chars_ptr;
+      result : IC.int;
+   begin
+      msg := IC.Strings.New_String (message);
+      result := C_dprint (IC.int (fd), msg);  -- returns #chars printed
+      IC.Strings.Free (msg);
+   end push_to_event_pipe;
+
 end Core.Unix;

@@ -35,9 +35,14 @@ package Core.Unix is
    --  Return True if file was successfully closed
    function close_file (fd : File_Descriptor) return Boolean;
 
+   --  Send log down file descriptor of event pipe
+   procedure push_to_event_pipe (fd : File_Descriptor; message : String);
+
 private
 
    last_errno : Integer;
+
+   function success (rc : IC.int) return Boolean;
 
    function C_Strerror (Errnum : IC.int) return IC.Strings.chars_ptr;
    pragma Import (C, C_Strerror, "strerror");
@@ -60,6 +65,7 @@ private
                        newfd : out IC.int) return IC.int;
    pragma Import (C, C_Connect, "connect_socket");
 
-   function success (rc : IC.int) return Boolean;
+   function C_dprint (fd : IC.int; msg : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_dprint, "dprint");
 
 end Core.Unix;
