@@ -65,7 +65,6 @@ package body Core.Config is
       mechanism   : Unix.Unix_Pipe;
       sock_error  : Text := SUS ("open event pipe (socket)");
 
-      use type Unix.Unix_File_Descriptor;
    begin
       begin
          file_exists := DIR.Exists (Name => event_pipe);
@@ -97,16 +96,16 @@ package body Core.Config is
             EV.pkg_emit_error (SUS (event_pipe & " is not a fifo or socket"));
 
          when Unix.named_pipe =>
-            context.eventpipe := Unix.open (filename  => event_pipe,
-                                            WRONLY    => True,
-                                            NON_BLOCK => True);
-            if context.eventpipe = Unix.not_connected then
+            context.eventpipe := Unix.open_file (filename  => event_pipe,
+                                                 WRONLY    => True,
+                                                 NON_BLOCK => True);
+            if not Unix.file_connected (context.eventpipe) then
                EV.pkg_emit_errno (SUS ("open event pipe (FIFO)"), SUS (event_pipe), Unix.errno);
             end if;
 
          when Unix.unix_socket =>
             declare
-               fd : Unix.Unix_File_Descriptor;
+               fd : Unix.File_Descriptor;
             begin
                case Unix.connect_unix_socket (event_pipe, fd) is
                   when Unix.connected =>

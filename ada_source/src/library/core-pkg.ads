@@ -138,7 +138,7 @@ package Core.Pkg is
 
    type T_pkg_context is
       record
-         eventpipe      : Unix.Unix_File_Descriptor := Unix.not_connected;
+         eventpipe      : Unix.File_Descriptor := Unix.not_connected;
          debug_level    : ST_Debug_Level := ST_Debug_Level'First;
          developer_mode : Boolean        := False;
          pkg_rootdir    : Text;

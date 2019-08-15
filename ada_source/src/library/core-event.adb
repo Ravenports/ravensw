@@ -706,9 +706,8 @@ package body Core.Event is
          return replace_substring (template, token, value);
       end TT;
 
-      use type Unix.Unix_File_Descriptor;
    begin
-      if context.eventpipe = Unix.not_connected then
+      if not Unix.file_connected (context.eventpipe) then
          return;
       end if;
 
