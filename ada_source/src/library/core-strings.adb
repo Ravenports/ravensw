@@ -197,4 +197,45 @@ package body Core.Strings is
    end json_escape;
 
 
+   --------------------------------------------------------------------------------------------
+   --  leads #1
+   --------------------------------------------------------------------------------------------
+   function leads (S : String; fragment : String) return Boolean is
+   begin
+      if fragment'Length > S'Length then
+         return False;
+      end if;
+      return (S (S'First .. S'First + fragment'Length - 1) = fragment);
+   end leads;
+
+
+   --------------------------------------------------------------------------------------------
+   --  leads #2
+   --------------------------------------------------------------------------------------------
+   function leads (US : Text; fragment : String) return Boolean is
+   begin
+      return leads (USS (US), fragment);
+   end leads;
+
+
+   --------------------------------------------------------------------------------------------
+   --  trails #1
+   --------------------------------------------------------------------------------------------
+   function trails (S : String; fragment : String) return Boolean is
+   begin
+      if fragment'Length > S'Length then
+         return False;
+      end if;
+      return (S (S'Last - fragment'Length + 1 .. S'Last) = fragment);
+   end trails;
+
+
+   --------------------------------------------------------------------------------------------
+   --  trails #2
+   --------------------------------------------------------------------------------------------
+   function trails (US : Text; fragment : String) return Boolean is
+   begin
+      return trails (USS (US), fragment);
+   end trails;
+
 end Core.Strings;

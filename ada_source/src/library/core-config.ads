@@ -5,6 +5,7 @@ with Core;         use Core;
 with Core.Strings; use Core.Strings;
 with Core.Pkg;     use Core.Pkg;
 with Core.Ucl;
+with libucl;
 
 package Core.Config is
 
@@ -37,12 +38,12 @@ package Core.Config is
       reposdir : String) return Pkg_Error_Type;
 
    --  Retrieve configure value given it's keep
-   function pkg_config_get (key : String) return Ucl.pkg_object;
+   function pkg_config_get (key : String) return access constant libucl.ucl_object_t;
 
 private
 
    parsed        : Boolean := False;
-   config_object : Ucl.pkg_object;
+   config_object : access libucl.ucl_object_t;
 
    type Config_Entry is
       record

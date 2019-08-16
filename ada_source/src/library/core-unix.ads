@@ -13,6 +13,16 @@ package Core.Unix is
    type File_Descriptor is new Integer;
    not_connected : constant File_Descriptor := 1;
 
+   type T_Open_Flags is
+      record
+         RDONLY    : Boolean := False;
+         WRONLY    : Boolean := False;
+         NON_BLOCK : Boolean := False;
+         DIRECTORY : Boolean := False;
+         CLOEXEC   : Boolean := False;
+
+      end record;
+
    --  strerror from libc
    function strerror (errno : Integer) return String;
 
@@ -20,7 +30,7 @@ package Core.Unix is
    function IPC_mechanism (filename : String) return Unix_Pipe;
 
    --  Use libc's open function to retrieve file descriptor
-   function open_file (filename : String; WRONLY, NON_BLOCK : Boolean) return File_Descriptor;
+   function open_file (filename : String; flags : T_Open_Flags) return File_Descriptor;
 
    --  Last seen error number by C function
    function errno return Integer;
@@ -53,9 +63,12 @@ private
    function C_Errno return IC.int;
    pragma Import (C, C_Errno, "get_errno");
 
-   function C_Open (path : IC.Strings.chars_ptr;
-                    wronly : IC.int;
-                    nonblock : IC.int) return IC.int;
+   function C_Open (path      : IC.Strings.chars_ptr;
+                    rdonly    : IC.int;
+                    wronly    : IC.int;
+                    nonblock  : IC.int;
+                    directory : IC.int;
+                    cloexec   : IC.int) return IC.int;
    pragma Import (C, C_Open, "try_open");
 
    function C_IPC (path : IC.Strings.chars_ptr) return IC.int;

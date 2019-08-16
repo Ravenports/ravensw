@@ -142,10 +142,10 @@ package Core.Pkg is
          debug_level    : ST_Debug_Level := ST_Debug_Level'First;
          developer_mode : Boolean        := False;
          pkg_rootdir    : Text;
-         --  int rootfd
-         --  int cachedirfd
-         --  int dbdirfd
-         --  int pkg_dbdirfd
+         rootfd         : Unix.File_Descriptor;
+         cachedirfd     : Unix.File_Descriptor;
+         dbdirfd        : Unix.File_Descriptor;
+         pkg_dbdirfd    : Unix.File_Descriptor;
       end record;
 
    context : T_pkg_context;

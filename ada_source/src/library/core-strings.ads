@@ -13,6 +13,14 @@ package Core.Strings is
    function contains (S : String; fragment : String) return Boolean;
    function contains (US : Text; fragment : String) return Boolean;
 
+   --  Return True if S terminates with fragment exactly
+   function trails (S  : String; fragment : String) return Boolean;
+   function trails (US : Text;   fragment : String) return Boolean;
+
+   --  Return True if S leads with fragment exactly
+   function leads (S  : String; fragment : String) return Boolean;
+   function leads (US : Text;   fragment : String) return Boolean;
+
    --  Return half of a string split by separator
    function part_1 (S : String; separator : String := "/") return String;
    function part_2 (S : String; separator : String := "/") return String;

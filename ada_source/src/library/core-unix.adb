@@ -72,23 +72,38 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  open_file
    --------------------------------------------------------------------
-   function open_file (filename : String; WRONLY, NON_BLOCK : Boolean) return File_Descriptor
+   function open_file (filename : String; flags : T_Open_Flags) return File_Descriptor
    is
-      result        : File_Descriptor;
-      flag_wronly   : IC.int := IC.int (0);
-      flag_nonblock : IC.int := IC.int (0);
-      name          : IC.Strings.chars_ptr;
+      result         : File_Descriptor;
+      flag_wronly    : IC.int := IC.int (0);
+      flag_nonblock  : IC.int := IC.int (0);
+      flag_rdonly    : IC.int := IC.int (0);
+      flag_directory : IC.int := IC.int (0);
+      flag_cloexec   : IC.int := IC.int (0);
+      name           : IC.Strings.chars_ptr;
    begin
-      if WRONLY then
+      if flags.WRONLY then
          flag_wronly := IC.int (1);
       end if;
-      if NON_BLOCK then
+      if flags.NON_BLOCK then
          flag_nonblock := IC.int (1);
       end if;
+      if flags.RDONLY then
+         flag_rdonly := IC.int (1);
+      end if;
+      if flags.DIRECTORY then
+         flag_directory := IC.int (1);
+      end if;
+      if flags.CLOEXEC then
+         flag_cloexec := IC.int (1);
+      end if;
       name := IC.Strings.New_String (filename);
-      result := File_Descriptor (C_Open (path     => name,
-                                         wronly   => flag_wronly,
-                                         nonblock => flag_nonblock));
+      result := File_Descriptor (C_Open (path      => name,
+                                         rdonly    => flag_rdonly,
+                                         wronly    => flag_wronly,
+                                         nonblock  => flag_nonblock,
+                                         directory => flag_directory,
+                                         cloexec   => flag_cloexec));
       IC.Strings.Free (name);
       if not file_connected (result) then
          last_errno := Integer (C_Errno);
