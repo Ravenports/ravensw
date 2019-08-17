@@ -34,6 +34,15 @@ package body Core.Ucl is
 
 
    --------------------------------------------------------------------
+   --  ucl_object_typed_new_array
+   --------------------------------------------------------------------
+   function ucl_object_typed_new_array return access libucl.ucl_object_t is
+   begin
+      return libucl.ucl_object_typed_new (libucl.UCL_ARRAY);
+   end ucl_object_typed_new_array;
+
+
+   --------------------------------------------------------------------
    --  common_ucl_object_fromstring
    --------------------------------------------------------------------
    function common_ucl_object_fromstring (txt   : String;
@@ -57,6 +66,24 @@ package body Core.Ucl is
    begin
       return (common_ucl_object_fromstring (txt, libucl.UCL_STRING_TRIM));
    end ucl_object_fromstring_and_trim;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_fromstring_boolean
+   --------------------------------------------------------------------
+   function ucl_object_fromstring_boolean (txt : String) return access libucl.ucl_object_t is
+   begin
+      return (common_ucl_object_fromstring (txt, libucl.UCL_STRING_PARSE_BOOLEAN));
+   end ucl_object_fromstring_boolean;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_fromstring_int
+   --------------------------------------------------------------------
+   function ucl_object_fromstring_int (txt : String) return access libucl.ucl_object_t is
+   begin
+      return (common_ucl_object_fromstring (txt, libucl.UCL_STRING_PARSE_INT));
+   end ucl_object_fromstring_int;
 
 
    --------------------------------------------------------------------
@@ -86,5 +113,20 @@ package body Core.Ucl is
       ICS.Free (ckey);
       return (result = 1);
    end ucl_object_insert_key;
+
+
+   --------------------------------------------------------------------
+   --  ucl_array_push
+      --------------------------------------------------------------------
+   function ucl_array_push (top : access libucl.ucl_object_t;
+                            elt : access libucl.ucl_object_t) return Boolean
+   is
+      use type ICX.bool;
+
+      result : ICX.bool;
+   begin
+      result := libucl.ucl_array_append (top, elt);
+      return (result = 1);
+   end ucl_array_push;
 
 end Core.Ucl;

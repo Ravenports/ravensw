@@ -1,14 +1,18 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Core.Event;
 with Core.Unix;
+with Core.Strings;
 
 package body Core.Config is
 
+   package LAT renames Ada.Characters.Latin_1;
    package DIR renames Ada.Directories;
    package EV  renames Core.Event;
+   package CS  renames Core.Strings;
 
    --------------------------------------------------------------------
    --  pkg_initialized
@@ -48,7 +52,8 @@ package body Core.Config is
       flags    : Pkg_init_flags) return Pkg_Error_Type
    is
       rootdir_used : constant Boolean := not IsBlank (context.pkg_rootdir);
-      obj          : access constant libucl.ucl_object_t;
+      obj          : access libucl.ucl_object_t;
+      inserted     : Boolean;
    begin
       if not Unix.file_connected (context.rootfd) then
          declare
@@ -95,11 +100,57 @@ package body Core.Config is
                        (USS (config_entries (index).default));
                   end if;
                end;
-            when pkg_bool => null;
-            when pkg_array => null;
-            when pkg_int => null;
-            when pkg_object => null;
+            when pkg_bool =>
+               obj := Ucl.ucl_object_fromstring_boolean
+                 (USS (config_entries (index).default));
+            when pkg_int =>
+               obj := Ucl.ucl_object_fromstring_int
+                 (USS (config_entries (index).default));
+            when pkg_array =>
+               obj := Ucl.ucl_object_typed_new_array;
+               --  format A,B,C,D
+               if not IsBlank (config_entries (index).default) then
+                  declare
+                     str : String  := USS (config_entries (index).default);
+                     nf  : Natural := CS.count_char (str, LAT.Comma);
+                  begin
+                     for k in 1 .. nf loop
+                        inserted := Ucl.ucl_array_push (obj,
+                                                        Ucl.ucl_object_fromstring_and_trim
+                                                          (CS.specific_field (str, k, ",")));
+                     end loop;
+                  end;
+               end if;
+            when pkg_object =>
+               obj := Ucl.ucl_object_typed_new_object;
+               --  format A=B,C=D,E=F,G=H
+               if not IsBlank (config_entries (index).default) then
+                  declare
+                     str : String  := USS (config_entries (index).default);
+                     nf  : Natural := CS.count_char (str, LAT.Comma);
+                  begin
+                     for k in 1 .. nf loop
+                        declare
+                           nvpair : constant String := CS.specific_field (str, k, ",");
+                        begin
+                           if CS.contains (nvpair, "=") then
+                              inserted := Ucl.ucl_object_insert_key
+                                (top      => obj,
+                                 elt      =>
+                                   Ucl.ucl_object_fromstring_and_trim (CS.part_2 (nvpair)),
+                                 key      => CS.part_1 (nvpair),
+                                 copy_key => False);
+                           end if;
+                        end;
+                     end loop;
+                  end;
+               end if;
          end case;
+         inserted := Ucl.ucl_object_insert_key
+           (top      => config_object,
+            elt      => obj,
+            key      => USS (config_entries (index).key),
+            copy_key => False);
       end loop;
 
       --  ...

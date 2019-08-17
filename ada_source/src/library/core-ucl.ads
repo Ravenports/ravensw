@@ -12,14 +12,30 @@ package Core.Ucl is
    --  Equivalent: ucl_object_typed_new(UCL_OBJECT)
    function ucl_object_typed_new_object return access libucl.ucl_object_t;
 
+   --  Equivalent: ucl_object_typed_new(UCL_ARRAY)
+   function ucl_object_typed_new_array return access libucl.ucl_object_t;
+
    --  Equivalent: ucl_object_fromstring_common (string, size, UCL_STRING_TRIM)
    --  creates and object from text (and trim transform)
    function ucl_object_fromstring_and_trim (txt : String) return access libucl.ucl_object_t;
+
+   --  Equivalent: ucl_object_fromstring_common (string, size, UCL_STRING_PARSE_BOOLEAN)
+   --  creates and object from text (and trim transform)
+   function ucl_object_fromstring_boolean (txt : String) return access libucl.ucl_object_t;
+
+   --  Equivalent: ucl_object_fromstring_common (string, size, UCL_STRING_PARSE_INT)
+   --  creates and object from text (and trim transform)
+   function ucl_object_fromstring_int (txt : String) return access libucl.ucl_object_t;
 
    function ucl_object_insert_key (top : access libucl.ucl_object_t;
                                    elt : access libucl.ucl_object_t;
                                    key : String;
                                    copy_key : Boolean) return Boolean;
+
+   --  Returns true if value was inserted into array
+   function ucl_array_push (top : access libucl.ucl_object_t;
+                            elt : access libucl.ucl_object_t) return Boolean;
+
 
 private
 

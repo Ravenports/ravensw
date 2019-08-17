@@ -47,4 +47,11 @@ package Core.Strings is
    --  Escape " and \ characters by prefacing them with a \ character
    function json_escape (S : String) return String;
 
+   --  Given a single line (presumably no line feeds) with data separated by <delimited>,
+   --  return the field given by field_number (starts counting at 1).
+   function specific_field
+     (S            : String;
+      field_number : Positive;
+      delimiter    : String := " ") return String;
+
 end Core.Strings;
