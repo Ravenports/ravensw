@@ -5,6 +5,7 @@ with Ada.Command_Line;
 with Cmd.Line;
 with Cmd.Usage;
 with Cmd.Bahnhof;
+with Core.Finalize;
 
 procedure Ravensw
 is
@@ -13,6 +14,7 @@ is
    package CB  renames Cmd.Bahnhof;
    package CL  renames Cmd.Line;
    package CU  renames Cmd.Usage;
+   package FIN renames Core.Finalize;
 
    comline_inputs : Cmd.Cldata;
 
@@ -28,5 +30,7 @@ begin
    else
       ACL.Set_Exit_Status (Code => ACL.Failure);
    end if;
+
+   FIN.cleanup;
 
 end Ravensw;

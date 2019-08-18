@@ -9,6 +9,8 @@ with libucl;
 
 package Core.Config is
 
+   Unsupported_Type : exception;
+
    type Config_Entry_Type is
      (
       pkg_string,
@@ -39,6 +41,9 @@ package Core.Config is
 
    --  Retrieve configure value given it's keep
    function pkg_config_get (key : String) return access constant libucl.ucl_object_t;
+
+   --  Expand config_object into human-readable text, configuration format
+   function pkg_config_dump return String;
 
 private
 
@@ -289,8 +294,11 @@ private
      );
 
    --  When provided a FIFO or socket, open file descriptor to it.
+   --  Closed by Core.Finalize.cleanup
    procedure connect_evpipe (event_pipe : String);
 
-   --  close_evpipe (?)
+   function convert (ut : libucl.ucl_type) return Config_Entry_Type;
+   function convert_string_to_ucl_object (cetype  : Config_Entry_Type;
+                                          payload : String) return access libucl.ucl_object_t;
 
 end Core.Config;

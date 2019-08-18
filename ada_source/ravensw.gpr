@@ -11,7 +11,7 @@ project Ravensw is
    for Languages use ("Ada", "C");
 
    package Linker is
-      for Switches ("ada") use ("-lucl");
+      for Switches ("ada") use ("-L/raven/lib", "-lucl_pic");
    end Linker;
 
 end Ravensw;

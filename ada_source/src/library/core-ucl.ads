@@ -84,6 +84,8 @@ package Core.Ucl is
 
    function ucl_object_toboolean (obj : access constant libucl.ucl_object_t) return Boolean;
 
+   function ucl_dump (obj : access constant libucl.ucl_object_t) return String;
+
 private
 
    --  internal use

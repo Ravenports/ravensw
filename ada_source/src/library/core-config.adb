@@ -3,16 +3,19 @@
 
 with Ada.Characters.Latin_1;
 with Ada.Directories;
+with Ada.Environment_Variables;
 with Core.Event;
 with Core.Unix;
 with Core.Strings;
 with Core.Object;
+with Core.Metalog;
 with System;
 
 package body Core.Config is
 
    package LAT renames Ada.Characters.Latin_1;
    package DIR renames Ada.Directories;
+   package ENV renames Ada.Environment_Variables;
    package EV  renames Core.Event;
    package CS  renames Core.Strings;
 
@@ -53,8 +56,6 @@ package body Core.Config is
       reposdir : String;
       flags    : Pkg_init_flags) return Pkg_Error_Type
    is
-      rootdir_used : constant Boolean := not IsBlank (context.pkg_rootdir);
-
       conffd       : Unix.File_Descriptor;
       default_conf : constant String := rel_prefix & "/etc/ravensw.conf";
       open_rdonly  : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
@@ -76,7 +77,8 @@ package body Core.Config is
          end;
       end if;
 
-      --  TODO: define myabi
+      --  TODO: pkg_get_myarch(myabi, BUFSIZ, &ctx.osversion);
+      --        pkg_get_myarch_legacy(myabi_legacy, BUFSIZ);
 
       if parsed then
          EV.pkg_emit_error (SUS ("pkg_init() must only be called once"));
@@ -90,72 +92,9 @@ package body Core.Config is
          inserted : Boolean;
       begin
          for index in config_entries'Range loop
-            case config_entries (index).config_type is
-            when pkg_string =>
-               declare
-                  tmp     : Text;
-                  tmp_set : Boolean := False;
-               begin
-                  if rootdir_used and then
-                    leads (config_entries (index).default, "/")
-                  then
-                     SU.Append (tmp, context.pkg_rootdir);
-                     SU.Append (tmp, config_entries (index).default);
-                     tmp_set := True;
-                  end if;
-                  if tmp_set then
-                     obj := Ucl.ucl_object_fromstring_and_trim (USS (tmp));
-                  else
-                     obj := Ucl.ucl_object_fromstring_and_trim
-                       (USS (config_entries (index).default));
-                  end if;
-               end;
-            when pkg_bool =>
-               obj := Ucl.ucl_object_fromstring_boolean
-                 (USS (config_entries (index).default));
-            when pkg_int =>
-               obj := Ucl.ucl_object_fromstring_int
-                 (USS (config_entries (index).default));
-            when pkg_array =>
-               obj := Ucl.ucl_object_typed_new_array;
-               --  format A,B,C,D
-               if not IsBlank (config_entries (index).default) then
-                  declare
-                     str : String  := USS (config_entries (index).default);
-                     nf  : Natural := CS.count_char (str, LAT.Comma);
-                  begin
-                     for k in 1 .. nf loop
-                        inserted := Ucl.ucl_array_push (obj,
-                                                        Ucl.ucl_object_fromstring_and_trim
-                                                          (CS.specific_field (str, k, ",")));
-                     end loop;
-                  end;
-               end if;
-            when pkg_object =>
-               obj := Ucl.ucl_object_typed_new_object;
-               --  format A=B,C=D,E=F,G=H
-               if not IsBlank (config_entries (index).default) then
-                  declare
-                     str : String  := USS (config_entries (index).default);
-                     nf  : Natural := CS.count_char (str, LAT.Comma);
-                  begin
-                     for k in 1 .. nf loop
-                        declare
-                           nvpair : constant String := CS.specific_field (str, k, ",");
-                        begin
-                           if CS.contains (nvpair, "=") then
-                              inserted := Ucl.ucl_object_insert_key
-                                (top      => obj,
-                                 elt      =>
-                                   Ucl.ucl_object_fromstring_and_trim (CS.part_2 (nvpair)),
-                                 key      => CS.part_1 (nvpair),
-                                 copy_key => False);
-                           end if;
-                        end;
-                     end loop;
-                  end;
-               end if;
-            end case;
+            obj := convert_string_to_ucl_object (cetype  => config_entries (index).config_type,
+                                                 payload => USS (config_entries (index).default));
+
             inserted := Ucl.ucl_object_insert_key
               (top      => config_object,
                elt      => obj,
@@ -183,13 +122,13 @@ package body Core.Config is
       end if;
 
       parser := Ucl.ucl_parser_new_basic;
-      --  ucl_parser_register_variable (p, "ABI", myabi);
-      --  ucl_parser_register_variable (p, "ALTABI", myabi_legacy);
+      --  TODO: ucl_parser_register_variable (p, "ABI", myabi);
+      --  TODO: ucl_parser_register_variable (p, "ALTABI", myabi_legacy);
 
       Unix.reset_errno;
       declare
          obj      : access libucl.ucl_object_t;
-         object   : access constant libucl.ucl_object_t;
+         conitem  : access constant libucl.ucl_object_t;
          item     : access constant libucl.ucl_object_t;
          ncfg     : access libucl.ucl_object_t;
          iter     : libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
@@ -223,11 +162,11 @@ package body Core.Config is
                           "Convert to the new repository style.  See ravensw.conf(5)"));
                      fatal_errors := True;
                   else
-                     object := Ucl.ucl_object_keyl (config_object, ukey);
+                     conitem := Ucl.ucl_object_keyl (config_object, ukey);
 
                      --  ignore unknown keys
-                     if object /= null then
-                        if not Ucl.object_types_equal (object, item) then
+                     if conitem /= null then
+                        if not Ucl.object_types_equal (conitem, item) then
                            EV.pkg_emit_error (SUS ("Malformed key " & key & ", ignoring"));
                         else
                            if virgin then
@@ -247,9 +186,11 @@ package body Core.Config is
                end;
             end loop;
 
+            libucl.ucl_object_unref (obj);
+            libucl.ucl_parser_free (parser);
+
             if fatal_errors then
                libucl.ucl_object_unref (ncfg);
-               libucl.ucl_parser_free (parser);
                return EPKG_FATAL;
             end if;
 
@@ -275,11 +216,71 @@ package body Core.Config is
          end if;
       end;
 
-      --  TODO: handle ENV overwrite
+      declare
+         ncfg     : access libucl.ucl_object_t;
+         iter     : libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+         obj      : access libucl.ucl_object_t;
+         item     : access constant libucl.ucl_object_t;
+         inserted : Boolean;
+         virgin   : Boolean := True;
+      begin
+         loop
+            item := Ucl.ucl_object_iterate (config_object, iter, True);
+            exit when item = null;
+
+            declare
+               key     : String := Ucl.ucl_object_key (item);
+               val     : String := ENV.Value (key);
+               contype : Config_Entry_Type := convert (item.c_type);
+            begin
+               obj := convert_string_to_ucl_object (contype, val);
+
+               if virgin then
+                  virgin := False;
+                  ncfg := Ucl.ucl_object_typed_new_object;
+               end if;
+
+               inserted :=
+                 Ucl.ucl_object_insert_key
+                   (top      => ncfg,
+                    elt      => obj,
+                    key      => key,
+                    copy_key => True);
+            exception
+               when Constraint_Error => null;   -- no env override, do nothing
+               when Unsupported_Type =>
+                  EV.pkg_emit_error (SUS ("pkg_ini: unsupported type: " & item.c_type'Img));
+            end;
+         end loop;
+
+         if not virgin then
+            iter := libucl.ucl_object_iter_t (System.Null_Address);
+            loop
+               item := Ucl.ucl_object_iterate (ncfg, iter, True);
+               exit when item = null;
+
+               declare
+                  key : constant String := Ucl.ucl_object_key (item);
+               begin
+                  inserted :=
+                    Ucl.ucl_object_replace_key (top      => config_object,
+                                                elt      => libucl.ucl_object_ref (item),
+                                                key      => key,
+                                                copy_key => True);
+               end;
+               libucl.ucl_object_unref (ncfg);
+            end loop;
+         end if;
+      end;
+
+      parsed := True;
+
+      --  TODO: check ABI isn't "unknown"
 
       EV.pkg_debug (1, "ravensw initialized");
 
       --  Start the event pipe
+      --  If used, event pipe closed by Core.Finalize.cleanup
       declare
          evpipe : String := Object.pkg_object_string (pkg_config_get ("EVENT_PIPE"));
       begin
@@ -310,11 +311,12 @@ package body Core.Config is
       --  TODO: bypass resolv.conf
 
       declare
-         metalog : String :=  Object.pkg_object_string (pkg_config_get ("METALOG"));
+         metalog_file : String :=  Object.pkg_object_string (pkg_config_get ("METALOG"));
       begin
-         --  TODO: open metalog
-         if not IsBlank (metalog) then
-            null;
+         if not IsBlank (metalog_file) then
+            if Metalog.metalog_open (metalog_file) /= EPKG_OK then
+               return EPKG_FATAL;
+            end if;
          end if;
       end;
 
@@ -387,5 +389,108 @@ package body Core.Config is
       end case;
 
    end connect_evpipe;
+
+
+   --------------------------------------------------------------------
+   --  convert_string_to_ucl
+   --------------------------------------------------------------------
+   function convert_string_to_ucl_object (cetype  : Config_Entry_Type;
+                                          payload : String) return access libucl.ucl_object_t
+   is
+      obj          : access libucl.ucl_object_t;
+      inserted     : Boolean;
+      rootdir_used : constant Boolean := not IsBlank (context.pkg_rootdir);
+   begin
+      case cetype is
+         when pkg_string =>
+            declare
+               tmp     : Text;
+               tmp_set : Boolean := False;
+            begin
+               if rootdir_used and then leads (payload, "/")
+               then
+                  SU.Append (tmp, context.pkg_rootdir);
+                  SU.Append (tmp, payload);
+                  tmp_set := True;
+               end if;
+               if tmp_set then
+                  obj := Ucl.ucl_object_fromstring_and_trim (USS (tmp));
+               else
+                  obj := Ucl.ucl_object_fromstring_and_trim (payload);
+               end if;
+            end;
+         when pkg_bool =>
+            obj := Ucl.ucl_object_fromstring_boolean (payload);
+         when pkg_int =>
+            obj := Ucl.ucl_object_fromstring_int (payload);
+         when pkg_array =>
+            obj := Ucl.ucl_object_typed_new_array;
+            --  format A,B,C,D
+            if not IsBlank (payload) then
+               declare
+                  nf  : Natural := CS.count_char (payload, LAT.Comma);
+               begin
+                  for k in 1 .. nf loop
+                     inserted := Ucl.ucl_array_push (obj,
+                                                     Ucl.ucl_object_fromstring_and_trim
+                                                       (CS.specific_field (payload, k, ",")));
+                  end loop;
+               end;
+            end if;
+         when pkg_object =>
+            obj := Ucl.ucl_object_typed_new_object;
+            --  format A=B,C=D,E=F,G=H
+            if not IsBlank (payload) then
+               declare
+                  nf  : Natural := CS.count_char (payload, LAT.Comma);
+               begin
+                  for k in 1 .. nf loop
+                     declare
+                        nvpair : constant String := CS.specific_field (payload, k, ",");
+                     begin
+                        if CS.contains (nvpair, "=") then
+                           inserted := Ucl.ucl_object_insert_key
+                             (top      => obj,
+                              elt      =>
+                                Ucl.ucl_object_fromstring_and_trim (CS.part_2 (nvpair)),
+                              key      => CS.part_1 (nvpair),
+                              copy_key => False);
+                        end if;
+                     end;
+                  end loop;
+               end;
+            end if;
+      end case;
+      return obj;
+   end convert_string_to_ucl_object;
+
+
+   --------------------------------------------------------------------
+   --  convert
+   --------------------------------------------------------------------
+   function convert (ut : libucl.ucl_type) return Config_Entry_Type is
+   begin
+      case ut is
+         when libucl.UCL_OBJECT  => return pkg_object;
+         when libucl.UCL_ARRAY   => return pkg_array;
+         when libucl.UCL_INT     => return pkg_int;
+         when libucl.UCL_STRING  => return pkg_string;
+         when libucl.UCL_BOOLEAN => return pkg_bool;
+         when libucl.UCL_FLOAT |
+              libucl.UCL_TIME |
+              libucl.UCL_USERDATA |
+              libucl.UCL_NULL =>
+            raise Unsupported_Type with ut'Img;
+      end case;
+   end convert;
+
+
+   --------------------------------------------------------------------
+   --  pkg_config_dump
+   --------------------------------------------------------------------
+   function pkg_config_dump return String is
+   begin
+      return Object.pkg_object_dump (config_object);
+   end pkg_config_dump;
 
 end Core.Config;

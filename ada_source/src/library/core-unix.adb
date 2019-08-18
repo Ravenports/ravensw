@@ -59,6 +59,10 @@ package body Core.Unix is
    is
       result : IC.int;
    begin
+      if fd = not_connected then
+         return False;
+      end if;
+
       result := C_Close (IC.int (fd));
       if success (result) then
          return True;

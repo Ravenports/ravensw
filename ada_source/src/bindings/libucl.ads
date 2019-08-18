@@ -1564,7 +1564,8 @@ package libucl is
   --  * #UCL_EMIT_CONFIG then emit config like object
   --  * @return dump of an object (must be freed after using) or NULL in case of error
 
-   function ucl_object_emit (obj : access constant ucl_object_t; emit_type : ucl_emitter) return access unsigned_char;  -- ucl.h:1439
+   function ucl_object_emit (obj : access constant ucl_object_t; emit_type : ucl_emitter)
+                              return Interfaces.C.Strings.chars_ptr;   -- ucl.h:1439
    pragma Import (C, ucl_object_emit, "ucl_object_emit");
 
   --  * Emit object to a string that can contain `\0` inside

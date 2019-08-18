@@ -39,6 +39,9 @@ package body Cmd.Unset is
    is
    begin
       TIO.Put_Line (format_extconfig ("Version", progversion));
+      TIO.Put_Line (pkg_config_dump);
+
+      --  TODO: show_repository_info
       return True;
    end extended_version_info;
 

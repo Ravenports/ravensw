@@ -50,4 +50,17 @@ package body Core.Object is
       return Ucl.ucl_object_toboolean (obj);
    end pkg_object_bool;
 
+
+   --------------------------------------------------------------------------------------------
+   --  pkg_object_dump
+   --------------------------------------------------------------------------------------------
+   function pkg_object_dump (obj : access constant libucl.ucl_object_t) return String
+   is
+   begin
+      if obj = null then
+         return "";
+      end if;
+      return Ucl.ucl_dump (obj);
+   end pkg_object_dump;
+
 end Core.Object;

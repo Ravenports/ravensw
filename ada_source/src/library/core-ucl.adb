@@ -112,7 +112,8 @@ package body Core.Ucl is
                                               key      => ckey,
                                               keylen   => 0,
                                               copy_key => ccopy);
-      ICS.Free (ckey);
+      --  Do not free, libucl doesn't copy
+      --  ICS.Free (ckey);
       return (result = 1);
    end ucl_object_insert_key;
 
@@ -177,6 +178,7 @@ package body Core.Ucl is
       result : ICS.chars_ptr;
    begin
       result := libucl.ucl_parser_get_error (parser);
+      --  Don't free result
       return ICS.Value (result);
    end ucl_parser_get_error;
 
@@ -221,6 +223,7 @@ package body Core.Ucl is
       result : ICS.chars_ptr;
    begin
       result := libucl.ucl_object_key (obj);
+      --  Don't free result
       return ICS.Value (result);
    end ucl_object_key;
 
@@ -279,7 +282,8 @@ package body Core.Ucl is
                                                key      => ckey,
                                                keylen   => 0,
                                                copy_key => ccopy);
-      ICS.Free (ckey);
+      --  Do not free, libucl doesn't copy
+      --  ICS.Free (ckey);
       return (result = 1);
    end ucl_object_replace_key;
 
@@ -292,6 +296,7 @@ package body Core.Ucl is
       result : ICS.chars_ptr;
    begin
       result := libucl.ucl_object_tostring_forced (obj);
+      --  Do NOT free result memory!
       return ICS.Value (result);
    end ucl_object_tostring_forced;
 
@@ -317,6 +322,23 @@ package body Core.Ucl is
       result := libucl.ucl_object_toboolean (obj);
       return (result = 1);
    end ucl_object_toboolean;
+
+
+   --------------------------------------------------------------------
+   --  ucl_dump
+   --------------------------------------------------------------------
+   function ucl_dump (obj : access constant libucl.ucl_object_t) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      result := libucl.ucl_object_emit (obj, libucl.UCL_EMIT_CONFIG);
+      declare
+         dump : String := ICS.Value (result);
+      begin
+         ICS.Free (result);
+         return dump;
+      end;
+   end ucl_dump;
 
 
 end Core.Ucl;
