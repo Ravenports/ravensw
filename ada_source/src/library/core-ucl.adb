@@ -203,15 +203,13 @@ package body Core.Ucl is
       use type ICX.bool;
 
       exv : ICX.bool := 0;
-      ep  : access IC.int := null;
    begin
       if expand_values then
          exv := 1;
       end if;
-      return libucl.ucl_object_iterate_with_error (obj           => obj,
-                                                   iter          => System.Address (iter),
-                                                   expand_values => exv,
-                                                   ep            => ep);
+      return libucl.ucl_object_iterate (obj           => obj,
+                                        iter          => System.Address (iter),
+                                        expand_values => exv);
    end ucl_object_iterate;
 
 

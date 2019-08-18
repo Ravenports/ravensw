@@ -9,6 +9,8 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
 
 int
 detect_IPC (const char *path)
@@ -50,7 +52,7 @@ connect_socket (const char *path, int newfd)
     newfd = -1;
     return (3);
   }
-  strncpy (sock.sun_path, path, sizeof(sock_sun_path));
+  strncpy (sock.sun_path, path, sizeof(sock.sun_path));
 
   newfd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (newfd == -1) {

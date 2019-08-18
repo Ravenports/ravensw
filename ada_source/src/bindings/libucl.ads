@@ -903,12 +903,11 @@ package libucl is
   --  * @param ep pointer record exception (such as ENOMEM), could be NULL
   --  * @return the next object or NULL
 
-   function ucl_object_iterate_with_error
+   function ucl_object_iterate
      (obj : access constant ucl_object_t;
       iter : System.Address;
-      expand_values : Extensions.bool;
-      ep : access int) return access constant ucl_object_t;  -- ucl.h:832
-   pragma Import (C, ucl_object_iterate_with_error, "ucl_object_iterate_with_error");
+      expand_values : Extensions.bool) return access constant ucl_object_t;  -- ucl.h:832
+   pragma Import (C, ucl_object_iterate, "ucl_object_iterate");
 
   --  * Create new safe iterator for the specified object
   --  * @param obj object to iterate
