@@ -6,6 +6,7 @@ with Ada.Directories;
 with Core.Event;
 with Core.Unix;
 with Core.Strings;
+with Core.Object;
 with System;
 
 package body Core.Config is
@@ -274,7 +275,49 @@ package body Core.Config is
          end if;
       end;
 
-      --  ...
+      --  TODO: handle ENV overwrite
+
+      EV.pkg_debug (1, "ravensw initialized");
+
+      --  Start the event pipe
+      declare
+         evpipe : String := Object.pkg_object_string (pkg_config_get ("EVENT_PIPE"));
+      begin
+         if not IsBlank (evpipe) then
+            connect_evpipe (evpipe);
+         end if;
+      end;
+
+      declare
+         use type Ucl.int64;
+         DL : Ucl.int64 := Object.pkg_object_int (pkg_config_get ("DEBUG_LEVEL"));
+      begin
+         if DL >= Ucl.int64 (ST_Debug_Level'First) and then
+           DL <= Ucl.int64 (ST_Debug_Level'Last)
+         then
+            context.debug_level := ST_Debug_Level (DL);
+         else
+            EV.pkg_emit_notice (SUS ("DEBUG_LEVEL out of range, ignoring"));
+         end if;
+      end;
+
+      context.developer_mode := Object.pkg_object_bool (pkg_config_get ("DEVELOPER_MODE"));
+
+      --  TODO: set PKG_ENV
+      --  TODO: set user-agent
+      --  TODO: load the repositories
+      --  TODO: validate the different scheme
+      --  TODO: bypass resolv.conf
+
+      declare
+         metalog : String :=  Object.pkg_object_string (pkg_config_get ("METALOG"));
+      begin
+         --  TODO: open metalog
+         if not IsBlank (metalog) then
+            null;
+         end if;
+      end;
+
       return EPKG_OK;
    end pkg_ini;
 

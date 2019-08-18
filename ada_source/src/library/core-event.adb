@@ -1036,4 +1036,20 @@ package body Core.Event is
    end evcat;
 
 
+   --------------------------------------------------------------------
+   --  pkg_debug
+   --------------------------------------------------------------------
+   procedure pkg_debug (level : ST_Debug_Level; message : String)
+   is
+      event  : pkg_event (this_event => PKG_EVENT_DEBUG);
+   begin
+      if context.debug_level < level then
+         return;
+      end if;
+
+      event.debug_level := level;
+      event.debug_msg := SUS (message);
+      pkg_emit_event_blind (event);
+   end pkg_debug;
+
 end Core.Event;

@@ -8,6 +8,7 @@ with Core.Unix;
 package Core.Ucl is
 
    subtype T_parser is System.Address;
+   type int64 is range -(2**63) .. +(2**63 - 1);
 
    function ucl_object_find_key (obj : access libucl.ucl_object_t;
                                  key : String) return access constant libucl.ucl_object_t;
@@ -76,6 +77,12 @@ package Core.Ucl is
                                     elt : access libucl.ucl_object_t;
                                     key : String;
                                     copy_key : Boolean) return Boolean;
+
+   function ucl_object_tostring_forced (obj : access constant libucl.ucl_object_t) return String;
+
+   function ucl_object_toint (obj : access constant libucl.ucl_object_t) return int64;
+
+   function ucl_object_toboolean (obj : access constant libucl.ucl_object_t) return Boolean;
 
 private
 

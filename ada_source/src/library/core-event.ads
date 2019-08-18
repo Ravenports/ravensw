@@ -219,12 +219,15 @@ package Core.Event is
    procedure pkg_emit_incremental_update      (reponame : Text; processed : Natural);
    procedure pkg_register_cleanup_callback    (callback : Clean_Callback; callback_data : Text);
    procedure pkg_unregister_cleanup_callback  (callback : Clean_Callback; callback_data : Text);
+   procedure pkg_debug                        (level : ST_Debug_Level; message : String);
 
    function pkg_emit_query_yesno  (deft : Natural; msg : Text) return Boolean;
    function pkg_emit_query_select (msg    : Text;
                                    items  : access pkg_query_items_crate.Vector;
                                    ncount : Natural;
                                    deft   : Natural) return Boolean;
+
+
 
 private
 

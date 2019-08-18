@@ -248,7 +248,7 @@ package body Core.Ucl is
    --------------------------------------------------------------------
    function object_types_equal (obj1, obj2 : access constant libucl.ucl_object_t) return Boolean
    is
-      use type IC.unsigned_short;
+      use type libucl.ucl_type;
    begin
       return obj1.c_type = obj2.c_type;
    end object_types_equal;
@@ -282,5 +282,41 @@ package body Core.Ucl is
       ICS.Free (ckey);
       return (result = 1);
    end ucl_object_replace_key;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_tostring_forced
+   --------------------------------------------------------------------
+   function ucl_object_tostring_forced (obj : access constant libucl.ucl_object_t) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      result := libucl.ucl_object_tostring_forced (obj);
+      return ICS.Value (result);
+   end ucl_object_tostring_forced;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_toint
+   --------------------------------------------------------------------
+   function ucl_object_toint (obj : access constant libucl.ucl_object_t) return int64 is
+   begin
+      return int64 (libucl.ucl_object_toint (obj));
+   end ucl_object_toint;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_toboolean
+   --------------------------------------------------------------------
+   function ucl_object_toboolean (obj : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type ICX.bool;
+
+      result : ICX.bool;
+   begin
+      result := libucl.ucl_object_toboolean (obj);
+      return (result = 1);
+   end ucl_object_toboolean;
+
 
 end Core.Ucl;

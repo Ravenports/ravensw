@@ -290,7 +290,7 @@ package libucl is
       len : aliased uint32_t;  -- ucl.h:236
       ref : aliased uint32_t;  -- ucl.h:237
       flags : aliased uint16_t;  -- ucl.h:238
-      c_type : aliased uint16_t;  -- ucl.h:239
+      c_type : ucl_type;   --aliased uint16_t;  -- ucl.h:239
       trash_stack : ucl_object_s_trash_stack_array;  -- ucl.h:240
    end record;
    pragma Convention (C_Pass_By_Copy, ucl_object_s);  -- ucl.h:220
