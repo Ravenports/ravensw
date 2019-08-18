@@ -231,23 +231,27 @@ package body Core.Config is
             exit when item = null;
 
             declare
-               key     : String := Ucl.ucl_object_key (item);
-               val     : String := ENV.Value (key);
-               contype : Config_Entry_Type := convert (item.c_type);
+               key : String := Ucl.ucl_object_key (item);
             begin
-               obj := convert_string_to_ucl_object (contype, val);
+               declare
+                  val     : String := ENV.Value (key);
+                  contype : Config_Entry_Type := convert (item.c_type);
+               begin
 
-               if virgin then
-                  virgin := False;
-                  ncfg := Ucl.ucl_object_typed_new_object;
-               end if;
+                  obj := convert_string_to_ucl_object (contype, val);
 
-               inserted :=
-                 Ucl.ucl_object_insert_key
-                   (top      => ncfg,
-                    elt      => obj,
-                    key      => key,
-                    copy_key => True);
+                  if virgin then
+                     virgin := False;
+                     ncfg := Ucl.ucl_object_typed_new_object;
+                  end if;
+
+                  inserted :=
+                    Ucl.ucl_object_insert_key
+                      (top      => ncfg,
+                       elt      => obj,
+                       key      => key,
+                       copy_key => True);
+               end;
             exception
                when Constraint_Error => null;   -- no env override, do nothing
                when Unsupported_Type =>

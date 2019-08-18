@@ -250,8 +250,13 @@ package body Core.Ucl is
    function object_types_equal (obj1, obj2 : access constant libucl.ucl_object_t) return Boolean
    is
       use type libucl.ucl_type;
+      otype1 : libucl.ucl_type_t;
+      otype2 : libucl.ucl_type_t;
    begin
-      return obj1.c_type = obj2.c_type;
+      otype1 := libucl.ucl_object_type (obj1);
+      otype2 := libucl.ucl_object_type (obj2);
+
+      return otype1 = otype2;
    end object_types_equal;
 
 
