@@ -3,11 +3,13 @@
 
 with Ada.Strings.Fixed;
 with Ada.Characters.Handling;
+with Ada.Integer_Text_IO;
 
 package body Core.Strings is
 
    package AS renames Ada.Strings;
    package HAN renames Ada.Characters.Handling;
+   package IIO renames Ada.Integer_Text_IO;
 
    --------------------------------------------------------------------------------------------
    --  USS
@@ -307,5 +309,51 @@ package body Core.Strings is
       return HAN.To_Lower (S);
    end lowercase;
 
+
+   --------------------------------------------------------------------------------------------
+   --  start_index
+   --------------------------------------------------------------------------------------------
+   function start_index (S : String; fragment : String) return Natural
+   is
+   begin
+      return AS.Fixed.Index (Source => S, Pattern => fragment);
+   end start_index;
+
+
+   --------------------------------------------------------------------------------------------
+   --  octal
+   --------------------------------------------------------------------------------------------
+   function octal (number : Natural; places : Positive; zero_pad : Boolean) return String
+   is
+      result  : String (1 .. places) := (others => ' ');
+      workstr : String (1 .. places + 3);
+      max     : Natural := 8 ** places - 1;
+      start   : Positive;
+      index   : Natural;
+   begin
+      if number > max then
+         result := (others => '#');
+         return result;
+      end if;
+
+      if zero_pad then
+         result := (others => '0');
+      end if;
+
+      --  function prefixes with "8#" and suffixes with "#"
+      IIO.Put (To   => workstr,
+               Item => number,
+               Base => 8);
+      index := start_index (workstr, "#");
+
+      --  "8#777#"  => "777"
+      --  " 8#77#"  => "077"
+      --  "  8#7#   => "007"
+      --   123456       123
+
+      start := index - 1;
+      result (start .. result'Last) := workstr (index + 1 .. workstr'Last - 1);
+      return result;
+   end octal;
 
 end Core.Strings;

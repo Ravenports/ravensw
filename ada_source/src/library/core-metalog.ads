@@ -19,5 +19,9 @@ package Core.Metalog is
                           fflags : Natural);
    procedure metalog_close;
 
+private
+
+   function strtofflags_supported return Boolean;
+   function strtoflags_plus_label (fflags : Natural) return String;
 
 end Core.Metalog;

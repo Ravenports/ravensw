@@ -62,4 +62,10 @@ package Core.Strings is
    function lowercase (US : Text)   return Text;
    function lowercase (S  : String) return String;
 
+   --  Print octal number given base 10 with optional zero-padding
+   function octal (number : Natural; places : Positive; zero_pad : Boolean) return String;
+
+   --  Returns index of first character of fragment (0 if not found)
+   function start_index (S : String; fragment : String) return Natural;
+
 end Core.Strings;
