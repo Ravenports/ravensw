@@ -1,6 +1,9 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Core.Pkg;     use Core.Pkg;
+with Core.Strings; use Core.Strings;
+
 package body Cmd.Unset is
 
    --------------------------------------------------------------------
@@ -8,11 +11,15 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    function execute_no_command (comline : Cldata) return Boolean
    is
+      result : Pkg_Error_Type;
    begin
       if comline.glob_version = 1 then
          return basic_version_info;
       end if;
       if comline.glob_version = 2 then
+         result := pkg_ini (path     => USS (comline.glob_config_file),
+                            reposdir => USS (comline.glob_repo_config_dir),
+                            flags    => comline.global_init_flags);
          return extended_version_info;
       end if;
       if comline.glob_list then
