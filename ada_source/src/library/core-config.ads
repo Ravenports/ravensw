@@ -297,7 +297,7 @@ private
    --  Closed by Core.Finalize.cleanup
    procedure connect_evpipe (event_pipe : String);
 
-   function convert (ut : libucl.ucl_type) return Config_Entry_Type;
+   function convert (obj : access constant libucl.ucl_object_t) return Config_Entry_Type;
    function convert_string_to_ucl_object (cetype  : Config_Entry_Type;
                                           payload : String) return access libucl.ucl_object_t;
 

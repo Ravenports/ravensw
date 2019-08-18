@@ -235,7 +235,7 @@ package body Core.Config is
             begin
                declare
                   val     : String := ENV.Value (key);
-                  contype : Config_Entry_Type := convert (item.c_type);
+                  contype : Config_Entry_Type := convert (item);
                begin
 
                   obj := convert_string_to_ucl_object (contype, val);
@@ -474,7 +474,9 @@ package body Core.Config is
    --------------------------------------------------------------------
    --  convert
    --------------------------------------------------------------------
-   function convert (ut : libucl.ucl_type) return Config_Entry_Type is
+   function convert (obj : access constant libucl.ucl_object_t) return Config_Entry_Type
+   is
+      ut : libucl.ucl_type_t := libucl.ucl_object_type (obj);
    begin
       case ut is
          when libucl.UCL_OBJECT  => return pkg_object;
