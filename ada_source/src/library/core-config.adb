@@ -131,7 +131,8 @@ package body Core.Config is
          conitem  : access constant libucl.ucl_object_t;
          item     : access constant libucl.ucl_object_t;
          ncfg     : access libucl.ucl_object_t;
-         iter     : libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+         iter     : aliased libucl.ucl_object_iter_t :=
+                            libucl.ucl_object_iter_t (System.Null_Address);
          success  : Boolean;
          inserted : Boolean;
          virgin   : Boolean := True;
@@ -146,7 +147,7 @@ package body Core.Config is
             success := Unix.close_file (conffd);
 
             loop
-               item := Ucl.ucl_object_iterate (obj, iter, True);
+               item := Ucl.ucl_object_iterate (obj, iter'Access, True);
                exit when item = null;
 
                declare
@@ -197,7 +198,7 @@ package body Core.Config is
             if not virgin then
                iter := libucl.ucl_object_iter_t (System.Null_Address);
                loop
-                  item := Ucl.ucl_object_iterate (ncfg, iter, True);
+                  item := Ucl.ucl_object_iterate (ncfg, iter'Access, True);
                   exit when item = null;
 
                   declare
@@ -218,14 +219,15 @@ package body Core.Config is
 
       declare
          ncfg     : access libucl.ucl_object_t;
-         iter     : libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+         iter     : aliased libucl.ucl_object_iter_t :=
+                            libucl.ucl_object_iter_t (System.Null_Address);
          obj      : access libucl.ucl_object_t;
          item     : access constant libucl.ucl_object_t;
          inserted : Boolean;
          virgin   : Boolean := True;
       begin
          loop
-            item := Ucl.ucl_object_iterate (config_object, iter, True);
+            item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
             exit when item = null;
 
             declare
@@ -256,7 +258,7 @@ package body Core.Config is
          if not virgin then
             iter := libucl.ucl_object_iter_t (System.Null_Address);
             loop
-               item := Ucl.ucl_object_iterate (ncfg, iter, True);
+               item := Ucl.ucl_object_iterate (ncfg, iter'Access, True);
                exit when item = null;
 
                declare

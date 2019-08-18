@@ -42,10 +42,11 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    --  extended_version_info
    --------------------------------------------------------------------
-   function extended_version_info return Boolean
-   is
+   function extended_version_info return Boolean is
    begin
-      TIO.Put_Line (format_extconfig ("Version", progversion));
+      --  Don't pad with 24 characters like FreeBSD pkg, it looks weird.
+      --  It must be a holdover from a previous design (pre-ucl?)
+      TIO.Put_Line ("Version: " & progversion);
       TIO.Put_Line (pkg_config_dump);
 
       --  TODO: show_repository_info

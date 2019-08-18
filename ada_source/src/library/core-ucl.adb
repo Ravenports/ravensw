@@ -196,7 +196,7 @@ package body Core.Ucl is
    --  ucl_object_iterate
    --------------------------------------------------------------------
    function ucl_object_iterate (obj : access constant libucl.ucl_object_t;
-                                iter : libucl.ucl_object_iter_t;
+                                iter : access libucl.ucl_object_iter_t;
                                 expand_values : Boolean)
                                 return access constant libucl.ucl_object_t
    is
@@ -208,7 +208,7 @@ package body Core.Ucl is
          exv := 1;
       end if;
       return libucl.ucl_object_iterate (obj           => obj,
-                                        iter          => System.Address (iter),
+                                        iter          => iter,
                                         expand_values => exv);
    end ucl_object_iterate;
 

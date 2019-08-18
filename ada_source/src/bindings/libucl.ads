@@ -905,7 +905,7 @@ package libucl is
 
    function ucl_object_iterate
      (obj : access constant ucl_object_t;
-      iter : System.Address;
+      iter : access ucl_object_iter_t;
       expand_values : Extensions.bool) return access constant ucl_object_t;  -- ucl.h:832
    pragma Import (C, ucl_object_iterate, "ucl_object_iterate");
 

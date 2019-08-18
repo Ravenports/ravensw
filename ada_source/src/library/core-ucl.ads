@@ -58,7 +58,7 @@ package Core.Ucl is
 
    --  #define ucl_object_iterate(ob,it,ev) ucl_object_iterate_with_error((ob), (it), (ev), NULL)
    function ucl_object_iterate (obj : access constant libucl.ucl_object_t;
-                                iter : libucl.ucl_object_iter_t;
+                                iter : access libucl.ucl_object_iter_t;
                                 expand_values : Boolean)
                                 return access constant libucl.ucl_object_t;
 

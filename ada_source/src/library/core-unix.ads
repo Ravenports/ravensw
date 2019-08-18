@@ -11,7 +11,7 @@ package Core.Unix is
    type Unix_Socket_Result is (connected, failed_creation, failed_population, failed_connection);
 
    type File_Descriptor is new Integer;
-   not_connected : constant File_Descriptor := 1;
+   not_connected : constant File_Descriptor := -1;
 
    type T_Open_Flags is
       record
