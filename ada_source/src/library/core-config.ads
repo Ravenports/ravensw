@@ -41,6 +41,9 @@ package Core.Config is
 
    --  Retrieve configure value given it's keep
    function pkg_config_get (key : String) return access constant libucl.ucl_object_t;
+   function pkg_config_get_string (key : String) return String;
+   function pkg_config_get_boolean (key : String) return Boolean;
+   function pkg_config_get_int64 (key : String) return Ucl.int64;
 
    --  Expand config_object into human-readable text, configuration format
    function pkg_config_dump return String;

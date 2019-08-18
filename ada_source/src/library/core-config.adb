@@ -49,6 +49,33 @@ package body Core.Config is
 
 
    --------------------------------------------------------------------
+   --  pkg_config_get_string
+   --------------------------------------------------------------------
+   function pkg_config_get_string (key : String) return String is
+   begin
+      return Object.pkg_object_string (pkg_config_get (key));
+   end pkg_config_get_string;
+
+
+   --------------------------------------------------------------------
+   --  pkg_config_get_boolean
+   --------------------------------------------------------------------
+   function pkg_config_get_boolean (key : String) return Boolean is
+   begin
+      return Object.pkg_object_bool (pkg_config_get (key));
+   end pkg_config_get_boolean;
+
+
+   --------------------------------------------------------------------
+   --  pkg_config_get_int64
+   --------------------------------------------------------------------
+   function pkg_config_get_int64 (key : String) return Ucl.int64 is
+   begin
+      return Object.pkg_object_int (pkg_config_get (key));
+   end pkg_config_get_int64;
+
+
+   --------------------------------------------------------------------
    --  pkg_ini
    --------------------------------------------------------------------
    function pkg_ini
@@ -288,7 +315,7 @@ package body Core.Config is
       --  Start the event pipe
       --  If used, event pipe closed by Core.Finalize.cleanup
       declare
-         evpipe : String := Object.pkg_object_string (pkg_config_get ("EVENT_PIPE"));
+         evpipe : String := pkg_config_get_string ("EVENT_PIPE");
       begin
          if not IsBlank (evpipe) then
             connect_evpipe (evpipe);
@@ -297,7 +324,7 @@ package body Core.Config is
 
       declare
          use type Ucl.int64;
-         DL : Ucl.int64 := Object.pkg_object_int (pkg_config_get ("DEBUG_LEVEL"));
+         DL : Ucl.int64 := pkg_config_get_int64 ("DEBUG_LEVEL");
       begin
          if DL >= Ucl.int64 (ST_Debug_Level'First) and then
            DL <= Ucl.int64 (ST_Debug_Level'Last)
@@ -308,10 +335,42 @@ package body Core.Config is
          end if;
       end;
 
-      context.developer_mode := Object.pkg_object_bool (pkg_config_get ("DEVELOPER_MODE"));
+      context.developer_mode := pkg_config_get_boolean ("DEVELOPER_MODE");
 
-      --  TODO: set PKG_ENV
-      --  TODO: set user-agent
+      declare
+         useragent : String := pkg_config_get_string ("HTTP_USER_AGENT");
+         variable  : String := "HTTP_USER_AGENT";
+      begin
+         if IsBlank (useragent) then
+            ENV.Set (variable, "ravensw/" & progversion);
+         else
+            ENV.Set (variable, useragent);
+         end if;
+      end;
+
+      declare
+         obj      : access constant libucl.ucl_object_t;
+         iter     : aliased libucl.ucl_object_iter_t :=
+                            libucl.ucl_object_iter_t (System.Null_Address);
+         item     : access constant libucl.ucl_object_t;
+      begin
+         obj := pkg_config_get ("PKG_ENV");
+         loop
+            item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
+            exit when item = null;
+
+            declare
+               key     : String := Ucl.ucl_object_key (item);
+               payload : String := Ucl.ucl_object_tostring_forced (item);
+            begin
+               EV.pkg_debug (1, "Setting env var: " & key);
+               if not IsBlank (key) then
+                  ENV.Set (key, payload);
+               end if;
+            end;
+         end loop;
+      end;
+
       --  TODO: load the repositories
       --  TODO: validate the different scheme
       --  TODO: bypass resolv.conf
