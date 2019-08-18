@@ -1052,4 +1052,5 @@ package body Core.Event is
       pkg_emit_event_blind (event);
    end pkg_debug;
 
+
 end Core.Event;
