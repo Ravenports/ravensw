@@ -11,7 +11,8 @@ package Core is
 
    progversion    : constant String := "2.0.0";
    progname       : constant String := "ravensw";
-   install_prefix : constant String := "/raven";
+   rel_prefix     : constant String := "raven";
+   install_prefix : constant String := "/" & rel_prefix;
    jail_supported : constant Boolean := False;   --  FreeBSD only
 
    subtype ST_Debug_Level is Natural range 0 .. 4;

@@ -10,3 +10,9 @@ get_errno(void)
 {
    return(errno);
 }
+
+void
+reset_errno(void)
+{
+    errno = 0;
+}

@@ -32,6 +32,11 @@ package Core.Unix is
    --  Use libc's open function to retrieve file descriptor
    function open_file (filename : String; flags : T_Open_Flags) return File_Descriptor;
 
+   --  Use libc's openat function to retrieve file descriptor
+   function open_file (dirfd         : File_Descriptor;
+                       relative_path : String;
+                       flags         : T_Open_Flags) return File_Descriptor;
+
    --  Last seen error number by C function
    function errno return Integer;
 
@@ -47,6 +52,10 @@ package Core.Unix is
 
    --  Send log down file descriptor of event pipe
    procedure push_to_event_pipe (fd : File_Descriptor; message : String);
+
+   --  Set errno to zero
+   procedure reset_errno;
+   pragma Import (C, reset_errno, "reset_errno");
 
 private
 
@@ -71,6 +80,15 @@ private
                     cloexec   : IC.int) return IC.int;
    pragma Import (C, C_Open, "try_open");
 
+   function C_Openat (dirfd     : IC.int;
+                      path      : IC.Strings.chars_ptr;
+                      rdonly    : IC.int;
+                      wronly    : IC.int;
+                      nonblock  : IC.int;
+                      directory : IC.int;
+                      cloexec   : IC.int) return IC.int;
+   pragma Import (C, C_Openat, "try_openat");
+
    function C_IPC (path : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_IPC, "detect_IPC");
 
@@ -80,5 +98,6 @@ private
 
    function C_dprint (fd : IC.int; msg : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_dprint, "dprint");
+
 
 end Core.Unix;

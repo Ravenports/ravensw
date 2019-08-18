@@ -6,6 +6,7 @@ with Interfaces.C.Extensions;
 
 package body Core.Ucl is
 
+   package IC  renames Interfaces.C;
    package ICS renames Interfaces.C.Strings;
    package ICX renames Interfaces.C.Extensions;
 
@@ -23,6 +24,7 @@ package body Core.Ucl is
       ICS.Free (ckey);
       return result;
    end ucl_object_find_key;
+
 
    --------------------------------------------------------------------
    --  ucl_object_typed_new_object
@@ -117,7 +119,7 @@ package body Core.Ucl is
 
    --------------------------------------------------------------------
    --  ucl_array_push
-      --------------------------------------------------------------------
+   --------------------------------------------------------------------
    function ucl_array_push (top : access libucl.ucl_object_t;
                             elt : access libucl.ucl_object_t) return Boolean
    is
@@ -128,5 +130,157 @@ package body Core.Ucl is
       result := libucl.ucl_array_append (top, elt);
       return (result = 1);
    end ucl_array_push;
+
+
+   --------------------------------------------------------------------
+   --  ucl_parser_new_basic
+   --------------------------------------------------------------------
+   function ucl_parser_new_basic return T_parser
+   is
+      flags : IC.int := 0;
+   begin
+      return libucl.ucl_parser_new (flags);
+   end ucl_parser_new_basic;
+
+
+   --------------------------------------------------------------------
+   --  ucl_parser_new_nofilevars
+   --------------------------------------------------------------------
+   function ucl_parser_new_nofilevars return T_parser
+   is
+      flags : IC.int := IC.int (libucl.UCL_PARSER_NO_FILEVARS);
+   begin
+      return libucl.ucl_parser_new (flags);
+   end ucl_parser_new_nofilevars;
+
+
+   --------------------------------------------------------------------
+   --  ucl_parser_add_fd
+   --------------------------------------------------------------------
+   function ucl_parser_add_fd (parser : T_parser;
+                               fd     : Unix.File_Descriptor) return Boolean
+   is
+      use type ICX.bool;
+
+      result : ICX.bool;
+   begin
+      result := libucl.ucl_parser_add_fd (parser, IC.int (fd));
+      return (result = 1);
+   end ucl_parser_add_fd;
+
+
+   --------------------------------------------------------------------
+   --  ucl_parser_get_error
+   --------------------------------------------------------------------
+   function ucl_parser_get_error (parser : T_parser) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      result := libucl.ucl_parser_get_error (parser);
+      return ICS.Value (result);
+   end ucl_parser_get_error;
+
+
+   --------------------------------------------------------------------
+   --  ucl_parser_get_object
+   --------------------------------------------------------------------
+   function ucl_parser_get_object (parser : T_parser) return access libucl.ucl_object_t is
+   begin
+      return libucl.ucl_parser_get_object (parser);
+   end ucl_parser_get_object;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_iterate
+   --------------------------------------------------------------------
+   function ucl_object_iterate (obj : access constant libucl.ucl_object_t;
+                                iter : libucl.ucl_object_iter_t;
+                                expand_values : Boolean)
+                                return access constant libucl.ucl_object_t
+   is
+      use type ICX.bool;
+
+      exv : ICX.bool := 0;
+      ep  : access IC.int := null;
+   begin
+      if expand_values then
+         exv := 1;
+      end if;
+      return libucl.ucl_object_iterate_with_error (obj           => obj,
+                                                   iter          => System.Address (iter),
+                                                   expand_values => exv,
+                                                   ep            => ep);
+   end ucl_object_iterate;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_key
+   --------------------------------------------------------------------
+   function ucl_object_key (obj : access constant libucl.ucl_object_t) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      result := libucl.ucl_object_key (obj);
+      return ICS.Value (result);
+   end ucl_object_key;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_keyl
+   --------------------------------------------------------------------
+   function ucl_object_keyl (obj : access constant libucl.ucl_object_t;
+                             key : String) return access constant libucl.ucl_object_t
+   is
+      result : access constant libucl.ucl_object_t;
+      keyx   : ICS.chars_ptr;
+      lenx   : aliased IC.size_t := IC.size_t (key'Length);
+   begin
+      keyx := ICS.New_String (key);
+      result := libucl.ucl_object_lookup_len (obj, keyx, lenx);
+      ICS.Free (keyx);
+
+      return result;
+   end ucl_object_keyl;
+
+
+   --------------------------------------------------------------------
+   --  object_types_equal
+   --------------------------------------------------------------------
+   function object_types_equal (obj1, obj2 : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type IC.unsigned_short;
+   begin
+      return obj1.c_type = obj2.c_type;
+   end object_types_equal;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_replace_key
+   --------------------------------------------------------------------
+   function ucl_object_replace_key (top : access libucl.ucl_object_t;
+                                    elt : access libucl.ucl_object_t;
+                                    key : String;
+                                    copy_key : Boolean) return Boolean
+   is
+      use type ICX.bool;
+
+      ckey   : ICS.chars_ptr;
+      ccopy  : ICX.bool := 0;
+      result : ICX.bool;
+
+   begin
+      ckey := ICS.New_String (key);
+      if copy_key then
+         ccopy := 1;
+      end if;
+
+      result := libucl.ucl_object_replace_key (top      => top,
+                                               elt      => elt,
+                                               key      => ckey,
+                                               keylen   => 0,
+                                               copy_key => ccopy);
+      ICS.Free (ckey);
+      return (result = 1);
+   end ucl_object_replace_key;
 
 end Core.Ucl;

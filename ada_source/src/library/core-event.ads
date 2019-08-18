@@ -174,6 +174,7 @@ package Core.Event is
    procedure pkg_emit_error             (message : Text);
    procedure pkg_emit_notice            (message : Text);
    procedure pkg_emit_developer_mode    (message : Text);
+   procedure pkg_emit_with_strerror     (message : Text);
    procedure pkg_emit_errno             (function_name : Text;
                                          arguments     : Text;
                                          error_number  : Integer);

@@ -6,6 +6,7 @@ with Ada.Directories;
 with Core.Event;
 with Core.Unix;
 with Core.Strings;
+with System;
 
 package body Core.Config is
 
@@ -52,8 +53,12 @@ package body Core.Config is
       flags    : Pkg_init_flags) return Pkg_Error_Type
    is
       rootdir_used : constant Boolean := not IsBlank (context.pkg_rootdir);
-      obj          : access libucl.ucl_object_t;
-      inserted     : Boolean;
+
+      conffd       : Unix.File_Descriptor;
+      default_conf : constant String := rel_prefix & "/etc/ravensw.conf";
+      open_rdonly  : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
+      parser       : Ucl.T_parser;
+      fatal_errors : Boolean := False;
    begin
       if not Unix.file_connected (context.rootfd) then
          declare
@@ -79,11 +84,15 @@ package body Core.Config is
 
       config_object := Ucl.ucl_object_typed_new_object;
 
-      for index in config_entries'Range loop
-         case config_entries (index).config_type is
+      declare
+         obj      : access libucl.ucl_object_t;
+         inserted : Boolean;
+      begin
+         for index in config_entries'Range loop
+            case config_entries (index).config_type is
             when pkg_string =>
                declare
-                  tmp : Text;
+                  tmp     : Text;
                   tmp_set : Boolean := False;
                begin
                   if rootdir_used and then
@@ -145,13 +154,125 @@ package body Core.Config is
                      end loop;
                   end;
                end if;
-         end case;
-         inserted := Ucl.ucl_object_insert_key
-           (top      => config_object,
-            elt      => obj,
-            key      => USS (config_entries (index).key),
-            copy_key => False);
-      end loop;
+            end case;
+            inserted := Ucl.ucl_object_insert_key
+              (top      => config_object,
+               elt      => obj,
+               key      => USS (config_entries (index).key),
+               copy_key => False);
+         end loop;
+      end;
+
+      if path = "" then
+         if DIR.Exists ("/" & default_conf) then
+            conffd := Unix.open_file (dirfd         => context.rootfd,
+                                      relative_path => default_conf,
+                                      flags         => open_rdonly);
+            if not Unix.file_connected (conffd) then
+               EV.pkg_emit_with_strerror (SUS ("Cannot open /" & default_conf));
+            end if;
+         end if;
+      else
+         if DIR.Exists (path) then
+            conffd := Unix.open_file (path, open_rdonly);
+            if not Unix.file_connected (conffd) then
+               EV.pkg_emit_with_strerror (SUS ("Cannot open " & path));
+            end if;
+         end if;
+      end if;
+
+      parser := Ucl.ucl_parser_new_basic;
+      --  ucl_parser_register_variable (p, "ABI", myabi);
+      --  ucl_parser_register_variable (p, "ALTABI", myabi_legacy);
+
+      Unix.reset_errno;
+      declare
+         obj      : access libucl.ucl_object_t;
+         object   : access constant libucl.ucl_object_t;
+         item     : access constant libucl.ucl_object_t;
+         ncfg     : access libucl.ucl_object_t;
+         iter     : libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+         success  : Boolean;
+         inserted : Boolean;
+         virgin   : Boolean := True;
+      begin
+         if Unix.file_connected (conffd) then
+            if not Ucl.ucl_parser_add_fd (parser, conffd) then
+               EV.pkg_emit_error (SUS ("Invalid configuration file: " &
+                                    Ucl.ucl_parser_get_error (parser)));
+            else
+               obj := Ucl.ucl_parser_get_object (parser);
+            end if;
+            success := Unix.close_file (conffd);
+
+            loop
+               item := Ucl.ucl_object_iterate (obj, iter, True);
+               exit when item = null;
+
+               declare
+                  key        : constant String := Ucl.ucl_object_key (item);
+                  ukey       : constant String := CS.uppercase (key);
+               begin
+                  if ukey = "PACKAGESITE" or else
+                    ukey = "PUBKEY" or else
+                    ukey = "MIRROR_TYPE"
+                  then
+                     EV.pkg_emit_error
+                       (SUS (ukey & " in ravensw.conf is no longer supported.  " &
+                          "Convert to the new repository style.  See ravensw.conf(5)"));
+                     fatal_errors := True;
+                  else
+                     object := Ucl.ucl_object_keyl (config_object, ukey);
+
+                     --  ignore unknown keys
+                     if object /= null then
+                        if not Ucl.object_types_equal (object, item) then
+                           EV.pkg_emit_error (SUS ("Malformed key " & key & ", ignoring"));
+                        else
+                           if virgin then
+                              virgin := False;
+                              ncfg := Ucl.ucl_object_typed_new_object;
+                           end if;
+
+                           inserted :=
+                             Ucl.ucl_object_insert_key
+                               (top      => ncfg,
+                                elt      => libucl.ucl_object_copy (item),
+                                key      => ukey,
+                                copy_key => True);
+                        end if;
+                     end if;
+                  end if;
+               end;
+            end loop;
+
+            if fatal_errors then
+               libucl.ucl_object_unref (ncfg);
+               libucl.ucl_parser_free (parser);
+               return EPKG_FATAL;
+            end if;
+
+            if not virgin then
+               iter := libucl.ucl_object_iter_t (System.Null_Address);
+               loop
+                  item := Ucl.ucl_object_iterate (ncfg, iter, True);
+                  exit when item = null;
+
+                  declare
+                     key : constant String := Ucl.ucl_object_key (item);
+                  begin
+                     inserted :=
+                       Ucl.ucl_object_replace_key (top      => config_object,
+                                                   elt      => libucl.ucl_object_ref (item),
+                                                   key      => key,
+                                                   copy_key => True);
+                  end;
+                  libucl.ucl_object_unref (ncfg);
+               end loop;
+            end if;
+
+         end if;
+      end;
 
       --  ...
       return EPKG_OK;

@@ -54,4 +54,12 @@ package Core.Strings is
       field_number : Positive;
       delimiter    : String := " ") return String;
 
+   --  Convert to uppercase
+   function uppercase (US : Text)   return Text;
+   function uppercase (S  : String) return String;
+
+   --  Convert to lowercase
+   function lowercase (US : Text)   return Text;
+   function lowercase (S  : String) return String;
+
 end Core.Strings;

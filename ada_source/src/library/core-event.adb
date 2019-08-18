@@ -46,6 +46,19 @@ package body Core.Event is
 
 
    --------------------------------------------------------------------
+   --  pkg_emit_error
+   --------------------------------------------------------------------
+   procedure pkg_emit_with_strerror (message : Text)
+   is
+      err_number : constant Integer := Unix.errno;
+      err_string : constant String := ": " & Unix.strerror (err_number);
+
+   begin
+      pkg_emit_error (SUS (USS (message) & err_string));
+   end pkg_emit_with_strerror;
+
+
+   --------------------------------------------------------------------
    --  pkg_emit_notice
    --------------------------------------------------------------------
    procedure pkg_emit_notice  (message : Text)

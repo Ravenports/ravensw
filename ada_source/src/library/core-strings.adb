@@ -2,11 +2,12 @@
 --  Reference: ../License.txt
 
 with Ada.Strings.Fixed;
+with Ada.Characters.Handling;
 
 package body Core.Strings is
 
    package AS renames Ada.Strings;
-
+   package HAN renames Ada.Characters.Handling;
 
    --------------------------------------------------------------------------------------------
    --  USS
@@ -265,5 +266,46 @@ package body Core.Strings is
          return S (front .. S'Last);
       end if;
    end specific_field;
+
+
+   --------------------------------------------------------------------------------------------
+   --  uppercase #1
+   --------------------------------------------------------------------------------------------
+   function uppercase (US : Text) return Text
+   is
+      tall : String := uppercase (USS (US));
+   begin
+      return SUS (tall);
+   end uppercase;
+
+
+   --------------------------------------------------------------------------------------------
+   --  uppercase #2
+   --------------------------------------------------------------------------------------------
+   function uppercase (S : String) return String is
+   begin
+      return HAN.To_Upper (S);
+   end uppercase;
+
+
+   --------------------------------------------------------------------------------------------
+   --  lowercase #1
+   --------------------------------------------------------------------------------------------
+   function lowercase (US : Text) return Text
+   is
+      short : String := lowercase (USS (US));
+   begin
+      return SUS (short);
+   end lowercase;
+
+
+   --------------------------------------------------------------------------------------------
+   --  lowercase #2
+   --------------------------------------------------------------------------------------------
+   function lowercase (S : String) return String is
+   begin
+      return HAN.To_Lower (S);
+   end lowercase;
+
 
 end Core.Strings;

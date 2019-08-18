@@ -2,9 +2,12 @@
 --  Reference: ../License.txt
 
 with libucl;
+with System;
+with Core.Unix;
 
 package Core.Ucl is
 
+   subtype T_parser is System.Address;
 
    function ucl_object_find_key (obj : access libucl.ucl_object_t;
                                  key : String) return access constant libucl.ucl_object_t;
@@ -36,6 +39,43 @@ package Core.Ucl is
    function ucl_array_push (top : access libucl.ucl_object_t;
                             elt : access libucl.ucl_object_t) return Boolean;
 
+   --  Equivalent: ucl_parser_new(0);
+   function ucl_parser_new_basic return T_parser;
+
+   --  Equivalent: ucl_parser_new(UCL_PARSER_NO_FILEVARS);
+   function ucl_parser_new_nofilevars return T_parser;
+
+   --  Equivalent:  ucl_parser_add_fd (p, fd) return Extensions.bool;
+   function ucl_parser_add_fd (parser : T_parser;
+                               fd     : Unix.File_Descriptor) return Boolean;
+
+   --  Equivalent: ucl_parser_get_error (p) return Interfaces.C.Strings.chars_ptr;
+   function ucl_parser_get_error (parser : T_parser) return String;
+
+   --  Equivalent: ucl_parser_get_object (parser : System.Address) return access ucl_object_t;
+   function ucl_parser_get_object (parser : T_parser) return access libucl.ucl_object_t;
+
+   --  #define ucl_object_iterate(ob,it,ev) ucl_object_iterate_with_error((ob), (it), (ev), NULL)
+   function ucl_object_iterate (obj : access constant libucl.ucl_object_t;
+                                iter : libucl.ucl_object_iter_t;
+                                expand_values : Boolean)
+                                return access constant libucl.ucl_object_t;
+
+   --  Equivalent: ucl_object_key (obj : access constant ucl_object_t) return IC.Strings.chars_ptr
+   function ucl_object_key (obj : access constant libucl.ucl_object_t) return String;
+
+   --  Equivalent: ucl_object_keyl (obj : access constant ucl_object_t; len : access size_t)
+   --  return Interfaces.C.Strings.chars_ptr;  -- ucl.h:748
+   function ucl_object_keyl (obj : access constant libucl.ucl_object_t;
+                             key : String) return access constant libucl.ucl_object_t;
+
+   --  Returns true if c_type field of both objects match
+   function object_types_equal (obj1, obj2 : access constant libucl.ucl_object_t) return Boolean;
+
+   function ucl_object_replace_key (top : access libucl.ucl_object_t;
+                                    elt : access libucl.ucl_object_t;
+                                    key : String;
+                                    copy_key : Boolean) return Boolean;
 
 private
 
