@@ -21,18 +21,18 @@ package body Core.Metalog is
    function metalog_open (filename : String) return Pkg_Error_Type is
    begin
       if DIR.Exists (filename) then
-         TIO.Create (File => metalog_handle,
-                     Mode => TIO.Out_File,
-                     Name => filename);
-      else
          TIO.Open (File => metalog_handle,
                    Mode => TIO.Append_File,
                    Name => filename);
+      else
+         TIO.Create (File => metalog_handle,
+                     Mode => TIO.Out_File,
+                     Name => filename);
       end if;
       return EPKG_OK;
    exception
       when others =>
-         EV.pkg_emit_with_strerror (SUS ("Unable to open metalog '" & filename & "'"));
+         EV.pkg_emit_error (SUS ("Unable to open metalog '" & filename & "'"));
          return EPKG_FATAL;
    end metalog_open;
 
