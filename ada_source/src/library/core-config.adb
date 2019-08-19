@@ -303,8 +303,8 @@ package body Core.Config is
                                                 key      => key,
                                                 copy_key => True);
                end;
-               libucl.ucl_object_unref (ncfg);
             end loop;
+            libucl.ucl_object_unref (ncfg);
          end if;
       end;
 
@@ -383,7 +383,7 @@ package body Core.Config is
       --  TODO: bypass resolv.conf
 
       declare
-         metalog_file : String :=  Object.pkg_object_string (pkg_config_get ("METALOG"));
+         metalog_file : String := pkg_config_get_string ("METALOG");
       begin
          if not IsBlank (metalog_file) then
             if Metalog.metalog_open (metalog_file) /= EPKG_OK then
