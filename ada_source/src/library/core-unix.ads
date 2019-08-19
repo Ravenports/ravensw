@@ -10,6 +10,7 @@ package Core.Unix is
    type Unix_Pipe is (named_pipe, unix_socket, something_else);
    type Unix_Socket_Result is (connected, failed_creation, failed_population, failed_connection);
 
+   type Process_ID is new Integer;
    type File_Descriptor is new Integer;
    not_connected : constant File_Descriptor := -1;
 
@@ -56,6 +57,10 @@ package Core.Unix is
    --  Set errno to zero
    procedure reset_errno;
    pragma Import (C, reset_errno, "reset_errno");
+
+   --  Get Process ID
+   function getpid return Process_ID;
+   pragma Import (C, getpid, "getpid");
 
 private
 

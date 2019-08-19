@@ -220,8 +220,8 @@ package body Cmd.Event is
             end if;
 
          when EV.PKG_EVENT_DEBUG =>
-            --  TODO: %d is get pid
-            warnx ("DBG(" & int2str (event.debug_level) & ")[%d]> " & USS (event.debug_msg));
+            warnx ("DBG(" & int2str (event.debug_level) & ")[" &
+                     int2str (Integer (Unix.getpid)) & "]> " & USS (event.debug_msg));
 
          when EV.PKG_EVENT_QUERY_YESNO =>
             if event.qyesno_deft > 0 then
