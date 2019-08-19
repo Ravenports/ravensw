@@ -73,6 +73,9 @@ package Core.Ucl is
    --  Returns true if c_type field of both objects match
    function object_types_equal (obj1, obj2 : access constant libucl.ucl_object_t) return Boolean;
 
+   --  Return true if UCL_OBJECT
+   function type_is_object (obj : access constant libucl.ucl_object_t) return Boolean;
+
    function ucl_object_replace_key (top : access libucl.ucl_object_t;
                                     elt : access libucl.ucl_object_t;
                                     key : String;
@@ -85,6 +88,8 @@ package Core.Ucl is
    function ucl_object_toboolean (obj : access constant libucl.ucl_object_t) return Boolean;
 
    function ucl_dump (obj : access constant libucl.ucl_object_t) return String;
+
+   procedure ucl_parser_register_variable (parser : T_parser; key, value : String);
 
 private
 

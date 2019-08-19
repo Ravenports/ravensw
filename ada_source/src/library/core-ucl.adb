@@ -261,6 +261,20 @@ package body Core.Ucl is
 
 
    --------------------------------------------------------------------
+   --  type_is_object
+   --------------------------------------------------------------------
+   function type_is_object (obj : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type libucl.ucl_type;
+      otype : libucl.ucl_type_t;
+   begin
+      otype := libucl.ucl_object_type (obj);
+
+      return otype = libucl.UCL_OBJECT;
+   end type_is_object;
+
+
+   --------------------------------------------------------------------
    --  ucl_object_replace_key
    --------------------------------------------------------------------
    function ucl_object_replace_key (top : access libucl.ucl_object_t;
@@ -342,6 +356,22 @@ package body Core.Ucl is
          return dump;
       end;
    end ucl_dump;
+
+
+   --------------------------------------------------------------------
+   --  ucl_parser_register_variable
+   --------------------------------------------------------------------
+   procedure ucl_parser_register_variable (parser : T_parser; key, value : String)
+   is
+      ckey : ICS.chars_ptr;
+      cval : ICS.chars_ptr;
+   begin
+      ckey := ICS.New_String (key);
+      cval := ICS.New_String (value);
+      libucl.ucl_parser_register_variable (parser, ckey, cval);
+
+      --  Don't free ckey and cval
+   end ucl_parser_register_variable;
 
 
 end Core.Ucl;

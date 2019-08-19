@@ -136,6 +136,140 @@ package Core.Pkg is
       Index_Type   => Natural,
       "="          => SU."=");
 
+   type T_signature is
+     (SIG_NONE,
+      SIG_PUBKEY,
+      SIG_FINGERPRINT);
+
+   type T_mirror_type is
+     (SRV,
+      HTTP,
+      NOMIRROR);
+
+   type T_hash is
+     (HASH_UNKNOWN,
+      HASH_SHA256,
+      HASH_BLAKE2);
+
+   subtype T_priority is Natural;
+   subtype T_version is Integer;
+
+   type T_fingerprint is
+      record
+         hash_type : T_hash;
+         hash      : Text;
+         --  hh
+      end record;
+
+   type T_checksum_type is
+      (PKG_HASH_TYPE_SHA256_BASE32,
+       PKG_HASH_TYPE_SHA256_HEX,
+       PKG_HASH_TYPE_BLAKE2_BASE32,
+       PKG_HASH_TYPE_SHA256_RAW,
+       PKG_HASH_TYPE_BLAKE2_RAW,
+       PKG_HASH_TYPE_BLAKE2S_BASE32,
+       PKG_HASH_TYPE_BLAKE2S_RAW,
+       PKG_HASH_TYPE_UNKNOWN);
+
+   type T_pubkey_Type is
+     (placeholder1,
+      placeholder2);
+
+   type T_pkg_repo_meta_key is
+      record
+         pubkey      : Text;
+         pubkey_type : T_pubkey_Type;
+         name        : Text;
+         --  hh
+      end record;
+
+   --  Obsolete, but maintained for compatability
+   type T_pkg_formats is (TAR, TGZ, TBZ, TXZ, TZS);
+
+   type T_pkg_repo_flags is (REPO_FLAGS_USE_IPV4, REPO_FLAGS_USE_IPV6);
+
+   --  Use the url record from fetch bind later
+   type T_http_mirror is
+      record
+         --  url : struct url
+         urlp1 : Text;
+         urlp2 : Text;
+      end record;
+
+   package http_mirror_crate is new CON.Vectors
+     (Element_Type => T_http_mirror,
+      Index_Type   => Natural);
+
+   --  Move this to utils package?
+   type T_dns_srvinfo is
+      record
+         dns_type    : Natural;
+         class       : Natural;
+         ttl         : Natural;
+         priority    : Natural;
+         weight      : Natural;
+         port        : Natural;
+         finalweight : Natural;
+         host        : Text;
+      end record;
+
+   package dns_srvinfo_crate is new CON.Vectors
+     (Element_Type => T_dns_srvinfo,
+      Index_Type   => Natural);
+
+   type T_pkg_repo_meta is
+      record
+         maintainer        : Text;
+         source            : Text;
+         digests           : Text;
+         digests_archive   : Text;
+         manifests         : Text;
+         manifests_archive : Text;
+         filesite          : Text;
+         filesite_archive  : Text;
+         conflicts         : Text;
+         conflicts_archive : Text;
+         fulldb            : Text;
+         fulldb_archive    : Text;
+         source_identifier : Text;
+         digest_format     : T_checksum_type;
+         keys              : T_pkg_repo_meta_key;
+         packing_format    : T_pkg_formats := TZS;
+         --  revision          : int64_t
+         --  end_of_life       : time_t
+         version           : T_version;
+      end record;
+
+
+   type T_pkg_repo (this_mirror : T_mirror_type) is
+      record
+         name           : Text;
+         url            : Text;
+         pubkey         : Text;
+         mirror_type    : T_mirror_type := this_mirror;
+         signature_type : T_signature;
+         fingerprints   : Text;
+         --  ssh
+         trusted_fprint : T_fingerprint;
+         revoked_fprint : T_fingerprint;
+         --  sshio
+         meta           : T_pkg_repo_meta;
+         enable         : Boolean;
+         priority       : T_priority;
+         flags          : T_pkg_repo_flags;
+         --  env
+         --  priv
+         case this_mirror is
+            when SRV =>
+               srv      : dns_srvinfo_crate.Vector;
+            when HTTP =>
+               http     : http_mirror_crate.Vector;
+            when NOMIRROR =>
+               null;
+         end case;
+
+      end record;
+
    type T_pkg_context is
       record
          eventpipe      : Unix.File_Descriptor := Unix.not_connected;

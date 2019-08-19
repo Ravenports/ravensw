@@ -9,6 +9,7 @@ with Core.Unix;
 with Core.Strings;
 with Core.Object;
 with Core.Metalog;
+with Core.Pkg;    use Core.Pkg;
 with System;
 
 package body Core.Config is
@@ -18,6 +19,7 @@ package body Core.Config is
    package ENV renames Ada.Environment_Variables;
    package EV  renames Core.Event;
    package CS  renames Core.Strings;
+   package COB renames Core.Object;
 
    --------------------------------------------------------------------
    --  pkg_initialized
@@ -566,5 +568,134 @@ package body Core.Config is
    begin
       return Object.pkg_object_dump (config_object);
    end pkg_config_dump;
+
+
+   --------------------------------------------------------------------
+   --  load_repo_file
+   --------------------------------------------------------------------
+   procedure load_repo_file (dfd      : Unix.File_Descriptor;
+                             repodir  : String;
+                             repofile : String;
+                             flags    : Pkg_init_flags)
+   is
+      parser  : Ucl.T_parser;
+      obj     : access libucl.ucl_object_t;
+      key_ABI : constant String := "ABI";
+      fd      : Unix.File_Descriptor;
+      success : Boolean;
+   begin
+      parser := Ucl.ucl_parser_new_basic;
+      declare
+         myarch : String := COB.pkg_object_string (key_ABI);
+      begin
+         Ucl.ucl_parser_register_variable (parser, key_ABI, myarch);
+      end;
+      pkg_debug (1, "PkgConfig: loading " & repodir & "/" & repofile);
+      fd := Unix.open_file (dfd, repofile, (RDONLY => True, others => False));
+
+      if not Unix.file_connected (fd) then
+         pkg_emit_with_strerror ("Unable to open '" & repodir & "/" & repofile & "'");
+         return;
+      end if;
+
+      success := Ucl.ucl_parser_add_fd (parser, fd);
+      Unix.close_file (fd);
+
+      if not success then
+         pkg_emit_with_strerror ("Error parsing: '" & repodir & "/" & repofile & "'");
+         libucl.ucl_parser_free (parser);
+         return;
+      end if;
+
+      obj := Ucl.ucl_parser_get_object (parser);
+      libucl.ucl_parser_free (parser);
+
+      if obj = null then
+         return;
+      end if;
+
+      if Ucl.type_is_object (obj) then
+         walk_repo_obj (obj, repofile, flags);
+      end if;
+
+      libucl.ucl_object_unref (obj);
+
+   end load_repo_file;
+
+
+   --------------------------------------------------------------------
+   --  load_repo_files
+   --------------------------------------------------------------------
+   procedure load_repo_files (repodir : String; flags : pkg_init_flags)
+   is
+      fd : Unix.File_Descriptor;
+   begin
+      pkg_debug (1, "PkgConfig: loading repositories in " & repodir);
+
+      fd := Unix.open_file (repodir, (DIRECTORY => True, CLOEXEC => True, others => False));
+      if not Unix.file_connected (fd) then
+         return;
+      end if;
+
+--        nents = scandir(repodir, &ent, configfile, alphasort);
+--  for (i = 0; i < nents; i++) {
+--    load_repo_file(fd, repodir, ent[i]->d_name, flags);
+--    free(ent[i]);
+--  }
+--  if (nents >= 0)
+--    free(ent);
+
+      Unix.close_file (fd);
+
+   end load_repo_files;
+
+
+
+   --------------------------------------------------------------------
+   --  load_repositories
+   --------------------------------------------------------------------
+   procedure load_repositories (repodir : String; flags : Pkg_init_flags) is
+   begin
+      if not IsBlank (repodir) then
+         load_repo_files (repodir, flags);
+      else
+         declare
+            iter : aliased libucl.ucl_object_iter_t :=
+                           libucl.ucl_object_iter_t (System.Null_Address);
+            item : access constant libucl.ucl_object_t;
+            reposlist : access libucl.ucl_object_t := pkg_config_get_string ("REPOS_DIR");
+         begin
+            loop
+               item := Ucl.ucl_object_iterate (reposlist, iter'Access, True);
+               exit when item = null;
+            end loop;
+         end;
+      end if;
+
+   end load_repositories;
+
+
+   --------------------------------------------------------------------
+   --  walk_repo_obj
+   --------------------------------------------------------------------
+   procedure walk_repo_obj (obj      : access const libucl.ucl_object_t;
+                            filename : String;
+                            flags    : Pkg_init_flags)
+   is
+      iter     : aliased libucl.ucl_object_iter_t :=
+                         libucl.ucl_object_iter_t (System.Null_Address);
+      item     : access constant libucl.ucl_object_t;
+   begin
+      loop
+         item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
+         exit when item = null;
+
+         declare
+            key : String := Ucl.ucl_object_key (item);
+         begin
+            pkg_debug (1, "PkgConfig: parsing key '" & key & "'");
+         end;
+      end loop;
+   end walk_repo_obj;
 
 end Core.Config;

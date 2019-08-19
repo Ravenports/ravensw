@@ -5,6 +5,7 @@ with Core;         use Core;
 with Core.Strings; use Core.Strings;
 with Core.Pkg;     use Core.Pkg;
 with Core.Ucl;
+with Core.Unix;
 with libucl;
 
 package Core.Config is
@@ -305,5 +306,15 @@ private
    function convert (obj : access constant libucl.ucl_object_t) return Config_Entry_Type;
    function convert_string_to_ucl_object (cetype  : Config_Entry_Type;
                                           payload : String) return access libucl.ucl_object_t;
+
+   procedure load_repositories (repodir  : String; flags : Pkg_init_flags);
+   procedure load_repo_files   (repodir  : String; flags : pkg_init_flags);
+   procedure load_repo_file    (dfd      : Unix.File_Descriptor;
+                                repodir  : String;
+                                repofile : String;
+                                flags    : Pkg_init_flags);
+   procedure walk_repo_obj     (obj      : access constant libucl.ucl_object_t;
+                                filename : String;
+                                flags    : Pkg_init_flags);
 
 end Core.Config;
