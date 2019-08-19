@@ -313,6 +313,19 @@ package body Core.Config is
       if dlevel > 0 then
          --  Let command line option override conf
          context.debug_level := dlevel;
+      else
+         declare
+            use type Ucl.int64;
+            DL : Ucl.int64 := pkg_config_get_int64 ("DEBUG_LEVEL");
+         begin
+            if DL >= Ucl.int64 (ST_Debug_Level'First) and then
+              DL <= Ucl.int64 (ST_Debug_Level'Last)
+            then
+               context.debug_level := ST_Debug_Level (DL);
+            else
+               EV.pkg_emit_notice (SUS ("DEBUG_LEVEL out of range, ignoring"));
+            end if;
+         end;
       end if;
 
       --  TODO: check ABI isn't "unknown"
@@ -326,19 +339,6 @@ package body Core.Config is
       begin
          if not IsBlank (evpipe) then
             connect_evpipe (evpipe);
-         end if;
-      end;
-
-      declare
-         use type Ucl.int64;
-         DL : Ucl.int64 := pkg_config_get_int64 ("DEBUG_LEVEL");
-      begin
-         if DL >= Ucl.int64 (ST_Debug_Level'First) and then
-           DL <= Ucl.int64 (ST_Debug_Level'Last)
-         then
-            context.debug_level := ST_Debug_Level (DL);
-         else
-            EV.pkg_emit_notice (SUS ("DEBUG_LEVEL out of range, ignoring"));
          end if;
       end;
 
