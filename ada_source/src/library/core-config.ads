@@ -32,12 +32,14 @@ package Core.Config is
    function pkg_ini
      (path     : String;
       reposdir : String;
-      flags    : Pkg_init_flags) return Pkg_Error_Type;
+      flags    : Pkg_init_flags;
+      dlevel   : ST_Debug_Level) return Pkg_Error_Type;
 
    --  Initialize configuration (not restricted to IPv4 or IPv6)
    function pkg_init
      (path     : String;
-      reposdir : String) return Pkg_Error_Type;
+      reposdir : String;
+      dlevel   : ST_Debug_Level) return Pkg_Error_Type;
 
    --  Retrieve configure value given it's keep
    function pkg_config_get (key : String) return access constant libucl.ucl_object_t;

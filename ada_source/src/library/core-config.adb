@@ -33,9 +33,10 @@ package body Core.Config is
    --------------------------------------------------------------------
    function pkg_init
      (path     : String;
-      reposdir : String) return Pkg_Error_Type is
+      reposdir : String;
+      dlevel   : ST_Debug_Level) return Pkg_Error_Type is
    begin
-      return pkg_ini (path, reposdir, init_none);
+      return pkg_ini (path, reposdir, init_none, dlevel);
    end pkg_init;
 
 
@@ -81,7 +82,8 @@ package body Core.Config is
    function pkg_ini
      (path     : String;
       reposdir : String;
-      flags    : Pkg_init_flags) return Pkg_Error_Type
+      flags    : Pkg_init_flags;
+      dlevel   : ST_Debug_Level) return Pkg_Error_Type
    is
       conffd       : Unix.File_Descriptor;
       default_conf : constant String := rel_prefix & "/etc/ravensw.conf";
@@ -307,6 +309,11 @@ package body Core.Config is
       end;
 
       parsed := True;
+
+      if dlevel > 0 then
+         --  Let command line option override conf
+         context.debug_level := dlevel;
+      end if;
 
       --  TODO: check ABI isn't "unknown"
 

@@ -12,7 +12,7 @@ package body Cmd.Event is
    package PRT renames Core.Printf;
 
    --------------------------------------------------------------------
-   --  warnx
+   --  warn
    --------------------------------------------------------------------
    procedure warn  (message : String; error : Integer) is
       suffix : String := ": " & Unix.strerror (error);

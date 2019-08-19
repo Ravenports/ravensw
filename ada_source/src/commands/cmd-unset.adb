@@ -19,7 +19,8 @@ package body Cmd.Unset is
       if comline.glob_version = 2 then
          result := pkg_ini (path     => USS (comline.glob_config_file),
                             reposdir => USS (comline.glob_repo_config_dir),
-                            flags    => comline.global_init_flags);
+                            flags    => comline.global_init_flags,
+                            dlevel   => comline.glob_debug);
          return extended_version_info;
       end if;
       if comline.glob_list then
