@@ -17,6 +17,10 @@ private
 
    package CON renames Ada.Containers;
 
+   --  global variables for src/
+   newpkgversion  : Boolean := False;
+   nbdone         : Natural := 0;
+
    type T_Search_Modifiers is
       record
          annotations     : Boolean;
