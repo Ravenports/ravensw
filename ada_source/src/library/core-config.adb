@@ -155,7 +155,7 @@ package body Core.Config is
       end if;
 
       parser := Ucl.ucl_parser_new_basic;
-      --  TODO: ucl_parser_register_variable (p, "ABI", myabi);
+      --  TODO: ucl_parser_register_variable (p, conf_abi, myabi);
       --  TODO: ucl_parser_register_variable (p, "ALTABI", myabi_legacy);
 
       Unix.reset_errno;
@@ -320,7 +320,7 @@ package body Core.Config is
       else
          declare
             use type Ucl.int64;
-            DL : Ucl.int64 := pkg_config_get_int64 ("DEBUG_LEVEL");
+            DL : Ucl.int64 := pkg_config_get_int64 (conf_debug_level);
          begin
             if DL >= Ucl.int64 (ST_Debug_Level'First) and then
               DL <= Ucl.int64 (ST_Debug_Level'Last)
@@ -339,23 +339,22 @@ package body Core.Config is
       --  Start the event pipe
       --  If used, event pipe closed by Core.Finalize.cleanup
       declare
-         evpipe : String := pkg_config_get_string ("EVENT_PIPE");
+         evpipe : String := pkg_config_get_string (conf_event_pipe);
       begin
          if not IsBlank (evpipe) then
             connect_evpipe (evpipe);
          end if;
       end;
 
-      context.developer_mode := pkg_config_get_boolean ("DEVELOPER_MODE");
+      context.developer_mode := pkg_config_get_boolean (conf_dev_mode);
 
       declare
-         useragent : String := pkg_config_get_string ("HTTP_USER_AGENT");
-         variable  : String := "HTTP_USER_AGENT";
+         useragent : String := pkg_config_get_string (conf_user_agent);
       begin
          if IsBlank (useragent) then
-            ENV.Set (variable, "ravensw/" & progversion);
+            ENV.Set (conf_user_agent, "ravensw/" & progversion);
          else
-            ENV.Set (variable, useragent);
+            ENV.Set (conf_user_agent, useragent);
          end if;
       end;
 
@@ -388,7 +387,7 @@ package body Core.Config is
       --  TODO: bypass resolv.conf
 
       declare
-         metalog_file : String := pkg_config_get_string ("METALOG");
+         metalog_file : String := pkg_config_get_string (conf_metalog);
       begin
          if not IsBlank (metalog_file) then
             if Metalog.metalog_open (metalog_file) /= EPKG_OK then
@@ -945,7 +944,7 @@ package body Core.Config is
          if flags = init_none then
             declare
                use type Ucl.int64;
-               proto : Ucl.int64 := pkg_config_get_int64 ("IP_VERSION");
+               proto : Ucl.int64 := pkg_config_get_int64 (conf_ip_version);
             begin
                if proto = 0 then
                   case use_ipvx is

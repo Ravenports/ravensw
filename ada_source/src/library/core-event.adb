@@ -183,7 +183,7 @@ package body Core.Event is
       event.old_pkg := old_pkg;
 
       --  TODO:
-      --  syslog_enabled = pkg_object_bool(pkg_config_get("SYSLOG"));
+      --  syslog_enabled = pkg_object_bool(pkg_config_get(conf_syslog));
       --  if (syslog_enabled) {
       --    syslog(LOG_NOTICE, "%s-%s installed", p->name, p->version);}
 
