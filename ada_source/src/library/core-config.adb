@@ -655,6 +655,7 @@ package body Core.Config is
       begin
          priorec.reponame := item.name;
          priorec.priority := item.priority;
+         repositories_order.Append (priorec);
       end populate_priority;
 
    begin

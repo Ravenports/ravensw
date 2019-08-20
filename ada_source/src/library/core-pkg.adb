@@ -9,7 +9,11 @@ package body Core.Pkg is
    --------------------------------------------------------------------
    function repo_priority_less_than (A, B : T_repo_priority) return Boolean is
    begin
-      return A.priority < B.priority;
+      if A.priority = B.priority then
+         return SU."<" (A.reponame, B.reponame);
+      else
+         return A.priority < B.priority;
+      end if;
    end repo_priority_less_than;
 
 end Core.Pkg;
