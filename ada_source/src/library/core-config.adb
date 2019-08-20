@@ -507,7 +507,7 @@ package body Core.Config is
                declare
                   nf  : Natural := CS.count_char (payload, LAT.Comma);
                begin
-                  for k in 1 .. nf loop
+                  for k in 1 .. nf + 1 loop
                      inserted := Ucl.ucl_array_push (obj,
                                                      Ucl.ucl_object_fromstring_and_trim
                                                        (CS.specific_field (payload, k, ",")));
@@ -521,7 +521,7 @@ package body Core.Config is
                declare
                   nf  : Natural := CS.count_char (payload, LAT.Comma);
                begin
-                  for k in 1 .. nf loop
+                  for k in 1 .. nf + 1 loop
                      declare
                         nvpair : constant String := CS.specific_field (payload, k, ",");
                      begin
