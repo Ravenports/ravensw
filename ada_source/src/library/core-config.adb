@@ -633,6 +633,7 @@ package body Core.Config is
    procedure load_repo_files (repodir : String; flags : Pkg_init_flags)
    is
       procedure loadfile (position : text_crate.Cursor);
+      procedure populate_priority (position : pkg_repos_crate.Cursor);
 
       fd : Unix.File_Descriptor;
       res : Boolean;
@@ -647,13 +648,22 @@ package body Core.Config is
                          flags    => flags);
       end loadfile;
 
+      procedure populate_priority (position : pkg_repos_crate.Cursor)
+      is
+         item    : T_pkg_repo renames pkg_repos_crate.Element (position);
+         priorec : T_repo_priority;
+      begin
+         priorec.reponame := item.name;
+         priorec.priority := item.priority;
+      end populate_priority;
+
    begin
       EV.pkg_debug (1, "PkgConfig: loading repositories in " & repodir);
 
-      --  Load file in alphabetical order to match pkg(8).
-      --  This is a long-standing bug in pkg(8) because it totally ignores the priority
-      --  settings.  So the plan is to set up vector of keys sorted by priority to
-      --  solve this for ravensw.
+      --  Don't bother to load in alphabetical order like pkg(8) does
+      --  1) it loads into a hashed map which is a random order anyway
+      --  2) pkg(8) has a bug where it ignores priority order.  We're going to fix
+      --  that and sort by priority after loading.
 
       declare
          Search    : DIR.Search_Type;
@@ -675,8 +685,6 @@ package body Core.Config is
             end loop;
             DIR.End_Search (Search);
 
-            sorter.Sort (tempstore);
-
             fd := Unix.open_file (repodir, (DIRECTORY => True, CLOEXEC => True, others => False));
             if Unix.file_connected (fd) then
                tempstore.Iterate (loadfile'Access);
@@ -684,6 +692,10 @@ package body Core.Config is
             end if;
          end if;
       end;
+
+      --  spin through repos and set priority order
+      repositories.Iterate (populate_priority'Access);
+      priority_sorter.Sort (repositories_order);
    end load_repo_files;
 
 

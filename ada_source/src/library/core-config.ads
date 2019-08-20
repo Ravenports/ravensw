@@ -12,6 +12,9 @@ package Core.Config is
 
    Unsupported_Type : exception;
 
+   repositories       : pkg_repos_crate.Map;
+   repositories_order : pkg_repos_priority_crate.Vector;
+
    type Config_Entry_Type is
      (
       pkg_string,
@@ -56,8 +59,6 @@ package Core.Config is
 
    --  Expand config_object into human-readable text, configuration format
    function pkg_config_dump return String;
-
-   repositories  : pkg_repos_crate.Map;
 
    --  Return repo's url
    function pkg_repo_url (repo : T_pkg_repo) return String;

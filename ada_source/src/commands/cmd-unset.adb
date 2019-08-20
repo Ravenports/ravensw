@@ -116,10 +116,12 @@ package body Cmd.Unset is
    --  show_repository_info
    --------------------------------------------------------------------
    procedure show_repository_info is
-      procedure list (position : pkg_repos_crate.Cursor);
-      procedure list (position : pkg_repos_crate.Cursor)
+      procedure list (position : pkg_repos_priority_crate.Cursor);
+      procedure list (position : pkg_repos_priority_crate.Cursor)
       is
-         repo : T_pkg_repo renames pkg_repos_crate.Element (position);
+         key     : Text := pkg_repos_priority_crate.Element (position).reponame;
+         rcursor : pkg_repos_crate.Cursor := repositories.Find (key);
+         repo    : T_pkg_repo renames pkg_repos_crate.Element (rcursor);
       begin
          TIO.Put_Line ("  " & USS (repo.name) & ": {");
          print_extconfig ("url", pkg_repo_url (repo), True);
@@ -144,7 +146,7 @@ package body Cmd.Unset is
       end list;
    begin
       TIO.Put_Line ("Repositories:");
-      Config.repositories.Iterate (list'Access);
+      Config.repositories_order.Iterate (list'Access);
    end show_repository_info;
 
 end Cmd.Unset;

@@ -286,6 +286,22 @@ package Core.Pkg is
       Hash            => Strings.map_hash,
       Equivalent_Keys => Strings.equivalent);
 
+   type T_repo_priority is
+      record
+         reponame : Text;
+         priority : T_priority;
+      end record;
+
+   --  Order to sort T_repo_priority
+   function repo_priority_less_than (A, B : T_repo_priority) return Boolean;
+
+   package pkg_repos_priority_crate is new CON.Vectors
+     (Element_Type => T_repo_priority,
+      Index_Type   => Natural);
+
+   package priority_sorter is new pkg_repos_priority_crate.Generic_Sorting
+     ("<" => repo_priority_less_than);
+
    type T_pkg_context is
       record
          eventpipe      : Unix.File_Descriptor := Unix.not_connected;
