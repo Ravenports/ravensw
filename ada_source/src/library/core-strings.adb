@@ -1,13 +1,14 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Strings.Hash;
 with Ada.Strings.Fixed;
 with Ada.Characters.Handling;
 with Ada.Integer_Text_IO;
 
 package body Core.Strings is
 
-   package AS renames Ada.Strings;
+   package AS  renames Ada.Strings;
    package HAN renames Ada.Characters.Handling;
    package IIO renames Ada.Integer_Text_IO;
 
@@ -355,5 +356,36 @@ package body Core.Strings is
       result (start .. result'Last) := workstr (index + 1 .. workstr'Last - 1);
       return result;
    end octal;
+
+
+   --------------------------------------------------------------------------------------------
+   --  map_hash
+   --------------------------------------------------------------------------------------------
+   function map_hash (key : Text) return CON.Hash_Type is
+   begin
+      return AS.Hash (USS (key));
+   end map_hash;
+
+
+   --------------------------------------------------------------------------------------------
+   --  equivalent #1
+   --------------------------------------------------------------------------------------------
+   function equivalent (A, B : Text) return Boolean
+   is
+      use type Text;
+   begin
+      return A = B;
+   end equivalent;
+
+
+   --------------------------------------------------------------------------------------------
+   --  equivalent #2
+   --------------------------------------------------------------------------------------------
+   function equivalent (A : Text; B : String) return Boolean
+   is
+      A2S : constant String := USS (A);
+   begin
+      return A2S = B;
+   end equivalent;
 
 end Core.Strings;

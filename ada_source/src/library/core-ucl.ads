@@ -10,7 +10,7 @@ package Core.Ucl is
    subtype T_parser is System.Address;
    type int64 is range -(2**63) .. +(2**63 - 1);
 
-   function ucl_object_find_key (obj : access libucl.ucl_object_t;
+   function ucl_object_find_key (obj : access constant libucl.ucl_object_t;
                                  key : String) return access constant libucl.ucl_object_t;
 
    --  Equivalent: ucl_object_typed_new(UCL_OBJECT)
@@ -76,12 +76,19 @@ package Core.Ucl is
    --  Return true if UCL_OBJECT
    function type_is_object (obj : access constant libucl.ucl_object_t) return Boolean;
 
+   --  Return true if UCL_STRING
+   function type_is_string (obj : access constant libucl.ucl_object_t) return Boolean;
+
+   --  Return true if UCL_INT
+   function type_is_integer (obj : access constant libucl.ucl_object_t) return Boolean;
+
    function ucl_object_replace_key (top : access libucl.ucl_object_t;
                                     elt : access libucl.ucl_object_t;
                                     key : String;
                                     copy_key : Boolean) return Boolean;
 
    function ucl_object_tostring_forced (obj : access constant libucl.ucl_object_t) return String;
+   function ucl_object_tostring (obj : access constant libucl.ucl_object_t) return String;
 
    function ucl_object_toint (obj : access constant libucl.ucl_object_t) return int64;
 
@@ -90,6 +97,8 @@ package Core.Ucl is
    function ucl_dump (obj : access constant libucl.ucl_object_t) return String;
 
    procedure ucl_parser_register_variable (parser : T_parser; key, value : String);
+
+   function ucl_emit_yaml (obj : access constant libucl.ucl_object_t) return String;
 
 private
 

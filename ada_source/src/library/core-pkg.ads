@@ -2,7 +2,9 @@
 --  Reference: ../License.txt
 
 with Ada.Containers.Vectors;
+with Ada.Containers.Hashed_Maps;
 with Core.Unix;
+with Core.Strings;
 
 package Core.Pkg is
 
@@ -241,12 +243,12 @@ package Core.Pkg is
       end record;
 
 
-   type T_pkg_repo (this_mirror : T_mirror_type) is
+   type T_pkg_repo is
       record
          name           : Text;
          url            : Text;
          pubkey         : Text;
-         mirror_type    : T_mirror_type := this_mirror;
+         mirror_type    : T_mirror_type;
          signature_type : T_signature;
          fingerprints   : Text;
          --  ssh
@@ -259,16 +261,17 @@ package Core.Pkg is
          flags          : T_pkg_repo_flags;
          --  env
          --  priv
-         case this_mirror is
-            when SRV =>
-               srv      : dns_srvinfo_crate.Vector;
-            when HTTP =>
-               http     : http_mirror_crate.Vector;
-            when NOMIRROR =>
-               null;
-         end case;
-
+         --  can't use immutable records inside containers
+         --  srv and http are used mutually exclusively
+         srv            : dns_srvinfo_crate.Vector;
+         http           : http_mirror_crate.Vector;
       end record;
+
+   package pkg_repos_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => T_pkg_repo,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent);
 
    type T_pkg_context is
       record

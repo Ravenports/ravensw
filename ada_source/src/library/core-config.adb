@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Environment_Variables;
+with Ada.Containers.Vectors;
 with Core.Event;
 with Core.Unix;
 with Core.Strings;
@@ -17,6 +18,7 @@ package body Core.Config is
    package LAT renames Ada.Characters.Latin_1;
    package DIR renames Ada.Directories;
    package ENV renames Ada.Environment_Variables;
+   package CON renames Ada.Containers;
    package EV  renames Core.Event;
    package CS  renames Core.Strings;
    package COB renames Core.Object;
@@ -56,7 +58,7 @@ package body Core.Config is
    --------------------------------------------------------------------
    function pkg_config_get_string (key : String) return String is
    begin
-      return Object.pkg_object_string (pkg_config_get (key));
+      return COB.pkg_object_string (pkg_config_get (key));
    end pkg_config_get_string;
 
 
@@ -65,7 +67,7 @@ package body Core.Config is
    --------------------------------------------------------------------
    function pkg_config_get_boolean (key : String) return Boolean is
    begin
-      return Object.pkg_object_bool (pkg_config_get (key));
+      return COB.pkg_object_bool (pkg_config_get (key));
    end pkg_config_get_boolean;
 
 
@@ -74,7 +76,7 @@ package body Core.Config is
    --------------------------------------------------------------------
    function pkg_config_get_int64 (key : String) return Ucl.int64 is
    begin
-      return Object.pkg_object_int (pkg_config_get (key));
+      return COB.pkg_object_int (pkg_config_get (key));
    end pkg_config_get_int64;
 
 
@@ -380,7 +382,8 @@ package body Core.Config is
          end loop;
       end;
 
-      --  TODO: load the repositories
+      load_repositories (reposdir, flags);
+
       --  TODO: validate the different scheme
       --  TODO: bypass resolv.conf
 
@@ -583,26 +586,27 @@ package body Core.Config is
       key_ABI : constant String := "ABI";
       fd      : Unix.File_Descriptor;
       success : Boolean;
+      res     : Boolean;
    begin
       parser := Ucl.ucl_parser_new_basic;
       declare
-         myarch : String := COB.pkg_object_string (key_ABI);
+         myarch : String := pkg_config_get_string (key_ABI);
       begin
          Ucl.ucl_parser_register_variable (parser, key_ABI, myarch);
       end;
-      pkg_debug (1, "PkgConfig: loading " & repodir & "/" & repofile);
+      EV.pkg_debug (1, "PkgConfig: loading " & repodir & "/" & repofile);
       fd := Unix.open_file (dfd, repofile, (RDONLY => True, others => False));
 
       if not Unix.file_connected (fd) then
-         pkg_emit_with_strerror ("Unable to open '" & repodir & "/" & repofile & "'");
+         EV.pkg_emit_with_strerror (SUS ("Unable to open '" & repodir & "/" & repofile & "'"));
          return;
       end if;
 
       success := Ucl.ucl_parser_add_fd (parser, fd);
-      Unix.close_file (fd);
+      res := Unix.close_file (fd);
 
       if not success then
-         pkg_emit_with_strerror ("Error parsing: '" & repodir & "/" & repofile & "'");
+         EV.pkg_emit_with_strerror (SUS ("Error parsing: '" & repodir & "/" & repofile & "'"));
          libucl.ucl_parser_free (parser);
          return;
       end if;
@@ -626,29 +630,67 @@ package body Core.Config is
    --------------------------------------------------------------------
    --  load_repo_files
    --------------------------------------------------------------------
-   procedure load_repo_files (repodir : String; flags : pkg_init_flags)
+   procedure load_repo_files (repodir : String; flags : Pkg_init_flags)
    is
+      package filename_crate is new CON.Vectors
+        (Element_Type => Text,
+         Index_Type   => Natural,
+         "="          => SU."=");
+      package sorter is new filename_crate.Generic_Sorting ("<" => SU."<");
+
+      procedure loadfile (position : filename_crate.Cursor);
+
       fd : Unix.File_Descriptor;
+      res : Boolean;
+
+      procedure loadfile (position : filename_crate.Cursor)
+      is
+         filename : String := USS (filename_crate.Element (position));
+      begin
+         load_repo_file (dfd      => fd,
+                         repodir  => repodir,
+                         repofile => filename,
+                         flags    => flags);
+      end loadfile;
+
    begin
-      pkg_debug (1, "PkgConfig: loading repositories in " & repodir);
+      EV.pkg_debug (1, "PkgConfig: loading repositories in " & repodir);
 
-      fd := Unix.open_file (repodir, (DIRECTORY => True, CLOEXEC => True, others => False));
-      if not Unix.file_connected (fd) then
-         return;
-      end if;
+      --  Load file in alphabetical order to match pkg(8).
+      --  This is a long-standing bug in pkg(8) because it totally ignores the priority
+      --  settings.  So the plan is to set up vector of keys sorted by priority to
+      --  solve this for ravensw.
 
---        nents = scandir(repodir, &ent, configfile, alphasort);
---  for (i = 0; i < nents; i++) {
---    load_repo_file(fd, repodir, ent[i]->d_name, flags);
---    free(ent[i]);
---  }
---  if (nents >= 0)
---    free(ent);
+      declare
+         Search    : DIR.Search_Type;
+         Dirent    : DIR.Directory_Entry_Type;
+         tempstore : filename_crate.Vector;
+         use type DIR.File_Kind;
+      begin
+         if DIR.Exists (repodir) and then
+           DIR.Kind (repodir) = DIR.Directory
+         then
+            DIR.Start_Search (Search    => Search,
+                              Directory => repodir,
+                              Filter    => (DIR.Ordinary_File => True, others => False),
+                              Pattern   => "*.conf");
 
-      Unix.close_file (fd);
+            while DIR.More_Entries (Search) loop
+               DIR.Get_Next_Entry (Search => Search, Directory_Entry => Dirent);
+               tempstore.Append (SUS (DIR.Simple_Name (Dirent)));
+            end loop;
+            DIR.End_Search (Search);
 
+            sorter.Sort (tempstore);
+
+            fd := Unix.open_file (repodir, (DIRECTORY => True, CLOEXEC => True, others => False));
+            if Unix.file_connected (fd) then
+               tempstore.Iterate (loadfile'Access);
+               res := Unix.close_file (fd);
+            end if;
+         end if;
+      end;
    end load_repo_files;
-
 
 
    --------------------------------------------------------------------
@@ -663,39 +705,212 @@ package body Core.Config is
             iter : aliased libucl.ucl_object_iter_t :=
                            libucl.ucl_object_iter_t (System.Null_Address);
             item : access constant libucl.ucl_object_t;
-            reposlist : access libucl.ucl_object_t := pkg_config_get_string ("REPOS_DIR");
+            reposlist : access constant libucl.ucl_object_t := pkg_config_get ("REPOS_DIR");
          begin
             loop
                item := Ucl.ucl_object_iterate (reposlist, iter'Access, True);
                exit when item = null;
+
+               declare
+                  diritem : String := COB.pkg_object_string (item);
+               begin
+                  load_repo_files (diritem, flags);
+               end;
             end loop;
          end;
       end if;
-
    end load_repositories;
 
 
    --------------------------------------------------------------------
    --  walk_repo_obj
    --------------------------------------------------------------------
-   procedure walk_repo_obj (obj      : access const libucl.ucl_object_t;
+   procedure walk_repo_obj (fileobj  : access constant libucl.ucl_object_t;
                             filename : String;
                             flags    : Pkg_init_flags)
    is
-      iter     : aliased libucl.ucl_object_iter_t :=
-                         libucl.ucl_object_iter_t (System.Null_Address);
-      item     : access constant libucl.ucl_object_t;
+      iter : aliased libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+      item : access constant libucl.ucl_object_t;
    begin
       loop
-         item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
+         item := Ucl.ucl_object_iterate (fileobj, iter'Access, True);
          exit when item = null;
 
          declare
-            key : String := Ucl.ucl_object_key (item);
+            --  key is the name of the repository, and source of the hash for repositories
+            key    : String := Ucl.ucl_object_key (item);
+            keystr : Text := SUS (key);
          begin
-            pkg_debug (1, "PkgConfig: parsing key '" & key & "'");
+            EV.pkg_debug (1, "PkgConfig: parsing key '" & key & "'");
+            if repositories.Contains (keystr) then
+               EV.pkg_debug (1, "PkgConfig: overwriting repository " & key);
+            end if;
+            if Ucl.type_is_object (item) then
+               add_repo (repo_obj => item, reponame => key, flags => flags);
+            else
+               EV.pkg_emit_error (SUS ("Ignoring bad configuration entry in " &
+                                    filename & ": " & Ucl.ucl_emit_yaml (item)));
+            end if;
          end;
       end loop;
    end walk_repo_obj;
+
+
+   --------------------------------------------------------------------
+   --  walk_repo_obj
+   --------------------------------------------------------------------
+   procedure add_repo (repo_obj : access constant libucl.ucl_object_t;
+                       reponame : String;
+                       flags    : Pkg_init_flags)
+   is
+      enabled      : access constant libucl.ucl_object_t;
+      reponame_txt : Text := SUS (reponame);
+   begin
+      EV.pkg_debug (1, "PkgConfig: parsing repository object " & reponame);
+
+      enabled := Ucl.ucl_object_find_key (repo_obj, "enabled");
+      if enabled = null then
+         enabled := Ucl.ucl_object_find_key (repo_obj, "ENABLED");
+      end if;
+
+      if enabled /= null then
+         declare
+            enable_repo : Boolean := Ucl.ucl_object_toboolean (enabled);
+            found_repo  : Boolean := repositories.Contains (reponame_txt);
+         begin
+            if found_repo and then not enable_repo then
+               --  Remove the existing data and forget everything parsed so far
+               EV.pkg_debug (1, "PkgConfig: disabling repo " & reponame);
+
+               repositories.Delete (reponame_txt);
+            end if;
+         end;
+         return;
+      end if;
+
+      declare
+         iter : aliased libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+         item : access constant libucl.ucl_object_t;
+
+         url          : Text;
+         pubkey       : Text;
+         mirror_type  : Text;
+         sig_type     : Text;
+         fingerprints : Text;
+         use_ipvx     : Ucl.int64;
+         priority     : Ucl.int64;
+         env          : access constant libucl.ucl_object_t;
+      begin
+         loop
+            item := Ucl.ucl_object_iterate (repo_obj, iter'Access, True);
+            exit when item = null;
+
+            declare
+               function content_is_string_type return Boolean;
+               function content_is_integer_type return Boolean;
+               function content_is_object_type return Boolean;
+               procedure generic_error_emission (flavor : String);
+
+               key  : String := Ucl.ucl_object_key (item);
+               ukey : String := uppercase (key);
+
+               procedure generic_error_emission (flavor : String) is
+               begin
+                  EV.pkg_emit_error (SUS ("Expecting " & flavor & " for the '" & key &
+                                       "' key of the '" & reponame & "' repo"));
+               end generic_error_emission;
+
+               function content_is_string_type return Boolean is
+               begin
+                  if Ucl.type_is_string (item) then
+                     return True;
+                  else
+                     generic_error_emission ("a string");
+                     return False;
+                  end if;
+               end content_is_string_type;
+
+               function content_is_integer_type return Boolean is
+               begin
+                  if Ucl.type_is_integer (item) then
+                     return True;
+                  else
+                     generic_error_emission ("an integer");
+                     return False;
+                  end if;
+               end content_is_integer_type;
+
+               function content_is_object_type return Boolean is
+               begin
+                  if Ucl.type_is_object (item) then
+                     return True;
+                  else
+                     generic_error_emission ("an object");
+                     return False;
+                  end if;
+               end content_is_object_type;
+
+            begin
+               if IsBlank (ukey) then
+                  null;
+               elsif ukey = "URL" then
+                  if content_is_string_type then
+                     url := SUS (Ucl.ucl_object_tostring (item));
+                  else
+                     return;
+                  end if;
+               elsif ukey = "PUBKEY" then
+                  if content_is_string_type then
+                     pubkey := SUS (Ucl.ucl_object_tostring (item));
+                  else
+                     return;
+                  end if;
+               elsif ukey = "MIRROR_TYPE" then
+                  if content_is_string_type then
+                     mirror_type := SUS (Ucl.ucl_object_tostring (item));
+                  else
+                     return;
+                  end if;
+               elsif ukey = "SIGNATURE_TYPE" then
+                  if content_is_string_type then
+                     sig_type := SUS (Ucl.ucl_object_tostring (item));
+                  else
+                     return;
+                  end if;
+               elsif ukey = "FINGERPRINTS" then
+                  if content_is_string_type then
+                     fingerprints := SUS (Ucl.ucl_object_tostring (item));
+                  else
+                     return;
+                  end if;
+               elsif ukey = "IP_VERSION" then
+                  if content_is_integer_type then
+                     use_ipvx := Ucl.ucl_object_toint (item);
+                     case use_ipvx is
+                        when 4 | 6 => null;
+                        when others => use_ipvx := 0;
+                     end case;
+                  else
+                     return;
+                  end if;
+               elsif ukey = "PRIORITY" then
+                  if content_is_integer_type then
+                     priority := Ucl.ucl_object_toint (item);
+                  else
+                     return;
+                  end if;
+               elsif ukey = "ENV" then
+                  if content_is_object_type then
+                     env := item;
+                  else
+                     return;
+                  end if;
+               end if;
+            end;
+         end loop;
+      end;
+
+      null;  --- TODO: rest
+   end add_repo;
 
 end Core.Config;

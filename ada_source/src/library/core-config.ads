@@ -42,10 +42,16 @@ package Core.Config is
       reposdir : String;
       dlevel   : ST_Debug_Level) return Pkg_Error_Type;
 
-   --  Retrieve configure value given it's keep
+   --  Retrieve configuration object given its key
    function pkg_config_get (key : String) return access constant libucl.ucl_object_t;
+
+   --  Retrieve string converted from ucl object given its key`
    function pkg_config_get_string (key : String) return String;
+
+   --  Retrieve boolean converted from ucl object given its key`
    function pkg_config_get_boolean (key : String) return Boolean;
+
+   --  Retrieve signed 64-bit integer converted from ucl object given its key`
    function pkg_config_get_int64 (key : String) return Ucl.int64;
 
    --  Expand config_object into human-readable text, configuration format
@@ -55,6 +61,7 @@ private
 
    parsed        : Boolean := False;
    config_object : access libucl.ucl_object_t;
+   repositories  : pkg_repos_crate.Map;
 
    type Config_Entry is
       record
@@ -273,11 +280,6 @@ private
        blank,
        SUS ("Save SAT problem to the specified dot file")),
 
-      (pkg_object,
-       SUS ("REPOSITORIES"),
-       blank,
-       SUS ("Repository config in ravensw.conf")),
-
       (pkg_array,
        SUS ("VALID_URL_SCHEME"),
        SUS ("rsw+http,rsw+https,https,http,file,ssh,ftp,ftps,rsw+ssh,rsw+ftp,rsw+ftps"),
@@ -308,13 +310,16 @@ private
                                           payload : String) return access libucl.ucl_object_t;
 
    procedure load_repositories (repodir  : String; flags : Pkg_init_flags);
-   procedure load_repo_files   (repodir  : String; flags : pkg_init_flags);
+   procedure load_repo_files   (repodir  : String; flags : Pkg_init_flags);
    procedure load_repo_file    (dfd      : Unix.File_Descriptor;
                                 repodir  : String;
                                 repofile : String;
                                 flags    : Pkg_init_flags);
-   procedure walk_repo_obj     (obj      : access constant libucl.ucl_object_t;
+   procedure walk_repo_obj     (fileobj  : access constant libucl.ucl_object_t;
                                 filename : String;
+                                flags    : Pkg_init_flags);
+   procedure add_repo          (repo_obj : access constant libucl.ucl_object_t;
+                                reponame : String;
                                 flags    : Pkg_init_flags);
 
 end Core.Config;

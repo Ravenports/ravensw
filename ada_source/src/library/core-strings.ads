@@ -1,7 +1,11 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Containers;
+
 package Core.Strings is
+
+   package CON renames Ada.Containers;
 
    blank : constant Text := SU.Null_Unbounded_String;
 
@@ -67,5 +71,12 @@ package Core.Strings is
 
    --  Returns index of first character of fragment (0 if not found)
    function start_index (S : String; fragment : String) return Natural;
+
+      --  True if strings are identical
+   function equivalent (A, B : Text) return Boolean;
+   function equivalent (A : Text; B : String) return Boolean;
+
+   --  Used for mapped containers
+   function map_hash (key : Text) return CON.Hash_Type;
 
 end Core.Strings;

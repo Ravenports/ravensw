@@ -13,7 +13,7 @@ package body Core.Ucl is
    --------------------------------------------------------------------
    --  ucl_object_find_key
    --------------------------------------------------------------------
-   function ucl_object_find_key (obj : access libucl.ucl_object_t;
+   function ucl_object_find_key (obj : access constant libucl.ucl_object_t;
                                  key : String) return access constant libucl.ucl_object_t
    is
       ckey   : ICS.chars_ptr;
@@ -275,6 +275,34 @@ package body Core.Ucl is
 
 
    --------------------------------------------------------------------
+   --  type_is_string
+   --------------------------------------------------------------------
+   function type_is_string (obj : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type libucl.ucl_type;
+      otype : libucl.ucl_type_t;
+   begin
+      otype := libucl.ucl_object_type (obj);
+
+      return otype = libucl.UCL_STRING;
+   end type_is_string;
+
+
+   --------------------------------------------------------------------
+   --  type_is_integer
+   --------------------------------------------------------------------
+   function type_is_integer (obj : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type libucl.ucl_type;
+      otype : libucl.ucl_type_t;
+   begin
+      otype := libucl.ucl_object_type (obj);
+
+      return otype = libucl.UCL_INT;
+   end type_is_integer;
+
+
+   --------------------------------------------------------------------
    --  ucl_object_replace_key
    --------------------------------------------------------------------
    function ucl_object_replace_key (top : access libucl.ucl_object_t;
@@ -316,6 +344,19 @@ package body Core.Ucl is
       --  Do NOT free result memory!
       return ICS.Value (result);
    end ucl_object_tostring_forced;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_tostring
+   --------------------------------------------------------------------
+   function ucl_object_tostring (obj : access constant libucl.ucl_object_t) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      result := libucl.ucl_object_tostring (obj);
+      --  Do NOT free result memory!
+      return ICS.Value (result);
+   end ucl_object_tostring;
 
 
    --------------------------------------------------------------------
@@ -373,5 +414,21 @@ package body Core.Ucl is
       --  Don't free ckey and cval
    end ucl_parser_register_variable;
 
+
+   --------------------------------------------------------------------
+   --  ucl_emit_yaml
+   --------------------------------------------------------------------
+   function ucl_emit_yaml (obj : access constant libucl.ucl_object_t) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      result := libucl.ucl_object_emit (obj, libucl.UCL_EMIT_YAML);
+      declare
+         dump : String := ICS.Value (result);
+      begin
+         ICS.Free (result);
+         return dump;
+      end;
+   end ucl_emit_yaml;
 
 end Core.Ucl;
