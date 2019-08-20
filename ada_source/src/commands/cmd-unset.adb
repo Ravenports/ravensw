@@ -1,10 +1,13 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Characters.Latin_1;
 with Core.Pkg;     use Core.Pkg;
 with Core.Strings; use Core.Strings;
 
 package body Cmd.Unset is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    --------------------------------------------------------------------
    --  execute_no_command
@@ -50,7 +53,8 @@ package body Cmd.Unset is
       TIO.Put_Line ("Version: " & progversion);
       TIO.Put_Line (pkg_config_dump);
 
-      --  TODO: show_repository_info
+      show_repository_info;
+
       return True;
    end extended_version_info;
 
@@ -58,9 +62,9 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    --  format_extconfig
    --------------------------------------------------------------------
-   function format_extconfig (name, value : String) return String
+   function format_extconfig (name, value : String; last : Boolean := False) return String
    is
-      width     : constant Natural := 24;
+      width     : constant Natural := 16;
       namespace : String (1 .. width) := (others => ' ');
       namelen   : Natural := name'Length;
    begin
@@ -68,8 +72,21 @@ package body Cmd.Unset is
          namelen := width;
       end if;
       namespace (1 .. namelen) := name (name'First .. name'First + namelen - 1);
-      return namespace & ": " & value;
+      if last then
+         return namespace & ": " & LAT.Quotation & value & LAT.Quotation;
+      else
+         return namespace & ": " & LAT.Quotation & value & LAT.Quotation & LAT.Comma;
+      end if;
    end format_extconfig;
+
+
+   --------------------------------------------------------------------
+   --  print_extconfig
+   --------------------------------------------------------------------
+   procedure print_extconfig (name, value : String; last : Boolean := False) is
+   begin
+      TIO.Put_Line (format_extconfig (name, value, last));
+   end print_extconfig;
 
 
    --------------------------------------------------------------------
@@ -85,5 +102,31 @@ package body Cmd.Unset is
       end loop;
       return True;
    end list_commands;
+
+
+   --------------------------------------------------------------------
+   --  show_repository_info
+   --------------------------------------------------------------------
+   procedure show_repository_info is
+      procedure list (position : pkg_repos_crate.Cursor);
+      procedure list (position : pkg_repos_crate.Cursor)
+      is
+         repo : T_pkg_repo renames pkg_repos_crate.Element (position);
+      begin
+         TIO.Put_Line ("  " & USS (repo.name) & ": {");
+         print_extconfig ("url", pkg_repo_name (repo));
+         print_extconfig ("enabled", pkg_repo_enabled (repo));
+         print_extconfig ("priority", pkg_repo_priority_type (repo));
+         print_extconfig ("mirror_type", pkg_repo_mirror_type (repo));
+         print_extconfig ("signature_type", pkg_repo_signature_type (repo));
+         print_extconfig ("fingerprints", pkg_repo_fingerprints (repo));
+         print_extconfig ("pubkey", pkg_repo_pubkey (repo));
+         print_extconfig ("ip_version", pkg_repo_ipv_type (repo), True);
+         TIO.Put_Line ("  }");
+      end list;
+   begin
+      TIO.Put_Line ("Repositories:");
+      Config.repositories.Iterate (list'Access);
+   end show_repository_info;
 
 end Cmd.Unset;

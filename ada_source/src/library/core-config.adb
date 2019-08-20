@@ -632,20 +632,14 @@ package body Core.Config is
    --------------------------------------------------------------------
    procedure load_repo_files (repodir : String; flags : Pkg_init_flags)
    is
-      package filename_crate is new CON.Vectors
-        (Element_Type => Text,
-         Index_Type   => Natural,
-         "="          => SU."=");
-      package sorter is new filename_crate.Generic_Sorting ("<" => SU."<");
-
-      procedure loadfile (position : filename_crate.Cursor);
+      procedure loadfile (position : text_crate.Cursor);
 
       fd : Unix.File_Descriptor;
       res : Boolean;
 
-      procedure loadfile (position : filename_crate.Cursor)
+      procedure loadfile (position : text_crate.Cursor)
       is
-         filename : String := USS (filename_crate.Element (position));
+         filename : String := USS (text_crate.Element (position));
       begin
          load_repo_file (dfd      => fd,
                          repodir  => repodir,
@@ -664,7 +658,7 @@ package body Core.Config is
       declare
          Search    : DIR.Search_Type;
          Dirent    : DIR.Directory_Entry_Type;
-         tempstore : filename_crate.Vector;
+         tempstore : text_crate.Vector;
          use type DIR.File_Kind;
       begin
          if DIR.Exists (repodir) and then
@@ -757,7 +751,7 @@ package body Core.Config is
 
 
    --------------------------------------------------------------------
-   --  walk_repo_obj
+   --  add_repo
    --------------------------------------------------------------------
    procedure add_repo (repo_obj : access constant libucl.ucl_object_t;
                        reponame : String;
@@ -765,27 +759,30 @@ package body Core.Config is
    is
       enabled      : access constant libucl.ucl_object_t;
       reponame_txt : Text := SUS (reponame);
+      new_repo     : T_pkg_repo;
+      found_repo   : Boolean;
+      enable_repo  : Boolean;
    begin
       EV.pkg_debug (1, "PkgConfig: parsing repository object " & reponame);
+
+      found_repo := repositories.Contains (reponame_txt);
 
       enabled := Ucl.ucl_object_find_key (repo_obj, "enabled");
       if enabled = null then
          enabled := Ucl.ucl_object_find_key (repo_obj, "ENABLED");
       end if;
 
-      if enabled /= null then
-         declare
-            enable_repo : Boolean := Ucl.ucl_object_toboolean (enabled);
-            found_repo  : Boolean := repositories.Contains (reponame_txt);
-         begin
-            if found_repo and then not enable_repo then
-               --  Remove the existing data and forget everything parsed so far
-               EV.pkg_debug (1, "PkgConfig: disabling repo " & reponame);
+      if enabled = null then
+         enable_repo := True;
+      else
+         enable_repo := Ucl.ucl_object_toboolean (enabled);
+         if found_repo and then not enable_repo then
+            --  Remove the existing data and forget everything parsed so far
+            EV.pkg_debug (1, "PkgConfig: disabling repo " & reponame);
 
-               repositories.Delete (reponame_txt);
-            end if;
-         end;
-         return;
+            repositories.Delete (reponame_txt);
+            return;
+         end if;
       end if;
 
       declare
@@ -799,7 +796,7 @@ package body Core.Config is
          fingerprints : Text;
          use_ipvx     : Ucl.int64;
          priority     : Ucl.int64;
-         env          : access constant libucl.ucl_object_t;
+         env_obj      : access constant libucl.ucl_object_t;
       begin
          loop
             item := Ucl.ucl_object_iterate (repo_obj, iter'Access, True);
@@ -901,16 +898,248 @@ package body Core.Config is
                   end if;
                elsif ukey = "ENV" then
                   if content_is_object_type then
-                     env := item;
+                     env_obj := item;
                   else
                      return;
                   end if;
                end if;
             end;
          end loop;
+
+         new_repo.name         := reponame_txt;
+         new_repo.enable       := enable_repo;
+         new_repo.url          := url;
+         new_repo.pubkey       := pubkey;
+         new_repo.fingerprints := fingerprints;
+
+         if equivalent (uppercase (mirror_type), "SRV") then
+            new_repo.mirror_type := SRV;
+         elsif equivalent (uppercase (mirror_type), "HTTP") then
+            new_repo.mirror_type := HTTP;
+         else
+            new_repo.mirror_type := NOMIRROR;
+         end if;
+
+         if equivalent (uppercase (sig_type), "PUBKEY") then
+            new_repo.signature_type := SIG_PUBKEY;
+         elsif equivalent (uppercase (sig_type), "FINGERPRINTS") then
+            new_repo.signature_type := SIG_FINGERPRINT;
+         else
+            new_repo.signature_type := SIG_NONE;
+         end if;
+
+         --  Priority for protocol: 1) flags, 2) config("IP_VERSION"), 3) repository("IP_VERSION")
+         if flags = init_none then
+            declare
+               use type Ucl.int64;
+               proto : Ucl.int64 := pkg_config_get_int64 ("IP_VERSION");
+            begin
+               if proto = 0 then
+                  case use_ipvx is
+                     when 4 => new_repo.flags := REPO_FLAGS_LIMIT_IPV4;
+                     when 6 => new_repo.flags := REPO_FLAGS_LIMIT_IPV6;
+                     when others => new_repo.flags := REPO_FLAGS_DEFAULT;
+                  end case;
+               else
+                  case proto is
+                     when 4 => new_repo.flags := REPO_FLAGS_LIMIT_IPV4;
+                     when 6 => new_repo.flags := REPO_FLAGS_LIMIT_IPV6;
+                     when others => new_repo.flags := REPO_FLAGS_DEFAULT;
+                  end case;
+               end if;
+            end;
+         else
+            if flags = init_use_ipv4 then
+               new_repo.flags := REPO_FLAGS_LIMIT_IPV4;
+            else
+               new_repo.flags := REPO_FLAGS_LIMIT_IPV6;
+            end if;
+         end if;
+
+         declare
+            use type Ucl.int64;
+         begin
+            if priority < Ucl.int64 (T_priority'First) then
+               new_repo.priority := T_priority (T_priority'First);
+            elsif priority > Ucl.int64 (T_priority'Last) then
+               new_repo.priority := T_priority (T_priority'Last);
+            else
+               new_repo.priority := T_priority (priority);
+            end if;
+         end;
+
+
+         if env_obj /= null then
+            declare
+               iter : aliased libucl.ucl_object_iter_t :=
+                              libucl.ucl_object_iter_t (System.Null_Address);
+               item : access constant libucl.ucl_object_t;
+            begin
+               loop
+                  item := Ucl.ucl_object_iterate (env_obj, iter'Access, True);
+                  exit when item = null;
+
+                  declare
+                     keytxt : Text := SUS (Ucl.ucl_object_key (item));
+                     valtxt : Text := SUS (Ucl.ucl_object_tostring_forced (item));
+                  begin
+                     if new_repo.env.Contains (keytxt) then
+                        new_repo.env.Replace (keytxt, valtxt);
+                     else
+                        new_repo.env.Insert (keytxt, valtxt);
+                     end if;
+                  end;
+               end loop;
+            end;
+         end if;
       end;
 
-      null;  --- TODO: rest
+      if found_repo then
+         repositories.Replace (reponame_txt, new_repo);
+      else
+         repositories.Insert (reponame_txt, new_repo);
+      end if;
    end add_repo;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_url
+   --------------------------------------------------------------------
+   function pkg_repo_url (repo : T_pkg_repo) return String is
+   begin
+      return USS (repo.url);
+   end pkg_repo_url;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_name
+   --------------------------------------------------------------------
+   function pkg_repo_name (repo : T_pkg_repo) return String is
+   begin
+      return USS (repo.name);
+   end pkg_repo_name;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_pubkey
+   --------------------------------------------------------------------
+   function pkg_repo_pubkey (repo : T_pkg_repo) return String is
+   begin
+      return USS (repo.pubkey);
+   end pkg_repo_pubkey;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_fingerprints
+   --------------------------------------------------------------------
+   function pkg_repo_fingerprints (repo : T_pkg_repo) return String is
+   begin
+      return USS (repo.fingerprints);
+   end pkg_repo_fingerprints;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_enabled #1
+   --------------------------------------------------------------------
+   function pkg_repo_enabled (repo : T_pkg_repo) return String is
+   begin
+      case repo.enable is
+         when False => return "no";
+         when True  => return "yes";
+      end case;
+   end pkg_repo_enabled;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_enabled #2
+   --------------------------------------------------------------------
+   function pkg_repo_enabled (repo : T_pkg_repo) return Boolean is
+   begin
+      return repo.enable;
+   end pkg_repo_enabled;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_mirror_type #1
+   --------------------------------------------------------------------
+   function pkg_repo_mirror_type (repo : T_pkg_repo) return String is
+   begin
+      case repo.mirror_type is
+         when SRV      => return "SRV";
+         when HTTP     => return "HTTP";
+         when NOMIRROR => return "NONE";
+      end case;
+   end pkg_repo_mirror_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_mirror_type #2
+   --------------------------------------------------------------------
+   function pkg_repo_mirror_type (repo : T_pkg_repo) return T_mirror_type is
+   begin
+      return repo.mirror_type;
+   end pkg_repo_mirror_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_signature_type #1
+   --------------------------------------------------------------------
+   function pkg_repo_signature_type (repo : T_pkg_repo) return String is
+   begin
+      case repo.signature_type is
+         when SIG_PUBKEY      => return "PUBKEY";
+         when SIG_FINGERPRINT => return "FINGERPRINTS";
+         when SIG_NONE        => return "NONE";
+      end case;
+   end pkg_repo_signature_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_signature_type #2
+   --------------------------------------------------------------------
+   function pkg_repo_signature_type (repo : T_pkg_repo) return T_signature is
+   begin
+      return repo.signature_type;
+   end pkg_repo_signature_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_priority_type #1
+   --------------------------------------------------------------------
+   function pkg_repo_priority_type (repo : T_pkg_repo) return String is
+   begin
+      return int2str (Integer (repo.priority));
+   end pkg_repo_priority_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_priority_type #2
+   --------------------------------------------------------------------
+   function pkg_repo_priority_type (repo : T_pkg_repo) return T_priority is
+   begin
+      return repo.priority;
+   end pkg_repo_priority_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_ipv_type #1
+   --------------------------------------------------------------------
+   function pkg_repo_ipv_type (repo : T_pkg_repo) return String is
+   begin
+      case repo.flags is
+         when REPO_FLAGS_LIMIT_IPV4 => return "4";
+         when REPO_FLAGS_LIMIT_IPV6 => return "6";
+         when REPO_FLAGS_DEFAULT    => return "0";
+      end case;
+   end pkg_repo_ipv_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_ipv_type #2
+   --------------------------------------------------------------------
+   function pkg_repo_ipv_type (repo : T_pkg_repo) return T_pkg_repo_flags is
+   begin
+      return repo.flags;
+   end pkg_repo_ipv_type;
 
 end Core.Config;

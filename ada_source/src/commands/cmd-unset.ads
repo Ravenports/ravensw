@@ -16,10 +16,15 @@ private
    function extended_version_info return Boolean;
 
    --  Provide uniform configuration formatting
-   function format_extconfig (name, value : String) return String;
+   function format_extconfig (name, value : String; last : Boolean := False) return String;
+
+   --  Print result of format_extconfig
+   procedure print_extconfig (name, value : String; last : Boolean := False);
 
    --  ravensw -l
    function list_commands return Boolean;
 
+   --  part of ravensw -vv
+   procedure show_repository_info;
 
 end Cmd.Unset;

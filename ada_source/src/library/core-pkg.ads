@@ -153,7 +153,7 @@ package Core.Pkg is
       HASH_SHA256,
       HASH_BLAKE2);
 
-   subtype T_priority is Natural;
+   subtype T_priority is Integer;
    subtype T_version is Integer;
 
    type T_fingerprint is
@@ -188,7 +188,7 @@ package Core.Pkg is
    --  Obsolete, but maintained for compatability
    type T_pkg_formats is (TAR, TGZ, TBZ, TXZ, TZS);
 
-   type T_pkg_repo_flags is (REPO_FLAGS_USE_IPV4, REPO_FLAGS_USE_IPV6);
+   type T_pkg_repo_flags is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
 
    --  Use the url record from fetch bind later
    type T_http_mirror is
@@ -242,6 +242,18 @@ package Core.Pkg is
          version           : T_version;
       end record;
 
+   package text_crate is new CON.Vectors
+     (Element_Type => Text,
+      Index_Type   => Natural,
+      "="          => SU."=");
+   package sorter is new text_crate.Generic_Sorting ("<" => SU."<");
+
+   package nvpair_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => Text,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent,
+      "="             => SU."=");
 
    type T_pkg_repo is
       record
@@ -251,16 +263,17 @@ package Core.Pkg is
          mirror_type    : T_mirror_type;
          signature_type : T_signature;
          fingerprints   : Text;
-         --  ssh
          trusted_fprint : T_fingerprint;
          revoked_fprint : T_fingerprint;
-         --  sshio
          meta           : T_pkg_repo_meta;
          enable         : Boolean;
          priority       : T_priority;
          flags          : T_pkg_repo_flags;
-         --  env
+         env            : nvpair_crate.Map;
          --  priv
+         --  ssh
+         --  sshio
+
          --  can't use immutable records inside containers
          --  srv and http are used mutually exclusively
          srv            : dns_srvinfo_crate.Vector;

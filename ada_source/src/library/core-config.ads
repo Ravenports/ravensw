@@ -57,11 +57,54 @@ package Core.Config is
    --  Expand config_object into human-readable text, configuration format
    function pkg_config_dump return String;
 
+   repositories  : pkg_repos_crate.Map;
+
+   --  Return repo's url
+   function pkg_repo_url (repo : T_pkg_repo) return String;
+
+   --  Return repo's name
+   function pkg_repo_name (repo : T_pkg_repo) return String;
+
+   --  Return repo's public key
+   function pkg_repo_pubkey (repo : T_pkg_repo) return String;
+
+   --  Return repo's fingerprints
+   function pkg_repo_fingerprints (repo : T_pkg_repo) return String;
+
+   --  Return repo's enabled as string (yes/no)
+   function pkg_repo_enabled (repo : T_pkg_repo) return String;
+
+   --  Return repo's enabled state
+   function pkg_repo_enabled (repo : T_pkg_repo) return Boolean;
+
+   --  Return repo's mirror type as string
+   function pkg_repo_mirror_type (repo : T_pkg_repo) return String;
+
+   --  Return repo's mirror type natively
+   function pkg_repo_mirror_type (repo : T_pkg_repo) return T_mirror_type;
+
+   --  Return repo's signature type as string
+   function pkg_repo_signature_type (repo : T_pkg_repo) return String;
+
+   --  Return repo's signature type natively
+   function pkg_repo_signature_type (repo : T_pkg_repo) return T_signature;
+
+   --  Return repo's priority type is string
+   function pkg_repo_priority_type (repo : T_pkg_repo) return String;
+
+   --  Return repo's priority type natively
+   function pkg_repo_priority_type (repo : T_pkg_repo) return T_priority;
+
+   --  Return repo's IP protocol type is string
+   function pkg_repo_ipv_type (repo : T_pkg_repo) return String;
+
+   --  Return repo's IP protocol type natively
+   function pkg_repo_ipv_type (repo : T_pkg_repo) return T_pkg_repo_flags;
+
 private
 
    parsed        : Boolean := False;
    config_object : access libucl.ucl_object_t;
-   repositories  : pkg_repos_crate.Map;
 
    type Config_Entry is
       record
