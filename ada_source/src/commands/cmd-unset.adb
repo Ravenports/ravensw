@@ -62,7 +62,7 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    --  format_extconfig
    --------------------------------------------------------------------
-   function format_extconfig (name, value : String; last : Boolean := False) return String
+   function format_extconfig (name, value : String; quotes, last : Boolean) return String
    is
       width     : constant Natural := 16;
       namespace : String (1 .. width) := (others => ' ');
@@ -72,10 +72,18 @@ package body Cmd.Unset is
          namelen := width;
       end if;
       namespace (1 .. namelen) := name (name'First .. name'First + namelen - 1);
-      if last then
-         return namespace & ": " & LAT.Quotation & value & LAT.Quotation;
+      if quotes then
+         if last then
+            return "    " & namespace & ": " & LAT.Quotation & value & LAT.Quotation;
+         else
+            return "    " & namespace & ": " & LAT.Quotation & value & LAT.Quotation & LAT.Comma;
+         end if;
       else
-         return namespace & ": " & LAT.Quotation & value & LAT.Quotation & LAT.Comma;
+         if last then
+            return "    " & namespace & ": " & value;
+         else
+            return "    " & namespace & ": " & value & LAT.Comma;
+         end if;
       end if;
    end format_extconfig;
 
@@ -83,9 +91,9 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    --  print_extconfig
    --------------------------------------------------------------------
-   procedure print_extconfig (name, value : String; last : Boolean := False) is
+   procedure print_extconfig (name, value : String; quotes : Boolean; last : Boolean := False) is
    begin
-      TIO.Put_Line (format_extconfig (name, value, last));
+      TIO.Put_Line (format_extconfig (name, value, quotes, last));
    end print_extconfig;
 
 
@@ -114,14 +122,24 @@ package body Cmd.Unset is
          repo : T_pkg_repo renames pkg_repos_crate.Element (position);
       begin
          TIO.Put_Line ("  " & USS (repo.name) & ": {");
-         print_extconfig ("url", pkg_repo_name (repo));
-         print_extconfig ("enabled", pkg_repo_enabled (repo));
-         print_extconfig ("priority", pkg_repo_priority_type (repo));
-         print_extconfig ("mirror_type", pkg_repo_mirror_type (repo));
-         print_extconfig ("signature_type", pkg_repo_signature_type (repo));
-         print_extconfig ("fingerprints", pkg_repo_fingerprints (repo));
-         print_extconfig ("pubkey", pkg_repo_pubkey (repo));
-         print_extconfig ("ip_version", pkg_repo_ipv_type (repo), True);
+         print_extconfig ("url", pkg_repo_url (repo), True);
+         print_extconfig ("enabled", pkg_repo_enabled (repo), False);
+         if pkg_repo_mirror_type (repo) /= NOMIRROR then
+            print_extconfig ("mirror_type", pkg_repo_mirror_type (repo), True);
+         end if;
+         if pkg_repo_signature_type (repo) /= SIG_NONE then
+            print_extconfig ("signature_type", pkg_repo_signature_type (repo), True);
+         end if;
+         if not IsBlank (pkg_repo_fingerprints (repo)) then
+            print_extconfig ("fingerprints", pkg_repo_fingerprints (repo), True);
+         end if;
+         if not IsBlank (pkg_repo_pubkey (repo)) then
+            print_extconfig ("pubkey", pkg_repo_pubkey (repo), True);
+         end if;
+         if pkg_repo_ipv_type (repo) /= REPO_FLAGS_DEFAULT then
+            print_extconfig ("ip_version", pkg_repo_ipv_type (repo), False);
+         end if;
+         print_extconfig ("priority", pkg_repo_priority_type (repo), False, True);
          TIO.Put_Line ("  }");
       end list;
    begin
