@@ -4,7 +4,7 @@
 with Interfaces.C.Strings;
 with Interfaces.C.Extensions;
 
-package body Core.Ucl is
+package body Ucl is
 
    package IC  renames Interfaces.C;
    package ICS renames Interfaces.C.Strings;
@@ -159,7 +159,7 @@ package body Core.Ucl is
    --  ucl_parser_add_fd
    --------------------------------------------------------------------
    function ucl_parser_add_fd (parser : T_parser;
-                               fd     : Unix.File_Descriptor) return Boolean
+                               fd     : Core.Unix.File_Descriptor) return Boolean
    is
       use type ICX.bool;
 
@@ -431,4 +431,4 @@ package body Core.Ucl is
       end;
    end ucl_emit_yaml;
 
-end Core.Ucl;
+end Ucl;

@@ -2,7 +2,7 @@
 --  Reference: ../License.txt
 
 with libucl;
-with Core.Ucl;
+with Ucl;
 
 package Core.Object is
 

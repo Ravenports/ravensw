@@ -5,7 +5,7 @@ with libucl;
 with System;
 with Core.Unix;
 
-package Core.Ucl is
+package Ucl is
 
    subtype T_parser is System.Address;
    type int64 is range -(2**63) .. +(2**63 - 1);
@@ -48,7 +48,7 @@ package Core.Ucl is
 
    --  Equivalent:  ucl_parser_add_fd (p, fd) return Extensions.bool;
    function ucl_parser_add_fd (parser : T_parser;
-                               fd     : Unix.File_Descriptor) return Boolean;
+                               fd     : Core.Unix.File_Descriptor) return Boolean;
 
    --  Equivalent: ucl_parser_get_error (p) return Interfaces.C.Strings.chars_ptr;
    function ucl_parser_get_error (parser : T_parser) return String;
@@ -107,4 +107,4 @@ private
                                           flags : libucl.ucl_string_flags)
                                           return access libucl.ucl_object_t;
 
-end Core.Ucl;
+end Ucl;

@@ -1,25 +1,24 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-with Core.Ucl;
 with Interfaces.C;
 
 package body Core.Object is
 
    package IC renames Interfaces.C;
 
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    --  pkg_object_string
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    function pkg_object_string (obj : access constant libucl.ucl_object_t) return String is
    begin
       return Ucl.ucl_object_tostring_forced (obj);
    end pkg_object_string;
 
 
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    --  pkg_object_string
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    function pkg_object_int (obj : access constant libucl.ucl_object_t) return Ucl.int64
    is
       use type libucl.ucl_type;
@@ -34,9 +33,9 @@ package body Core.Object is
    end pkg_object_int;
 
 
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    --  pkg_object_bool
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    function pkg_object_bool (obj : access constant libucl.ucl_object_t) return Boolean
    is
       use type libucl.ucl_type;
@@ -51,9 +50,9 @@ package body Core.Object is
    end pkg_object_bool;
 
 
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    --  pkg_object_dump
-   --------------------------------------------------------------------------------------------
+   --------------------------------------------------------------------
    function pkg_object_dump (obj : access constant libucl.ucl_object_t) return String
    is
    begin
