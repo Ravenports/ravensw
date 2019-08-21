@@ -383,7 +383,60 @@ package body Core.Config is
 
       load_repositories (reposdir, flags);
 
-      --  TODO: validate the different scheme
+      --  validate the different scheme
+      declare
+         procedure scan (position : pkg_repos_crate.Cursor);
+
+         invalid_url    : Boolean := False;
+         invalid_scheme : Boolean := False;
+
+         procedure scan (position : pkg_repos_crate.Cursor)
+         is
+            repo  : T_pkg_repo renames pkg_repos_crate.Element (position);
+            url   : constant String := pkg_repo_url (repo);
+            delim : constant String := ":/";
+         begin
+            if not invalid_url and then not invalid_scheme then
+               if not contains (url, delim) then
+                  EV.pkg_emit_error (SUS ("invalid url: " & url));
+                  invalid_url := True;
+               end if;
+
+               if not invalid_url then
+                  fatal_errors := True;
+                  declare
+                     sobj   : access constant libucl.ucl_object_t;
+                     iter   : aliased libucl.ucl_object_iter_t :=
+                                      libucl.ucl_object_iter_t (System.Null_Address);
+                     item   : access constant libucl.ucl_object_t;
+                     scheme : constant String := part_1 (url, delim);
+                  begin
+                     sobj := Ucl.ucl_object_find_key (config_object, conf_valid_scheme);
+                     loop
+                        exit when not fatal_errors;
+                        item := Ucl.ucl_object_iterate (sobj, iter'Access, True);
+                        exit when item = null;
+
+                        if Ucl.ucl_object_tostring_forced (item) = scheme then
+                           fatal_errors := False;
+                        end if;
+                     end loop;
+                  end;
+
+                  if fatal_errors then
+                     EV.pkg_emit_error (SUS ("invalid scheme " & part_1 (url, delim)));
+                     invalid_scheme := True;
+                  end if;
+               end if;
+            end if;
+         end scan;
+      begin
+         repositories.Iterate (scan'Access);
+         if invalid_url or else invalid_scheme then
+            return EPKG_FATAL;
+         end if;
+      end;
+
       --  TODO: bypass resolv.conf
 
       declare
