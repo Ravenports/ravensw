@@ -39,7 +39,8 @@ private
          error     : Pkg_Error_Type;
       end record;
 
-   subtype T_Word is Natural range 0 .. 2 ** 16;
+   type T_Word is range 0 .. 2 ** 32 - 1;
+   subtype T_Wordstr is String (1 .. 4);
 
    type T_GNU_tag is
       record
@@ -89,8 +90,18 @@ private
    --  If necessary, specify floating point capability
    function determine_fpu (elfhdr : access gelf_h.GElf_Ehdr; arch : T_arch) return T_fpu;
 
+   --  Return abi given archive and elfclass, if pertinent
    function determine_abi (elfhdr : access gelf_h.GElf_Ehdr;
                            arch   : T_arch;
                            size   : T_wordsize) return T_abi;
+
+   --  Round up by y, but y has to be a power of 2
+   function roundup2 (x, y : Natural) return Natural;
+
+   --  Decode 4-character string into word (big endian)
+   function be32dec (wordstr : T_Wordstr) return T_Word;
+
+   --  Decode 4-character string into word (littler endian)
+   function le32dec (wordstr : T_Wordstr) return T_Word;
 
 end Core.Elf_Operations;

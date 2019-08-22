@@ -3,6 +3,7 @@
 
 with Ada.Environment_Variables;
 with Ada.Directories;
+with Ada.Unchecked_Conversion;
 
 with Core.Unix;
 with Core.Event;
@@ -236,9 +237,9 @@ package body Core.Elf_Operations is
       function create_strversion_type2 (tag : T_GNU_tag) return String is
       begin
          return
-           int2str (tag.version_major) & "." &
-           int2str (tag.version_minor) & "." &
-           int2str (tag.version_point);
+           int2str (Integer (tag.version_major)) & "." &
+           int2str (Integer (tag.version_minor)) & "." &
+           int2str (Integer (tag.version_point));
       end create_strversion_type2;
 
 
@@ -516,15 +517,155 @@ package body Core.Elf_Operations is
 
 
    --------------------------------------------------------------------
+   --  roundup2
+   --------------------------------------------------------------------
+   function roundup2 (x, y : Natural) return Natural
+   is
+      --  c code: (((x)+((y)-1))&(~((y)-1)))  /* if y is powers of two */
+      type pos32 is mod 2 ** 32;
+      xx   : pos32 := pos32 (x);
+      yym1 : pos32 := pos32 (y - 1);
+   begin
+      return Natural ((xx + yym1) and (not yym1));
+   end roundup2;
+
+
+   --------------------------------------------------------------------
+   --  le32dec
+   --------------------------------------------------------------------
+   function le32dec (wordstr : T_Wordstr) return T_Word
+   is
+      p0 : Integer := Character'Pos (wordstr (wordstr'First));
+      p1 : Integer := Character'Pos (wordstr (wordstr'First + 1));
+      p2 : Integer := Character'Pos (wordstr (wordstr'First + 2));
+      p3 : Integer := Character'Pos (wordstr (wordstr'First + 3));
+   begin
+      return T_Word
+        (p0 +
+        (p1 * 2 ** 8) +
+        (p2 * 2 ** 16) +
+        (p3 * 2 ** 24));
+   end le32dec;
+
+
+
+   --------------------------------------------------------------------
+   --  be32dec
+   --------------------------------------------------------------------
+   function be32dec (wordstr : T_Wordstr) return T_Word
+   is
+      p0 : Integer := Character'Pos (wordstr (wordstr'First));
+      p1 : Integer := Character'Pos (wordstr (wordstr'First + 1));
+      p2 : Integer := Character'Pos (wordstr (wordstr'First + 2));
+      p3 : Integer := Character'Pos (wordstr (wordstr'First + 3));
+   begin
+      return T_Word
+        (p3 +
+        (p2 * 2 ** 8) +
+        (p1 * 2 ** 16) +
+        (p0 * 2 ** 24));
+   end be32dec;
+
+
+   --------------------------------------------------------------------
    --  elf_note_analyse
    --------------------------------------------------------------------
    function elf_note_analyse (data   : access libelf_h.u_Elf_Data;
                               elfhdr : access gelf_h.GElf_Ehdr;
                               info   : out T_elf_info) return Boolean
    is
+      subtype note_buffer is String (1 .. Libelf.elf_note_size);
+
+      NT_VERSION     : constant Natural := 1;
+      NT_GNU_ABI_TAG : constant Natural := 1;
+      ELFDATA2MSB    : constant Natural := 2;
+
+      function buffer_to_elfnote is
+        new Ada.Unchecked_Conversion (Source => note_buffer,
+                                      Target => elfdefinitions_h.Elf_Note);
+
+      buffer : String := Libelf.convert_elf_data_buffer (data);
+      index  : Natural := buffer'First;
+      bnote  : note_buffer;
+      note   : elfdefinitions_h.Elf_Note;
+      found  : Boolean := False;
+
+      eidata : Libelf.EI_Byte := Libelf.get_ident_byte (elfhdr, Libelf.EI_DATA);
+      bigend : constant Boolean := (eidata = ELFDATA2MSB);
+
+      invalid_osname : constant String := "unknown";
    begin
-      info.osname := SUS ("fuck-off");
-      return False;
+
+      loop
+         exit when found;
+         exit when index + note_buffer'Length - 1 > buffer'Last;
+         bnote := buffer (index .. index + note_buffer'Length - 1);
+         note := buffer_to_elfnote (bnote);
+         index := index + note_buffer'Length;
+         declare
+            name : String := buffer (index .. index + Natural (note.n_namesz) - 1);
+         begin
+            index := index + roundup2 (Natural (note.n_namesz), 4);
+            if name = "DragonFly" or else
+              name = "FreeBSD" or else
+              name = "NetBSD"
+            then
+               if Natural (note.n_type) = NT_VERSION then
+                  found := True;
+                  info.use_gnu_tag := False;
+                  info.osname := SUS (name);
+               end if;
+               --  info.osversion
+            elsif name = "GNU" then
+               if Natural (note.n_type) = NT_GNU_ABI_TAG then
+                  --  verify we have 16 more characters in the buffer.
+                  --  If so, set tag and osname.
+                  --  If not, output debug message
+                  if index + 15 <= buffer'Last then
+                     found := True;
+                     info.use_gnu_tag := True;
+                     declare
+                        workword : T_Word;
+                     begin
+                        for x in 1 .. 4 loop
+                           if bigend then
+                              workword := be32dec (buffer (index .. index + 3));
+                           else
+                              workword := le32dec (buffer (index .. index + 3));
+                           end if;
+                           case x is
+                              when 1 => info.tag.os_descriptor := workword;
+                              when 2 => info.tag.version_major := workword;
+                              when 3 => info.tag.version_minor := workword;
+                              when 4 => info.tag.version_point := workword;
+                           end case;
+                           index := index + 4;
+                        end loop;
+                     end;
+                     case info.tag.os_descriptor is
+                        when 0 => info.osname := SUS ("Linux");
+                        when 1 => info.osname := SUS ("GNU");
+                        when 2 => info.osname := SUS ("Solaris");
+                        when 3 => info.osname := SUS ("FreeBSD");
+                        when 4 => info.osname := SUS ("NetBSD");
+                        when 5 => info.osname := SUS ("Syllable");
+                        when others => info.osname := SUS (invalid_osname);
+                     end case;
+                  else
+                     EV.pkg_debug (3, "elf-note: NT_GNU_ABI_TAG found, but tag < 16 chars");
+                  end if;
+               end if;
+            elsif name = "" then
+               if Natural (note.n_type) = NT_VERSION then
+                  found := True;
+                  info.use_gnu_tag := False;
+                  info.osname := SUS (invalid_osname);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      return found;
    end elf_note_analyse;
 
 

@@ -144,4 +144,23 @@ package body Libelf is
    end get_ident_byte;
 
 
+   --------------------------------------------------------------------
+   --  convert_elf_data_buffer
+   --------------------------------------------------------------------
+   function convert_elf_data_buffer (data : access libelf_h.Elf_Data) return String
+   is
+   begin
+      return ICS.Value (Item   => data.d_buf, Length => IC.size_t (data.d_size));
+   end convert_elf_data_buffer;
+
+
+   --------------------------------------------------------------------
+   --  elf_note_size
+   --------------------------------------------------------------------
+   function elf_note_size return Natural is
+      --  size returns #bits, so divide by 8 to get #bytes
+   begin
+      return (3 * IC.unsigned'Size) / 8;
+   end elf_note_size;
+
 end Libelf;
