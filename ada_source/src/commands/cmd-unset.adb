@@ -30,7 +30,7 @@ package body Cmd.Unset is
          return extended_version_info;
       end if;
       if comline.glob_list then
-         return list_commands;
+         return list_available_commands;
       end if;
       return True;
    end execute_no_command;
@@ -101,18 +101,35 @@ package body Cmd.Unset is
 
 
    --------------------------------------------------------------------
-   --  list_command
+   --  list_available_comands
    --------------------------------------------------------------------
-   function list_commands return Boolean
+   function list_available_commands return Boolean
    is
+      type cols is range 1 .. 5;
+      column : cols := cols'First;
    begin
       for command in Command_verb'Range loop
-         if command /= Command_verb'First then
-            TIO.Put_Line (convert_command_enum_to_label (command));
-         end if;
+         declare
+            C : constant String := convert_command_enum_to_label (command);
+         begin
+            case command is
+               when cv_unset => null;
+               when others =>
+                  TIO.Put (C);
+                  if column = cols'Last then
+                     column := cols'First;
+                     TIO.Put_Line ("");
+                  else
+                     column := column + 1;
+                  end if;
+            end case;
+         end;
       end loop;
+      if column > cols'First then
+         TIO.Put_Line ("");
+      end if;
       return True;
-   end list_commands;
+   end list_available_commands;
 
 
    --------------------------------------------------------------------

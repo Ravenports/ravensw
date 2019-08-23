@@ -22,7 +22,7 @@ private
    procedure print_extconfig (name, value : String; quotes : Boolean; last : Boolean := False);
 
    --  ravensw -l
-   function list_commands return Boolean;
+   function list_available_commands return Boolean;
 
    --  part of ravensw -vv
    procedure show_repository_info;
