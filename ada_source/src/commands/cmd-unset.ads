@@ -24,6 +24,9 @@ private
    --  ravensw -l
    function list_available_commands return Boolean;
 
+   --  ravensw -N
+   function do_activation_test return Boolean;
+
    --  part of ravensw -vv
    procedure show_repository_info;
 

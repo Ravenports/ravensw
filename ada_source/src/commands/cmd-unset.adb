@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with Core.Pkg;     use Core.Pkg;
 with Core.Strings; use Core.Strings;
+with Core.Status;
 
 package body Cmd.Unset is
 
@@ -16,9 +17,12 @@ package body Cmd.Unset is
    is
       result : Pkg_Error_Type;
    begin
+      --  switch -v
       if comline.glob_version = 1 then
          return basic_version_info;
       end if;
+
+      --  switch -vv
       if comline.glob_version = 2 then
          result := pkg_ini (path     => USS (comline.glob_config_file),
                             reposdir => USS (comline.glob_repo_config_dir),
@@ -30,9 +34,16 @@ package body Cmd.Unset is
          end if;
          return extended_version_info;
       end if;
+
+      --  switch -l
       if comline.glob_list then
          return list_available_commands;
       end if;
+
+      if comline.glob_status_check then
+         return do_activation_test;
+      end if;
+
       return True;
    end execute_no_command;
 
@@ -200,5 +211,33 @@ package body Cmd.Unset is
       TIO.Put_Line ("Repositories:");
       Config.repositories_order.Iterate (list'Access);
    end show_repository_info;
+
+
+   --------------------------------------------------------------------
+   --  do_activation_test
+   --------------------------------------------------------------------
+   function do_activation_test return Boolean
+   is
+      result : Status.Pkg_Status_Output;
+   begin
+      result := Status.ravensw_status;
+
+      case result.status is
+         when Status.PKG_STATUS_NODB =>
+            TIO.Put_Line (TIO.Standard_Error, progname & " database doesn't exist.");
+         when Status.PKG_STATUS_BAD_DB =>
+            TIO.Put_Line (TIO.Standard_Error, progname & " database exists but doesn't work.");
+         when Status.PKG_STATUS_NOPACKAGES =>
+            TIO.Put_Line (TIO.Standard_Error, "no packages registered.");
+         when Status.PKG_STATUS_ACTIVE =>
+            TIO.Put_Line (int2str (result.count) & " packages installed.");
+      end case;
+
+      case result.status is
+         when Status.PKG_STATUS_ACTIVE => return True;
+         when others            => return False;
+      end case;
+
+   end do_activation_test;
 
 end Cmd.Unset;

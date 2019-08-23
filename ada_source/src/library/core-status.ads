@@ -5,16 +5,17 @@ package Core.Status is
 
    type Pkg_Status is
      (PKG_STATUS_NODB,
+      PKG_STATUS_BAD_DB,
       PKG_STATUS_NOPACKAGES,
       PKG_STATUS_ACTIVE);
 
    type Pkg_Status_Output is
       record
          status : Pkg_Status;
-         count  : Natural;
+         count  : Integer;
       end record;
 
    --  Used for activation status check
-   function pkg_status return Pkg_Status_Output;
+   function ravensw_status return Pkg_Status_Output;
 
 end Core.Status;

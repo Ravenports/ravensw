@@ -229,6 +229,9 @@ package sqlite_h is
    function sqlite3_initialize return IC.int;
    pragma Import (C, sqlite3_initialize);
 
+   function sqlite3_shutdown return IC.int;
+   pragma Import (C, sqlite3_shutdown);
+
 private
 
    type sqlite3      is limited null record;
