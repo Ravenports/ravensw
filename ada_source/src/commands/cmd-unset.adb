@@ -23,7 +23,8 @@ package body Cmd.Unset is
          result := pkg_ini (path     => USS (comline.glob_config_file),
                             reposdir => USS (comline.glob_repo_config_dir),
                             flags    => comline.global_init_flags,
-                            dlevel   => comline.glob_debug);
+                            dlevel   => comline.glob_debug,
+                            options  => USS (comline.glob_option));
          if result /= EPKG_OK then
             return False;
          end if;
@@ -116,9 +117,11 @@ package body Cmd.Unset is
 
       column : cols := cols'First;
    begin
-      for N in 1 .. cols_plus1 loop
-         col_length (cols (N)) := minlength + 1;
-      end loop;
+      if cols_plus1 > 0 then
+         for N in 1 .. cols_plus1 loop
+            col_length (cols (N)) := minlength + 1;
+         end loop;
+      end if;
 
       declare
          po_index : Natural := 1;  --  Zero-indexed, but we want to skip the first command

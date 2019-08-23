@@ -39,9 +39,10 @@ package body Core.Config is
    function pkg_init
      (path     : String;
       reposdir : String;
-      dlevel   : ST_Debug_Level) return Pkg_Error_Type is
+      dlevel   : ST_Debug_Level;
+      options  : String) return Pkg_Error_Type is
    begin
-      return pkg_ini (path, reposdir, init_none, dlevel);
+      return pkg_ini (path, reposdir, init_none, dlevel, options);
    end pkg_init;
 
 
@@ -88,7 +89,8 @@ package body Core.Config is
      (path     : String;
       reposdir : String;
       flags    : Pkg_init_flags;
-      dlevel   : ST_Debug_Level) return Pkg_Error_Type
+      dlevel   : ST_Debug_Level;
+      options  : String) return Pkg_Error_Type
    is
       conffd       : Unix.File_Descriptor;
       default_conf : constant String := rel_prefix & "/etc/ravensw.conf";
@@ -302,6 +304,50 @@ package body Core.Config is
                   EV.pkg_emit_error (SUS ("pkg_ini: unsupported type: " & item.c_type'Img));
             end;
          end loop;
+
+         --  Now overwrite any configuration options defined by command line
+         if not IsBlank (options) then
+            declare
+               numfields : constant Natural := count_char (options, LAT.Vertical_Line) + 1;
+            begin
+               for F in 1 .. numfields loop
+                  declare
+                     delimiter : String := LAT.Vertical_Line & "";
+                     nvequals  : String := "=";
+                     nvpair : String := specific_field (options, F, delimiter);
+                  begin
+                     if contains (nvpair, nvequals) then
+                        declare
+                           name : constant String := uppercase (part_1 (nvpair, nvequals));
+                           val  : constant String := part_2 (nvpair, nvequals);
+                           contype : Config_Entry_Type;
+                        begin
+                           iter := libucl.ucl_object_iter_t (System.Null_Address);
+                           loop
+                              item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
+                              if item = null then
+                                 EV.pkg_debug (1, "option not set (key not found): " & nvpair);
+                              end if;
+                              exit when item = null;
+
+                              if Ucl.ucl_object_key (item) = name then
+                                 contype := convert (item);
+                                 obj := convert_string_to_ucl_object (contype, val);
+                                 inserted :=
+                                   Ucl.ucl_object_insert_key
+                                     (top      => ncfg,
+                                      elt      => obj,
+                                      key      => name,
+                                      copy_key => True);
+                                 exit;
+                              end if;
+                           end loop;
+                        end;
+                     end if;
+                  end;
+               end loop;
+            end;
+         end if;
 
          if not virgin then
             iter := libucl.ucl_object_iter_t (System.Null_Address);

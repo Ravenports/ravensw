@@ -2,12 +2,14 @@
 --  Reference: ../License.txt
 
 with Ada.Command_Line;
+with Ada.Characters.Latin_1;
 
 with Core.Strings; use Core.Strings;
 
 package body Cmd.Line is
 
    package ACL renames Ada.Command_Line;
+   package LAT renames Ada.Characters.Latin_1;
 
    --------------------------------------------------------------------
    --  parse_command_line
@@ -1208,7 +1210,6 @@ package body Cmd.Line is
                when global_config      => result.glob_config_file     := datumtxt;
                when global_repoconfdir => result.glob_repo_config_dir := datumtxt;
                when global_rootdir     => result.glob_root_dir        := datumtxt;
-               when global_option      => result.glob_option          := datumtxt;
                when global_jail        => result.glob_jail            := datumtxt;
                when generic_repo_name  => result.verb_repo_name       := datumtxt;
                when which_filename     => result.which_filename       := datumtxt;
@@ -1240,6 +1241,12 @@ package body Cmd.Line is
                when version_not_char   => result.version_not_char     := datum (datum'First);
                when version_origin     => result.version_origin       := datumtxt;
                when version_pkgname    => result.version_pkg_name     := datumtxt;
+               when global_option      =>
+                  if IsBlank (result.glob_option) then
+                     result.glob_option := datumtxt;
+                  else
+                     SU.Append (result.glob_option, LAT.Vertical_Line & datum);
+                  end if;
                when help =>
                   result.help_command := get_command (datum);
                   if result.help_command = cv_unset then
