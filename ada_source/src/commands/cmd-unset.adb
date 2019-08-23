@@ -13,31 +13,31 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    --  execute_no_command
    --------------------------------------------------------------------
-   function execute_no_command (comline : Cldata) return Boolean
-   is
-      result : Pkg_Error_Type;
+   function execute_no_command (comline : Cldata) return Boolean is
    begin
       --  switch -v
       if comline.glob_version = 1 then
          return basic_version_info;
       end if;
 
-      --  switch -vv
-      if comline.glob_version = 2 then
-         result := pkg_ini (path     => USS (comline.glob_config_file),
-                            reposdir => USS (comline.glob_repo_config_dir),
-                            flags    => comline.global_init_flags,
-                            dlevel   => comline.glob_debug,
-                            options  => USS (comline.glob_option));
-         if result /= EPKG_OK then
-            return False;
-         end if;
-         return extended_version_info;
-      end if;
-
       --  switch -l
       if comline.glob_list then
          return list_available_commands;
+      end if;
+
+      --  Below this line, configuration is needed (invoke pkg_ini)
+      if pkg_ini (path     => USS (comline.glob_config_file),
+                  reposdir => USS (comline.glob_repo_config_dir),
+                  flags    => comline.global_init_flags,
+                  dlevel   => comline.glob_debug,
+                  options  => USS (comline.glob_option)) /= EPKG_OK
+      then
+         return False;
+      end if;
+
+      --  switch -vv
+      if comline.glob_version = 2 then
+         return extended_version_info;
       end if;
 
       if comline.glob_status_check then
