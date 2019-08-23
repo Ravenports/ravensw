@@ -33,7 +33,7 @@ package Libelf is
    --  Advances internal pointer to next section and populate scn variable.
    --  Returns False if at end of header
    function elf_next_section (elf_obj : access libelf_h.Elf;
-                              section : access libelf_h.Elf_Scn) return Boolean;
+                              section : access libelf_h.Elf_Scn) return access libelf_h.Elf_Scn;
 
    --  Advances to section's header.  Returns False if problem occurred
    function elf_get_section_header (section : access libelf_h.Elf_Scn;

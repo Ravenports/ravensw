@@ -57,7 +57,7 @@ package body Core.Elf_Operations is
       fd          : Unix.File_Descriptor := Unix.not_connected;
       elf_obj     : access libelf_h.Elf;
       elf_header  : aliased gelf_h.GElf_Ehdr;
-      elf_section : aliased libelf_h.Elf_Scn;
+      elf_section : access libelf_h.Elf_Scn := null;
       info        : T_elf_info;
       clean_now   : Boolean := False;
       success     : Boolean;
@@ -117,9 +117,10 @@ package body Core.Elf_Operations is
       begin
          if not clean_now then
             loop
-               exit when not Libelf.elf_next_section (elf_obj, elf_section'Access);
+               elf_section := Libelf.elf_next_section (elf_obj, elf_section);
+               exit when elf_section = null;
 
-               if not Libelf.elf_get_section_header (section => elf_section'Access,
+               if not Libelf.elf_get_section_header (section => elf_section,
                                                      sheader => section_header'Access)
                then
                   EV.pkg_emit_error (SUS ("elfparse/getshdr() failed: " & Libelf.elf_errmsg));
@@ -130,7 +131,7 @@ package body Core.Elf_Operations is
 
                if Libelf.section_header_is_elf_note (section_header'Access) then
                   declare
-                     data : access libelf_h.Elf_Data := Libelf.elf_getdata (elf_section'Access);
+                     data : access libelf_h.Elf_Data := Libelf.elf_getdata (elf_section);
                   begin
                      if elf_note_analyse (data, elf_header, info) then
                         --  OS note found

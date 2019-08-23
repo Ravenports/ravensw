@@ -88,12 +88,10 @@ package body Libelf is
    --  elf_next_section
    --------------------------------------------------------------------
    function elf_next_section (elf_obj : access libelf_h.Elf;
-                              section : access libelf_h.Elf_Scn) return Boolean
+                              section : access libelf_h.Elf_Scn) return access libelf_h.Elf_Scn
    is
-      result : access libelf_h.Elf_Scn;
    begin
-      result := libelf_h.elf_nextscn (elf_obj, section);
-      return (result /= null);
+      return libelf_h.elf_nextscn (elf_obj, section);
    end elf_next_section;
 
 
@@ -106,7 +104,7 @@ package body Libelf is
       result : access gelf_h.GElf_Shdr;
    begin
       result := gelf_h.gelf_getshdr (section, sheader);
-      return (result /= sheader);
+      return (result /= null);
    end elf_get_section_header;
 
 
