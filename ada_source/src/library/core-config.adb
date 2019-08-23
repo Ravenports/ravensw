@@ -122,7 +122,7 @@ package body Core.Config is
          --  overwrite default value for conf_abi with the calculated abi value
          for index in config_entries'Range loop
             if equivalent (config_entries (index).key, conf_abi) then
-               config_entries (index).key := abicalc.abi;
+               config_entries (index).default := abicalc.abi;
                exit;
             end if;
          end loop;

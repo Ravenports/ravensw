@@ -16,6 +16,6 @@ package Core is
    rel_prefix     : constant String := "raven";
    install_prefix : constant String := "/" & rel_prefix;
    jail_supported : constant Boolean := False;   --  FreeBSD only
-   platform       : constant T_platform := generic_unix;
+   platform       : constant T_platform := dragonfly;
 
 end Core;
