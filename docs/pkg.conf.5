@@ -15,17 +15,17 @@
 .\"     @(#)pkg.1
 .\" $FreeBSD$
 .\"
-.Dd February 25, 2019
+.Dd August 23, 2019
 .Dt PKG.CONF 5
 .Os
 .Sh NAME
 .Nm "ravensw.conf"
 .Nd system-wide configuration file for
-.Xr ravensw 1
+.Xr ravensw 8
 .Sh DESCRIPTION
 .Nm
 is the system-wide configuration file used by the
-.Xr ravensw 1
+.Xr ravensw 8
 tools.
 .Pp
 The default location of this file is
@@ -146,25 +146,6 @@ Default: NO.
 .It Cm HTTP_USER_AGENT: string
 Define User-agent to be sent to HTTP server when getting reposity
 data
-.It Cm IGNORE_OSVERSION: boolean [FreeBSD specific]
-Ignore FreeBSD OS version check, useful on -STABLE and -CURRENT branches.
-Default: NO.
-.It Cm INDEXDIR: string
-If set, the directory to search for
-.Cm INDEXFILE
-in.
-If unset,
-.Cm PORTSDIR
-will be searched instead.
-Default: not set.
-.It Cm INDEXFILE: string
-The filename of the ports index, searched for in
-.Cm INDEXDIR
-or
-.Cm PORTSDIR .
-Default: INDEX-N where
-.Cm N
-is the OS major version number.
 .It Cm IP_VERSION: integer
 Restrict network access to specified IP version.
 4 will only allow IPv4 and 6 will only allow IPv6.
@@ -198,7 +179,7 @@ Default: NO.
 Specifies the cache directory for packages.
 Default:
 .Pa /var/cache/ravensw
-.It Cm PKG_CREATE_VERBOSE: boolean
+.It Cm RAVENSW_CREATE_VERBOSE: boolean
 When set to a
 .Sy true
 value, make
@@ -211,12 +192,7 @@ Specifies the directory to use for storing the package
 database files.
 Default:
 .Pa /var/db/ravensw
-.It Cm PKG_ENABLE_PLUGINS: boolean
-When set to
-.Dq YES ,
-activate plugin support.
-Default: YES.
-.It Cm PKG_ENV: Key/Value list
+.It Cm RAVENSW_ENV: Key/Value list
 This tells
 .Xr ravensw 8
 to set key/values to be passed in the environment.
@@ -227,33 +203,12 @@ which can be configured by e.g., setting
 and
 .Ev HTTP_PROXY .
 Default: not set.
-.It Cm PKG_PLUGINS_DIR: string
-Directory which
-.Xr ravensw 8
-will load plugins from.
-Default:
-.Pa /raven/lib/ravensw
-.It Cm PKG_SSH_ARGS: string
+.It Cm RAVENSW_SSH_ARGS: string
 Extra arguments to pass to
 .Xr ssh 1 .
 Default: not set.
-.It Cm PLIST_KEYWORDS_DIR: string
-Directory containing definitions of plist keywords.
-Default: PORTSDIR/keyword
-.It Cm PLIST_ACCEPT_DIRECTORIES: boolean
-Accept directories listed like plain files in plist.
-Default: NO.
-.It Cm PLUGINS: array
-List of plugins that
-.Xr ravensw 8
-should load.
-Default: not set.
-.It Cm PLUGINS_CONF_DIR: string
-Directory containing per-plugin configuration files.
-Default:
-.Pa /raven/etc/ravensw
-.It Cm PORTSDIR: string
-Specifies the location to the Ports directory.
+.It Cm RAVENPORTS: string
+Specifies the location to the Ravenports conspiracy directory.
 Default:
 .Pa /var/ravenports/conspiracy
 .It Cm READ_LOCK: boolean
@@ -312,12 +267,6 @@ for remote.
 Default: If unset, the algorithm described in
 .Xr ravensw-version 8
 is used to determine the version source automatically.
-.It Cm VULNXML_SITE: string
-Specifies the URL to fetch the
-.Pa vuln.xml
-vulnerability database from.
-Default:
-.Pa http://vuxml.freebsd.org/freebsd/vuln.xml.bz2 .
 .It Cm WORKERS_COUNT: integer
 How many workers are used for ravensw-repo.
 If set to 0,
@@ -329,16 +278,13 @@ Default: 0.
 To use a repository you will need at least one repository
 configuration file.
 .Pp
-Repository configuration files are searched for in order of the
-directories listed in the
+Repository configuration files are searched for in directories listed in the
 .Cm REPOS_DIR
 array,
 which defaults to
-.Pa /etc/ravensw/
-and
 .Pa /raven/etc/ravensw/repos/ .
 .Pp
-Filenames are arbitrary, but should end in
+Filenames are not arbitrary; they must end in
 .Sq .conf
 For example
 .Pa /raven/etc/ravensw/repos/myrepo.conf .
@@ -387,7 +333,7 @@ overwritten by a command line option.
 Default: 0.
 .It Cm PRIORITY: integer
 Set the priority of the repository.
-Higher values are preferred.
+Higher values are used preferentially over lower ones.
 Default: 0
 .El
 .El
@@ -412,9 +358,9 @@ Where
 is
 .Dv SRV ,
 you should use a
-.Dv pkg+http://
+.Dv rsw+http://
 or
-.Dv pkg+https://
+.Dv rsw+https://
 (etc.) URL scheme.
 Using an
 .Dv http://
@@ -470,12 +416,8 @@ configuration files later on the
 search path to overwrite the equivalent settings for the same tag
 earlier on the search path.
 .Pp
-Repositories are processed in the order they are found on the
-.Sy REPOS_DIR
-search path, with individual repository configuration files in the
-same directory processed in alphabetical order.
-Settings from files later in the search path will override those from
-earlier ones.
+Repositories are sorted in order of priority (descending), and then
+alphabetically by repository key.
 Packages are selected preferentially out of all the repositories that contain
 them from the repository with the highest priority, so long as they are
 suitable to solve the necessary dependency requirements.
@@ -500,7 +442,7 @@ file.
 Repository configuration file:
 .Bd -literal -offset indent
 FreeBSD: {
-    url: "pkg+http://pkg.freebsd.org/${ABI}/latest",
+    url: "rsw+http://pkg.freebsd.org/${ABI}/latest",
     enabled: true,
     signature_type: "fingerprints",
     fingerprints: "/usr/share/keys/pkg",
@@ -512,11 +454,9 @@ Example for ravensw.conf:
 .Bd -literal -offset indent
 ravensw_dbdir: "/var/db/ravensw"
 ravensw_cachedir: "/var/cache/ravensw"
-portsdir: "/usr/ports"
 handle_rc_scripts: false
 assume_always_yes: false
 repos_dir: [
-     "/etc/ravensw",
      "/raven/etc/ravensw/repos",
 ]
 syslog: true
@@ -531,34 +471,6 @@ alias: {
 }
 .Ed
 .Pp
-To bootstrap
-.Xr ravensw 8
-using a private repository:
-.Bd -literal -offset indent
-# cat > /raven/etc/ravensw/repos/example.conf <<EOF
-example: {
-    url: http://pkgrepo.example.com/${ABI}
-}
-EOF
-# cat > /raven/etc/ravensw/repos/FreeBSD.conf <<EOF
-FreeBSD: {
-    enabled: NO
-}
-EOF
-# env PACKAGESITE='http://pkgrepo.example.com/${ABI}' \
-    /usr/sbin/pkg bootstrap
-.Ed
-.Pp
-Note that
-.Xr pkg 7
-uses
-.Ev PACKAGESITE
-for the URL to download
-.Xr ravensw 8
-from, and subsequently passes it in the environment to
-.Xr ravensw 8 ,
-which ignores it (possibly with a deprecation warning that should be
-ignored), and reads the configuration files instead.
 .Sh SEE ALSO
 .Xr ravensw-repository 5 ,
 .Xr ravensw 8 ,
