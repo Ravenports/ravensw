@@ -106,10 +106,38 @@ package body Cmd.Unset is
    function list_available_commands return Boolean
    is
       type cols is range 1 .. 5;
+
+      minlength   : constant Natural := Command_verb'Range_Length / cols'Range_Length;
+      cols_plus1  : constant Natural := Command_verb'Range_Length mod cols'Range_Length;
+
+      col_length  : array (cols) of Natural := (others => minlength);
+      print_order : array (1 .. Command_verb'Range_Length) of Command_verb;
+
       column : cols := cols'First;
    begin
-      for command in Command_verb'Range loop
+      for N in 0 .. cols_plus1 loop
+         col_length (cols (N + 1)) := minlength + 1;
+      end loop;
+
+      declare
+         po_index : Natural := 0;
+      begin
+         for N in cols'Range loop
+            declare
+               index : Positive := Positive (N);
+            begin
+               for Q in 1 .. col_length (N) loop
+                  print_order (index) := Command_verb'Val (po_index);
+                  po_index := po_index + 1;
+                  index := index + Positive (cols'Last);
+               end loop;
+            end;
+         end loop;
+      end;
+
+      for cindex in print_order'Range loop
          declare
+            command : Command_verb := print_order (cindex);
             C : constant String := convert_command_enum_to_label (command);
          begin
             case command is
