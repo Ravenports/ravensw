@@ -333,6 +333,12 @@ package body Core.Config is
                               if Ucl.ucl_object_key (item) = name then
                                  contype := convert (item);
                                  obj := convert_string_to_ucl_object (contype, val);
+
+                                 if virgin then
+                                    virgin := False;
+                                    ncfg := Ucl.ucl_object_typed_new_object;
+                                 end if;
+
                                  inserted :=
                                    Ucl.ucl_object_insert_key
                                      (top      => ncfg,
