@@ -10,6 +10,7 @@ with Core.Unix;
 with Core.Strings;
 with Core.Object;
 with Core.Metalog;
+with Core.Elf_Operations;
 with Core.Pkg;    use Core.Pkg;
 with System;
 
@@ -94,7 +95,13 @@ package body Core.Config is
       open_rdonly  : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
       parser       : Ucl.T_parser;
       fatal_errors : Boolean := False;
+      abicalc      : Elf_Operations.abi_result;
    begin
+      if parsed then
+         EV.pkg_emit_error (SUS ("pkg_init() must only be called once"));
+         return EPKG_FATAL;
+      end if;
+
       if not Unix.file_connected (context.rootfd) then
          declare
             flags : Unix.T_Open_Flags;
@@ -110,12 +117,17 @@ package body Core.Config is
          end;
       end if;
 
-      --  TODO: pkg_get_myarch(myabi, BUFSIZ, &ctx.osversion);
-      --        pkg_get_myarch_legacy(myabi_legacy, BUFSIZ);
-
-      if parsed then
-         EV.pkg_emit_error (SUS ("pkg_init() must only be called once"));
-         return EPKG_FATAL;
+      abicalc := Elf_Operations.calculate_abi;
+      if abicalc.error = EPKG_OK then
+         --  overwrite default value for conf_abi with the calculated abi value
+         for index in config_entries'Range loop
+            if equivalent (config_entries (index).key, conf_abi) then
+               config_entries (index).key := abicalc.abi;
+               exit;
+            end if;
+         end loop;
+      else
+         return abicalc.error;
       end if;
 
       config_object := Ucl.ucl_object_typed_new_object;
@@ -155,8 +167,7 @@ package body Core.Config is
       end if;
 
       parser := Ucl.ucl_parser_new_basic;
-      --  TODO: ucl_parser_register_variable (p, conf_abi, myabi);
-      --  TODO: ucl_parser_register_variable (p, "ALTABI", myabi_legacy);
+      Ucl.ucl_parser_register_variable (parser, conf_abi, USS (abicalc.abi));
 
       Unix.reset_errno;
       declare
@@ -331,8 +342,6 @@ package body Core.Config is
             end if;
          end;
       end if;
-
-      --  TODO: check ABI isn't "unknown"
 
       EV.pkg_debug (1, "ravensw initialized");
 

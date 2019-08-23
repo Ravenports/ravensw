@@ -212,7 +212,7 @@ private
 
       (pkg_string,
        SUS (conf_abi),
-       SUS ("TODO: myabi"),
+       SUS ("overwritten"),
        SUS ("Override the automatically detected ABI")),
 
       (pkg_bool,
