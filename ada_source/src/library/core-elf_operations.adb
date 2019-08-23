@@ -210,7 +210,7 @@ package body Core.Elf_Operations is
    --------------------------------------------------------------------
    --  create_strversion_type1
    --------------------------------------------------------------------
-   function create_strversion_type1 (osversion : Natural) return String
+   function create_strversion_type1 (osversion : T_Word) return String
    is
       full_integer : Natural;
       fraction     : Natural;
@@ -606,7 +606,8 @@ package body Core.Elf_Operations is
          note := buffer_to_elfnote (bnote);
          index := index + note_buffer'Length;
          declare
-            name : String := buffer (index .. index + Natural (note.n_namesz) - 1);
+            --  Subtract 1 from n_namesz, the strings are null-terminated
+            name : String := buffer (index .. index + Natural (note.n_namesz) - 2);
          begin
             index := index + roundup2 (Natural (note.n_namesz), 4);
             if name = "DragonFly" or else
@@ -617,8 +618,12 @@ package body Core.Elf_Operations is
                   found := True;
                   info.use_gnu_tag := False;
                   info.osname := SUS (name);
+                  if bigend then
+                     info.osversion := be32dec (buffer (index .. index + 3));
+                  else
+                     info.osversion := le32dec (buffer (index .. index + 3));
+                  end if;
                end if;
-               --  info.osversion
             elsif name = "GNU" then
                if Natural (note.n_type) = NT_GNU_ABI_TAG then
                   --  verify we have 16 more characters in the buffer.

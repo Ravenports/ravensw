@@ -57,7 +57,7 @@ private
    function triplet_3 (breakdown : T_parse_result) return String;
 
    --  Create version string from version natural
-   function create_strversion_type1 (osversion : Natural) return String;
+   function create_strversion_type1 (osversion : T_Word) return String;
 
    --  Create version string from GNU tag
    function create_strversion_type2 (tag : T_GNU_tag) return String;
@@ -66,7 +66,7 @@ private
       record
          osname      : Text;
          use_gnu_tag : Boolean;
-         osversion   : Natural;
+         osversion   : T_Word;
          tag         : T_GNU_tag;
       end record;
 
