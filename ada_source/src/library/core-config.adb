@@ -326,9 +326,10 @@ package body Core.Config is
                            loop
                               item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
                               if item = null then
-                                 EV.pkg_debug (1, "option not set (key not found): " & nvpair);
+                                 EV.pkg_emit_notice
+                                   (SUS ("option not set (key not found): " & nvpair));
+                                 exit;
                               end if;
-                              exit when item = null;
 
                               if Ucl.ucl_object_key (item) = name then
                                  contype := convert (item);
@@ -340,7 +341,7 @@ package body Core.Config is
                                  end if;
 
                                  inserted :=
-                                   Ucl.ucl_object_insert_key
+                                   Ucl.ucl_object_replace_key
                                      (top      => ncfg,
                                       elt      => obj,
                                       key      => name,
@@ -348,6 +349,10 @@ package body Core.Config is
                                  exit;
                               end if;
                            end loop;
+                        exception
+                           when Unsupported_Type =>
+                              EV.pkg_emit_error
+                                (SUS ("pkg_ini: unsupported type: " & item.c_type'Img));
                         end;
                      end if;
                   end;
@@ -395,6 +400,7 @@ package body Core.Config is
          end;
       end if;
 
+      --  Above this line, pkg_debug doesn't work.  Use EV.pkg_emit_notice instead, perhaps.
       EV.pkg_debug (1, "ravensw initialized");
 
       --  Start the event pipe
