@@ -56,8 +56,8 @@ package body Core.Elf_Operations is
       result      : T_parse_result;
       fd          : Unix.File_Descriptor := Unix.not_connected;
       elf_obj     : access libelf_h.Elf;
-      elf_header  : access gelf_h.GElf_Ehdr := null;
-      elf_section : access libelf_h.Elf_Scn := null;
+      elf_header  : aliased gelf_h.GElf_Ehdr;
+      elf_section : aliased libelf_h.Elf_Scn;
       info        : T_elf_info;
       clean_now   : Boolean := False;
       success     : Boolean;
@@ -105,7 +105,7 @@ package body Core.Elf_Operations is
       end if;
 
       if not clean_now then
-         if not Libelf.get_elf_header (elf_obj, elf_header) then
+         if not Libelf.get_elf_header (elf_obj, elf_header'Access) then
             EV.pkg_emit_error (SUS ("elfparse/getehdr() failed: " & Libelf.elf_errmsg));
             result.error := EPKG_FATAL;
             clean_now := True;
@@ -113,14 +113,14 @@ package body Core.Elf_Operations is
       end if;
 
       declare
-         section_header : access gelf_h.GElf_Shdr := null;
+         section_header : aliased gelf_h.GElf_Shdr;
       begin
          if not clean_now then
             loop
-               exit when not Libelf.elf_next_section (elf_obj, elf_section);
+               exit when not Libelf.elf_next_section (elf_obj, elf_section'Access);
 
-               if not Libelf.elf_get_section_header (section => elf_section,
-                                                     sheader => section_header)
+               if not Libelf.elf_get_section_header (section => elf_section'Access,
+                                                     sheader => section_header'Access)
                then
                   EV.pkg_emit_error (SUS ("elfparse/getshdr() failed: " & Libelf.elf_errmsg));
                   result.error := EPKG_FATAL;
@@ -128,9 +128,9 @@ package body Core.Elf_Operations is
                   exit;
                end if;
 
-               if Libelf.section_header_is_elf_note (section_header) then
+               if Libelf.section_header_is_elf_note (section_header'Access) then
                   declare
-                     data : access libelf_h.Elf_Data := Libelf.elf_getdata (elf_section);
+                     data : access libelf_h.Elf_Data := Libelf.elf_getdata (elf_section'Access);
                   begin
                      if elf_note_analyse (data, elf_header, info) then
                         --  OS note found
@@ -383,7 +383,7 @@ package body Core.Elf_Operations is
    --------------------------------------------------------------------
    --  determine_word_size
    --------------------------------------------------------------------
-   function determine_word_size (elfhdr : access gelf_h.GElf_Ehdr) return T_wordsize
+   function determine_word_size (elfhdr : gelf_h.GElf_Ehdr) return T_wordsize
    is
       value : Libelf.EI_Byte := Libelf.get_ident_byte (elfhdr, Libelf.EI_CLASS);
    begin
@@ -398,7 +398,7 @@ package body Core.Elf_Operations is
    --------------------------------------------------------------------
    --  determine_endian
    --------------------------------------------------------------------
-   function determine_endian (elfhdr : access gelf_h.GElf_Ehdr) return T_endian
+   function determine_endian (elfhdr : gelf_h.GElf_Ehdr) return T_endian
    is
       value : Libelf.EI_Byte := Libelf.get_ident_byte (elfhdr, Libelf.EI_DATA);
    begin
@@ -413,7 +413,7 @@ package body Core.Elf_Operations is
    --------------------------------------------------------------------
    --  determine_architecture
    --------------------------------------------------------------------
-   function determine_architecture (elfhdr : access gelf_h.GElf_Ehdr) return T_arch
+   function determine_architecture (elfhdr : gelf_h.GElf_Ehdr) return T_arch
    is
       machine : constant elfdefinitions_h.Elf32_Half := elfhdr.e_machine;
    begin
@@ -435,7 +435,7 @@ package body Core.Elf_Operations is
    --------------------------------------------------------------------
    --  determine_fpu
    --------------------------------------------------------------------
-   function determine_fpu (elfhdr : access gelf_h.GElf_Ehdr; arch : T_arch) return T_fpu is
+   function determine_fpu (elfhdr : gelf_h.GElf_Ehdr; arch : T_arch) return T_fpu is
    begin
       case arch is
          when arm =>
@@ -458,7 +458,7 @@ package body Core.Elf_Operations is
    --------------------------------------------------------------------
    --  determine_abi
    --------------------------------------------------------------------
-   function determine_abi (elfhdr : access gelf_h.GElf_Ehdr;
+   function determine_abi (elfhdr : gelf_h.GElf_Ehdr;
                            arch   : T_arch;
                            size   : T_wordsize) return T_abi
    is
@@ -573,7 +573,7 @@ package body Core.Elf_Operations is
    --  elf_note_analyse
    --------------------------------------------------------------------
    function elf_note_analyse (data   : access libelf_h.u_Elf_Data;
-                              elfhdr : access gelf_h.GElf_Ehdr;
+                              elfhdr : gelf_h.GElf_Ehdr;
                               info   : out T_elf_info) return Boolean
    is
       subtype note_buffer is String (1 .. Libelf.elf_note_size);

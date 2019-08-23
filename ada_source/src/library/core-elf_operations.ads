@@ -75,23 +75,23 @@ private
 
    --  Given elf note section, derive note info.  Return True if OS version not found
    function elf_note_analyse (data   : access libelf_h.u_Elf_Data;
-                              elfhdr : access gelf_h.GElf_Ehdr;
+                              elfhdr : gelf_h.GElf_Ehdr;
                               info   : out T_elf_info) return Boolean;
 
    --  Check value of e_ident[EI_CLASS] and derive word size
-   function determine_word_size (elfhdr : access gelf_h.GElf_Ehdr) return T_wordsize;
+   function determine_word_size (elfhdr : gelf_h.GElf_Ehdr) return T_wordsize;
 
    --  Check value of e_ident[EI_DATA] and derive endian orientation
-   function determine_endian (elfhdr : access gelf_h.GElf_Ehdr) return T_endian;
+   function determine_endian (elfhdr : gelf_h.GElf_Ehdr) return T_endian;
 
    --  Check value of e_machine and derive machine
-   function determine_architecture (elfhdr : access gelf_h.GElf_Ehdr) return T_arch;
+   function determine_architecture (elfhdr : gelf_h.GElf_Ehdr) return T_arch;
 
    --  If necessary, specify floating point capability
-   function determine_fpu (elfhdr : access gelf_h.GElf_Ehdr; arch : T_arch) return T_fpu;
+   function determine_fpu (elfhdr : gelf_h.GElf_Ehdr; arch : T_arch) return T_fpu;
 
    --  Return abi given archive and elfclass, if pertinent
-   function determine_abi (elfhdr : access gelf_h.GElf_Ehdr;
+   function determine_abi (elfhdr : gelf_h.GElf_Ehdr;
                            arch   : T_arch;
                            size   : T_wordsize) return T_abi;
 

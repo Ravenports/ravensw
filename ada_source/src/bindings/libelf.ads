@@ -46,7 +46,7 @@ package Libelf is
    function elf_getdata (section : access libelf_h.Elf_Scn) return access libelf_h.Elf_Data;
 
    --  Return byte indicated at offset of the e_ident field
-   function get_ident_byte (header : access gelf_h.GElf_Ehdr; offset : EI_OFFSETS) return EI_Byte;
+   function get_ident_byte (header : gelf_h.GElf_Ehdr; offset : EI_OFFSETS) return EI_Byte;
 
    --  Convert the elf data buffer into a full string (ignore null terminators)
    function convert_elf_data_buffer (data : access libelf_h.Elf_Data) return String;

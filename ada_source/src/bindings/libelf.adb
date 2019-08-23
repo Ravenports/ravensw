@@ -136,7 +136,7 @@ package body Libelf is
    --------------------------------------------------------------------
    --  get_ident_byte
    --------------------------------------------------------------------
-   function get_ident_byte (header : access gelf_h.GElf_Ehdr; offset : EI_OFFSETS) return EI_Byte
+   function get_ident_byte (header : gelf_h.GElf_Ehdr; offset : EI_OFFSETS) return EI_Byte
    is
       index : constant Natural := Natural (EI_OFFSETS'Pos (offset));
    begin
