@@ -24,6 +24,9 @@ package body Cmd.Unset is
                             reposdir => USS (comline.glob_repo_config_dir),
                             flags    => comline.global_init_flags,
                             dlevel   => comline.glob_debug);
+         if result /= EPKG_OK then
+            return False;
+         end if;
          return extended_version_info;
       end if;
       if comline.glob_list then

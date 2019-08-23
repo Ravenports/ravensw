@@ -37,9 +37,11 @@ package body Core.Elf_Operations is
                elf_properties : T_parse_result := pkg_get_myarch_elfparse (triplet_1);
             begin
                result.error := elf_properties.error;
-               result.abi := SUS (triplet_1 & ":" &
-                                        USS (elf_properties.release) & ":" &
-                                        triplet_3 (elf_properties));
+               if result.error = EPKG_OK then
+                  result.abi := SUS (triplet_1 & ":" &
+                                       USS (elf_properties.release) & ":" &
+                                       triplet_3 (elf_properties));
+               end if;
             end;
             return result;
       end case;
@@ -54,8 +56,8 @@ package body Core.Elf_Operations is
       result      : T_parse_result;
       fd          : Unix.File_Descriptor := Unix.not_connected;
       elf_obj     : access libelf_h.Elf;
-      elf_header  : aliased gelf_h.GElf_Ehdr;
-      elf_section : aliased libelf_h.Elf_Scn;
+      elf_header  : access gelf_h.GElf_Ehdr := null;
+      elf_section : access libelf_h.Elf_Scn := null;
       info        : T_elf_info;
       clean_now   : Boolean := False;
       success     : Boolean;
@@ -103,7 +105,7 @@ package body Core.Elf_Operations is
       end if;
 
       if not clean_now then
-         if not Libelf.get_elf_header (elf_obj, elf_header'Access) then
+         if not Libelf.get_elf_header (elf_obj, elf_header) then
             EV.pkg_emit_error (SUS ("elfparse/getehdr() failed: " & Libelf.elf_errmsg));
             result.error := EPKG_FATAL;
             clean_now := True;
@@ -111,14 +113,14 @@ package body Core.Elf_Operations is
       end if;
 
       declare
-         section_header : aliased gelf_h.GElf_Shdr;
+         section_header : access gelf_h.GElf_Shdr := null;
       begin
          if not clean_now then
             loop
-               exit when not Libelf.elf_next_section (elf_obj, elf_section'Access);
+               exit when not Libelf.elf_next_section (elf_obj, elf_section);
 
-               if not Libelf.elf_get_section_header (section => elf_section'Access,
-                                                     sheader => section_header'Access)
+               if not Libelf.elf_get_section_header (section => elf_section,
+                                                     sheader => section_header)
                then
                   EV.pkg_emit_error (SUS ("elfparse/getshdr() failed: " & Libelf.elf_errmsg));
                   result.error := EPKG_FATAL;
@@ -128,9 +130,9 @@ package body Core.Elf_Operations is
 
                if Libelf.section_header_is_elf_note (section_header) then
                   declare
-                     data : access libelf_h.Elf_Data := Libelf.elf_getdata (elf_section'Access);
+                     data : access libelf_h.Elf_Data := Libelf.elf_getdata (elf_section);
                   begin
-                     if elf_note_analyse (data, elf_header'Access, info) then
+                     if elf_note_analyse (data, elf_header, info) then
                         --  OS note found
                         exit;
                      end if;
@@ -149,11 +151,11 @@ package body Core.Elf_Operations is
       if not clean_now then
          result.error    := EPKG_OK;
          result.osname    := info.osname;
-         result.wordsize  := determine_word_size (elf_header'Access);
-         result.endian    := determine_endian (elf_header'Access);
-         result.arch      := determine_architecture (elf_header'Access);
-         result.fpu       := determine_fpu (elf_header'Access, result.arch);
-         result.abi       := determine_abi (elf_header'Access, result.arch, result.wordsize);
+         result.wordsize  := determine_word_size (elf_header);
+         result.endian    := determine_endian (elf_header);
+         result.arch      := determine_architecture (elf_header);
+         result.fpu       := determine_fpu (elf_header, result.arch);
+         result.abi       := determine_abi (elf_header, result.arch, result.wordsize);
 
          if info.use_gnu_tag then
             result.release := SUS (create_strversion_type2 (info.tag));

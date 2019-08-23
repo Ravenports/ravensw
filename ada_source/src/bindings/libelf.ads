@@ -40,7 +40,7 @@ package Libelf is
                                     sheader : access gelf_h.GElf_Shdr) return Boolean;
 
    --  Return true if given section header defines an elf note.
-   function section_header_is_elf_note (section : gelf_h.GElf_Shdr) return Boolean;
+   function section_header_is_elf_note (section : access gelf_h.GElf_Shdr) return Boolean;
 
    --  Return data from given section
    function elf_getdata (section : access libelf_h.Elf_Scn) return access libelf_h.Elf_Data;

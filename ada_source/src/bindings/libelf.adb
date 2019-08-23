@@ -113,7 +113,7 @@ package body Libelf is
    --------------------------------------------------------------------
    --  elf_get_section_header
    --------------------------------------------------------------------
-   function section_header_is_elf_note (section : gelf_h.GElf_Shdr) return Boolean
+   function section_header_is_elf_note (section : access gelf_h.GElf_Shdr) return Boolean
    is
       --  should have been in elfdefinitions.h
       SHT_NOTE : constant elfdefinitions_h.Elf64_Word := elfdefinitions_h.Elf64_Word (7);
