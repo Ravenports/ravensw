@@ -141,9 +141,10 @@ package body Cmd.Usage is
             return alert ("Jail operation is not supported on this platform");
          end if;
 
-         --  Only two switches used without a command verb
+         --  Only three switches used without a command verb
          if comline.glob_version = ST_Version'First and then
-           not comline.glob_status_check
+           not comline.glob_status_check and then
+           not comline.glob_list
          then
             return alert ("No commands specified");
          end if;
