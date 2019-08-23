@@ -115,7 +115,7 @@ package body Cmd.Unset is
             case command is
                when cv_unset => null;
                when others =>
-                  TIO.Put (C);
+                  TIO.Put (pad_right (C, 15));
                   if column = cols'Last then
                      column := cols'First;
                      TIO.Put_Line ("");

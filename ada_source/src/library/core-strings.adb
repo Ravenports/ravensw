@@ -388,4 +388,20 @@ package body Core.Strings is
       return A2S = B;
    end equivalent;
 
+
+   --------------------------------------------------------------------------------------------
+   --  pad_right
+   --------------------------------------------------------------------------------------------
+   function pad_right (S : String; places : Positive) return String
+   is
+      result : String (1 .. places) := (others => ' ');
+   begin
+      if S'Length > places then
+         result (1 .. places) := S (S'First .. S'First + places - 1);
+      else
+         result (1 .. S'Length) := S;
+      end if;
+      return result;
+   end pad_right;
+
 end Core.Strings;

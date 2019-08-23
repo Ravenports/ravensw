@@ -79,4 +79,9 @@ package Core.Strings is
    --  Used for mapped containers
    function map_hash (key : Text) return CON.Hash_Type;
 
+   --  Create a string with {places} length and put S at the first index.
+   --  Truncate if S greater than places.
+   function pad_right (S : String; places : Positive) return String;
+
+
 end Core.Strings;
