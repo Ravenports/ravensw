@@ -107,20 +107,21 @@ package body Cmd.Unset is
    is
       type cols is range 1 .. 5;
 
-      minlength   : constant Natural := Command_verb'Range_Length / cols'Range_Length;
-      cols_plus1  : constant Natural := Command_verb'Range_Length mod cols'Range_Length;
+      numwords    : constant Natural := Command_verb'Range_Length - 1;
+      minlength   : constant Natural := numwords / cols'Range_Length;
+      cols_plus1  : constant Natural := numwords mod cols'Range_Length;
 
       col_length  : array (cols) of Natural := (others => minlength);
-      print_order : array (1 .. Command_verb'Range_Length) of Command_verb;
+      print_order : array (1 .. numwords) of Command_verb;
 
       column : cols := cols'First;
    begin
-      for N in 0 .. cols_plus1 loop
-         col_length (cols (N + 1)) := minlength + 1;
+      for N in 1 .. cols_plus1 loop
+         col_length (cols (N)) := minlength + 1;
       end loop;
 
       declare
-         po_index : Natural := 0;
+         po_index : Natural := 1;  --  Zero-indexed, but we want to skip the first command
       begin
          for N in cols'Range loop
             declare
