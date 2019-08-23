@@ -25,7 +25,7 @@ package body Core.Status is
 
       --  Does the local.sqlite pkg database exist, and can we open it for reading?
 
-      if not OSL.Is_Read_Accessible_File (dbfile) then
+      if not OSL.Is_Readable_File (dbfile) then
          result.status := PKG_STATUS_NODB;
          return result;
       end if;
