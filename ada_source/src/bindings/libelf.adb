@@ -4,7 +4,6 @@
 with Interfaces.C.Strings;
 with Interfaces.C.Extensions;
 with elfdefinitions_h;
---  with gelf_h;
 
 package body Libelf is
 
@@ -147,8 +146,11 @@ package body Libelf is
    --------------------------------------------------------------------
    function convert_elf_data_buffer (data : access libelf_h.Elf_Data) return String
    is
+      result : String (1 .. Integer (data.d_size));
+
+      for result'Address use data.d_buf;
    begin
-      return ICS.Value (Item   => data.d_buf, Length => IC.size_t (data.d_size));
+      return result;
    end convert_elf_data_buffer;
 
 

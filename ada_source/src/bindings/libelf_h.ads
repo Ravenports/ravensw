@@ -114,7 +114,7 @@ package libelf_h is
 
    type u_Elf_Data is record
       d_align : aliased unsigned_long;  -- /raven/include/libelf.h:108
-      d_buf : Interfaces.C.Strings.chars_ptr;  -- /raven/include/libelf.h:109
+      d_buf : System.Address;  -- /raven/include/libelf.h:109
       d_off : aliased unsigned_long;  -- /raven/include/libelf.h:110
       d_size : aliased unsigned_long;  -- /raven/include/libelf.h:111
       d_type : aliased Elf_Type;  -- /raven/include/libelf.h:112
