@@ -6,6 +6,7 @@ with System;
 
 with Core.Config;
 with Core.Deps;
+with Core.Version;
 
 package body Core.PkgDB is
 
@@ -88,8 +89,10 @@ package body Core.PkgDB is
          arg1   : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2));
          arg2   : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (3));
          op     : Deps.pkg_dep_version_op;
-         cmp    : Integer;
+         cmp    : Version.cmp_result;
          ret    : Boolean;
+
+         use type ICS.chars_ptr;
       begin
          if op_str = ICS.Null_Ptr or else
            arg1 = ICS.Null_Ptr or else
@@ -101,23 +104,24 @@ package body Core.PkgDB is
          end if;
 
          op := Deps.pkg_deps_string_toop (ICS.Value (op_str));
-         --  cmp
+         cmp := Version.pkg_version_cmp (ICS.Value (arg1), ICS.Value (arg2));
 
          case op is
-            when deps.VERSION_EQ  => ret := (cmp = 0);
+            when Deps.VERSION_EQ  => ret := (cmp = 0);
             when Deps.VERSION_GE  => ret := (cmp >= 0);
             when Deps.VERSION_LE  => ret := (cmp <= 0);
             when Deps.VERSION_GT  => ret := (cmp > 0);
             when Deps.VERSION_LT  => ret := (cmp < 0);
-            when Deps.VERSION_NOT => ret := (cmp != 0);
+            when Deps.VERSION_NOT => ret := (cmp /= 0);
             when Deps.VERSION_ANY => ret := True;
-         end;
+         end case;
 
          if ret then
             sqlite_h.sqlite3_result_int (context, IC.int (1));
          else
             sqlite_h.sqlite3_result_int (context, IC.int (0));
          end if;
+      end;
    end pkgdb_vercmp;
 
 
