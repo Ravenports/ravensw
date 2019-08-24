@@ -404,4 +404,71 @@ package body Core.Strings is
       return result;
    end pad_right;
 
+
+   --------------------------------------------------------------------------------------------
+   --  head #1
+   --------------------------------------------------------------------------------------------
+   function head (US : Text; delimiter : Text) return Text
+   is
+      result : constant String := head (USS (US), USS (delimiter));
+   begin
+      return SUS (result);
+   end head;
+
+
+   --------------------------------------------------------------------------------------------
+   --  head #2
+   --------------------------------------------------------------------------------------------
+   function head (S  : String; delimiter : String) return String
+   is
+      dl_size      : constant Natural := delimiter'Length;
+      back_marker  : constant Natural := S'First;
+      front_marker : Natural := S'Last - dl_size + 1;
+   begin
+      loop
+         if front_marker < back_marker then
+            --  delimiter never found
+            return "";
+         end if;
+         if S (front_marker .. front_marker + dl_size - 1) = delimiter then
+            return S (back_marker .. front_marker - 1);
+         end if;
+         front_marker := front_marker - 1;
+      end loop;
+   end head;
+
+
+   --------------------------------------------------------------------------------------------
+   --  tail #1
+   --------------------------------------------------------------------------------------------
+   function tail (US : Text; delimiter : Text) return Text
+   is
+      result : constant String := tail (USS (US), USS (delimiter));
+   begin
+      return SUS (result);
+   end tail;
+
+
+   --------------------------------------------------------------------------------------------
+   --  tail #2
+   --------------------------------------------------------------------------------------------
+   function tail (S : String; delimiter : String) return String
+   is
+      dl_size      : constant Natural := delimiter'Length;
+      back_marker  : constant Natural := S'First;
+      front_marker : Natural := S'Last - dl_size + 1;
+   begin
+      loop
+         if front_marker < back_marker then
+            --  delimiter never found
+            return S;
+         end if;
+         if S (front_marker .. front_marker + dl_size - 1) = delimiter then
+            return S (front_marker + dl_size .. S'Last);
+         end if;
+         front_marker := front_marker - 1;
+      end loop;
+   end tail;
+
+
 end Core.Strings;

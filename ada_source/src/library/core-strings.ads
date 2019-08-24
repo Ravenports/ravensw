@@ -83,5 +83,12 @@ package Core.Strings is
    --  Truncate if S greater than places.
    function pad_right (S : String; places : Positive) return String;
 
+   --  Head (keep all but last delimiter and field)
+   function head (US : Text;   delimiter : Text)   return Text;
+   function head (S  : String; delimiter : String) return String;
+
+   --  Tail (keep only last field)
+   function tail (US : Text;   delimiter : Text)   return Text;
+   function tail (S  : String; delimiter : String) return String;
 
 end Core.Strings;

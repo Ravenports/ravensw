@@ -64,6 +64,9 @@ package sqlite_h is
    SQLITE_OPEN_READWRITE : constant := 2;
    SQLITE_OPEN_CREATE    : constant := 4;
 
+   SQLITE_ANY            : constant := 5;
+   SQLITE_DETERMINISTIC  : constant := 16#800#;
+
    ---------------------
    --  Library Calls  --
    ----------------------
@@ -232,9 +235,77 @@ package sqlite_h is
    function sqlite3_shutdown return IC.int;
    pragma Import (C, sqlite3_shutdown);
 
+   type sqlite3_context      is limited private;
+   type sqlite3_value        is limited private;
+   type sqlite3_api_routines is limited private;
+
+   type sqlite3_context_Access is access all sqlite3_context;
+   pragma Convention (C, sqlite3_context_Access);
+
+   type sqlite3_value_Access is access all sqlite3_value;
+   pragma Convention (C, sqlite3_value_Access);
+
+   type sqlite3_api_routines_Access is access all sqlite3_api_routines;
+   pragma Convention (C, sqlite3_api_routines_Access);
+
+   type cb_xFuncStep is access procedure
+     (context : not null sqlite3_context_Access;
+      numargs : IC.int;
+      argsval : not null access sqlite3_value_Access);
+   pragma Convention (C, cb_xFuncStep);
+
+   type cb_xFinal is access procedure
+     (context :  not null sqlite3_context_Access);
+   pragma Convention (C, cb_xFinal);
+
+   type cb_xEntryPoint is access function
+     (db       : not null sqlite3_Access;
+      pzErrMsg : not null access ICS.chars_ptr;
+      pThunk   : not null sqlite3_api_routines_Access) return IC.int;
+   pragma Convention (C, cb_xEntryPoint);
+
+   function sqlite3_auto_extension (callback : cb_xEntryPoint) return IC.int;
+   pragma Import (C, sqlite3_auto_extension);
+
+   function sqlite3_create_function
+     (db            : not null sqlite3_Access;
+      zFunctionName : ICS.chars_ptr;
+      nArg          : IC.int;
+      eTextRep      : IC.int;
+      pApp          : System.Address;
+      xFunc         : cb_xFuncStep;
+      xStep         : cb_xFuncStep;
+      xFinal        : cb_xFinal) return IC.int;
+   pragma Import (C, sqlite3_create_function);
+
+   procedure sqlite3_result_error
+     (context       : sqlite3_context_Access;
+      message       : ICS.chars_ptr;
+      errnum        : IC.int);
+   pragma Import (C, sqlite3_result_error);
+
+   procedure sqlite3_result_int64
+     (context       : sqlite3_context_Access;
+      result        : sql64);
+   pragma Import (C, sqlite3_result_int64);
+
+   procedure sqlite3_result_int
+     (context       : sqlite3_context_Access;
+      result        : IC.int);
+   pragma Import (C, sqlite3_result_int);
+
+   function sqlite3_value_text (value : sqlite3_value_Access) return ICS.chars_ptr;
+   pragma Import (C, sqlite3_value_text);
+
+   function sqlite3_value_int (value : sqlite3_value_Access) return IC.int;
+   pragma Import (C, sqlite3_value_int);
+
 private
 
-   type sqlite3      is limited null record;
-   type sqlite3_stmt is limited null record;
+   type sqlite3              is limited null record;
+   type sqlite3_stmt         is limited null record;
+   type sqlite3_context      is limited null record;
+   type sqlite3_value        is limited null record;
+   type sqlite3_api_routines is limited null record;
 
 end sqlite_h;

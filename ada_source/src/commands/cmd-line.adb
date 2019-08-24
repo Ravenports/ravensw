@@ -974,7 +974,7 @@ package body Cmd.Line is
                   if IsBlank (result.shell_pass_along) then
                      result.shell_pass_along := datumtxt;
                   else
-                     SU.Append (result.shell_pass_along, " " & datum);
+                     SU.Append (result.shell_pass_along, LAT.Vertical_Line & datum);
                   end if;
 
                when cv_shlib =>
