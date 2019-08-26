@@ -51,7 +51,7 @@ package body Cmd.Unset is
                       reposdir => USS (comline.glob_repo_config_dir),
                       flags    => comline.global_init_flags,
                       dlevel   => comline.glob_debug,
-                      options  => USS (comline.glob_option)) /= EPKG_OK;
+                      options  => USS (comline.glob_option)) = EPKG_OK;
    end Initialize_ravensw;
 
 
