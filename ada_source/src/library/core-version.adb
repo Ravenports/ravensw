@@ -347,4 +347,41 @@ package body Core.Version is
       end;
    end pull_leading_number;
 
+
+   --------------------------------------------------------------------
+   --  pkg_version_change
+   --------------------------------------------------------------------
+   function pkg_version_change (pkg : access T_pkg) return T_pkg_change is
+   begin
+      if IsBlank (pkg.old_version) then
+         return PKG_REINSTALL;
+      end if;
+
+      case pkg_version_cmp (USS (pkg.old_version), USS (pkg.version)) is
+         when -1 => return PKG_UPGRADE;
+         when  0 => return PKG_REINSTALL;
+         when  1 => return PKG_DOWNGRADE;
+      end case;
+   end pkg_version_change;
+
+
+   --------------------------------------------------------------------
+   --  pkg_version_change_between
+   --------------------------------------------------------------------
+   function pkg_version_change_between (pkg1, pkg2 : access T_pkg) return T_pkg_change
+   is
+   begin
+      if pkg2 = null then
+         return PKG_REINSTALL;
+      end if;
+
+      case pkg_version_cmp (USS (pkg2.version), USS (pkg1.version)) is
+         when -1 => return PKG_UPGRADE;
+         when  0 => return PKG_REINSTALL;
+         when  1 => return PKG_DOWNGRADE;
+      end case;
+
+   end pkg_version_change_between;
+
+
 end Core.Version;

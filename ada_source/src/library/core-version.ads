@@ -2,10 +2,17 @@
 --  Reference: ../License.txt
 
 with Core.Strings;  use Core.Strings;
+with Core.Pkg;  use Core.Pkg;
 
 package Core.Version is
 
    subtype cmp_result is Integer range -1 .. +1;
+
+   type T_pkg_change is
+     (PKG_DOWNGRADE,
+      PKG_REINSTALL,
+      PKG_UPGRADE);
+
 
    type version_breakdown is
       record
@@ -48,6 +55,10 @@ package Core.Version is
    --  reimplemented by Oliver Eikemeier
    --
    function pkg_version_cmp (pkg1, pkg2 : String) return cmp_result;
+
+   function pkg_version_change (pkg : access T_pkg) return T_pkg_change;
+
+   function pkg_version_change_between (pkg1, pkg2 : access T_pkg) return T_pkg_change;
 
 private
 
