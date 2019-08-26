@@ -57,9 +57,14 @@ package body Core.Version is
                result.revision := 0;
                result.version := SUS (workstr);
             else
-               result.revision :=
-                 Natural (Integer'Value (specific_field (versionstr, count_commas + 1, "_")));
                result.version  := SUS (head (versionstr, "_"));
+               begin
+                  result.revision :=
+                 Natural (Integer'Value (specific_field (versionstr, count_scores + 1, "_")));
+               exception
+                  when Constraint_Error =>
+                     result.revision := 0;
+               end;
             end if;
          end;
       end split_versionstr;
@@ -196,6 +201,10 @@ package body Core.Version is
          has_stage := True;
       end if;
 
+      if position > full_version'Last then
+         return component;
+      end if;
+
       --  handle letter
       if is_alpha (full_version (position)) then
          declare
@@ -247,6 +256,10 @@ package body Core.Version is
          has_patch_level := False;
       end if;
 
+      if position > full_version'Last then
+         return component;
+      end if;
+
       if has_patch_level then
          --  handle patch number
          if is_digit (full_version (position)) then
@@ -258,11 +271,17 @@ package body Core.Version is
          component.pl := 0;
       end if;
 
+      if position > full_version'Last then
+         return component;
+      end if;
+
       --  skip trailing separators
       loop
          exit when position > full_version'Last;
-         exit when not is_digit (full_version (position)) and then
-           not is_alpha (full_version (position));
+         exit when is_digit (full_version (position)) or else
+           is_alpha (full_version (position)) or else
+           full_version (position) = '*' or else
+           full_version (position) = '+';
          position := position + 1;
       end loop;
 
