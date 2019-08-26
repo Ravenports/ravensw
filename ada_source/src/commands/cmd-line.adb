@@ -71,6 +71,7 @@ package body Cmd.Line is
       procedure handle_trailing_pkgname (datum : String; datumtxt : Text);
       procedure set_error (error_msg : String);
       procedure check_annotate_stdin;
+      procedure check_version_stdin;
       procedure check_create_incompatibilities;
       procedure check_implied_info_all;
       procedure check_implied_query_all;
@@ -325,6 +326,7 @@ package body Cmd.Line is
             begin
                if datum'Length = 1 then
                   --  Too small to be any kind of switch, just save it
+                  --  It also could be a hyphen to indicate stdin output
                   save_as_is := True;
                elsif datum (datum'First) = '-' then
                   if datum (datum'First + 1) = '-' then
@@ -1292,6 +1294,46 @@ package body Cmd.Line is
 
 
       ---------------------------------
+      --  check_version_stdin
+      ---------------------------------
+      procedure check_version_stdin
+      is
+         --  stdin can be used for either the pattern or the input, but not both
+      begin
+         if result.version_behavior = compare_against_pattern then
+            declare
+               hyphen1 : Boolean := equivalent (result.version_test1, "-");
+               hyphen2 : Boolean := equivalent (result.version_test2, "-");
+               c       : Character;
+            begin
+               if hyphen1 and then hyphen1 then
+                  set_error ("Only one input can be set through standard-in stream");
+                  return;
+               end if;
+               if hyphen1 or else hyphen2 then
+                  while not TIO.End_Of_File loop
+                     TIO.Get (c);
+                     if c = ' ' then
+                        set_error ("Only one input expected through standard-in stream");
+                     end if;
+                     if hyphen1 then
+                        SU.Append (result.version_test1, c);
+                     else
+                        SU.Append (result.version_test2, c);
+                     end if;
+                  end loop;
+                  if hyphen1 then
+                     TIO.Put_Line (USS (result.version_test1));
+                  else
+                     TIO.Put_Line (USS (result.version_test1));
+                  end if;
+               end if;
+            end;
+         end if;
+      end check_version_stdin;
+
+
+      ---------------------------------
       --  check_create_incompatibilities
       ---------------------------------
       procedure check_create_incompatibilities
@@ -1418,6 +1460,7 @@ package body Cmd.Line is
       expand_command_line;
       expanded_args.Iterate (translate_switch'Access);
       check_annotate_stdin;
+      check_version_stdin;
       check_create_incompatibilities;
       check_implied_rquery_all;
       check_implied_query_all;

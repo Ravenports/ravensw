@@ -10,4 +10,7 @@ private
    --  ravensw version -t <pkg1> <pkg2>
    function do_testversion (pkgname1, pkgname2 : String) return Boolean;
 
+   --  ravensw version -T <pkgname> <pattern>
+   function do_testpattern (pkgname, pattern : String) return Boolean;
+
 end Cmd.Version;

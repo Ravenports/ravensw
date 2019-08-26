@@ -227,4 +227,22 @@ package body Core.Unix is
       IC.Strings.Free (msg);
    end push_to_event_pipe;
 
+
+   --------------------------------------------------------------------
+   --  filename_match
+   --------------------------------------------------------------------
+   function filename_match (pattern, teststring : String) return Boolean
+   is
+      c_pattern    : IC.Strings.chars_ptr;
+      c_teststring : IC.Strings.chars_ptr;
+      result       : IC.int;
+   begin
+      c_pattern := IC.Strings.New_String (pattern);
+      c_teststring := IC.Strings.New_String (teststring);
+      result := C_fnmatch (c_pattern, c_teststring, 0);
+      IC.Strings.Free (c_pattern);
+      IC.Strings.Free (c_teststring);
+      return success (result);
+   end filename_match;
+
 end Core.Unix;

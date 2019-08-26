@@ -3,6 +3,7 @@
 
 with Core.Version;  use Core.Version;
 with Core.Strings;  use Core.Strings;
+with Core.Unix;
 
 package body Cmd.Version is
 
@@ -17,7 +18,8 @@ package body Cmd.Version is
          when use_conspiracy_state => return False;
          when test_versions =>
             return do_testversion (USS (comline.version_test1), USS (comline.version_test2));
-         when compare_against_pattern => return False;
+         when compare_against_pattern =>
+            return do_testpattern (USS (comline.version_test1), USS (comline.version_test2));
       end case;
    end execute_version_command;
 
@@ -34,5 +36,14 @@ package body Cmd.Version is
       end case;
       return True;
    end do_testversion;
+
+
+   --------------------------------------------------------------------
+   --  do_testpattern
+   --------------------------------------------------------------------
+   function do_testpattern (pkgname, pattern : String) return Boolean is
+   begin
+      return Unix.filename_match (pattern, pkgname);
+   end do_testpattern;
 
 end Cmd.Version;

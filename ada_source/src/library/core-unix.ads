@@ -54,6 +54,9 @@ package Core.Unix is
    --  Send log down file descriptor of event pipe
    procedure push_to_event_pipe (fd : File_Descriptor; message : String);
 
+   --  Return true if teststring matches the pattern according to the shell rules.
+   function filename_match (pattern, teststring : String) return Boolean;
+
    --  Set errno to zero
    procedure reset_errno;
    pragma Import (C, reset_errno, "reset_errno");
@@ -103,6 +106,9 @@ private
 
    function C_dprint (fd : IC.int; msg : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_dprint, "dprint");
+
+   function C_fnmatch (pattern, teststring : IC.Strings.chars_ptr; flags : IC.int) return IC.int;
+   pragma Import (C, C_fnmatch, "fnmatch");
 
 
 end Core.Unix;
