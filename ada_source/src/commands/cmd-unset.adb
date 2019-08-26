@@ -25,13 +25,7 @@ package body Cmd.Unset is
          return list_available_commands;
       end if;
 
-      --  Below this line, configuration is needed (invoke pkg_ini)
-      if pkg_ini (path     => USS (comline.glob_config_file),
-                  reposdir => USS (comline.glob_repo_config_dir),
-                  flags    => comline.global_init_flags,
-                  dlevel   => comline.glob_debug,
-                  options  => USS (comline.glob_option)) /= EPKG_OK
-      then
+      if not Initialize_ravensw (comline) then
          return False;
       end if;
 
@@ -46,6 +40,19 @@ package body Cmd.Unset is
 
       return True;
    end execute_no_command;
+
+
+   --------------------------------------------------------------------
+   --  Initialize_ravensw
+   --------------------------------------------------------------------
+   function Initialize_ravensw (comline : Cldata) return Boolean is
+   begin
+      return pkg_ini (path     => USS (comline.glob_config_file),
+                      reposdir => USS (comline.glob_repo_config_dir),
+                      flags    => comline.global_init_flags,
+                      dlevel   => comline.glob_debug,
+                      options  => USS (comline.glob_option)) /= EPKG_OK;
+   end Initialize_ravensw;
 
 
    --------------------------------------------------------------------

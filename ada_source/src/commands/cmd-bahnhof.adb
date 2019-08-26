@@ -17,6 +17,14 @@ package body Cmd.Bahnhof is
    function execute_command (comline : Cldata) return Boolean is
    begin
       case comline.command is
+         when cv_unset => null;
+         when others =>
+            if not C00.Initialize_ravensw (comline) then
+               return False;
+            end if;
+      end case;
+
+      case comline.command is
          when cv_unset   => return (C00.execute_no_command (comline));
          when cv_help    => return (C01.execute_help_command (comline));
          when cv_version => return (C02.execute_version_command (comline));

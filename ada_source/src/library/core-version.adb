@@ -335,7 +335,7 @@ package body Core.Version is
       end if;
 
       declare
-         fragment : constant String (1 .. number_digits - 1) :=
+         fragment : constant String (1 .. number_digits) :=
            full_version (position .. position + number_digits - 1);
       begin
          position := position + number_digits;

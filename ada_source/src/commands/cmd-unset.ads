@@ -7,6 +7,9 @@ package Cmd.Unset is
    --  For example, to get version information or perform the activation status check
    function execute_no_command (comline : Cldata) return Boolean;
 
+   --  Return False if initialization fails
+   function Initialize_ravensw (comline : Cldata) return Boolean;
+
 private
 
    --  ravensw -v
