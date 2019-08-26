@@ -43,9 +43,14 @@ package body Core.Version is
             result.epoch := 0;
             ver_wo_epoch := SUS (versionstr);
          else
-            result.epoch :=
-              Natural (Integer'Value (specific_field (versionstr, count_commas + 1, ",")));
             ver_wo_epoch := SUS (head (versionstr, ","));
+            begin
+               result.epoch :=
+                 Natural (Integer'Value (specific_field (versionstr, count_commas + 1, ",")));
+            exception
+               when Constraint_Error =>
+                  result.epoch := 0;
+            end;
          end if;
 
          declare
@@ -127,8 +132,7 @@ package body Core.Version is
                --  If any component differs, there is an inequality.
                loop
                   exit when result /= identical;
-                  exit when v1_index > version1'Last;
-                  exit when v2_index > version2'Last;
+                  exit when v1_index > version1'Last and then v2_index > version2'Last;
 
                   declare
                      block_v1 : Boolean;
@@ -136,12 +140,12 @@ package body Core.Version is
                      vc1      : version_component;
                      vc2      : version_component;
                   begin
-                     if version1 (v1_index) = '+' then
+                     if v1_index > version1'Last or else version1 (v1_index) = '+' then
                         block_v1 := True;
                      else
                         vc1 := get_component (version1, v1_index);
                      end if;
-                     if version2 (v2_index) = '+' then
+                     if v2_index > version2'Last or else version2 (v2_index) = '+' then
                         block_v2 := True;
                      else
                         vc2 := get_component (version2, v2_index);
@@ -214,15 +218,17 @@ package body Core.Version is
             has_patch_level := True;
 
             --  special prefixes
-            if position + 1 <= full_version'Last and then
-              is_alpha (full_version (position + 1))
+            if position <= full_version'Last and then
+              is_alpha (full_version (position))
             then
                for S in 1 .. stage'Length loop
-                  if position + stage (S).namelen <= full_version'Last then
-                     if full_version (position + 1 .. position + stage (S).namelen) =
+                  if position + stage (S).namelen - 1 <= full_version'Last then
+                     if full_version (position .. position + stage (S).namelen - 1) =
                        stage (S).name (1 .. stage (S).namelen)
                      then
-                        if not is_alpha (full_version (position + stage (S).namelen)) then
+                        if position + stage (S).namelen > full_version'Last or else
+                          not is_alpha (full_version (position + stage (S).namelen))
+                        then
                            if has_stage then
                               --  stage to value
                               component.a := stage (S).value;
