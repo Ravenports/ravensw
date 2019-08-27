@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 with sqlite_h;
+with regex_h;
 
 package SQLite is
 
@@ -36,5 +37,19 @@ package SQLite is
 
    --  Shutdown sqlite3
    procedure shutdown_sqlite;
+
+   function sqlite3_get_auxdata_as_regex
+     (context : sqlite_h.sqlite3_context_Access;
+      N       : Integer) return regex_h.regex_t_Access;
+
+   type cb_regex is access procedure
+     (regex_ptr :  not null regex_h.regex_t_Access);
+   pragma Convention (C, cb_regex);
+
+   procedure sqlite3_set_auxdata_as_regex
+     (context  : sqlite_h.sqlite3_context_Access;
+      N        : Integer;
+      data     : regex_h.regex_t_Access;
+      callback : cb_regex);
 
 end SQLite;

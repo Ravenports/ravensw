@@ -300,6 +300,24 @@ package sqlite_h is
    function sqlite3_value_int (value : sqlite3_value_Access) return IC.int;
    pragma Import (C, sqlite3_value_int);
 
+   subtype Void_Ptr is System.Address;
+
+   function sqlite3_get_auxdata
+     (context : sqlite3_context_Access;
+      N       : IC.int) return Void_Ptr;
+   pragma Import (C, sqlite3_get_auxdata);
+
+   type cb_auxdata is access procedure
+     (ptr : Void_Ptr);
+   pragma Convention (C, cb_auxdata);
+
+   procedure sqlite3_set_auxdata
+     (context  : sqlite3_context_Access;
+      N        : IC.int;
+      data     : Void_Ptr;
+      callback : cb_auxdata);
+   pragma Import (C, sqlite3_set_auxdata);
+
 private
 
    type sqlite3              is limited null record;

@@ -7,6 +7,8 @@ with System;
 with Core.Config;
 with Core.Deps;
 with Core.Version;
+with Regex;
+with SQLite;
 
 package body Core.PkgDB is
 
@@ -22,7 +24,6 @@ package body Core.PkgDB is
       reponame.all := ICS.New_String (dbfile);
       result := sqlite_h.sqlite3_auto_extension (callback => pkgdb_sqlcmd_init'Access);
    end pkgshell_open;
-
 
 
    --------------------------------------------------------------------
@@ -77,12 +78,11 @@ package body Core.PkgDB is
 
       for argv'Address use argsval.all'Address;
    begin
-      if numargs /= 0 then
+      if numargs /= 3 then
          errmsg := ICS.New_String ("Invalid usage of vercmp(): needs 3 arguments");
          sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
          ICS.Free (errmsg);
       end if;
-
 
       declare
          op_str : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
@@ -91,7 +91,7 @@ package body Core.PkgDB is
          op     : Deps.pkg_dep_version_op;
          cmp    : Version.cmp_result;
          ret    : Boolean;
-
+         result : IC.int := 0;
          use type ICS.chars_ptr;
       begin
          if op_str = ICS.Null_Ptr or else
@@ -117,10 +117,9 @@ package body Core.PkgDB is
          end case;
 
          if ret then
-            sqlite_h.sqlite3_result_int (context, IC.int (1));
-         else
-            sqlite_h.sqlite3_result_int (context, IC.int (0));
+            result := IC.int (1);
          end if;
+         sqlite_h.sqlite3_result_int (context, result);
       end;
    end pkgdb_vercmp;
 
@@ -133,13 +132,77 @@ package body Core.PkgDB is
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access)
    is
+      use type IC.int;
+
+      errmsg : ICS.chars_ptr;
+      argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
+
+      for argv'Address use argsval.all'Address;
+
    begin
-      null;
+      if numargs /= 2 then
+         errmsg := ICS.New_String ("Invalid usage of regex(): needs 2 arguments");
+         sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+         ICS.Free (errmsg);
+      end if;
+
+      declare
+         regex     : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
+         str       : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2));
+         re_Access : regex_h.regex_t_Access;
+         ret       : IC.int;
+
+         use type ICS.chars_ptr;
+         use type regex_h.regex_t_Access;
+      begin
+         if regex = ICS.Null_Ptr or else
+           str = ICS.Null_Ptr
+         then
+            errmsg := ICS.New_String ("Invalid usage of regex(): blank arguments");
+            sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+            ICS.Free (errmsg);
+         end if;
+
+         re_Access := SQLite.sqlite3_get_auxdata_as_regex (context, 0);
+
+         if re_Access = null then
+            declare
+               cflags : IC.int;
+               res    : IC.int;
+            begin
+               if pkgdb_is_case_sensitive then
+                  cflags := IC.int (regex_h.REG_EXTENDED + regex_h.REG_NOSUB);
+               else
+                  cflags := IC.int (regex_h.REG_EXTENDED + regex_h.REG_NOSUB + regex_h.REG_ICASE);
+               end if;
+
+               re_Access := re'Access;
+               res := regex_h.regcomp (re_Access, regex, cflags);
+               if (res /= 0) then
+                  errmsg := ICS.New_String ("Invalid regex");
+                  sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+                  ICS.Free (errmsg);
+               end if;
+
+               SQLite.sqlite3_set_auxdata_as_regex (context  => context,
+                                                    N        => 0,
+                                                    data     => re_Access,
+                                                    callback => pkgdb_regex_delete'Access);
+            end;
+         end if;
+         ret := regex_h.regexec (preg   => re_Access,
+                                 regex  => str,
+                                 nmatch => 0,
+                                 pmatch => null,
+                                 eflags => 0);
+         sqlite_h.sqlite3_result_int (context => context,
+                                      result  => conv2cint (ret /= regex_h.REG_NOMATCH));
+      end;
    end pkgdb_regex;
 
 
    --------------------------------------------------------------------
-   --  pkgdb_regex
+   --  pkgdb_myarch
    --------------------------------------------------------------------
    procedure pkgdb_myarch
      (context : not null sqlite_h.sqlite3_context_Access;
@@ -186,5 +249,47 @@ package body Core.PkgDB is
 
       sqlite_h.sqlite3_result_int64 (context, sqlite_h.sql64 (epoch));
    end pkgdb_now;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_set_case_sensitivity
+   --------------------------------------------------------------------
+   procedure pkgdb_set_case_sensitivity (sensitive : Boolean) is
+   begin
+      case_sensitivity_setting := sensitive;
+   end pkgdb_set_case_sensitivity;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_get_case_sensitivity
+   --------------------------------------------------------------------
+   function pkgdb_is_case_sensitive return Boolean is
+   begin
+      return case_sensitivity_setting;
+   end pkgdb_is_case_sensitive;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_regex_delete
+   --------------------------------------------------------------------
+   procedure pkgdb_regex_delete (regex_ptr : not null regex_h.regex_t_Access) is
+   begin
+      regex_h.regfree (regex_ptr);
+      Regex.free (regex_ptr);
+   end pkgdb_regex_delete;
+
+
+   --------------------------------------------------------------------
+   --  conv2cint
+   --------------------------------------------------------------------
+   function conv2cint (result : Boolean) return IC.int is
+   begin
+      if result then
+         return IC.int (1);
+      else
+         return IC.int (0);
+      end if;
+   end conv2cint;
+
 
 end Core.PkgDB;

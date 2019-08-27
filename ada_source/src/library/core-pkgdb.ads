@@ -3,6 +3,7 @@
 
 with Interfaces.C.Strings;
 with sqlite_h;
+with regex_h;
 with System;
 
 package Core.PkgDB is
@@ -14,6 +15,19 @@ package Core.PkgDB is
    pragma Export (C, pkgshell_open);
 
 private
+
+   case_sensitivity_setting : Boolean := False;
+
+   --  By default, MATCH_EXACT and MATCH_REGEX are case sensitive.  This
+   --  is modified in many actions according to the value of
+   --  CASE_SENSITIVE_MATCH in ravensw.conf and then possibly reset again in
+   --  pkg search et al according to command line flags
+   procedure pkgdb_set_case_sensitivity (sensitive : Boolean);
+   function  pkgdb_is_case_sensitive return Boolean;
+
+   --  regex object must be global to assign access to it.
+   re : aliased regex_h.regex_t;
+
 
    function pkgdb_sqlcmd_init
      (db       : not null sqlite_h.sqlite3_Access;
@@ -50,5 +64,11 @@ private
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access);
    pragma Convention (C, pkgdb_vercmp);
+
+   procedure pkgdb_regex_delete (regex_ptr : not null regex_h.regex_t_Access);
+   pragma Convention (C, pkgdb_regex_delete);
+
+private
+   function conv2cint (result : Boolean) return IC.int;
 
 end Core.PkgDB;
