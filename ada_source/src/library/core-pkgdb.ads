@@ -71,4 +71,12 @@ private
 private
    function conv2cint (result : Boolean) return IC.int;
 
+   procedure pkgdb_split_common
+     (context : not null sqlite_h.sqlite3_context_Access;
+      numargs : IC.int;
+      argsval : not null access sqlite_h.sqlite3_value_Access;
+      delim   : Character;
+      first   : String;
+      second  : String);
+
 end Core.PkgDB;

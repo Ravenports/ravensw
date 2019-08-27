@@ -294,6 +294,13 @@ package sqlite_h is
       result        : IC.int);
    pragma Import (C, sqlite3_result_int);
 
+   procedure sqlite3_result_text
+     (context       : sqlite3_context_Access;
+      result        : ICS.chars_ptr;
+      termpos       : IC.int;
+      destructor    : sqlite3_destructor);
+   pragma Import (C, sqlite3_result_text);
+
    function sqlite3_value_text (value : sqlite3_value_Access) return ICS.chars_ptr;
    pragma Import (C, sqlite3_value_text);
 

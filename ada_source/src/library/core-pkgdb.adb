@@ -98,7 +98,7 @@ package body Core.PkgDB is
            arg1 = ICS.Null_Ptr or else
            arg2 = ICS.Null_Ptr
          then
-            errmsg := ICS.New_String ("Invalid usage of vercmp(): blank arguments");
+            errmsg := ICS.New_String ("Invalid usage of vercmp(): null arguments");
             sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
             ICS.Free (errmsg);
          end if;
@@ -158,7 +158,7 @@ package body Core.PkgDB is
          if regex = ICS.Null_Ptr or else
            str = ICS.Null_Ptr
          then
-            errmsg := ICS.New_String ("Invalid usage of regex(): blank arguments");
+            errmsg := ICS.New_String ("Invalid usage of regex(): null arguments");
             sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
             ICS.Free (errmsg);
          end if;
@@ -209,8 +209,45 @@ package body Core.PkgDB is
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access)
    is
+      errmsg : ICS.chars_ptr;
+      arg1   : ICS.chars_ptr := ICS.Null_Ptr;
+      show_abi : Boolean := False;
+
+      use type ICS.chars_ptr;
    begin
-      null;
+      if numargs > 1 then
+         errmsg := ICS.New_String ("Invalid usage of myarch(): needs 0 or 1 arguments");
+         sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+         ICS.Free (errmsg);
+      end if;
+
+      if numargs = 0 then
+         show_abi := True;
+      else
+         first : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
+         if first = ICS.Null_Ptr then
+            show_abi := True;
+         end if;
+      end if;
+
+      if show_abi then
+         declare
+            abi : constant String := pkg_config_get_string (conf_abi);
+         begin
+            first := ICS.New_String (abi);
+            sqlite_h.sqlite3_result_text (context    => context,
+                                          result     => first,
+                                          termpos    => -1,
+                                          destructor => null);
+            ICS.Free (abi);
+         end;
+      else
+         sqlite_h.sqlite3_result_text (context    => context,
+                                       result     => first,
+                                       termpos    => -1,
+                                       destructor => null);
+      end if;
+
    end pkgdb_myarch;
 
 
@@ -220,10 +257,14 @@ package body Core.PkgDB is
    procedure pkgdb_split_version
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;
-      argsval : not null access sqlite_h.sqlite3_value_Access)
-   is
+      argsval : not null access sqlite_h.sqlite3_value_Access) is
    begin
-      null;
+      pkgdb_split_common (context => context,
+                          numargs => numargs,
+                          argsval => argsval,
+                          delim   => '-',
+                          first   => "name",
+                          second  => "version");
    end pkgdb_split_version;
 
 
@@ -290,6 +331,86 @@ package body Core.PkgDB is
          return IC.int (0);
       end if;
    end conv2cint;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_split_common
+   --------------------------------------------------------------------
+   procedure pkgdb_split_common
+     (context : not null sqlite_h.sqlite3_context_Access;
+      numargs : IC.int;
+      argsval : not null access sqlite_h.sqlite3_value_Access;
+      delim   : Character;
+      first   : ICS.chars_ptr;
+      second  : ICS.chars_ptr)
+   is
+      errmsg : ICS.chars_ptr;
+   begin
+      if numargs /= 2 then
+         errmsg := ICS.New_String ("Invalid usage of split_*(): needs 2 arguments");
+         sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+         ICS.Free (errmsg);
+      end if;
+
+      declare
+         what : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
+         data : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2));
+
+         use type ICS.chars_ptr;
+      begin
+         if what = ICS.Null_Ptr or else
+           data = ICS.Null_Ptr
+         then
+            errmsg := ICS.New_String ("Invalid usage of split_*(): null arguments");
+            sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+            ICS.Free (errmsg);
+         end if;
+
+         declare
+            whatstr  : constant String := ICS.Value (what);
+            datastr  : constant String := ICS.Value (data);
+            delimstr : constant String (1) := (1 => delim);
+         begin
+            if whatstr = first then
+               if contains (data, delimstr) then
+                  sqlite_h.sqlite3_result_text
+                    (context    => context,
+                     result     => data,
+                     termpos    => IC.int (head (datastr, delimstr)'Length),
+                     destructor => null);
+               else
+                  sqlite_h.sqlite3_result_text (context    => context,
+                                                result     => data,
+                                                termpos    => IC.int (-1),
+                                                destructor => null);
+               end if;
+            elsif whatstr = second then
+               if contains (data, delimstr) then
+                  declare
+                     tailstring : constant String := tail (datastr, delimstr);
+                     newstr     : ICS.chars_ptr;
+                  begin
+                     newstr := ICS.New_String (tailstring);
+                     sqlite_h.sqlite3_result_text (context    => context,
+                                                   result     => newstr,
+                                                   termpos    => IC.int (-1),
+                                                   destructor => null);
+                     ICS.Free (newstr);
+                  end if;
+               else
+                  sqlite_h.sqlite3_result_text (context    => context,
+                                                result     => data,
+                                                termpos    => IC.int (-1),
+                                                destructor => null);
+               end if;
+            else
+               errmsg := ICS.New_String ("SQL function split_*() called with invalid arguments");
+               sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+               ICS.Free (errmsg);
+            end if;
+         end;
+   end pkgdb_split_common;
+
 
 
 end Core.PkgDB;
