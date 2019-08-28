@@ -111,9 +111,10 @@ package body Core.PkgDB is
       use type IC.int;
 
       errmsg : ICS.chars_ptr;
-      argv   : array (1 .. 3) of sqlite_h.sqlite3_value_Access;
+      argv   : array (1 .. 3) of access sqlite_h.sqlite3_value_Access;
 
       for argv'Address use argsval.all'Address;
+      pragma Import (Ada, argv);
    begin
       if numargs /= 3 then
          errmsg := ICS.New_String ("Invalid usage of vercmp(): needs 3 arguments");
@@ -122,9 +123,9 @@ package body Core.PkgDB is
       end if;
 
       declare
-         op_str : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
-         arg1   : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2));
-         arg2   : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (3));
+         op_str : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1).all);
+         arg1   : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2).all);
+         arg2   : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (3).all);
          op     : Deps.pkg_dep_version_op;
          cmp    : Version.cmp_result;
          ret    : Boolean;
@@ -172,10 +173,10 @@ package body Core.PkgDB is
       use type IC.int;
 
       errmsg : ICS.chars_ptr;
-      argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
+      argv   : array (1 .. 2) of access sqlite_h.sqlite3_value_Access;
 
       for argv'Address use argsval.all'Address;
-
+      pragma Import (Ada, argv);
    begin
       if numargs /= 2 then
          errmsg := ICS.New_String ("Invalid usage of regex(): needs 2 arguments");
@@ -184,8 +185,8 @@ package body Core.PkgDB is
       end if;
 
       declare
-         regex     : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
-         str       : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2));
+         regex     : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1).all);
+         str       : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2).all);
          re_Access : regex_h.regex_t_Access;
          ret       : IC.int;
 
@@ -252,9 +253,6 @@ package body Core.PkgDB is
       errmsg   : ICS.chars_ptr;
       first    : ICS.chars_ptr := ICS.Null_Ptr;
       show_abi : Boolean := False;
-      argv     : array (1 .. 1) of sqlite_h.sqlite3_value_Access;
-
-      for argv'Address use argsval.all'Address;
    begin
       if numargs > 1 then
          errmsg := ICS.New_String ("Invalid usage of myarch(): needs 0 or 1 arguments");
@@ -265,7 +263,7 @@ package body Core.PkgDB is
       if numargs = 0 then
          show_abi := True;
       else
-         first := sqlite_h.sqlite3_value_text (argv (1));
+         first := sqlite_h.sqlite3_value_text (argsval.all);
          if first = ICS.Null_Ptr then
             show_abi := True;
          end if;
@@ -388,9 +386,10 @@ package body Core.PkgDB is
       use type IC.int;
 
       errmsg : ICS.chars_ptr;
-      argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
+      argv   : array (1 .. 2) of access sqlite_h.sqlite3_value_Access;
 
       for argv'Address use argsval.all'Address;
+      pragma Import (Ada, argv);
    begin
       if numargs /= 2 then
          errmsg := ICS.New_String ("Invalid usage of split_*(): needs 2 arguments");
@@ -399,8 +398,8 @@ package body Core.PkgDB is
       end if;
 
       declare
-         what : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
-         data : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2));
+         what : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1).all);
+         data : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (2).all);
 
          use type ICS.chars_ptr;
       begin

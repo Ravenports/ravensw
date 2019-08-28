@@ -72,5 +72,10 @@ try_openat
     flags |= O_DIRECTORY;
 #endif
 
+#ifndef _WIN32
   return (openat (dirfd, path, flags));
+#else
+  return (0);
+#endif
+
 }
