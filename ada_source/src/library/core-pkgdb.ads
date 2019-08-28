@@ -14,6 +14,8 @@ package Core.PkgDB is
    procedure pkgshell_open (reponame : access ICS.chars_ptr);
    pragma Export (C, pkgshell_open);
 
+   procedure pkgdb_command (passthrough : String);
+
 private
 
    case_sensitivity_setting : Boolean := False;
@@ -68,7 +70,6 @@ private
    procedure pkgdb_regex_delete (regex_ptr : not null regex_h.regex_t_Access);
    pragma Convention (C, pkgdb_regex_delete);
 
-private
    function conv2cint (result : Boolean) return IC.int;
 
    procedure pkgdb_split_common

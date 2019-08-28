@@ -2,15 +2,19 @@
 --  Reference: ../License.txt
 
 with Ada.Calendar.Conversions;
+with Ada.Characters.Latin_1;
 with System;
 
 with Core.Config;
 with Core.Deps;
 with Core.Version;
+with Core.Strings; use Core.Strings;
 with Regex;
 with SQLite;
 
 package body Core.PkgDB is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    --------------------------------------------------------------------
    --  pkgshell_open
@@ -24,6 +28,39 @@ package body Core.PkgDB is
       reponame.all := ICS.New_String (dbfile);
       result := sqlite_h.sqlite3_auto_extension (callback => pkgdb_sqlcmd_init'Access);
    end pkgshell_open;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_command
+   --------------------------------------------------------------------
+   procedure pkgdb_command  (passthrough : String)
+   is
+      numargs : Natural := count_char (passthrough, LAT.Vertical_Line) + 1;
+   begin
+      if not SQLite.initialize_sqlite then
+         return;
+      end if;
+
+      declare
+         type argv_t is array (1 .. numargs) of aliased ICS.chars_ptr;
+         delim : constant String (1 .. 1) := (1 => LAT.Vertical_Line);
+         argv    : argv_t;
+         argsval : access ICS.chars_ptr;
+         result  : IC.int;
+      begin
+         for x in 1 .. numargs loop
+            argv (x) := ICS.New_String (specific_field (passthrough, x, delim));
+         end loop;
+
+         argsval := argv (1)'Access;
+
+         result := sqlite_h.sqlite3_shell (IC.int (numargs), argsval);
+
+         for x in 1 .. numargs loop
+            ICS.Free (argv (x));
+         end loop;
+      end;
+   end pkgdb_command;
 
 
    --------------------------------------------------------------------
@@ -209,11 +246,15 @@ package body Core.PkgDB is
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access)
    is
-      errmsg : ICS.chars_ptr;
-      arg1   : ICS.chars_ptr := ICS.Null_Ptr;
-      show_abi : Boolean := False;
-
       use type ICS.chars_ptr;
+      use type IC.int;
+
+      errmsg   : ICS.chars_ptr;
+      first    : ICS.chars_ptr := ICS.Null_Ptr;
+      show_abi : Boolean := False;
+      argv     : array (1 .. 1) of sqlite_h.sqlite3_value_Access;
+
+      for argv'Address use argsval.all'Address;
    begin
       if numargs > 1 then
          errmsg := ICS.New_String ("Invalid usage of myarch(): needs 0 or 1 arguments");
@@ -224,7 +265,7 @@ package body Core.PkgDB is
       if numargs = 0 then
          show_abi := True;
       else
-         first : ICS.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
+         first := sqlite_h.sqlite3_value_text (argv (1));
          if first = ICS.Null_Ptr then
             show_abi := True;
          end if;
@@ -232,14 +273,14 @@ package body Core.PkgDB is
 
       if show_abi then
          declare
-            abi : constant String := pkg_config_get_string (conf_abi);
+            abi : constant String := Config.pkg_config_get_string (Config.conf_abi);
          begin
             first := ICS.New_String (abi);
             sqlite_h.sqlite3_result_text (context    => context,
                                           result     => first,
                                           termpos    => -1,
                                           destructor => null);
-            ICS.Free (abi);
+            ICS.Free (first);
          end;
       else
          sqlite_h.sqlite3_result_text (context    => context,
@@ -341,10 +382,15 @@ package body Core.PkgDB is
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access;
       delim   : Character;
-      first   : ICS.chars_ptr;
-      second  : ICS.chars_ptr)
+      first   : String;
+      second  : String)
    is
+      use type IC.int;
+
       errmsg : ICS.chars_ptr;
+      argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
+
+      for argv'Address use argsval.all'Address;
    begin
       if numargs /= 2 then
          errmsg := ICS.New_String ("Invalid usage of split_*(): needs 2 arguments");
@@ -369,10 +415,10 @@ package body Core.PkgDB is
          declare
             whatstr  : constant String := ICS.Value (what);
             datastr  : constant String := ICS.Value (data);
-            delimstr : constant String (1) := (1 => delim);
+            delimstr : constant String (1 .. 1) := (1 => delim);
          begin
             if whatstr = first then
-               if contains (data, delimstr) then
+               if contains (datastr, delimstr) then
                   sqlite_h.sqlite3_result_text
                     (context    => context,
                      result     => data,
@@ -385,7 +431,7 @@ package body Core.PkgDB is
                                                 destructor => null);
                end if;
             elsif whatstr = second then
-               if contains (data, delimstr) then
+               if contains (datastr, delimstr) then
                   declare
                      tailstring : constant String := tail (datastr, delimstr);
                      newstr     : ICS.chars_ptr;
@@ -396,7 +442,7 @@ package body Core.PkgDB is
                                                    termpos    => IC.int (-1),
                                                    destructor => null);
                      ICS.Free (newstr);
-                  end if;
+                  end;
                else
                   sqlite_h.sqlite3_result_text (context    => context,
                                                 result     => data,
@@ -409,6 +455,7 @@ package body Core.PkgDB is
                ICS.Free (errmsg);
             end if;
          end;
+      end;
    end pkgdb_split_common;
 
 

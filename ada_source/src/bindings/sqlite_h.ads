@@ -325,6 +325,9 @@ package sqlite_h is
       callback : cb_auxdata);
    pragma Import (C, sqlite3_set_auxdata);
 
+   function sqlite3_shell (argc : IC.int; argv : access ICS.chars_ptr) return IC.int;
+   pragma Import (C, sqlite3_shell);
+
 private
 
    type sqlite3              is limited null record;
