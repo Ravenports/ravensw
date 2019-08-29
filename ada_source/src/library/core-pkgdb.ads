@@ -63,6 +63,15 @@ private
       argsval : not null access sqlite_h.sqlite3_value_Access);
    pragma Convention (C, pkgdb_myarch);
 
+   --  sqlite> select regexp ("[0-9]e", "abc3ef");
+   --  returns 1
+   --  sqlite> select regexp ("[0-9]f", "abc3ef");
+   --  returns 0
+   --
+   --  arg1 = regular expression string
+   --  arg2 = input string
+   --  returns 0 (false) or 1 (true) if a match is found
+   --  Function returns True if given string has a match against given regular expression
    procedure pkgdb_regex
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;
