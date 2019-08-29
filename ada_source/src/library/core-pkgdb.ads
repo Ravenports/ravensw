@@ -30,19 +30,33 @@ private
    --  regex object must be global to assign access to it.
    re : aliased regex_h.regex_t;
 
-
+   --  Defines custom sql functions for sqlite
    function pkgdb_sqlcmd_init
      (db       : not null sqlite_h.sqlite3_Access;
       pzErrMsg : not null access ICS.chars_ptr;
       pThunk   : not null sqlite_h.sqlite3_api_routines_Access) return IC.int;
    pragma Export (C, pkgdb_sqlcmd_init);
 
+   --  select now();
+   --  returns 1567046088
+   --
+   --  takes no arguments
+   --  Function returns unix epoch as defined by system clock
    procedure pkgdb_now
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access);
    pragma Convention (C, pkgdb_now);
 
+   --  select myarch();
+   --  returns "DragonFly:5.8:x86_64"
+   --  select myarch(null);
+   --  returns "DragonFly:5.8:x86_64"
+   --  select myarch("OpenBSD:6.4:amd64");
+   --  returns "OpenBSD:6.4:amd64";
+   --
+   --  arg1 optional.  Will override ABI if present
+   --  Function returns configured ABI unless overridden in arguments (then it returns that)
    procedure pkgdb_myarch
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;
@@ -55,23 +69,41 @@ private
       argsval : not null access sqlite_h.sqlite3_value_Access);
    pragma Convention (C, pkgdb_regex);
 
+   --  select split_version ("name", "joe-1.0");
+   --  returns "joe"
+   --  select split_version ("version", "joe-1.0_1,2");
+   --  returns "1.0_1,2"
+   --
+   --  arg1 = "name" or "version"
+   --  arg2 = package name
+   --  function returns name part or version part of package name
    procedure pkgdb_split_version
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access);
    pragma Convention (C, pkgdb_split_version);
 
+   --  select vercmp("<=", "joe-1.0", "joe-1.1");
+   --  returns 1.
+   --
+   --  arg1 = operator string ("==", "!=", "<", ">", "<=", ">=", anything else)
+   --  arg2 = package 1 name
+   --  arg3 = package 2 name
+   --  Function compares package 2 name against package 1 name and returns 0 or 1.
    procedure pkgdb_vercmp
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;
       argsval : not null access sqlite_h.sqlite3_value_Access);
    pragma Convention (C, pkgdb_vercmp);
 
+   --  callback for pkgdb_regex
    procedure pkgdb_regex_delete (regex_ptr : not null regex_h.regex_t_Access);
    pragma Convention (C, pkgdb_regex_delete);
 
+   --  Converts boolean until C integer
    function conv2cint (result : Boolean) return IC.int;
 
+   --  Where split routine does the actual work (allows custom split words, delimiter, etc)
    procedure pkgdb_split_common
      (context : not null sqlite_h.sqlite3_context_Access;
       numargs : IC.int;

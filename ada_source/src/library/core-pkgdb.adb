@@ -9,7 +9,6 @@ with Core.Config;
 with Core.Deps;
 with Core.Version;
 with Core.Strings; use Core.Strings;
-with Regex;
 with SQLite;
 
 package body Core.PkgDB is
@@ -362,7 +361,6 @@ package body Core.PkgDB is
    procedure pkgdb_regex_delete (regex_ptr : not null regex_h.regex_t_Access) is
    begin
       regex_h.regfree (regex_ptr);
-      Regex.free (regex_ptr);
    end pkgdb_regex_delete;
 
 
