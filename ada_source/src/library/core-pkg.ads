@@ -255,6 +255,9 @@ package Core.Pkg is
       Equivalent_Keys => Strings.equivalent,
       "="             => SU."=");
 
+
+   type repo_ops_variant is (binary);
+
    type T_pkg_repo is
       record
          name           : Text;
@@ -269,6 +272,7 @@ package Core.Pkg is
          enable         : Boolean;
          priority       : T_priority;
          flags          : T_pkg_repo_flags;
+         ops_variant    : repo_ops_variant;
          env            : nvpair_crate.Map;
          --  priv
          --  ssh

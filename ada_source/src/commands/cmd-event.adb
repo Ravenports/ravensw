@@ -20,6 +20,7 @@ package body Cmd.Event is
       TIO.Put_Line (TIO.Standard_Error, message & suffix);
    end warn;
 
+
    --------------------------------------------------------------------
    --  warnx
    --------------------------------------------------------------------

@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)pkg.8
 .\"
-.Dd May 8, 2018
+.Dd August 29, 2019
 .Dt RAVENSW-VERSION 8
 .Os
 .Sh NAME
@@ -22,28 +22,24 @@
 .Nd summarize installed versions of packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl IPR
+.Op Fl IR
 .Op Fl hoqvU
-.Op Fl l Ar limchar
-.Op Fl L Ar limchar
+.Op Fl l Ar limchar | Fl L Ar limchar
 .Op Fl Cegix Ar pattern
 .Op Fl r Ar reponame
 .Op Fl O Ar origin | Fl n Ar pkgname
-.Op Ar index
 .Nm
 .Fl t Ar version1 Ar version2
 .Nm
 .Fl T Ar pkgname Ar pattern
 .Pp
 .Nm
-.Op Fl -{index,ports,remote}
+.Op Fl -{index,remote}
 .Op Fl -{help,origin,quiet,verbose,no-repo-update}
-.Op Fl -like Ar limchar
-.Op Fl -not-like Ar limchar
+.Op Fl -like Ar limchar | -not-like Ar limchar
 .Op Fl -{case-sensitive,exact,glob,case-insensitive,regex} Ar pattern
 .Op Fl -repository Ar reponame
-.Op Fl -match-origin Ar origin
-.Op Ar index
+.Op Fl -match-origin Ar origin | Fl -match-name Ar pkgname
 .Nm
 .Fl -test-version Ar version1 Ar version2
 .Nm
@@ -76,14 +72,10 @@ used
 When
 .Fl I
 is used, versions of installed packages will be compared to the
-versions listed in the file argument
-.Ar index ,
-or if that is not given explicitly, in the default ports index file
-(typically located as
-.Pa /usr/ports/INDEX-N ,
-where
-.Sy N
-is the OS major version number.)
+versions listed in the conspiracy index derived from the
+.Cm RAVENPORTS
+setting in
+.Xr ravensw.conf 5 .
 .Pp
 When
 .Fl R
@@ -132,25 +124,15 @@ matching against
 case sensitive.
 .It Fl h , Fl -help
 Displays usage information.
-.It Fl I Op Ar index , Fl -index Op Ar index
+.It Fl I , Fl -index
 Use
-.Pa index
-file for determining if a package is out of date.
-If no
-.Pa index
-file name is specified, uses the default index file.
-This is the default, if the index file exists.
-.It Fl P , Fl -ports
-Use ports for determining if a package is out of date.
-This is the default if the index file is not present and a ports tree
-exists.
-The tree used can be overridden by PORTSDIR, see
-.Xr ravensw.conf 5
-for more information.
+.Pa repology.json
+file from the
+.Cm RAVENPORTS
+configuration setting for determining if a package is out of date.
 .It Fl R , Fl -remote
 Use repository catalog for determining if a package is out of date.
-This is the default if neither the ports index nor the ports tree
-exists.
+This is the default if the ravenports tree does not exists.
 .It Fl U , Fl -no-repo-update
 Suppress the automatic update of the local copy of the repository catalog
 from remote.
@@ -243,29 +225,9 @@ See
 for further description.
 .Bl -tag -width ".Ev NO_DESCRIPTIONS"
 .It Ev CASE_SENSITIVE_MATCH
-.It Ev INDEXDIR
-.It Ev INDEXFILE
 .It Ev RAVENSW_DBDIR
-.It Ev PORTSDIR
+.It Ev RAVENPORTS
 .El
-.Pp
-The default
-.Pa index
-file is searched for in
-.Ev INDEXDIR ,
-or if that is not set,
-.Ev PORTSDIR .
-.Ev INDEXFILE
-is the name of the
-.Pa index
-relative to that directory.
-If
-.Ev INDEXFILE
-is not set, the default file name is
-.Pa INDEX-N
-where
-.Cm N
-is the OS major version number.
 .Sh FILES
 See
 .Xr ravensw.conf 5 .

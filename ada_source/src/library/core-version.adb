@@ -405,7 +405,6 @@ package body Core.Version is
          when  0 => return PKG_REINSTALL;
          when  1 => return PKG_DOWNGRADE;
       end case;
-
    end pkg_version_change_between;
 
 

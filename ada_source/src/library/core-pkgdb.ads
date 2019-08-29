@@ -6,25 +6,96 @@ with sqlite_h;
 with regex_h;
 with System;
 
+private with Core.Pkg;
+
 package Core.PkgDB is
 
    package IC  renames Interfaces.C;
    package ICS renames Interfaces.C.Strings;
+
+   type T_match is (MATCH_ALL, MATCH_EXACT, MATCH_GLOB, MATCH_REGEX, MATCH_CONDITION);
+   type struct_pkgdb is limited private;
 
    procedure pkgshell_open (reponame : access ICS.chars_ptr);
    pragma Export (C, pkgshell_open);
 
    procedure pkgdb_command (passthrough : String);
 
-private
-
-   case_sensitivity_setting : Boolean := False;
-
    --  By default, MATCH_EXACT and MATCH_REGEX are case sensitive.  This
    --  is modified in many actions according to the value of
    --  CASE_SENSITIVE_MATCH in ravensw.conf and then possibly reset again in
    --  pkg search et al according to command line flags
    procedure pkgdb_set_case_sensitivity (sensitive : Boolean);
+
+   --  The four arguments are mutually exclusive, but the command line parser doesn't
+   --  object if more than one set.  Set in priority order exact, glob, regex, condition
+   function set_match_behavior
+     (request_exact : Boolean := False;
+      request_glob  : Boolean := False;
+      request_regex : Boolean := False;
+      request_condition : Boolean := False) return T_match;
+
+   --  Close access to the local sqlite database
+   procedure pkgdb_close (db : in out struct_pkgdb);
+
+private
+
+   case_sensitivity_setting : Boolean := False;
+
+   type struct_pkgdb is limited
+      record
+         sqlite : sqlite_h.sqlite3_Access;
+         prstmt_initialized : Boolean;
+         repos : Pkg.pkg_repos_crate.Map;
+      end record;
+
+   type sql_prstmt_index is
+     (MTREE,
+      PKG,
+      DEPS_UPDATE,
+      DEPENDENCIES,
+      FILES,
+      FILES_REPLACE,
+      DIRS1,
+      DIRS2,
+      CATEGORY1,
+      CATEGORY2,
+      LICENSES1,
+      LICENSES2,
+      USERS1,
+      USERS2,
+      GROUPS1,
+      GROUPS2,
+      SCRIPT1,
+      SCRIPT2,
+      OPTION1,
+      OPTION2,
+      SHLIBS1,
+      SHLIBS_REQD,
+      SHLIBS_PROV,
+      ANNOTATE1,
+      ANNOTATE2,
+      ANNOTATE_ADD1,
+      ANNOTATE_DEL1,
+      ANNOTATE_DEL2,
+      CONFLICT,
+      PKG_PROVIDE,
+      PROVIDE,
+      UPDATE_DIGEST,
+      CONFIG_FILES,
+      UPDATE_CONFIG_FILE,
+      PKG_REQUIRE,
+      REQUIRE
+     );
+
+   --  SQL associated with sql_prstmt_index enumeration
+   function prstmt_text_sql (index : sql_prstmt_index) return String;
+
+   --  Argument types associated with sql_prstmt_index enumeration
+   function prstmt_text_argtypes (index : sql_prstmt_index) return String;
+
+   sql_prepared_statements : array (sql_prstmt_index) of sqlite_h.sqlite3_stmt_Access;
+
    function  pkgdb_is_case_sensitive return Boolean;
 
    --  regex object must be global to assign access to it.
@@ -120,5 +191,7 @@ private
       delim   : Character;
       first   : String;
       second  : String);
+
+   procedure prstmt_finalize (db : in out struct_pkgdb);
 
 end Core.PkgDB;

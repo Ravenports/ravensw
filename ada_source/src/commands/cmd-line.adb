@@ -471,12 +471,14 @@ package body Cmd.Line is
          swl_nocat  : constant String := "--no-repo-update";
          sws_repo   : constant String := "-r";
          swl_repo   : constant String := "--repository";
+         AME        : constant String := " switches are mutually exclusive.";
          error_rec  : constant String := "Unrecognized option: ";
          error_exp  : constant String := "Unexpected argument: ";
          error_chk  : constant String := "Attempt to redefine check action: ";
          error_ann  : constant String := "Attempt to redefine annotation action: ";
-         error_PR   : constant String := "The --provides and --requires switches " &
-                                         "are mutually exclusive.";
+         error_PR   : constant String := "The --provides and --requires" & AME;
+         error_MON  : constant String := "The --match-origin and --match-name" & AME;
+         error_like : constant String := "The --like and --not-like" & AME;
          hyphen     : constant Character := '-';
 
       begin
@@ -1073,33 +1075,52 @@ package body Cmd.Line is
                      result.verb_skip_catalog := True;
                   elsif datum = sws_repo or else datum = swl_repo then
                      last_cmd := generic_repo_name;
+                     if result.version_behavior = no_defined_behavior or else
+                       result.version_behavior = use_remote_catalog_state
+                     then
+                        result.version_behavior := use_remote_catalog_state;
+                     else
+                        set_error ("The -r switch is not compatible with -I, -t, or -T switches.");
+                     end if;
                   elsif aCgix (datum, datumtxt, False) then
                      null;
                   elsif datum = "-e" or else datum = "--exact" then
                      result.version_exact_match := True;
                   elsif datum = "-l" or else datum = "--like" then
+                     if result.version_not_char /= Character'First then
+                        set_error (error_like);
+                     end if;
                      last_cmd := version_match_char;
                   elsif datum = "-L" or else datum = "--not-like" then
+                     if result.version_match_char /= Character'First then
+                        set_error (error_like);
+                     end if;
                      last_cmd := version_not_char;
                   elsif datum = "-o" or else datum = "--origin" then
                      result.version_disp_origin := True;
                   elsif datum = "-O" or else datum = "--match-origin" then
+                     if not IsBlank (result.version_pkg_name) then
+                        set_error (error_MON);
+                     end if;
                      last_cmd := version_origin;
                   elsif datum = "-n" or else datum = "--match-name" then
+                     if not IsBlank (result.version_origin) then
+                        set_error (error_MON);
+                     end if;
                      last_cmd := version_pkgname;
                   elsif datum = "-t" or else datum = "--test-version" then
                      if result.version_behavior = no_defined_behavior then
                         result.version_behavior := test_versions;
                      else
                         set_error ("The --test-version switch is not compatible with -I, -R, " &
-                                     "or -T switches.");
+                                     "-r, or -T switches.");
                      end if;
                   elsif datum = "-T" or else datum = "--test-pattern" then
                      if result.version_behavior = no_defined_behavior then
                         result.version_behavior := compare_against_pattern;
                      else
                         set_error ("The --test-pattern switch is not compatible with -I, -R, " &
-                                     "or -t switches.");
+                                     "-r, or -t switches.");
                      end if;
                   elsif datum = "-R" or else datum = "--remote" then
                      if result.version_behavior = no_defined_behavior then

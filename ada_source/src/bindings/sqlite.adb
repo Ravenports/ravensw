@@ -105,9 +105,12 @@ package body SQLite is
    --------------------------------------------------------------------
    procedure finalize_statement (stmt : sqlite_h.sqlite3_stmt_Access)
    is
+      use type sqlite_h.sqlite3_stmt_Access;
       result : IC.int;
    begin
-      result := sqlite_h.sqlite3_finalize (stmt);
+      if stmt /= null then
+         result := sqlite_h.sqlite3_finalize (stmt);
+      end if;
    end finalize_statement;
 
 
