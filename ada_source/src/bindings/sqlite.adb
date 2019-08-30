@@ -5,6 +5,7 @@ with Ada.Unchecked_Conversion;
 
 with Interfaces.C;
 with Interfaces.C.Strings;
+with System;
 
 package body SQLite is
 
@@ -26,7 +27,7 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
-   --  open_sqlite_database
+   --  open_sqlite_database_readonly
    --------------------------------------------------------------------
    function open_sqlite_database_readonly (path : String;
                                            ppDB : not null access sqlite_h.sqlite3_Access)
@@ -45,6 +46,26 @@ package body SQLite is
       ICS.Free (c_path);
       return (result = sqlite_h.SQLITE_OK);
    end open_sqlite_database_readonly;
+
+
+   --------------------------------------------------------------------
+   --  open_sqlite_database_readwrite
+   --------------------------------------------------------------------
+   function open_sqlite_database_readwrite (path : String;
+                                            ppDB : not null access sqlite_h.sqlite3_Access)
+                                            return Boolean
+   is
+      c_path  : ICS.chars_ptr;
+      result  : IC.int;
+
+      use type IC.int;
+   begin
+      c_path := ICS.New_String (path);
+      result := sqlite_h.sqlite3_open (File_Name => c_path,
+                                       Handle    => ppDB);
+      ICS.Free (c_path);
+      return (result = sqlite_h.SQLITE_OK);
+   end open_sqlite_database_readwrite;
 
 
    --------------------------------------------------------------------
@@ -221,5 +242,49 @@ package body SQLite is
       c_msg := sqlite_h.sqlite3_errmsg (db);
       return ICS.Value (c_msg);
    end get_last_error_message;
+
+
+   --------------------------------------------------------------------
+   --  get_last_error_code
+   --------------------------------------------------------------------
+   function get_last_error_code (db : sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types
+   is
+      code : IC.int;
+   begin
+      code := sqlite_h.sqlite3_errcode (db);
+
+      return sqlite_h.enum_error_types'Val (Integer (code) - 1);
+   end get_last_error_code;
+
+
+   --------------------------------------------------------------------
+   --  exec_sql
+   --------------------------------------------------------------------
+   function exec_sql (db : sqlite_h.sqlite3_Access; sql : String; msg : out Text) return Boolean
+   is
+      use type IC.int;
+
+      errmsg : ICS.chars_ptr;
+      c_sql  : ICS.chars_ptr;
+      res    : IC.int;
+   begin
+      msg := blank;
+      c_sql := ICS.New_String (sql);
+      res := sqlite_h.sqlite3_exec (db       => db,
+                                    sql      => c_sql,
+                                    callback => System.Null_Address,
+                                    firstarg => System.Null_Address,
+                                    errmsg   => errmsg'Address);
+      ICS.Free (c_sql);
+      if res = sqlite_h.SQLITE_OK then
+         return True;
+      else
+         msg := SUS (ICS.Value (errmsg));
+         ICS.Free (errmsg);
+         return False;
+      end if;
+   end exec_sql;
+
+
 
 end SQLite;

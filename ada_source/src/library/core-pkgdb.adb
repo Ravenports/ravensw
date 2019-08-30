@@ -72,8 +72,8 @@ package body Core.PkgDB is
    --------------------------------------------------------------------
    function pkgdb_sqlcmd_init
      (db       : not null sqlite_h.sqlite3_Access;
-      pzErrMsg : not null access ICS.chars_ptr;
-      pThunk   : not null sqlite_h.sqlite3_api_routines_Access) return IC.int
+      pzErrMsg : access ICS.chars_ptr;
+      pThunk   : sqlite_h.sqlite3_api_routines_Access) return IC.int
    is
       procedure fast (name : String; nargs : Natural; cb : sqlite_h.cb_xFuncStep);
       procedure fast (name : String; nargs : Natural; cb : sqlite_h.cb_xFuncStep)
@@ -821,6 +821,8 @@ package body Core.PkgDB is
    function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
                             return Core.Pkg.Pkg_Error_Type
    is
+      use type sqlite_h.enum_error_types;
+      func   : constant String := "pkgdb_open_all";
       dirfd  : Unix.File_Descriptor;
       create : Boolean := False;
       result : Boolean;
@@ -877,8 +879,50 @@ package body Core.PkgDB is
       result := SQLite.initialize_sqlite;
       SQLite.pkgdb_syscall_overload;
 
-     -- SQLite.open_sqlite_database_readonly
 
+      if not SQLite.open_sqlite_database_readwrite ("/local.sqlite", db.sqlite'Access) then
+         ERROR_SQLITE (db.sqlite, func, "sqlite open");
+         if SQLite.get_last_error_code (db.sqlite) = sqlite_h.SQLITE_CORRUPT then
+            Event.pkg_emit_error (SUS ("Database corrupt.  Are you running on NFS?  " &
+                                    "If so, ensure the locking mechanism is properly set up."));
+         end if;
+         pkgdb_close (db);
+         return EPKG_FATAL;
+      end if;
+
+      --  Wait up to 5 seconds if database is busy
+      declare
+         use type IC.int;
+         res : IC.int;
+      begin
+         res := sqlite_h.sqlite3_busy_timeout (db.sqlite, IC.int (5000));
+         if res /= 0 then
+            Event.pkg_emit_error (SUS ("Failed to set busy timeout in " & func));
+         end if;
+      end;
+
+      --  If the database is missing we have to initialize it
+      if create and then
+        pkgdb_init(db.sqlite) != EPKG_OK
+      then
+         pkgdb_close (db);
+         return EPKG_FATAL;
+      end if;
+
+      --  Create our functions
+      declare
+         use type IC.int;
+         res : IC.int;
+      begin
+         res := pkgdb_sqlcmd_init (db       => db.sqlite,
+                                   pzErrMsg => null,
+                                   pThunk   => null);
+         if res /= 0 then
+            Event.pkg_emit_error (SUS ("Failed to add custom sql functions in " & func));
+            pkgdb_close (db);
+            return EPKG_FATAL;
+         end if;
+      end;
 
       return EPKG_FATAL;
    end pkgdb_open_all;
@@ -997,4 +1041,402 @@ package body Core.PkgDB is
       return res;
    end vfs_dbdir_mkdir;
 
+
+   --------------------------------------------------------------------
+   --  pkgdb_init
+   --------------------------------------------------------------------
+   function pkgdb_init (db : sqlite_h.sqlite3_Access) return Core.Pkg.Pkg_Error_Type
+   is
+      sql : constant String :=
+        "BEGIN;" &
+        "CREATE TABLE packages (" &
+                "id INTEGER PRIMARY KEY," &
+                "origin TEXT NOT NULL," &
+                "name TEXT NOT NULL," &
+                "version TEXT NOT NULL," &
+                "comment TEXT NOT NULL," &
+                "desc TEXT NOT NULL," &
+                "mtree_id INTEGER REFERENCES mtree(id)" &
+                        " ON DELETE RESTRICT ON UPDATE CASCADE," &
+                "message TEXT," &
+                "arch TEXT NOT NULL," &
+                "maintainer TEXT NOT NULL," &
+                "www TEXT," &
+                "prefix TEXT NOT NULL," &
+                "flatsize INTEGER NOT NULL," &
+                "automatic INTEGER NOT NULL," &
+                "locked INTEGER NOT NULL DEFAULT 0," &
+                "licenselogic INTEGER NOT NULL," &
+                "time INTEGER, " &
+                "manifestdigest TEXT NULL, " &
+                "pkg_format_version INTEGER," &
+                "dep_formula TEXT NULL," &
+                "vital INTEGER NOT NULL DEFAULT 0" &
+        ");" &
+        "CREATE UNIQUE INDEX packages_unique ON packages(name);" &
+        "CREATE TABLE mtree (" &
+                "id INTEGER PRIMARY KEY," &
+                "content TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_script (" &
+                "package_id INTEGER REFERENCES packages(id)" &
+                        " ON DELETE CASCADE ON UPDATE CASCADE," &
+                "type INTEGER," &
+                "script_id INTEGER REFERENCES script(script_id)" &
+                        " ON DELETE RESTRICT ON UPDATE CASCADE," &
+                "PRIMARY KEY (package_id, type)" &
+        ");" &
+        "CREATE TABLE script (" &
+                "script_id INTEGER PRIMARY KEY," &
+                "script TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE option (" &
+                "option_id INTEGER PRIMARY KEY," &
+                "option TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE option_desc (" &
+                "option_desc_id INTEGER PRIMARY KEY," &
+                "option_desc TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_option (" &
+                "package_id INTEGER NOT NULL REFERENCES packages(id) " &
+                        "ON DELETE CASCADE ON UPDATE CASCADE," &
+                "option_id INTEGER NOT NULL REFERENCES option(option_id) " &
+                        "ON DELETE RESTRICT ON UPDATE CASCADE," &
+                "value TEXT NOT NULL," &
+                "PRIMARY KEY(package_id, option_id)" &
+        ");" &
+        "CREATE TABLE pkg_option_desc (" &
+                "package_id INTEGER NOT NULL REFERENCES packages(id) " &
+                        "ON DELETE CASCADE ON UPDATE CASCADE," &
+                "option_id INTEGER NOT NULL REFERENCES option(option_id) " &
+                        "ON DELETE RESTRICT ON UPDATE CASCADE," &
+                "option_desc_id INTEGER NOT NULL " &
+                        "REFERENCES option_desc(option_desc_id) " &
+                        "ON DELETE RESTRICT ON UPDATE CASCADE," &
+                "PRIMARY KEY(package_id, option_id)" &
+        ");" &
+        "CREATE TABLE pkg_option_default (" &
+                "package_id INTEGER NOT NULL REFERENCES packages(id) " &
+                        "ON DELETE CASCADE ON UPDATE CASCADE," &
+                "option_id INTEGER NOT NULL REFERENCES option(option_id) " &
+                        "ON DELETE RESTRICT ON UPDATE CASCADE," &
+                "default_value TEXT NOT NULL," &
+                "PRIMARY KEY(package_id, option_id)" &
+        ");" &
+        "CREATE TABLE deps (" &
+                "origin TEXT NOT NULL," &
+                "name TEXT NOT NULL," &
+                "version TEXT NOT NULL," &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE" &
+        ");" &
+        "CREATE UNIQUE INDEX deps_unique ON deps(name, version, package_id);" &
+        "CREATE TABLE files (" &
+                "path TEXT PRIMARY KEY," &
+                "sha256 TEXT," &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE" &
+        ");" &
+        "CREATE TABLE directories (" &
+                "id INTEGER PRIMARY KEY," &
+                "path TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_directories (" &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE," &
+                "directory_id INTEGER REFERENCES directories(id) ON DELETE RESTRICT" &
+                        " ON UPDATE RESTRICT," &
+                "try INTEGER," &
+                "PRIMARY KEY (package_id, directory_id)" &
+        ");" &
+        "CREATE TABLE categories (" &
+                "id INTEGER PRIMARY KEY," &
+                "name TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_categories (" &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE," &
+                "category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT" &
+                        " ON UPDATE RESTRICT," &
+                "PRIMARY KEY (package_id, category_id)" &
+        ");" &
+        "CREATE TABLE licenses (" &
+                "id INTEGER PRIMARY KEY," &
+                "name TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_licenses (" &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE," &
+                "license_id INTEGER REFERENCES licenses(id) ON DELETE RESTRICT" &
+                        " ON UPDATE RESTRICT," &
+                "PRIMARY KEY (package_id, license_id)" &
+        ");" &
+        "CREATE TABLE users (" &
+                "id INTEGER PRIMARY KEY," &
+                "name TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_users (" &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE," &
+                "user_id INTEGER REFERENCES users(id) ON DELETE RESTRICT" &
+                        " ON UPDATE RESTRICT," &
+                "UNIQUE(package_id, user_id)" &
+        ");" &
+        "CREATE TABLE groups (" &
+                "id INTEGER PRIMARY KEY," &
+                "name TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_groups (" &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE," &
+                "group_id INTEGER REFERENCES groups(id) ON DELETE RESTRICT" &
+                        " ON UPDATE RESTRICT," &
+                "UNIQUE(package_id, group_id)" &
+        ");" &
+        "CREATE TABLE shlibs (" &
+                "id INTEGER PRIMARY KEY," &
+                "name TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_shlibs_required (" &
+                "package_id INTEGER NOT NULL REFERENCES packages(id)" &
+                        " ON DELETE CASCADE ON UPDATE CASCADE," &
+                "shlib_id INTEGER NOT NULL REFERENCES shlibs(id)" &
+                        " ON DELETE RESTRICT ON UPDATE RESTRICT," &
+                "UNIQUE (package_id, shlib_id)" &
+        ");" &
+        "CREATE TABLE pkg_shlibs_provided (" &
+                "package_id INTEGER NOT NULL REFERENCES packages(id)" &
+                        " ON DELETE CASCADE ON UPDATE CASCADE," &
+                "shlib_id INTEGER NOT NULL REFERENCES shlibs(id)" &
+                        " ON DELETE RESTRICT ON UPDATE RESTRICT," &
+                "UNIQUE (package_id, shlib_id)" &
+        ");" &
+        "CREATE TABLE annotation (" &
+                "annotation_id INTEGER PRIMARY KEY," &
+                "annotation TEXT NOT NULL UNIQUE" &
+        ");" &
+        "CREATE TABLE pkg_annotation (" &
+                "package_id INTERGER REFERENCES packages(id)" &
+                      " ON DELETE CASCADE ON UPDATE RESTRICT," &
+                "tag_id INTEGER NOT NULL REFERENCES annotation(annotation_id)" &
+                      " ON DELETE CASCADE ON UPDATE RESTRICT," &
+                "value_id INTEGER NOT NULL REFERENCES annotation(annotation_id)" &
+                      " ON DELETE CASCADE ON UPDATE RESTRICT," &
+                "UNIQUE (package_id, tag_id)" &
+        ");" &
+        "CREATE TABLE pkg_conflicts (" &
+            "package_id INTEGER NOT NULL REFERENCES packages(id)" &
+            "  ON DELETE CASCADE ON UPDATE CASCADE," &
+            "conflict_id INTEGER NOT NULL," &
+            "UNIQUE(package_id, conflict_id)" &
+        ");" &
+        "CREATE TABLE pkg_lock (" &
+            "exclusive INTEGER(1)," &
+            "advisory INTEGER(1)," &
+            "read INTEGER(8)" &
+        ");" &
+        "CREATE TABLE pkg_lock_pid (" &
+            "pid INTEGER PRIMARY KEY" &
+        ");" &
+        "INSERT INTO pkg_lock VALUES(0,0,0);" &
+        "CREATE TABLE provides(" &
+        "    id INTEGER PRIMARY KEY," &
+        "    provide TEXT NOT NULL" &
+        ");" &
+        "CREATE TABLE pkg_provides (" &
+            "package_id INTEGER NOT NULL REFERENCES packages(id)" &
+            "  ON DELETE CASCADE ON UPDATE CASCADE," &
+            "provide_id INTEGER NOT NULL REFERENCES provides(id)" &
+            "  ON DELETE RESTRICT ON UPDATE RESTRICT," &
+            "UNIQUE(package_id, provide_id)" &
+        ");" &
+        "CREATE TABLE config_files (" &
+                "path TEXT NOT NULL UNIQUE, " &
+                "content TEXT, " &
+                "package_id INTEGER REFERENCES packages(id) ON DELETE CASCADE" &
+                        " ON UPDATE CASCADE" &
+        ");" &
+
+        "CREATE INDEX deporigini on deps(origin);" &
+        "CREATE INDEX pkg_script_package_id ON pkg_script(package_id);" &
+        "CREATE INDEX deps_package_id ON deps (package_id);" &
+        "CREATE INDEX files_package_id ON files (package_id);" &
+        "CREATE INDEX pkg_directories_package_id ON pkg_directories (package_id);" &
+        "CREATE INDEX pkg_categories_package_id ON pkg_categories (package_id);" &
+        "CREATE INDEX pkg_licenses_package_id ON pkg_licenses (package_id);" &
+        "CREATE INDEX pkg_users_package_id ON pkg_users (package_id);" &
+        "CREATE INDEX pkg_groups_package_id ON pkg_groups (package_id);" &
+        "CREATE INDEX pkg_shlibs_required_package_id ON pkg_shlibs_required (package_id);" &
+        "CREATE INDEX pkg_shlibs_provided_package_id ON pkg_shlibs_provided (package_id);" &
+        "CREATE INDEX pkg_directories_directory_id ON pkg_directories (directory_id);" &
+        "CREATE INDEX pkg_annotation_package_id ON pkg_annotation(package_id);" &
+        "CREATE INDEX pkg_digest_id ON packages(origin, manifestdigest);" &
+        "CREATE INDEX pkg_conflicts_pid ON pkg_conflicts(package_id);" &
+        "CREATE INDEX pkg_conflicts_cid ON pkg_conflicts(conflict_id);" &
+        "CREATE INDEX pkg_provides_id ON pkg_provides(package_id);" &
+        "CREATE INDEX packages_origin ON packages(origin COLLATE NOCASE);" &
+        "CREATE INDEX packages_name ON packages(name COLLATE NOCASE);" &
+
+        "CREATE VIEW pkg_shlibs AS SELECT * FROM pkg_shlibs_required;" &
+        "CREATE TRIGGER pkg_shlibs_update " &
+                "INSTEAD OF UPDATE ON pkg_shlibs " &
+        "FOR EACH ROW BEGIN " &
+                "UPDATE pkg_shlibs_required " &
+                "SET package_id = new.package_id, " &
+                "  shlib_id = new.shlib_id " &
+                "WHERE shlib_id = old.shlib_id " &
+                "AND package_id = old.package_id; " &
+        "END;" &
+        "CREATE TRIGGER pkg_shlibs_insert " &
+                "INSTEAD OF INSERT ON pkg_shlibs " &
+        "FOR EACH ROW BEGIN " &
+                "INSERT INTO pkg_shlibs_required (shlib_id, package_id) " &
+                "VALUES (new.shlib_id, new.package_id); " &
+        "END;" &
+        "CREATE TRIGGER pkg_shlibs_delete " &
+                "INSTEAD OF DELETE ON pkg_shlibs " &
+        "FOR EACH ROW BEGIN " &
+                "DELETE FROM pkg_shlibs_required " &
+                "WHERE shlib_id = old.shlib_id " &
+                "AND package_id = old.package_id; " &
+        "END;" &
+
+        "CREATE VIEW scripts AS SELECT package_id, script, type" &
+                " FROM pkg_script ps JOIN script s" &
+                " ON (ps.script_id = s.script_id);" &
+        "CREATE TRIGGER scripts_update" &
+                " INSTEAD OF UPDATE ON scripts " &
+        "FOR EACH ROW BEGIN" &
+                " INSERT OR IGNORE INTO script(script)" &
+                " VALUES(new.script);" &
+                " UPDATE pkg_script" &
+                " SET package_id = new.package_id," &
+                        " type = new.type," &
+                        " script_id = ( SELECT script_id" &
+                        " FROM script WHERE script = new.script )" &
+                " WHERE package_id = old.package_id" &
+                        " AND type = old.type;" &
+        "END;" &
+        "CREATE TRIGGER scripts_insert" &
+                " INSTEAD OF INSERT ON scripts " &
+        "FOR EACH ROW BEGIN" &
+                " INSERT OR IGNORE INTO script(script)" &
+                " VALUES(new.script);" &
+                " INSERT INTO pkg_script(package_id, type, script_id) " &
+                " SELECT new.package_id, new.type, s.script_id" &
+                " FROM script s WHERE new.script = s.script;" &
+        "END;" &
+        "CREATE TRIGGER scripts_delete" &
+                " INSTEAD OF DELETE ON scripts " &
+        "FOR EACH ROW BEGIN" &
+                " DELETE FROM pkg_script" &
+                " WHERE package_id = old.package_id" &
+                " AND type = old.type;" &
+                " DELETE FROM script" &
+                " WHERE script_id NOT IN" &
+                         " (SELECT DISTINCT script_id FROM pkg_script);" &
+        "END;" &
+        "CREATE VIEW options AS " &
+                "SELECT package_id, option, value " &
+                "FROM pkg_option JOIN option USING(option_id);" &
+        "CREATE TRIGGER options_update " &
+                "INSTEAD OF UPDATE ON options " &
+        "FOR EACH ROW BEGIN " &
+                "UPDATE pkg_option " &
+                "SET value = new.value " &
+                "WHERE package_id = old.package_id AND " &
+                        "option_id = ( SELECT option_id FROM option " &
+                                      "WHERE option = old.option );" &
+        "END;" &
+        "CREATE TRIGGER options_insert " &
+                "INSTEAD OF INSERT ON options " &
+        "FOR EACH ROW BEGIN " &
+                "INSERT OR IGNORE INTO option(option) " &
+                "VALUES(new.option);" &
+                "INSERT INTO pkg_option(package_id, option_id, value) " &
+                "VALUES (new.package_id, " &
+                        "(SELECT option_id FROM option " &
+                        "WHERE option = new.option), " &
+                        "new.value);" &
+        "END;" &
+        "CREATE TRIGGER options_delete " &
+                "INSTEAD OF DELETE ON options " &
+        "FOR EACH ROW BEGIN " &
+                "DELETE FROM pkg_option " &
+                "WHERE package_id = old.package_id AND " &
+                        "option_id = ( SELECT option_id FROM option " &
+                                        "WHERE option = old.option );" &
+                "DELETE FROM option " &
+                "WHERE option_id NOT IN " &
+                        "( SELECT DISTINCT option_id FROM pkg_option );" &
+        "END;" &
+        "CREATE TABLE requires(" &
+        "    id INTEGER PRIMARY KEY," &
+        "    require TEXT NOT NULL" &
+        ");" &
+        "CREATE TABLE pkg_requires (" &
+            "package_id INTEGER NOT NULL REFERENCES packages(id)" &
+            "  ON DELETE CASCADE ON UPDATE CASCADE," &
+            "require_id INTEGER NOT NULL REFERENCES requires(id)" &
+            "  ON DELETE RESTRICT ON UPDATE RESTRICT," &
+            "UNIQUE(package_id, require_id)" &
+        ");" &
+
+        "PRAGMA user_version = " & DBVERSION & ";" &
+        "COMMIT;";
+
+   begin
+      return sql_exec (db, sql);
+   end pkgdb_init;
+
+
+   --------------------------------------------------------------------
+   --  sql_exec
+   --------------------------------------------------------------------
+   function sql_exec (db : sqlite_h.sqlite3_Access; sql : String) return Core.Pkg.Pkg_Error_Type
+   is
+      msg : Text;
+   begin
+      Event.pkg_debug (4, "Pkgdb: executing '" & sql & "'");
+      if SQLite.exec_sql (db, sql, msg) then
+         return Core.Pkg.EPKG_OK;
+      else
+         Event.pkg_emit_error (SUS ("sql_exec() error: " & USS (msg)));
+         return Core.Pkg.EPKG_FATAL;
+      end if;
+   end sql_exec;
+
+
+   --------------------------------------------------------------------
+   --  sql_exec
+   --------------------------------------------------------------------
+   function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        sql     : String;
+                        res     : out SQLite.sql_int64;
+                        silence : Boolean) return Core.Pkg.Pkg_Error_Type
+   is
+      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      func : constant String := "get_pragma";
+   begin
+      res := 0;
+      Event.pkg_debug (4, "Pkgdb: executing pragma command '" & sql & "'");
+      if not SQLite.prepare_sql (db, sql, stmt'Access) then
+         if not silence then
+            ERROR_SQLITE (db, func, sql);
+         end if;
+         return EPKG_FATAL;
+      end if;
+
+      if not Sqlite.step_through_statement (stmt => stmt, num_retries => 6) then
+         SQLite.finalize_statement (stmt);
+         Event.pkg_emit_error (SUS ("Pkgdb: failed to step through get_pragma()"));
+         return EPKG_FATAL;
+      end if;
+
+      res := SQLite.retrieve_integer (stmt, 0);
+      SQLite.finalize_statement (stmt);
+
+      return EPKG_OK;
+   end get_pragma;
 end Core.PkgDB;

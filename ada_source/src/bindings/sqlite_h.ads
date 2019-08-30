@@ -53,10 +53,69 @@ package sqlite_h is
       SQLITE_BLOB    => 4,
       SQLITE_NULL    => 5);
 
-   SQLITE_OK      : constant :=   0;  --  Successful result
-   SQLITE_ROW     : constant := 100;  --  sqlite3_step() has another row ready
-   SQLITE_DONE    : constant := 101;  --  sqlite3_step() has finished executing
-   SQLITE_BUSY    : constant :=   5;
+   SQLITE_OK       : constant :=   0;  --  Successful result
+   SQLITE_ROW      : constant := 100;  --  sqlite3_step() has another row ready
+   SQLITE_DONE     : constant := 101;  --  sqlite3_step() has finished executing
+
+   type enum_error_types is
+     (SQLITE_ERROR,
+      SQLITE_INTERNAL,
+      SQLITE_PERM,
+      SQLITE_ABORT,
+      SQLITE_BUSY,
+      SQLITE_LOCKED,
+      SQLITE_NOMEM,
+      SQLITE_READONLY,
+      SQLITE_INTERRUPT,
+      SQLITE_IOERR,
+      SQLITE_CORRUPT,
+      SQLITE_NOTFOUND,
+      SQLITE_FULL,
+      SQLITE_CANTOPEN,
+      SQLITE_PROTOCOL,
+      SQLITE_EMPTY,
+      SQLITE_SCHEMA,
+      SQLITE_TOOBIG,
+      SQLITE_CONSTRAINT,
+      SQLITE_MISMATCH,
+      SQLITE_MISUSE,
+      SQLITE_NOLFS,
+      SQLITE_AUTH,
+      SQLITE_FORMAT,
+      SQLITE_RANGE,
+      SQLITE_NOTADB,
+      SQLITE_NOTICE,
+      SQLITE_WARNING);
+   pragma Convention (C, enum_error_types);
+   for enum_error_types use
+     (SQLITE_ERROR      => 1,
+      SQLITE_INTERNAL   => 2,
+      SQLITE_PERM       => 3,
+      SQLITE_ABORT      => 4,
+      SQLITE_BUSY       => 5,
+      SQLITE_LOCKED     => 6,
+      SQLITE_NOMEM      => 7,
+      SQLITE_READONLY   => 8,
+      SQLITE_INTERRUPT  => 9,
+      SQLITE_IOERR      => 10,
+      SQLITE_CORRUPT    => 11,
+      SQLITE_NOTFOUND   => 12,
+      SQLITE_FULL       => 13,
+      SQLITE_CANTOPEN   => 14,
+      SQLITE_PROTOCOL   => 15,
+      SQLITE_EMPTY      => 16,
+      SQLITE_SCHEMA     => 17,
+      SQLITE_TOOBIG     => 18,
+      SQLITE_CONSTRAINT => 19,
+      SQLITE_MISMATCH   => 20,
+      SQLITE_MISUSE     => 21,
+      SQLITE_NOLFS      => 22,
+      SQLITE_AUTH       => 23,
+      SQLITE_FORMAT     => 24,
+      SQLITE_RANGE      => 25,
+      SQLITE_NOTADB     => 26,
+      SQLITE_NOTICE     => 27,
+      SQLITE_WARNING    => 28);
 
    SQLITE_CONFIG_SINGLETHREAD : constant := 1;  --  nil
    SQLITE_CONFIG_MULTITHREAD  : constant := 2;  --  nil
@@ -265,8 +324,8 @@ package sqlite_h is
 
    type cb_xEntryPoint is access function
      (db       : not null sqlite3_Access;
-      pzErrMsg : not null access ICS.chars_ptr;
-      pThunk   : not null sqlite3_api_routines_Access) return IC.int;
+      pzErrMsg : access ICS.chars_ptr;
+      pThunk   : sqlite3_api_routines_Access) return IC.int;
    pragma Convention (C, cb_xEntryPoint);
 
    function sqlite3_auto_extension (callback : cb_xEntryPoint) return IC.int;
@@ -338,6 +397,10 @@ package sqlite_h is
 
    function sqlite3_vfs_find (zVfsName : ICS.chars_ptr) return sqlite3_vfs_Access;
    pragma Import (C, sqlite3_vfs_find);
+
+   function sqlite3_busy_timeout (db : sqlite3_Access; millisecs : IC.int) return IC.int;
+   pragma Import (C, sqlite3_busy_timeout);
+
 private
 
    type sqlite3              is limited null record;

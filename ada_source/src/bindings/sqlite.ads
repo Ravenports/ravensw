@@ -3,6 +3,10 @@
 
 with sqlite_h;
 with regex_h;
+with Core.Strings;
+
+use Core;
+use Core.Strings;
 
 package SQLite is
 
@@ -16,6 +20,11 @@ package SQLite is
      (path  : String;
       ppDB  :  not null access sqlite_h.sqlite3_Access) return Boolean;
 
+   --  return True on success, db is output
+   function open_sqlite_database_readwrite
+     (path  : String;
+      ppDB  :  not null access sqlite_h.sqlite3_Access) return Boolean;
+
    --  return True on success, stmt is output
    function prepare_sql
      (pDB    : sqlite_h.sqlite3_Access;
@@ -25,7 +34,7 @@ package SQLite is
    --  return True if row found after the step
    function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
 
-   --  return True if row found after the step, attemp num_retries when SQLITE_BUSY encountered
+   --  return True if row found after the step, attempt num_retries when SQLITE_BUSY encountered
    function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
                                     return Boolean;
 
@@ -60,7 +69,11 @@ package SQLite is
 
    function get_last_error_message (db : sqlite_h.sqlite3_Access) return String;
 
+   function get_last_error_code (db : sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types;
+
    procedure pkgdb_syscall_overload;
    pragma Import (C, pkgdb_syscall_overload);
+
+   function exec_sql (db : sqlite_h.sqlite3_Access; sql : String; msg : out Text) return Boolean;
 
 end SQLite;

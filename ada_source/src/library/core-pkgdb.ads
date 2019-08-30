@@ -53,7 +53,7 @@ private
 
    type struct_pkgdb is limited
       record
-         sqlite : sqlite_h.sqlite3_Access;
+         sqlite : aliased sqlite_h.sqlite3_Access;
          prstmt_initialized : Boolean;
          repos : Pkg.pkg_repos_crate.Map;
       end record;
@@ -113,8 +113,8 @@ private
    --  Defines custom sql functions for sqlite
    function pkgdb_sqlcmd_init
      (db       : not null sqlite_h.sqlite3_Access;
-      pzErrMsg : not null access ICS.chars_ptr;
-      pThunk   : not null sqlite_h.sqlite3_api_routines_Access) return IC.int;
+      pzErrMsg : access ICS.chars_ptr;
+      pThunk   : sqlite_h.sqlite3_api_routines_Access) return IC.int;
    pragma Export (C, pkgdb_sqlcmd_init);
 
    --  select now();
@@ -236,5 +236,17 @@ private
 
    function vfs_dbdir_mkdir (path : ICS.chars_ptr; mode : IC.int) return IC.int;
    pragma Export (C, vfs_dbdir_mkdir);
+
+   function pkgdb_init (db : sqlite_h.sqlite3_Access) return Core.Pkg.Pkg_Error_Type;
+
+   function sql_exec (db : sqlite_h.sqlite3_Access; sql : String) return Core.Pkg.Pkg_Error_Type;
+
+   function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        sql     : String;
+                        res     : out SQLite.sql_int64;
+                        silence : Boolean) return Core.Pkg.Pkg_Error_Type;
+
+
+
 
 end Core.PkgDB;

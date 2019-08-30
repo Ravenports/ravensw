@@ -18,4 +18,8 @@ package Core is
    jail_supported : constant Boolean := False;   --  FreeBSD only
    platform       : constant T_platform := dragonfly;
 
+   DB_SCHEMA_MAJOR : constant Natural := 0;
+   DB_SCHEMA_MINOR : constant Natural := 34;
+   DBVERSION       : constant String  := "34"; --  DB_SCHEMA_MAJOR * 1000 + DB_SCHEMA_MINOR
+
 end Core;
