@@ -4,7 +4,6 @@
 with Ada.Calendar.Conversions;
 with Ada.Characters.Latin_1;
 with Ada.Directories;
-with GNAT.OS_Lib;
 with System;
 
 with Core.Config;
@@ -20,7 +19,6 @@ package body Core.PkgDB is
 
    package LAT renames Ada.Characters.Latin_1;
    package DIR renames Ada.Directories;
-   package OSL renames GNAT.OS_Lib;
 
    --------------------------------------------------------------------
    --  pkgshell_open
@@ -823,7 +821,9 @@ package body Core.PkgDB is
    function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
                             return Core.Pkg.Pkg_Error_Type
    is
-      dirfd : Unix.File_Descriptor;
+      dirfd  : Unix.File_Descriptor;
+      create : Boolean := False;
+      result : Boolean;
    begin
       if SQLite.db_connected (db.sqlite) then
          Event.pkg_emit_error (SUS ("pkgdb_open_all(): database already connected"));
@@ -840,6 +840,7 @@ package body Core.PkgDB is
                dbdir_dirname : String := DIR.Containing_Directory (dbdir);
             begin
                DIR.Create_Path (dbdir_dirname);
+               create := True;
             end;
          exception
             when others =>
@@ -853,7 +854,32 @@ package body Core.PkgDB is
          end if;
       end if;
 
-      --  if not OSL.Is_Readable_File
+      if not create then
+         if not Unix.relative_file_readable (dirfd, "local.sqlite") then
+            declare
+               dbdir : String := Config.pkg_config_get_string (Config.conf_dbdir);
+            begin
+               if DIR.Exists (dbdir & "/local.sqlite") then
+                  Event.pkg_emit_nolocaldb;
+                  return EPKG_ENODB;
+               elsif not Unix.relative_file_writable (dirfd, ".") then
+                  --  If we need to create the db but cannot
+                  --  write to it, fail early
+                  Event.pkg_emit_nolocaldb;
+                  return EPKG_ENODB;
+               else
+                  create := True;
+               end if;
+            end;
+         end if;
+      end if;
+
+      result := SQLite.initialize_sqlite;
+      SQLite.pkgdb_syscall_overload;
+
+     -- SQLite.open_sqlite_database_readonly
+
+
       return EPKG_FATAL;
    end pkgdb_open_all;
 

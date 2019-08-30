@@ -60,4 +60,7 @@ package SQLite is
 
    function get_last_error_message (db : sqlite_h.sqlite3_Access) return String;
 
+   procedure pkgdb_syscall_overload;
+   pragma Import (C, pkgdb_syscall_overload);
+
 end SQLite;

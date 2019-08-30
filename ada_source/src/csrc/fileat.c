@@ -110,6 +110,18 @@ port_faccessat(int fd, const char *path, int mode, int flag)
 }
 
 int
+port_faccessat_readable (int fd, const char *path)
+{
+  return port_faccessat (fd, path, R_OK, 0);
+}
+
+int
+port_faccessat_writable (int fd, const char *path)
+{
+  return port_faccessat (fd, path, W_OK, 0);
+}
+
+int
 port_unlinkat(int fd, const char *path, int flag)
 {
 	int ret;

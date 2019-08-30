@@ -106,6 +106,14 @@ package Core.Unix is
       mode : IC.int) return IC.int;
    pragma Import (C, C_mkdirat, "port_mkdirat");
 
+   function relative_file_readable
+     (dfd  : File_Descriptor;
+      path : String) return Boolean;
+
+   function relative_file_writable
+     (dfd  : File_Descriptor;
+      path : String) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -160,5 +168,15 @@ private
       path : IC.Strings.chars_ptr;
       sb   : struct_stat_Access) return IC.int;
    pragma Import (C, C_lstat, "port_lstatat");
+
+   function C_faccessat_readable
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_faccessat_readable, "port_faccessat_readable");
+
+   function C_faccessat_writable
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_faccessat_writable, "port_faccessat_writable");
 
 end Core.Unix;
