@@ -1293,4 +1293,72 @@ package body Core.Config is
       return context.pkg_dbdirfd;
    end pkg_get_dbdirfd;
 
+
+   --------------------------------------------------------------------
+   --  pkg_repos_activated_count
+   --------------------------------------------------------------------
+   function pkg_repos_activated_count return Natural
+   is
+      procedure scan (position : pkg_repos_crate.Cursor);
+
+      total_active : Natural := 0;
+
+      procedure scan (position : pkg_repos_crate.Cursor)
+      is
+         item : T_pkg_repo renames pkg_repos_crate.Element (position);
+      begin
+         if item.enable then
+            total_active := total_active + 1;
+         end if;
+      end scan;
+   begin
+      repositories.Iterate (scan'Access);
+      return total_active;
+   end pkg_repos_activated_count;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_is_active
+   --------------------------------------------------------------------
+   function pkg_repo_is_active (reponame : String) return Boolean
+   is
+      reponame_txt : Text := SUS (reponame);
+   begin
+      if repositories.Contains (reponame_txt) then
+         return repositories.Element (reponame_txt).enable;
+      else
+         return False;
+      end if;
+   end pkg_repo_is_active;
+
+
+   --------------------------------------------------------------------
+   --  first_active_repository
+   --------------------------------------------------------------------
+   function first_active_repository return String
+   is
+      procedure list (position : pkg_repos_priority_crate.Cursor);
+
+      key   : Text;
+      found : Boolean := False;
+
+      procedure list (position : pkg_repos_priority_crate.Cursor) is
+      begin
+         if not found then
+            key := pkg_repos_priority_crate.Element (position).reponame;
+            if pkg_repos_crate.Element (repositories.Find (key)).enable then
+               found := True;
+            end if;
+         end if;
+      end list;
+
+   begin
+      Config.repositories_order.Iterate (list'Access);
+      if found then
+         return USS (key);
+      else
+         return "";
+      end if;
+   end first_active_repository;
+
 end Core.Config;

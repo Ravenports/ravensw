@@ -942,6 +942,44 @@ package body Core.PkgDB is
          end if;
       end;
 
+      if dbtype = PKGDB_REMOTE or else dbtype = PKGDB_MAYBE_REMOTE then
+         if reponame /= "" then
+            if Config.pkg_repo_is_active (reponame) then
+               declare
+                  ret : Pkg_Error_Type;
+               begin
+                  ret := pkgdb_open_repository (db, reponame);
+                  if ret /= EPKG_OK then
+                     Event.pkg_emit_error (SUS ("Failed to open repository " & reponame));
+                     pkgdb_close (db);
+                     return EPKG_FATAL;
+                  end if;
+               end;
+            else
+               Event.pkg_emit_error
+                 (SUS ("Repository " & reponame & " is not active or does not exist"));
+               pkgdb_close (db);
+               return EPKG_FATAL;
+            end if;
+         elsif Config.pkg_repos_activated_count > 0 then
+            declare
+               ret     : Pkg_Error_Type;
+               farname : String := Config.first_active_repository;
+            begin
+               ret := pkgdb_open_repository (db, farname);
+               if ret /= EPKG_OK then
+                  Event.pkg_emit_error (SUS ("Failed to open first active repository " & farname));
+                  pkgdb_close (db);
+                  return EPKG_FATAL;
+               end if;
+            end;
+         elsif dbtype = PKGDB_REMOTE then
+            Event.pkg_emit_error (SUS ("No active remote repositories configured"));
+            pkgdb_close (db);
+            return EPKG_FATAL;
+         end if;
+      end if;
+
       return EPKG_OK;
    end pkgdb_open_all;
 
@@ -1592,5 +1630,35 @@ package body Core.PkgDB is
          end case;
       end;
    end upgrade_sql_for_next_version;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_open_repository
+   --------------------------------------------------------------------
+   function pkgdb_open_repository (db       : in out struct_pkgdb;
+                                   reponame : String) return Core.Pkg.Pkg_Error_Type
+   is
+      key   : Text := SUS (reponame);
+      xrepo : T_pkg_repo := Config.repositories.Element (key);
+      ov    : repo_ops_variant renames xrepo.ops_variant;
+   begin
+      if Repo_Operations.Ops (ov).all.repo_open
+        (repo => xrepo,
+         mode => Repo_Operations.ACCESS_R_OK)
+      then
+         if Repo_Operations.Ops (ov).all.repo_init (xrepo)
+         then
+            db.repos.Insert (key, xrepo);
+            return EPKG_OK;
+         else
+            Event.pkg_emit_error (SUS ("Repository " & reponame & "' cannot be initialized."));
+            return EPKG_FATAL;
+         end if;
+      else
+         Event.pkg_emit_error (SUS ("Repository " & reponame & " cannot be opened. '" &
+                                 progname & " update' required."));
+         return EPKG_FATAL;
+      end if;
+   end pkgdb_open_repository;
 
 end Core.PkgDB;

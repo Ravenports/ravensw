@@ -253,4 +253,8 @@ private
    function upgrade_available (current_version : Natural) return Boolean;
    function upgrade_sql_for_next_version (current_version : Natural) return String;
 
+   function pkgdb_open_repository (db       : in out struct_pkgdb;
+                                   reponame : String) return Core.Pkg.Pkg_Error_Type;
+
+
 end Core.PkgDB;

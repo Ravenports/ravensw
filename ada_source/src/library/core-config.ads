@@ -16,13 +16,11 @@ package Core.Config is
    repositories_order : pkg_repos_priority_crate.Vector;
 
    type Config_Entry_Type is
-     (
-      pkg_string,
+     (pkg_string,
       pkg_bool,
       pkg_array,
       pkg_int,
-      pkg_object
-     );
+      pkg_object);
 
    type Pkg_init_flags is
      (init_none,
@@ -106,6 +104,17 @@ package Core.Config is
 
    --  Return file descriptor of RAVENSW_DBDIR, opening file if necessary
    function pkg_get_dbdirfd return Unix.File_Descriptor;
+
+   --  Return number of configured repositories that are active.
+   function pkg_repos_activated_count return Natural;
+
+   --  Return True if repo identified by reponame is active
+   --  Returns False if reponame doesn't refer to any repo at all.
+   function pkg_repo_is_active (reponame : String) return Boolean;
+
+   --  Returns blank string if no repositories are active, otherwise it returns
+   --  The name of the first one.
+   function first_active_repository return String;
 
    conf_dbdir          : constant String := "RAVENSW_DBDIR";
    conf_cachedir       : constant String := "RAVENSW_CACHEDIR";
