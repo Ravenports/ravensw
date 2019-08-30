@@ -5,6 +5,7 @@ with Interfaces.C.Strings;
 with sqlite_h;
 with regex_h;
 with System;
+with Core.Unix;
 
 private with Core.Pkg;
 
@@ -40,6 +41,11 @@ package Core.PkgDB is
 
    --  Close access to the local sqlite database
    procedure pkgdb_close (db : in out struct_pkgdb);
+
+   function pkgdb_transaction_begin (db : struct_pkgdb; savepoint : String) return Boolean;
+   function pkgdb_transaction_commit (db : struct_pkgdb; savepoint : String) return Boolean;
+   function pkgdb_transaction_rollback (db : struct_pkgdb; savepoint : String) return Boolean;
+
 
 private
 
@@ -201,5 +207,34 @@ private
                              return Boolean;
 
    procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
+
+
+   function pkgdb_transaction_begin_sqlite    (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean;
+   function pkgdb_transaction_commit_sqlite   (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean;
+   function pkgdb_transaction_rollback_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean;
+
+   function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
+                            return Core.Pkg.Pkg_Error_Type;
+
+   function vfs_dbdir_open (path : ICS.chars_ptr; flags : IC.int; mode : IC.int) return IC.int;
+   pragma Export (C, vfs_dbdir_open);
+
+   function vfs_dbdir_access (path : ICS.chars_ptr; mode : IC.int) return IC.int;
+   pragma Export (C, vfs_dbdir_access);
+
+   function vfs_dbdir_unlink (path : ICS.chars_ptr) return IC.int;
+   pragma Export (C, vfs_dbdir_unlink);
+
+   function vfs_dbdir_stat (path : ICS.chars_ptr; sb : Unix.struct_stat_Access) return IC.int;
+   pragma Export (C, vfs_dbdir_stat);
+
+   function vfs_dbdir_lstat (path : ICS.chars_ptr; sb : Unix.struct_stat_Access) return IC.int;
+   pragma Export (C, vfs_dbdir_lstat);
+
+   function vfs_dbdir_mkdir (path : ICS.chars_ptr; mode : IC.int) return IC.int;
+   pragma Export (C, vfs_dbdir_mkdir);
 
 end Core.PkgDB;

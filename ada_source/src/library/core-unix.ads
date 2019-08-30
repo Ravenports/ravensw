@@ -21,7 +21,6 @@ package Core.Unix is
          NON_BLOCK : Boolean := False;
          DIRECTORY : Boolean := False;
          CLOEXEC   : Boolean := False;
-
       end record;
 
    --  strerror from libc
@@ -65,9 +64,53 @@ package Core.Unix is
    function getpid return Process_ID;
    pragma Import (C, getpid, "getpid");
 
+   function C_Openat_Stock
+     (dirfd     : IC.int;
+      path      : IC.Strings.chars_ptr;
+      flags     : IC.int;
+      mode      : IC.int) return IC.int;
+   pragma Import (C, C_Openat_Stock, "openat");
+
+   function C_faccessat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      mode : IC.int;
+      flag : IC.int) return IC.int;
+   pragma Import (C, C_faccessat, "port_faccessat");
+
+   function C_unlinkat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      flag : IC.int) return IC.int;
+   pragma Import (C, C_unlinkat, "port_unlinkat");
+
+   type struct_stat is limited private;
+   type struct_stat_Access is access all struct_stat;
+   pragma Convention (C, struct_stat_Access);
+
+   function C_fstatat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      sb   : struct_stat_Access;
+      flag : IC.int) return IC.int;
+   pragma Import (C, C_fstatat, "fstatat");
+
+   function lstatat
+     (dfd  : File_Descriptor;
+      path : String;
+      sb   : struct_stat_Access) return Boolean;
+
+   function C_mkdirat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      mode : IC.int) return IC.int;
+   pragma Import (C, C_mkdirat, "port_mkdirat");
+
 private
 
    last_errno : Integer;
+
+   type struct_stat is limited null record;
 
    function success (rc : IC.int) return Boolean;
 
@@ -80,21 +123,23 @@ private
    function C_Errno return IC.int;
    pragma Import (C, C_Errno, "get_errno");
 
-   function C_Open (path      : IC.Strings.chars_ptr;
-                    rdonly    : IC.int;
-                    wronly    : IC.int;
-                    nonblock  : IC.int;
-                    directory : IC.int;
-                    cloexec   : IC.int) return IC.int;
+   function C_Open
+     (path      : IC.Strings.chars_ptr;
+      rdonly    : IC.int;
+      wronly    : IC.int;
+      nonblock  : IC.int;
+      directory : IC.int;
+      cloexec   : IC.int) return IC.int;
    pragma Import (C, C_Open, "try_open");
 
-   function C_Openat (dirfd     : IC.int;
-                      path      : IC.Strings.chars_ptr;
-                      rdonly    : IC.int;
-                      wronly    : IC.int;
-                      nonblock  : IC.int;
-                      directory : IC.int;
-                      cloexec   : IC.int) return IC.int;
+   function C_Openat
+     (dirfd     : IC.int;
+      path      : IC.Strings.chars_ptr;
+      rdonly    : IC.int;
+      wronly    : IC.int;
+      nonblock  : IC.int;
+      directory : IC.int;
+      cloexec   : IC.int) return IC.int;
    pragma Import (C, C_Openat, "try_openat");
 
    function C_IPC (path : IC.Strings.chars_ptr) return IC.int;
@@ -110,5 +155,10 @@ private
    function C_fnmatch (pattern, teststring : IC.Strings.chars_ptr; flags : IC.int) return IC.int;
    pragma Import (C, C_fnmatch, "fnmatch");
 
+   function C_lstat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      sb   : struct_stat_Access) return IC.int;
+   pragma Import (C, C_lstat, "port_lstatat");
 
 end Core.Unix;

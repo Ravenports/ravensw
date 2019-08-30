@@ -1274,4 +1274,23 @@ package body Core.Config is
       return repo.flags;
    end pkg_repo_ipv_type;
 
+
+   --------------------------------------------------------------------
+   --  pkg_get_dbdirfd
+   --------------------------------------------------------------------
+   function pkg_get_dbdirfd return Unix.File_Descriptor is
+   begin
+      if not Unix.file_connected (context.pkg_dbdirfd) then
+         declare
+            dbdir : String := pkg_config_get_string (conf_dbdir);
+            flags : Unix.T_Open_Flags := (DIRECTORY => True,
+                                          CLOEXEC => True,
+                                          others => False);
+         begin
+            context.dbdirfd := Unix.open_file (dbdir, flags);
+         end;
+      end if;
+      return context.pkg_dbdirfd;
+   end pkg_get_dbdirfd;
+
 end Core.Config;

@@ -3,6 +3,8 @@
 
 with Ada.Calendar.Conversions;
 with Ada.Characters.Latin_1;
+with Ada.Directories;
+with GNAT.OS_Lib;
 with System;
 
 with Core.Config;
@@ -17,6 +19,8 @@ with SQLite;
 package body Core.PkgDB is
 
    package LAT renames Ada.Characters.Latin_1;
+   package DIR renames Ada.Directories;
+   package OSL renames GNAT.OS_Lib;
 
    --------------------------------------------------------------------
    --  pkgshell_open
@@ -726,19 +730,245 @@ package body Core.PkgDB is
       end joinsql;
 
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      func : constant String := "run_transaction";
    begin
       Event.pkg_debug (4, "Pkgdb: running '" & joinsql & "'");
       if SQLite.prepare_sql (db, joinsql, stmt'Access) then
          if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
+            ERROR_SQLITE (db, func, joinsql);
             SQLite.finalize_statement (stmt);
             return False;
          end if;
          SQLite.finalize_statement (stmt);
          return True;
       else
-         ERROR_SQLITE (db, "run_transaction", joinsql);
+         ERROR_SQLITE (db, func, joinsql);
          return False;
       end if;
    end run_transaction;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_transaction_begin_sqlite
+   --------------------------------------------------------------------
+   function pkgdb_transaction_begin_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                            return Boolean is
+   begin
+      if IsBlank (savepoint) then
+         return run_transaction (db, "BEGIN IMMEDIATE TRANSACTION", "");
+      else
+         return run_transaction (db, "SAVEPOINT", savepoint);
+      end if;
+   end pkgdb_transaction_begin_sqlite;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_transaction_commit_sqlite
+   --------------------------------------------------------------------
+   function pkgdb_transaction_commit_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                             return Boolean is
+   begin
+      if IsBlank (savepoint) then
+         return run_transaction (db, "COMMIT TRANSACTION", "");
+      else
+         return run_transaction (db, "RELEASE SAVEPOINT", savepoint);
+      end if;
+   end pkgdb_transaction_commit_sqlite;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_transaction_rollback_sqlite
+   --------------------------------------------------------------------
+   function pkgdb_transaction_rollback_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean is
+   begin
+      if IsBlank (savepoint) then
+         return run_transaction (db, "ROLLBACK TRANSACTION", "");
+      else
+         return run_transaction (db, "ROLLBACK TO SAVEPOINT", savepoint);
+      end if;
+   end pkgdb_transaction_rollback_sqlite;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_transaction_begin
+   --------------------------------------------------------------------
+   function pkgdb_transaction_begin (db : struct_pkgdb; savepoint : String) return Boolean is
+   begin
+      return pkgdb_transaction_begin_sqlite (db.sqlite, savepoint);
+   end pkgdb_transaction_begin;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_transaction_commit
+   --------------------------------------------------------------------
+   function pkgdb_transaction_commit (db : struct_pkgdb; savepoint : String) return Boolean is
+   begin
+      return pkgdb_transaction_commit_sqlite (db.sqlite, savepoint);
+   end pkgdb_transaction_commit;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_transaction_rollback
+   --------------------------------------------------------------------
+   function pkgdb_transaction_rollback (db : struct_pkgdb; savepoint : String) return Boolean is
+   begin
+      return pkgdb_transaction_rollback_sqlite (db.sqlite, savepoint);
+   end pkgdb_transaction_rollback;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_open_all
+   --------------------------------------------------------------------
+   function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
+                            return Core.Pkg.Pkg_Error_Type
+   is
+      dirfd : Unix.File_Descriptor;
+   begin
+      if SQLite.db_connected (db.sqlite) then
+         Event.pkg_emit_error (SUS ("pkgdb_open_all(): database already connected"));
+         return EPKG_FATAL;
+      end if;
+
+      dirfd := Config.pkg_get_dbdirfd;
+      if not Unix.file_connected (dirfd) then
+         --  Failed to create, maybe directory tree doesn't exit.
+         declare
+            dbdir : String := Config.pkg_config_get_string (Config.conf_dbdir);
+         begin
+            declare
+               dbdir_dirname : String := DIR.Containing_Directory (dbdir);
+            begin
+               DIR.Create_Path (dbdir_dirname);
+            end;
+         exception
+            when others =>
+               Event.pkg_emit_error (SUS ("pkgdb_open_all(): failed to create dbdir directories"));
+               return EPKG_FATAL;
+         end;
+         dirfd := Config.pkg_get_dbdirfd;
+         if not Unix.file_connected (dirfd) then
+            Event.pkg_emit_error (SUS ("pkgdb_open_all(): failed to open dbdir"));
+            return EPKG_FATAL;
+         end if;
+      end if;
+
+      --  if not OSL.Is_Readable_File
+      return EPKG_FATAL;
+   end pkgdb_open_all;
+
+
+   --------------------------------------------------------------------
+   --  vfs_dbdir_open
+   --------------------------------------------------------------------
+   function vfs_dbdir_open (path : ICS.chars_ptr; flags : IC.int; mode : IC.int) return IC.int
+   is
+      dfd      : Unix.File_Descriptor := Config.pkg_get_dbdirfd;
+      basename : String := tail (ICS.Value (path), "/");
+      newpath  : ICS.chars_ptr;
+      fd       : IC.int;
+   begin
+      newpath := ICS.New_String (basename);
+      fd := Unix.C_Openat_Stock (dirfd => IC.int (dfd),
+                                 path  => newpath,
+                                 flags => flags,
+                                 mode  => mode);
+      ICS.Free (newpath);
+      return fd;
+   end vfs_dbdir_open;
+
+
+   --------------------------------------------------------------------
+   --  vfs_dbdir_access
+   --------------------------------------------------------------------
+   function vfs_dbdir_access (path : ICS.chars_ptr; mode : IC.int) return IC.int
+   is
+      dfd      : Unix.File_Descriptor := Config.pkg_get_dbdirfd;
+      basename : String := tail (ICS.Value (path), "/");
+      newpath  : ICS.chars_ptr;
+      res      : IC.int;
+   begin
+      newpath := ICS.New_String (basename);
+      res     := Unix.C_faccessat (dfd  => IC.int (dfd),
+                                   path => newpath,
+                                   mode => mode,
+                                   flag => 0);
+      ICS.Free (newpath);
+      return res;
+   end vfs_dbdir_access;
+
+
+   --------------------------------------------------------------------
+   --  vfs_dbdir_unlink
+   --------------------------------------------------------------------
+   function vfs_dbdir_unlink (path : ICS.chars_ptr) return IC.int
+   is
+      dfd      : Unix.File_Descriptor := Config.pkg_get_dbdirfd;
+      basename : String := tail (ICS.Value (path), "/");
+      newpath  : ICS.chars_ptr;
+      res      : IC.int;
+   begin
+      newpath := ICS.New_String (basename);
+      res     := Unix.C_unlinkat (dfd  => IC.int (dfd),
+                                  path => newpath,
+                                  flag => 0);
+      ICS.Free (newpath);
+      return res;
+   end vfs_dbdir_unlink;
+
+
+   --------------------------------------------------------------------
+   --  vfs_dbdir_stat
+   --------------------------------------------------------------------
+   function vfs_dbdir_stat (path : ICS.chars_ptr; sb : Unix.struct_stat_Access) return IC.int
+   is
+      dfd      : Unix.File_Descriptor := Config.pkg_get_dbdirfd;
+      basename : String := tail (ICS.Value (path), "/");
+      newpath  : ICS.chars_ptr;
+      res      : IC.int;
+   begin
+      newpath := ICS.New_String (basename);
+      res     := Unix.C_fstatat (dfd  => IC.int (dfd),
+                                 path => newpath,
+                                 sb   => sb,
+                                 flag => 0);
+      ICS.Free (newpath);
+      return res;
+   end vfs_dbdir_stat;
+
+
+   --------------------------------------------------------------------
+   --  vfs_dbdir_lstat
+   --------------------------------------------------------------------
+   function vfs_dbdir_lstat (path : ICS.chars_ptr; sb : Unix.struct_stat_Access) return IC.int
+   is
+      dfd      : Unix.File_Descriptor := Config.pkg_get_dbdirfd;
+      basename : String := tail (ICS.Value (path), "/");
+   begin
+      if Unix.lstatat (dfd, basename, sb) then
+         return IC.int (0);
+      else
+         return IC.int (-1);
+      end if;
+   end vfs_dbdir_lstat;
+
+
+   --------------------------------------------------------------------
+   --  vfs_dbdir_mkdir
+   --------------------------------------------------------------------
+   function vfs_dbdir_mkdir (path : ICS.chars_ptr; mode : IC.int) return IC.int
+   is
+      dfd      : Unix.File_Descriptor := Config.pkg_get_dbdirfd;
+      basename : String := tail (ICS.Value (path), "/");
+      newpath  : ICS.chars_ptr;
+      res      : IC.int;
+   begin
+      newpath := ICS.New_String (basename);
+      res := Unix.C_mkdirat (dfd  => IC.int (dfd),
+                             path => newpath,
+                             mode => IC.int (mode));
+      ICS.Free (newpath);
+      return res;
+   end vfs_dbdir_mkdir;
 
 end Core.PkgDB;

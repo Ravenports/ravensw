@@ -77,5 +77,5 @@ try_openat
 #else
   return (0);
 #endif
-
 }
+

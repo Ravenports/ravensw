@@ -104,6 +104,9 @@ package Core.Config is
    --  Return repo's IP protocol type natively
    function pkg_repo_ipv_type (repo : T_pkg_repo) return T_pkg_repo_flags;
 
+   --  Return file descriptor of RAVENSW_DBDIR, opening file if necessary
+   function pkg_get_dbdirfd return Unix.File_Descriptor;
+
    conf_dbdir          : constant String := "RAVENSW_DBDIR";
    conf_cachedir       : constant String := "RAVENSW_CACHEDIR";
    conf_ravenports     : constant String := "RAVENPORTS";

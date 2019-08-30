@@ -245,4 +245,24 @@ package body Core.Unix is
       return success (result);
    end filename_match;
 
+
+   --------------------------------------------------------------------
+   --  lstatat
+   --------------------------------------------------------------------
+   function lstatat
+     (dfd  : File_Descriptor;
+      path : String;
+      sb   : struct_stat_Access) return Boolean
+   is
+      c_path : IC.Strings.chars_ptr;
+      result       : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      result := C_lstat (dfd  => IC.int (dfd),
+                         path => c_path,
+                         sb   => sb);
+      IC.Strings.Free (c_path);
+      return success (result);
+   end lstatat;
+
 end Core.Unix;

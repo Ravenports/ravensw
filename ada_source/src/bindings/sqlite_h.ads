@@ -31,6 +31,10 @@ package sqlite_h is
    type sqlite3_destructor is access procedure (text : ICS.char_array_access);
    pragma Convention (C, sqlite3_destructor);
 
+   type sqlite3_vfs is limited private;
+   type sqlite3_vfs_Access is access all sqlite3_vfs;
+   pragma Convention (C, sqlite3_vfs_Access);
+
    ---------------
    -- Constants --
    ---------------
@@ -332,6 +336,8 @@ package sqlite_h is
    function sqlite3_sleep (millisecs : IC.int) return IC.int;
    pragma Import (C, sqlite3_sleep);
 
+   function sqlite3_vfs_find (zVfsName : ICS.chars_ptr) return sqlite3_vfs_Access;
+   pragma Import (C, sqlite3_vfs_find);
 private
 
    type sqlite3              is limited null record;
@@ -339,5 +345,6 @@ private
    type sqlite3_context      is limited null record;
    type sqlite3_value        is limited null record;
    type sqlite3_api_routines is limited null record;
+   type sqlite3_vfs          is limited null record;
 
 end sqlite_h;
