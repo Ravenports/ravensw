@@ -286,5 +286,21 @@ package body SQLite is
    end exec_sql;
 
 
+   --------------------------------------------------------------------
+   --  database_was_opened_readonly
+   --------------------------------------------------------------------
+   function database_was_opened_readonly
+     (db     : sqlite_h.sqlite3_Access;
+      dbname : String) return Boolean
+   is
+      use type IC.int;
+      res      : IC.int;
+      c_dbname : ICS.chars_ptr;
+   begin
+      c_dbname := ICS.New_String (dbname);
+      res := sqlite_h.sqlite3_db_readonly (db, c_dbname);
+      ICS.Free (c_dbname);
+      return (res = IC.int (1));
+   end database_was_opened_readonly;
 
 end SQLite;

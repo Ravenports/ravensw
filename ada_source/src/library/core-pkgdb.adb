@@ -13,7 +13,6 @@ with Core.Repo_Operations;
 with Core.Event;
 with Core.Pkg;     use Core.Pkg;
 with Core.Strings; use Core.Strings;
-with SQLite;
 
 package body Core.PkgDB is
 
@@ -903,7 +902,7 @@ package body Core.PkgDB is
 
       --  If the database is missing we have to initialize it
       if create and then
-        pkgdb_init(db.sqlite) != EPKG_OK
+        pkgdb_init (db.sqlite) /= EPKG_OK
       then
          pkgdb_close (db);
          return EPKG_FATAL;
@@ -924,7 +923,26 @@ package body Core.PkgDB is
          end if;
       end;
 
-      return EPKG_FATAL;
+      if pkgdb_upgrade (db) /= EPKG_OK then
+         --  pkgdb_upgrade() emits error events; we don't need to add more
+         pkgdb_close (db);
+         return EPKG_FATAL;
+      end if;
+
+      --  allow foreign key option which will allow to have
+      --  clean support for reinstalling
+      declare
+         msg : Text;
+         sql : constant String := "PRAGMA foreign_keys = ON";
+      begin
+         if not SQLite.exec_sql (db.sqlite, sql, msg) then
+            ERROR_SQLITE (db.sqlite, func, sql);
+            pkgdb_close (db);
+            return EPKG_FATAL;
+         end if;
+      end;
+
+      return EPKG_OK;
    end pkgdb_open_all;
 
 
@@ -1428,7 +1446,7 @@ package body Core.PkgDB is
          return EPKG_FATAL;
       end if;
 
-      if not Sqlite.step_through_statement (stmt => stmt, num_retries => 6) then
+      if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
          SQLite.finalize_statement (stmt);
          Event.pkg_emit_error (SUS ("Pkgdb: failed to step through get_pragma()"));
          return EPKG_FATAL;
@@ -1439,4 +1457,140 @@ package body Core.PkgDB is
 
       return EPKG_OK;
    end get_pragma;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_upgrade
+   --------------------------------------------------------------------
+   function pkgdb_upgrade (db : struct_pkgdb) return Core.Pkg.Pkg_Error_Type
+   is
+      use type SQLite.sql_int64;
+      cur_dbver : SQLite.sql_int64;
+      exp_dbver : constant SQLite.sql_int64 := SQLite.sql_int64 (Natural'Value (DBVERSION));
+   begin
+      if get_pragma (db.sqlite, "PRAGMA user_version;", cur_dbver, False) /= EPKG_OK then
+         return EPKG_FATAL;
+      end if;
+
+      if cur_dbver = exp_dbver then
+         return EPKG_OK;
+      end if;
+
+      if cur_dbver > exp_dbver then
+         if Natural (cur_dbver / 1000) <= DB_SCHEMA_MAJOR then
+            --  VIEWS and TRIGGERS used as compatibility hack
+            Event.pkg_emit_error
+              (SUS ("warning: database version " & int2str (Integer (cur_dbver)) &
+                 " is newer than the latest " & progname & "version " & DBVERSION &
+                 ", but still compatible"));
+            return EPKG_OK;
+         else
+            Event.pkg_emit_error
+              (SUS ("database version " & int2str (Integer (cur_dbver)) &
+                 " is newer than and incompatible with the latest " & progname &
+                 "version " & DBVERSION));
+            return EPKG_FATAL;
+         end if;
+      end if;
+
+      if SQLite.database_was_opened_readonly (db.sqlite, "main") then
+         Event.pkg_emit_error (SUS ("The database is outdated and opened readonly"));
+         return EPKG_FATAL;
+      end if;
+
+      --  We only need to check availability of upgrade once.  If the lowest version is
+      --  supported, all subsequent versions will be as well.
+      if not upgrade_available (Natural (cur_dbver) + 1) then
+         Event.pkg_emit_error (SUS ("Upgrade support has been removed for ancient " &
+                                 "database version " & int2str (Integer (cur_dbver))));
+         return EPKG_FATAL;
+      end if;
+
+      loop
+         exit when cur_dbver = exp_dbver;
+         cur_dbver := cur_dbver + 1;
+
+         if not pkgdb_transaction_begin_sqlite (db.sqlite, "") then
+            Event.pkg_emit_error (SUS ("pkgdb_upgrade() transaction start failed"));
+            return EPKG_FATAL;
+         end if;
+
+         declare
+            msg     : Text;
+            sql     : constant String := upgrade_sql_for_next_version (Natural (cur_dbver));
+            pragsql : constant String := "PRAGMA user_version = " &
+                                         int2str (Natural (cur_dbver));
+         begin
+            if not SQLite.exec_sql (db.sqlite, sql, msg) then
+               Event.pkg_emit_error (SUS ("pkgdb_upgrade() failed, sql: " & sql));
+               if not pkgdb_transaction_rollback_sqlite (db.sqlite, "") then
+                  null;
+               end if;
+               return EPKG_FATAL;
+            end if;
+
+            if not SQLite.exec_sql (db.sqlite, pragsql, msg) then
+               Event.pkg_emit_error (SUS ("pkgdb_upgrade() failed, sql: " & pragsql));
+               if not pkgdb_transaction_rollback_sqlite (db.sqlite, "") then
+                  null;
+               end if;
+               return EPKG_FATAL;
+            end if;
+         end;
+
+         if not pkgdb_transaction_commit_sqlite (db.sqlite, "") then
+            Event.pkg_emit_error (SUS ("pkgdb_upgrade() transaction commit failed"));
+            return EPKG_FATAL;
+         end if;
+      end loop;
+
+      return EPKG_OK;
+   end pkgdb_upgrade;
+
+
+   --------------------------------------------------------------------
+   --  upgrade_available
+   --------------------------------------------------------------------
+   function upgrade_available (current_version : Natural) return Boolean
+   is
+      subtype upgrade_range is Natural range 0 .. DB_SCHEMA_MAJOR * 1000 + DB_SCHEMA_MINOR;
+   begin
+      if current_version > upgrade_range'Last then
+         return False;
+      end if;
+      declare
+         curversion : constant upgrade_range := upgrade_range (current_version);
+      begin
+         case curversion is
+            when 33 .. 34 => return True;
+            when 0 .. 32  => return False;
+         end case;
+      end;
+   end upgrade_available;
+
+
+   --------------------------------------------------------------------
+   --  upgrade_sql_for_next_version
+   --------------------------------------------------------------------
+   function upgrade_sql_for_next_version (current_version : Natural) return String
+   is
+      subtype upgrade_range is Natural range 0 .. DB_SCHEMA_MAJOR * 1000 + DB_SCHEMA_MINOR;
+   begin
+      if current_version > upgrade_range'Last then
+         return "version out-of-range";
+      end if;
+      declare
+         curversion : constant upgrade_range := upgrade_range (current_version);
+      begin
+         case curversion is
+            when 0 .. 32 =>
+               return "unsupported";
+            when 33 =>
+               return "ALTER TABLE packages ADD COLUMN vital INTEGER NOT NULL DEFAULT 0";
+            when 34 =>
+               return "DROP TABLE pkg_search";
+         end case;
+      end;
+   end upgrade_sql_for_next_version;
+
 end Core.PkgDB;

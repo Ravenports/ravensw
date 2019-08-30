@@ -2,12 +2,13 @@
 --  Reference: ../License.txt
 
 with Interfaces.C.Strings;
-with sqlite_h;
-with regex_h;
-with System;
-with Core.Unix;
 
 private with Core.Pkg;
+private with SQLite;
+private with sqlite_h;
+private with regex_h;
+private with System;
+private with Core.Unix;
 
 package Core.PkgDB is
 
@@ -247,6 +248,9 @@ private
                         silence : Boolean) return Core.Pkg.Pkg_Error_Type;
 
 
+   function pkgdb_upgrade (db : struct_pkgdb) return Core.Pkg.Pkg_Error_Type;
 
+   function upgrade_available (current_version : Natural) return Boolean;
+   function upgrade_sql_for_next_version (current_version : Natural) return String;
 
 end Core.PkgDB;

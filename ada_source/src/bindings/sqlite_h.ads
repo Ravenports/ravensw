@@ -401,6 +401,9 @@ package sqlite_h is
    function sqlite3_busy_timeout (db : sqlite3_Access; millisecs : IC.int) return IC.int;
    pragma Import (C, sqlite3_busy_timeout);
 
+   function sqlite3_db_readonly (db : sqlite3_Access; zDbName : ICS.chars_ptr) return IC.int;
+   pragma Import (C, sqlite3_db_readonly);
+
 private
 
    type sqlite3              is limited null record;

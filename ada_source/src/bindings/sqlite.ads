@@ -74,6 +74,13 @@ package SQLite is
    procedure pkgdb_syscall_overload;
    pragma Import (C, pkgdb_syscall_overload);
 
-   function exec_sql (db : sqlite_h.sqlite3_Access; sql : String; msg : out Text) return Boolean;
+   function exec_sql
+     (db  : sqlite_h.sqlite3_Access;
+      sql : String;
+      msg : out Text) return Boolean;
+
+   function database_was_opened_readonly
+     (db     : sqlite_h.sqlite3_Access;
+      dbname : String) return Boolean;
 
 end SQLite;
