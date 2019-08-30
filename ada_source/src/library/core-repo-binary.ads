@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with sqlite_h;
 
 package Core.Repo.Binary is
 
@@ -17,7 +18,7 @@ package Core.Repo.Binary is
                          return Boolean;
 
    overriding
-   function repo_close  (this : Repo_Operations_Binary; repo : T_pkg_repo; commit : Boolean)
+   function repo_close  (this : Repo_Operations_Binary; repo : in out T_pkg_repo; commit : Boolean)
                          return Boolean;
 
    overriding
@@ -37,5 +38,36 @@ private
       record
          variant : repo_ops_variant := Pkg.binary;
       end record;
+
+   type binary_stmt_index is
+     (PKG,
+      DEPS,
+      CAT1,
+      CAT2,
+      LIC1,
+      LIC2,
+      OPT1,
+      OPT2,
+      SHLIB1,
+      SHLIB_REQD,
+      SHLIB_PROV,
+      ANNOTATE1,
+      ANNOTATE2,
+      EXISTS,
+      REPO_VERSION,
+      DELETE,
+      PROVIDE,
+      PROVIDES,
+      REQUIRE,
+      REQUIRES
+     );
+
+      --  SQL associated with sql_prstmt_index enumeration
+   function binary_stmt_text_sql (index : binary_stmt_index) return String;
+
+   --  Argument types associated with sql_prstmt_index enumeration
+   function binary_stmt_text_argtypes (index : binary_stmt_index) return String;
+
+   binary_prepared_statements : array (binary_stmt_index) of sqlite_h.sqlite3_stmt_Access;
 
 end Core.Repo.Binary;

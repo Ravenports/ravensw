@@ -5,6 +5,7 @@ with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Maps;
 with Core.Unix;
 with Core.Strings;
+with sqlite_h;
 
 package Core.Pkg is
 
@@ -274,7 +275,7 @@ package Core.Pkg is
          flags          : T_pkg_repo_flags;
          ops_variant    : repo_ops_variant;
          env            : nvpair_crate.Map;
-         --  priv
+         sqlite_handle  : sqlite_h.sqlite3_Access;
          --  ssh
          --  sshio
 

@@ -14,7 +14,10 @@ package Core.PkgDB is
    package ICS renames Interfaces.C.Strings;
 
    type T_match is (MATCH_ALL, MATCH_EXACT, MATCH_GLOB, MATCH_REGEX, MATCH_CONDITION);
+   type T_pkgdb is (PKGDB_DEFAULT, PKGDB_REMOTE, PKGDB_MAYBE_REMOTE);
+
    type struct_pkgdb is limited private;
+   type struct_pkgdb_Access is access all struct_pkgdb;
 
    procedure pkgshell_open (reponame : access ICS.chars_ptr);
    pragma Export (C, pkgshell_open);
@@ -193,5 +196,10 @@ private
       second  : String);
 
    procedure prstmt_finalize (db : in out struct_pkgdb);
+
+   function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
+                             return Boolean;
+
+   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
 
 end Core.PkgDB;

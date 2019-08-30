@@ -52,6 +52,7 @@ package sqlite_h is
    SQLITE_OK      : constant :=   0;  --  Successful result
    SQLITE_ROW     : constant := 100;  --  sqlite3_step() has another row ready
    SQLITE_DONE    : constant := 101;  --  sqlite3_step() has finished executing
+   SQLITE_BUSY    : constant :=   5;
 
    SQLITE_CONFIG_SINGLETHREAD : constant := 1;  --  nil
    SQLITE_CONFIG_MULTITHREAD  : constant := 2;  --  nil
@@ -327,6 +328,9 @@ package sqlite_h is
 
    function sqlite3_shell (argc : IC.int; argv : access ICS.chars_ptr) return IC.int;
    pragma Import (C, sqlite3_shell);
+
+   function sqlite3_sleep (millisecs : IC.int) return IC.int;
+   pragma Import (C, sqlite3_sleep);
 
 private
 

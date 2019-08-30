@@ -88,6 +88,29 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  step_through_statement
+   --------------------------------------------------------------------
+   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
+                                    return Boolean
+   is
+      use type IC.int;
+
+      result : IC.int;
+      slpres : IC.int;
+      counter : Natural := 0;
+   begin
+      loop
+         result := sqlite_h.sqlite3_step (stmt);
+         exit when result = sqlite_h.SQLITE_ROW;
+         exit when counter > num_retries;
+         counter := counter + 1;
+         slpres := sqlite_h.sqlite3_sleep (IC.int (200));
+      end loop;
+      return (result = sqlite_h.SQLITE_ROW);
+   end step_through_statement;
+
+
+   --------------------------------------------------------------------
    --  retrieve_integer
    --------------------------------------------------------------------
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
@@ -175,5 +198,28 @@ package body SQLite is
                                     data     => data_ptr,
                                     callback => gen_cb);
    end sqlite3_set_auxdata_as_regex;
+
+
+   --------------------------------------------------------------------
+   --  db_connected
+   --------------------------------------------------------------------
+   function db_connected (db : sqlite_h.sqlite3_Access) return Boolean
+   is
+      use type sqlite_h.sqlite3_Access;
+   begin
+      return (db /= null);
+   end db_connected;
+
+
+   --------------------------------------------------------------------
+   --  get_last_error_message
+   --------------------------------------------------------------------
+   function get_last_error_message (db : sqlite_h.sqlite3_Access) return String
+   is
+      c_msg : ICS.chars_ptr;
+   begin
+      c_msg := sqlite_h.sqlite3_errmsg (db);
+      return ICS.Value (c_msg);
+   end get_last_error_message;
 
 end SQLite;

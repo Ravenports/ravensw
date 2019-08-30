@@ -25,6 +25,10 @@ package SQLite is
    --  return True if row found after the step
    function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
 
+   --  return True if row found after the step, attemp num_retries when SQLITE_BUSY encountered
+   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
+                                    return Boolean;
+
    --  After stepping, return 64-bit integer from given column
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
                               column : Integer) return sql_int64;
@@ -51,5 +55,9 @@ package SQLite is
       N        : Integer;
       data     : regex_h.regex_t_Access;
       callback : cb_regex);
+
+   function db_connected (db : sqlite_h.sqlite3_Access) return Boolean;
+
+   function get_last_error_message (db : sqlite_h.sqlite3_Access) return String;
 
 end SQLite;

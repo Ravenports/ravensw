@@ -9,6 +9,7 @@ with Core.Config;
 with Core.Deps;
 with Core.Version;
 with Core.Repo_Operations;
+with Core.Event;
 with Core.Pkg;     use Core.Pkg;
 with Core.Strings; use Core.Strings;
 with SQLite;
@@ -667,13 +668,20 @@ package body Core.PkgDB is
       use type sqlite_h.sqlite3_Access;
 
       procedure close (position : pkg_repos_crate.Cursor);
-      procedure close (position : pkg_repos_crate.Cursor)
-      is
-         xrepo : T_pkg_repo renames pkg_repos_crate.Element (position);
-         result    : Boolean;
+      procedure close_out (key : Text; xrepo : in out T_pkg_repo);
+
+      procedure close (position : pkg_repos_crate.Cursor) is
       begin
-         result := Repo_Operations.Ops (xrepo.ops_variant).repo_close (xrepo, False);
+         db.repos.Update_Element (Position => position,
+                                  Process  => close_out'Access);
       end close;
+
+      procedure close_out (key : Text; xrepo : in out T_pkg_repo)
+      is
+         result : Boolean;
+      begin
+         result := Repo_Operations.Ops (xrepo.ops_variant).all.repo_close (xrepo, False);
+      end close_out;
 
    begin
       if db.prstmt_initialized then
@@ -683,8 +691,54 @@ package body Core.PkgDB is
          db.repos.Iterate (close'Access);
          db.repos.Clear;
          SQLite.close_database (db.sqlite);
+         db.sqlite := null;
       end if;
       SQLite.shutdown_sqlite;
    end pkgdb_close;
+
+
+   --------------------------------------------------------------------
+   --  ERROR_SQLITE
+   --------------------------------------------------------------------
+   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String)
+   is
+      msg : String := "sqlite error while executing " & query &
+        " in file core-pkgdb.adb," & func & "(): " & SQLite.get_last_error_message (db);
+   begin
+      Event.pkg_emit_error (SUS (msg));
+   end ERROR_SQLITE;
+
+
+   --------------------------------------------------------------------
+   --  run_transaction
+   --------------------------------------------------------------------
+   function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
+                             return Boolean
+   is
+      function joinsql return String;
+      function joinsql return String is
+      begin
+         if IsBlank (savepoint) then
+            return query;
+         else
+            return query & " " & savepoint;
+         end if;
+      end joinsql;
+
+      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      Event.pkg_debug (4, "Pkgdb: running '" & joinsql & "'");
+      if SQLite.prepare_sql (db, joinsql, stmt'Access) then
+         if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
+            SQLite.finalize_statement (stmt);
+            return False;
+         end if;
+         SQLite.finalize_statement (stmt);
+         return True;
+      else
+         ERROR_SQLITE (db, "run_transaction", joinsql);
+         return False;
+      end if;
+   end run_transaction;
 
 end Core.PkgDB;

@@ -18,7 +18,7 @@ package Core.Repo is
                          return Boolean is abstract;
    function repo_update (this : Base_Repo_Operations; repo : T_pkg_repo; force : Boolean)
                          return Boolean is abstract;
-   function repo_close  (this : Base_Repo_Operations; repo : T_pkg_repo; commit : Boolean)
+   function repo_close  (this : Base_Repo_Operations; repo : in out T_pkg_repo; commit : Boolean)
                          return Boolean is abstract;
    function repo_open   (this : Base_Repo_Operations; repo : T_pkg_repo; mode : mode_t)
                          return Boolean is abstract;
