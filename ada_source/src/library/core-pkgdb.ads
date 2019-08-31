@@ -2,8 +2,8 @@
 --  Reference: ../License.txt
 
 with Interfaces.C.Strings;
+with Core.Pkg;
 
-private with Core.Pkg;
 private with SQLite;
 private with sqlite_h;
 private with regex_h;
@@ -47,6 +47,8 @@ package Core.PkgDB is
    function pkgdb_transaction_commit (db : struct_pkgdb; savepoint : String) return Boolean;
    function pkgdb_transaction_rollback (db : struct_pkgdb; savepoint : String) return Boolean;
 
+   function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
+                            return Core.Pkg.Pkg_Error_Type;
 
 private
 
@@ -104,7 +106,7 @@ private
    --  Argument types associated with sql_prstmt_index enumeration
    function prstmt_text_argtypes (index : sql_prstmt_index) return String;
 
-   sql_prepared_statements : array (sql_prstmt_index) of sqlite_h.sqlite3_stmt_Access;
+   sql_prepared_statements : array (sql_prstmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
 
    function  pkgdb_is_case_sensitive return Boolean;
 
@@ -203,6 +205,7 @@ private
       second  : String);
 
    procedure prstmt_finalize (db : in out struct_pkgdb);
+   function prstmt_initialize (db : in out struct_pkgdb) return Core.Pkg.Pkg_Error_Type;
 
    function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
                              return Boolean;
@@ -217,8 +220,8 @@ private
    function pkgdb_transaction_rollback_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
                                                return Boolean;
 
-   function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
-                            return Core.Pkg.Pkg_Error_Type;
+   function pkgdb_open_remote (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
+                               return Core.Pkg.Pkg_Error_Type;
 
    function vfs_dbdir_open (path : ICS.chars_ptr; flags : IC.int; mode : IC.int) return IC.int;
    pragma Export (C, vfs_dbdir_open);
@@ -256,5 +259,11 @@ private
    function pkgdb_open_repository (db       : in out struct_pkgdb;
                                    reponame : String) return Core.Pkg.Pkg_Error_Type;
 
+   function pkgdb_profile_callback
+     (trace_type : IC.unsigned;
+      ud   : sqlite_h.Void_Ptr;
+      stmt : sqlite_h.Void_Ptr;
+      x    : sqlite_h.Void_Ptr) return IC.int;
+   pragma Export (C, pkgdb_profile_callback);
 
 end Core.PkgDB;

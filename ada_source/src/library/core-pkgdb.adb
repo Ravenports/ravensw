@@ -662,6 +662,28 @@ package body Core.PkgDB is
 
 
    --------------------------------------------------------------------
+   --  prstmt_initialize
+   --------------------------------------------------------------------
+   function prstmt_initialize (db : in out struct_pkgdb) return Pkg_Error_Type is
+   begin
+      if not db.prstmt_initialized then
+         for S in sql_prstmt_index'Range loop
+            Event.pkg_debug (4, "Pkgdb: preparing statement '" & prstmt_text_sql (S) & "'");
+            if not SQLite.prepare_sql (pDB    => db.sqlite,
+                                       sql    => prstmt_text_sql (S),
+                                       ppStmt => sql_prepared_statements (S)'Access)
+            then
+               ERROR_SQLITE (db.sqlite, "prstmt_initialize", prstmt_text_sql (S));
+               return (EPKG_FATAL);
+            end if;
+            db.prstmt_initialized := True;
+         end loop;
+      end if;
+      return (EPKG_OK);
+   end prstmt_initialize;
+
+
+   --------------------------------------------------------------------
    --  pkgdb_close
    --------------------------------------------------------------------
    procedure pkgdb_close (db : in out struct_pkgdb)
@@ -821,8 +843,8 @@ package body Core.PkgDB is
       result : Boolean;
    begin
       if SQLite.db_connected (db.sqlite) then
-         Event.pkg_emit_error (SUS ("pkgdb_open_all(): database already connected"));
-         return EPKG_FATAL;
+         --  database is already open, just load another repository and exit
+         return pkgdb_open_remote (db, dbtype, reponame);
       end if;
 
       dirfd := Config.pkg_get_dbdirfd;
@@ -936,6 +958,37 @@ package body Core.PkgDB is
          end if;
       end;
 
+      declare
+         result : Pkg_Error_Type;
+      begin
+         result := pkgdb_open_remote (db, dbtype, reponame);
+         if result /= EPKG_OK then
+            return result;
+         end if;
+      end;
+
+      if prstmt_initialize (db) /= EPKG_OK then
+         Event.pkg_emit_error (SUS ("Failed to initialize prepared statements"));
+         pkgdb_close (db);
+         return EPKG_FATAL;
+      end if;
+
+      if Config.pkg_config_get_boolean (Config.conf_sqlite_profile) then
+         Event.pkg_debug (1, "pkgdb profiling is enabled");
+         SQLite.set_sqlite_profile (db.sqlite, pkgdb_profile_callback'Access);
+      end if;
+
+      return EPKG_OK;
+   end pkgdb_open_all;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_open_remote
+   --------------------------------------------------------------------
+   function pkgdb_open_remote (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
+                               return Core.Pkg.Pkg_Error_Type
+   is
+   begin
       if dbtype = PKGDB_REMOTE or else dbtype = PKGDB_MAYBE_REMOTE then
          if reponame /= "" then
             if Config.pkg_repo_is_active (reponame) then
@@ -975,7 +1028,7 @@ package body Core.PkgDB is
       end if;
 
       return EPKG_OK;
-   end pkgdb_open_all;
+   end pkgdb_open_remote;
 
 
    --------------------------------------------------------------------
@@ -1654,5 +1707,35 @@ package body Core.PkgDB is
          return EPKG_FATAL;
       end if;
    end pkgdb_open_repository;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_profile_callback
+   --------------------------------------------------------------------
+   function pkgdb_profile_callback
+     (trace_type : IC.unsigned;
+      ud   : sqlite_h.Void_Ptr;
+      stmt : sqlite_h.Void_Ptr;
+      x    : sqlite_h.Void_Ptr) return IC.int
+   is
+      use type SQLite.sql_int64;
+      nsec        : SQLite.sql_int64;
+      nsec_Access : access SQLite.sql_int64;
+      stmt_Access : sqlite_h.sqlite3_stmt_Access;
+
+      for nsec_Access'Address use x;
+      pragma Import (Ada, nsec_Access);
+
+      for stmt_Access'Address use stmt;
+      pragma Import (Ada, stmt_Access);
+   begin
+      --  According to sqlite3 documentation, nsec has milliseconds accuracy
+      nsec := nsec_Access.all / 1_000_000;
+      if nsec > 0 then
+         Event.pkg_debug (1, "Sqlite request " & SQLite.get_sql (stmt_Access) &
+                            " was executed in " & int2str (Integer (nsec)) & " milliseconds");
+      end if;
+      return 0;
+   end pkgdb_profile_callback;
 
 end Core.PkgDB;

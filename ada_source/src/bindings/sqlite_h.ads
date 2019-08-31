@@ -131,6 +131,12 @@ package sqlite_h is
    SQLITE_ANY            : constant := 5;
    SQLITE_DETERMINISTIC  : constant := 16#800#;
 
+   SQLITE_TRACE_STMT     : constant := 1;
+   SQLITE_TRACE_PROFILE  : constant := 2;
+   SQLITE_TRACE_ROW      : constant := 4;
+   SQLITE_TRACE_CLOSE    : constant := 8;
+
+
    ---------------------
    --  Library Calls  --
    ----------------------
@@ -403,6 +409,22 @@ package sqlite_h is
 
    function sqlite3_db_readonly (db : sqlite3_Access; zDbName : ICS.chars_ptr) return IC.int;
    pragma Import (C, sqlite3_db_readonly);
+
+   type cb_trace is access function
+     (trace_type : IC.unsigned;
+      ud   : Void_Ptr;
+      stmt : Void_Ptr;
+      x    : Void_Ptr) return IC.int;
+   pragma Convention (C, cb_trace);
+
+   function sqlite3_trace_v2 (db       : sqlite3_Access;
+                              uMask    : IC.unsigned;
+                              callback : cb_trace;
+                              pCtx     : Void_Ptr) return IC.int;
+   pragma Import (C, sqlite3_trace_v2);
+
+   function sqlite3_sql (pStmt : sqlite3_stmt_Access) return ICS.chars_ptr;
+   pragma Import (C, sqlite3_sql);
 
 private
 

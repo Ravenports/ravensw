@@ -83,4 +83,10 @@ package SQLite is
      (db     : sqlite_h.sqlite3_Access;
       dbname : String) return Boolean;
 
+   function get_sql (pStmt : sqlite_h.sqlite3_stmt_Access) return String;
+
+   procedure set_sqlite_profile
+     (db       : sqlite_h.sqlite3_Access;
+      callback : sqlite_h.cb_trace);
+
 end SQLite;

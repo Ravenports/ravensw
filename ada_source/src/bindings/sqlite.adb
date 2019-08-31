@@ -303,4 +303,31 @@ package body SQLite is
       return (res = IC.int (1));
    end database_was_opened_readonly;
 
+
+   --------------------------------------------------------------------
+   --  database_was_opened_readonly
+   --------------------------------------------------------------------
+   function get_sql (pStmt : sqlite_h.sqlite3_stmt_Access) return String
+   is
+      sql : ICS.chars_ptr;
+   begin
+      sql := sqlite_h.sqlite3_sql (pStmt);
+      return ICS.Value (sql);
+   end get_sql;
+
+
+   --------------------------------------------------------------------
+   --  set_sqlite_profile
+   --------------------------------------------------------------------
+   procedure set_sqlite_profile
+     (db       : sqlite_h.sqlite3_Access;
+      callback : sqlite_h.cb_trace)
+   is
+      res : IC.int;
+   begin
+      res := sqlite_h.sqlite3_trace_v2 (db       => db,
+                                        uMask    => sqlite_h.SQLITE_TRACE_PROFILE,
+                                        callback => callback,
+                                        pCtx     => System.Null_Address);
+   end set_sqlite_profile;
 end SQLite;
