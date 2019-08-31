@@ -56,7 +56,7 @@ private
       record
          sqlite : aliased sqlite_h.sqlite3_Access;
          prstmt_initialized : Boolean;
-         repos : Pkg.pkg_repos_crate.Map;
+         repos : Pkg.text_crate.Vector;
       end record;
 
    type sql_prstmt_index is

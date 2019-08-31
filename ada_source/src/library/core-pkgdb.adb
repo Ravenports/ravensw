@@ -668,21 +668,15 @@ package body Core.PkgDB is
    is
       use type sqlite_h.sqlite3_Access;
 
-      procedure close (position : pkg_repos_crate.Cursor);
-      procedure close_out (key : Text; xrepo : in out T_pkg_repo);
-
-      procedure close (position : pkg_repos_crate.Cursor) is
-      begin
-         db.repos.Update_Element (Position => position,
-                                  Process  => close_out'Access);
-      end close;
-
-      procedure close_out (key : Text; xrepo : in out T_pkg_repo)
+      procedure close (position : text_crate.Cursor);
+      procedure close (position : text_crate.Cursor)
       is
-         result : Boolean;
+         result   : Boolean;
+         reponame : Text renames text_crate.Element (position);
+         variant  : repo_ops_variant := Config.repositories.Element (reponame).ops_variant;
       begin
-         result := Repo_Operations.Ops (xrepo.ops_variant).all.repo_close (xrepo, False);
-      end close_out;
+         result := Repo_Operations.Ops (variant).all.repo_close (reponame, False);
+      end close;
 
    begin
       if db.prstmt_initialized then
@@ -1638,17 +1632,17 @@ package body Core.PkgDB is
    function pkgdb_open_repository (db       : in out struct_pkgdb;
                                    reponame : String) return Core.Pkg.Pkg_Error_Type
    is
-      key   : Text := SUS (reponame);
-      xrepo : T_pkg_repo := Config.repositories.Element (key);
-      ov    : repo_ops_variant renames xrepo.ops_variant;
+      key     : Text := SUS (reponame);
+      xrepo   : T_pkg_repo renames Config.repositories.Element (key);
+      variant : repo_ops_variant renames xrepo.ops_variant;
    begin
-      if Repo_Operations.Ops (ov).all.repo_open
-        (repo => xrepo,
-         mode => Repo_Operations.ACCESS_R_OK)
+      if Repo_Operations.Ops (variant).all.repo_open
+        (reponame => key,
+         mode     => Repo_Operations.ACCESS_R_OK)
       then
-         if Repo_Operations.Ops (ov).all.repo_init (xrepo)
+         if Repo_Operations.Ops (variant).all.repo_init (key)
          then
-            db.repos.Insert (key, xrepo);
+            db.repos.Prepend (key);
             return EPKG_OK;
          else
             Event.pkg_emit_error (SUS ("Repository " & reponame & "' cannot be initialized."));

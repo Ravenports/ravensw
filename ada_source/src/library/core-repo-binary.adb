@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 with SQLite;
+with Core.Config;
 
 package body Core.Repo.Binary is
 
@@ -10,7 +11,7 @@ package body Core.Repo.Binary is
    --  repo_init
    --------------------------------------------------------------------
    overriding
-   function repo_init (this : Repo_Operations_Binary; repo : T_pkg_repo) return Boolean
+   function repo_init (this : Repo_Operations_Binary; reponame : Text) return Boolean
    is
    begin
       return False;
@@ -21,7 +22,7 @@ package body Core.Repo.Binary is
    --  repo_create
    --------------------------------------------------------------------
    overriding
-   function repo_create (this : Repo_Operations_Binary; repo : T_pkg_repo) return Boolean
+   function repo_create (this : Repo_Operations_Binary; reponame : Text) return Boolean
    is
    begin
       return False;
@@ -32,7 +33,7 @@ package body Core.Repo.Binary is
    --  repo_update
    --------------------------------------------------------------------
    overriding
-   function repo_update (this : Repo_Operations_Binary; repo : T_pkg_repo; force : Boolean)
+   function repo_update (this : Repo_Operations_Binary; reponame : Text; force : Boolean)
                          return Boolean
    is
    begin
@@ -44,9 +45,21 @@ package body Core.Repo.Binary is
    --  repo_close
    --------------------------------------------------------------------
    overriding
-   function repo_close (this : Repo_Operations_Binary; repo : in out T_pkg_repo; commit : Boolean)
+   function repo_close (this : Repo_Operations_Binary; reponame : Text; commit : Boolean)
                         return Boolean
    is
+      procedure close_database (key : Text; Element : in out T_pkg_repo);
+
+      repo    : T_pkg_repo renames Config.repositories.Element (reponame);
+
+      procedure close_database (key : Text; Element : in out T_pkg_repo)
+      is
+         repository : T_pkg_repo renames Element;
+      begin
+         SQLite.close_database (repository.sqlite_handle);
+         repository.sqlite_handle := null;
+      end close_database;
+
    begin
       if not SQLite.db_connected (repo.sqlite_handle) then
          return True;
@@ -59,9 +72,9 @@ package body Core.Repo.Binary is
       for S in binary_stmt_index loop
          SQLite.finalize_statement (binary_prepared_statements (S));
       end loop;
-      SQLite.close_database (repo.sqlite_handle);
 
-      repo.sqlite_handle := null;
+      Config.repositories.Update_Element (Position => Config.repositories.Find (reponame),
+                                          Process  => close_database'Access);
       return True;
    end repo_close;
 
@@ -70,7 +83,7 @@ package body Core.Repo.Binary is
    --  repo_open
    --------------------------------------------------------------------
    overriding
-   function repo_open (this : Repo_Operations_Binary; repo : T_pkg_repo; mode : mode_t)
+   function repo_open (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
                        return Boolean
    is
    begin
@@ -82,7 +95,7 @@ package body Core.Repo.Binary is
    --  repo_access
    --------------------------------------------------------------------
    overriding
-   function repo_access (this : Repo_Operations_Binary; repo : T_pkg_repo; mode : mode_t)
+   function repo_access (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
                          return Boolean
    is
    begin
@@ -94,7 +107,7 @@ package body Core.Repo.Binary is
    --  repo_ensure_loaded
    --------------------------------------------------------------------
    overriding
-   function repo_ensure_loaded (this : Repo_Operations_Binary; repo : T_pkg_repo; pkg1 : T_pkg)
+   function repo_ensure_loaded (this : Repo_Operations_Binary; reponame : Text; pkg1 : T_pkg)
                                 return Boolean
    is
    begin

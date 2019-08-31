@@ -8,29 +8,29 @@ package Core.Repo.Binary is
    type Repo_Operations_Binary is new Base_Repo_Operations with private;
 
    overriding
-   function repo_init   (this : Repo_Operations_Binary; repo : T_pkg_repo) return Boolean;
+   function repo_init   (this : Repo_Operations_Binary; reponame : Text) return Boolean;
 
    overriding
-   function repo_create (this : Repo_Operations_Binary; repo : T_pkg_repo) return Boolean;
+   function repo_create (this : Repo_Operations_Binary; reponame : Text) return Boolean;
 
    overriding
-   function repo_update (this : Repo_Operations_Binary; repo : T_pkg_repo; force : Boolean)
+   function repo_update (this : Repo_Operations_Binary; reponame : Text; force : Boolean)
                          return Boolean;
 
    overriding
-   function repo_close  (this : Repo_Operations_Binary; repo : in out T_pkg_repo; commit : Boolean)
+   function repo_close  (this : Repo_Operations_Binary; reponame : Text; commit : Boolean)
                          return Boolean;
 
    overriding
-   function repo_open   (this : Repo_Operations_Binary; repo : T_pkg_repo; mode : mode_t)
+   function repo_open   (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
                          return Boolean;
 
    overriding
-   function repo_access (this : Repo_Operations_Binary; repo : T_pkg_repo; mode : mode_t)
+   function repo_access (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
                          return Boolean;
 
    overriding
-   function repo_ensure_loaded (this : Repo_Operations_Binary; repo : T_pkg_repo; pkg1 : T_pkg)
+   function repo_ensure_loaded (this : Repo_Operations_Binary; reponame : Text; pkg1 : T_pkg)
                                 return Boolean;
 
 private
