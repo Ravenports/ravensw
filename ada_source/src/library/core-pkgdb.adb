@@ -1738,4 +1738,14 @@ package body Core.PkgDB is
       return 0;
    end pkgdb_profile_callback;
 
+
+   --------------------------------------------------------------------
+   --  pkgdb_profile_callback
+   --------------------------------------------------------------------
+   function pkgdb_open (db : in out struct_pkgdb; dbtype : T_pkgdb) return Core.Pkg.Pkg_Error_Type
+   is
+   begin
+      return pkgdb_open_all (db, dbtype, "");
+   end pkgdb_open;
+
 end Core.PkgDB;

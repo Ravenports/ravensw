@@ -156,6 +156,17 @@ package body Ucl is
 
 
    --------------------------------------------------------------------
+   --  ucl_parser_new_lowercase
+   --------------------------------------------------------------------
+   function ucl_parser_new_lowercase return T_parser
+   is
+      flags : IC.int := IC.int (libucl.UCL_PARSER_KEY_LOWERCASE);
+   begin
+      return libucl.ucl_parser_new (flags);
+   end ucl_parser_new_lowercase;
+
+
+   --------------------------------------------------------------------
    --  ucl_parser_add_fd
    --------------------------------------------------------------------
    function ucl_parser_add_fd (parser : T_parser;
@@ -430,5 +441,50 @@ package body Ucl is
          return dump;
       end;
    end ucl_emit_yaml;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_valid_per_schema
+   --------------------------------------------------------------------
+   function ucl_object_valid_per_schema
+     (schema          : access constant libucl.ucl_object_t;
+      obj_to_validate : access constant libucl.ucl_object_t;
+      error_message   : out Text) return Boolean
+   is
+      use type ICX.bool;
+
+      res  : ICX.bool;
+      serr : aliased libucl.ucl_schema_error;
+      msg  : ICS.chars_ptr;
+   begin
+      res := libucl.ucl_object_validate (schema, obj_to_validate, serr'Access);
+      if (res = 0) then
+         msg := ICS.New_Char_Array (serr.msg);
+         error_message := SUS (ICS.Value (msg));
+         ICS.Free (msg);
+         return False;
+      else
+         error_message := blank;
+         return True;
+      end if;
+   end ucl_object_valid_per_schema;
+
+
+   --------------------------------------------------------------------
+   --  ucl_object_valid_per_schema
+   --------------------------------------------------------------------
+   function ucl_parser_add_chunk (parser : T_parser; data : String) return Boolean
+   is
+      use type ICX.bool;
+
+      res : ICX.bool;
+      c_data : array (data'Range) of aliased IC.unsigned_char;
+   begin
+      for x in data'Range loop
+         c_data (x) := IC.unsigned_char (Character'Pos (data (x)));
+      end loop;
+      res := libucl.ucl_parser_add_chunk (parser, c_data (c_data'First)'Access, data'Length);
+      return (res = 1);
+   end ucl_parser_add_chunk;
 
 end Ucl;

@@ -3,6 +3,10 @@
 
 with SQLite;
 with Core.Config;
+with Core.PkgDB;
+with Core.Unix;
+with Core.Event;
+with Core.Repo_Meta;
 
 package body Core.Repo.Binary is
 
@@ -66,7 +70,9 @@ package body Core.Repo.Binary is
       end if;
 
       if commit then
-         null;
+         if not PkgDB.pkgdb_transaction_commit_sqlite (repo.sqlite_handle, "") then
+            return False;
+         end if;
       end if;
 
       for S in binary_stmt_index loop
@@ -86,8 +92,70 @@ package body Core.Repo.Binary is
    function repo_open (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
                        return Boolean
    is
+      procedure open_database (key : Text; Element : in out T_pkg_repo);
+
+      dbdirfd : Unix.File_Descriptor;
+      result  : Boolean := False;
+
+      procedure open_database (key : Text; Element : in out T_pkg_repo)
+      is
+         repository : T_pkg_repo renames Element;
+
+         errprefix : constant String := "Repository " & USS (reponame) & " load error: ";
+      begin
+         --  Open metafile
+         declare
+            fd : Unix.File_Descriptor;
+            filename : constant String := USS (reponame) & ".meta";
+            dbfile   : constant String := "repo-" & USS (reponame) & ".sqlite";
+            flags    : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
+            success  : Pkg_Error_Type;
+            tmp      : T_pkg_repo_meta;
+         begin
+            fd := Unix.open_file (dirfd         => dbdirfd,
+                                  relative_path => filename,
+                                  flags         => flags);
+
+            if Unix.file_connected (fd) then
+               tmp := Repo_Meta.pkg_repo_meta_load (fd, success);
+               if success = EPKG_OK then
+                  repository.meta := tmp;
+               else
+                  Event.pkg_emit_errno (SUS (errprefix & "openat"),
+                                        SUS ("dbdirfd, " & filename),
+                                        Unix.errno);
+                  if Unix.close_file (fd) then
+                     null;
+                  end if;
+                  return;
+               end if;
+               if not Unix.close_file (fd) then
+                  Event.pkg_emit_errno (SUS (errprefix & "close"), SUS ("meta fd"), Unix.errno);
+                  return;
+               end if;
+            end if;
+
+            if not Unix.relative_file_readable (dbdirfd, dbfile) then
+               Event.pkg_emit_error (SUS (dbfile & " is not readable"));
+               return;
+            end if;
+
+            --  TODO: not finished yet
+
+            result := True;
+         end;
+      end open_database;
    begin
-      return False;
+      if not SQLite.initialize_sqlite then
+         return False;
+      end if;
+      SQLite.pkgdb_syscall_overload;
+
+      dbdirfd := Config.pkg_get_dbdirfd;
+
+      Config.repositories.Update_Element (Position => Config.repositories.Find (reponame),
+                                          Process  => open_database'Access);
+      return result;
    end repo_open;
 
 
@@ -95,6 +163,7 @@ package body Core.Repo.Binary is
    --  repo_access
    --------------------------------------------------------------------
    overriding
+
    function repo_access (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
                          return Boolean
    is

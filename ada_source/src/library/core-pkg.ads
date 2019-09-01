@@ -38,6 +38,7 @@ package Core.Pkg is
    type T_pkg_size      is mod 2**64;
    type T_pkg_timestamp is mod 2**64;
    type T_progress_tick is mod 2**64;
+   type T_EOL           is mod 2**64;
 
    type T_message_type is
      (PKG_MESSAGE_ALWAYS,
@@ -155,7 +156,11 @@ package Core.Pkg is
       HASH_BLAKE2);
 
    subtype T_priority is Integer;
-   subtype T_version is Integer;
+
+   --  version 0 is an error, version 1 is the only existing version.
+   type T_meta_version is new Natural range 0 .. 1;
+
+   invalid_meta_version : constant T_meta_version := 0;
 
    type T_fingerprint is
       record
@@ -175,16 +180,19 @@ package Core.Pkg is
        PKG_HASH_TYPE_UNKNOWN);
 
    type T_pubkey_Type is
-     (placeholder1,
-      placeholder2);
+     (rsa);
 
-   type T_pkg_repo_meta_key is
+   type T_pkg_repo_meta_cert is
       record
          pubkey      : Text;
          pubkey_type : T_pubkey_Type;
          name        : Text;
-         --  hh
       end record;
+
+   package cert_crate is new CON.Vectors
+     (Element_Type => T_pkg_repo_meta_cert,
+      Index_Type   => Natural);
+
 
    --  Obsolete, but maintained for compatability
    type T_pkg_formats is (TAR, TGZ, TBZ, TXZ, TZS);
@@ -224,6 +232,7 @@ package Core.Pkg is
       record
          maintainer        : Text;
          source            : Text;
+         source_identifier : Text;
          digests           : Text;
          digests_archive   : Text;
          manifests         : Text;
@@ -234,14 +243,14 @@ package Core.Pkg is
          conflicts_archive : Text;
          fulldb            : Text;
          fulldb_archive    : Text;
-         source_identifier : Text;
          digest_format     : T_checksum_type;
-         keys              : T_pkg_repo_meta_key;
+         cert              : cert_crate.Vector;
          packing_format    : T_pkg_formats := TZS;
-         --  revision          : int64_t
-         --  end_of_life       : time_t
-         version           : T_version;
+         revision          : Integer;
+         end_of_life       : T_EOL;
+         version           : T_meta_version;
       end record;
+   type T_pkg_repo_meta_Access is access all T_pkg_repo_meta;
 
    package text_crate is new CON.Vectors
      (Element_Type => Text,

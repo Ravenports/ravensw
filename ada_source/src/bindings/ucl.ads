@@ -4,6 +4,10 @@
 with libucl;
 with System;
 with Core.Unix;
+with Core.Strings;
+
+use Core;
+use Core.Strings;
 
 package Ucl is
 
@@ -45,6 +49,9 @@ package Ucl is
 
    --  Equivalent: ucl_parser_new(UCL_PARSER_NO_FILEVARS);
    function ucl_parser_new_nofilevars return T_parser;
+
+   --  Equivalent: ucl_parser_new(UCL_PARSER_KEY_LOWERCASE);
+   function ucl_parser_new_lowercase return T_parser;
 
    --  Equivalent:  ucl_parser_add_fd (p, fd) return Extensions.bool;
    function ucl_parser_add_fd (parser : T_parser;
@@ -99,6 +106,13 @@ package Ucl is
    procedure ucl_parser_register_variable (parser : T_parser; key, value : String);
 
    function ucl_emit_yaml (obj : access constant libucl.ucl_object_t) return String;
+
+   function ucl_object_valid_per_schema
+     (schema          : access constant libucl.ucl_object_t;
+      obj_to_validate : access constant libucl.ucl_object_t;
+      error_message   : out Text) return Boolean;
+
+   function ucl_parser_add_chunk (parser : T_parser; data : String) return Boolean;
 
 private
 

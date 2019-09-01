@@ -3,9 +3,9 @@
 
 with Interfaces.C.Strings;
 with Core.Pkg;
+with sqlite_h;
 
 private with SQLite;
-private with sqlite_h;
 private with regex_h;
 private with System;
 private with Core.Unix;
@@ -43,10 +43,18 @@ package Core.PkgDB is
    --  Close access to the local sqlite database
    procedure pkgdb_close (db : in out struct_pkgdb);
 
-   function pkgdb_transaction_begin (db : struct_pkgdb; savepoint : String) return Boolean;
-   function pkgdb_transaction_commit (db : struct_pkgdb; savepoint : String) return Boolean;
+   function pkgdb_transaction_begin    (db : struct_pkgdb; savepoint : String) return Boolean;
+   function pkgdb_transaction_commit   (db : struct_pkgdb; savepoint : String) return Boolean;
    function pkgdb_transaction_rollback (db : struct_pkgdb; savepoint : String) return Boolean;
+   function pkgdb_transaction_begin_sqlite    (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean;
+   function pkgdb_transaction_commit_sqlite   (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean;
+   function pkgdb_transaction_rollback_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
+                                               return Boolean;
 
+   function pkgdb_open     (db : in out struct_pkgdb; dbtype : T_pkgdb)
+                            return Core.Pkg.Pkg_Error_Type;
    function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
                             return Core.Pkg.Pkg_Error_Type;
 
@@ -211,14 +219,6 @@ private
                              return Boolean;
 
    procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
-
-
-   function pkgdb_transaction_begin_sqlite    (db : sqlite_h.sqlite3_Access; savepoint : String)
-                                               return Boolean;
-   function pkgdb_transaction_commit_sqlite   (db : sqlite_h.sqlite3_Access; savepoint : String)
-                                               return Boolean;
-   function pkgdb_transaction_rollback_sqlite (db : sqlite_h.sqlite3_Access; savepoint : String)
-                                               return Boolean;
 
    function pkgdb_open_remote (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
                                return Core.Pkg.Pkg_Error_Type;
