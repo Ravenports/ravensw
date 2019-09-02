@@ -4,6 +4,7 @@
 with Core.PkgDB;
 with Core.Strings;
 with Core.Event;
+with Core.Checksum;
 with SQLite;
 
 use Core.Strings;
@@ -39,7 +40,10 @@ package body Core.Iterators.Binary_sqlite is
    overriding
    function Next (this : in out Iterator_Binary_Sqlite;
                   pkg_ptr : access T_pkg_Access;
-                  flags : Iterator_Flags) return Pkg_Error_Type is
+                  flags : Load_Flags) return Pkg_Error_Type
+   is
+      P   : T_pkg renames pkg_ptr.all.all;
+      ret : Pkg_Error_Type;
    begin
       if this.counter > 0 and then
         (this.flags and PKGDB_IT_FLAG_ONCE) > 0
@@ -48,7 +52,22 @@ package body Core.Iterators.Binary_sqlite is
       end if;
 
       case sqlite_h.sqlite3_step (this.stmt) is
-         when sqlite_h.SQLITE_ROW => null;
+         when sqlite_h.SQLITE_ROW =>
+            populate_pkg (this.stmt, pkg_ptr.all);
+            if not IsBlank (P.digest) then
+               if not Checksum.pkg_checksum_is_valid (P.digest) then
+                  P.digest := blank;
+               end if;
+            end if;
+            for load_op in PKG_LOAD_OPS'Range loop
+               if (flags and load_on_flag (load_op).flag) > 0 then
+                  ret := load_on_flag (load_op).load (this.db, pkg_ptr.all);
+                  if ret /= EPKG_OK then
+                     return ret;
+                  end if;
+               end if;
+            end loop;
+            return EPKG_OK;
          when sqlite_h.SQLITE_DONE =>
             this.counter := this.counter + 1;
             if (this.flags and PKGDB_IT_FLAG_CYCLED) > 0 then
@@ -210,6 +229,7 @@ package body Core.Iterators.Binary_sqlite is
       function get_pkgid (col_index : Natural) return T_pkg_id;
       function get_timestamp (col_index : Natural) return T_pkg_timestamp;
       function get_message (col_index : Natural) return T_message;
+      function get_liclogic (col_index : Natural) return T_licenselogic;
 
       P : T_pkg renames pkg_access.all;
 
@@ -250,6 +270,24 @@ package body Core.Iterators.Binary_sqlite is
          return result;
       end get_message;
 
+      function get_liclogic (col_index : Natural) return T_licenselogic
+      is
+         r64  : SQLite.sql_int64 := SQLite.retrieve_integer (stmt, col_index);
+         AOR  : constant SQLite.sql_int64 := SQLite.sql_int64 (Character'Pos ('|'));
+         AAND : constant SQLite.sql_int64 := SQLite.sql_int64 (Character'Pos ('&'));
+      begin
+         case r64 is
+            when AOR    => return LICENSE_OR;
+            when AAND   => return LICENSE_AND;
+            when 1      => return LICENSE_SINGLE;
+            when others =>
+               Event.pkg_emit_notice
+                 (SUS ("Invalid license logic value " & int2str (Integer (r64)) &
+                    ", defaulting to single license"));
+               return LICENSE_SINGLE;
+         end case;
+      end get_liclogic;
+
    begin
       clear_pkg_data (pkg_access);
       for icol in 0 .. SQLite.get_number_of_columns (stmt) - 1 loop
@@ -258,36 +296,35 @@ package body Core.Iterators.Binary_sqlite is
             datatype : pkg_attr := get_attribute (colname);
          begin
             case datatype is
-               when PKG_ABI          => P.abi := get_text (icol);
-               when PKG_CKSUM        => P.sum := get_text (icol);
-               when PKG_COMMENT      => P.comment := get_text (icol);
-               when PKG_REPONAME     => P.reponame := get_text (icol);
-               when PKG_DESC         => P.desc := get_text (icol);
-               when PKG_MAINTAINER   => P.maintainer := get_text (icol);
-               when PKG_DIGEST       => P.digest := get_text (icol);
-               when PKG_NAME         => P.name := get_text (icol);
-               when PKG_OLD_VERSION  => P.old_version := get_text (icol);
-               when PKG_ORIGIN       => P.origin := get_text (icol);
-               when PKG_PREFIX       => P.prefix := get_text (icol);
-               when PKG_REPOPATH     => P.repopath := get_text (icol);
-               when PKG_REPOURL      => P.repourl := get_text (icol);
-               when PKG_UNIQUEID     => P.uid := get_text (icol);
-               when PKG_VERSION      => P.version := get_text (icol);
-               when PKG_WWW          => P.www := get_text (icol);
-               when PKG_DEP_FORMULA  => P.dep_formula := get_text (icol);
-               when PKG_MESSAGE      => P.messages.Append (get_message (icol));
+               when PKG_ABI           => P.abi := get_text (icol);
+               when PKG_CKSUM         => P.sum := get_text (icol);
+               when PKG_COMMENT       => P.comment := get_text (icol);
+               when PKG_REPONAME      => P.reponame := get_text (icol);
+               when PKG_DESC          => P.desc := get_text (icol);
+               when PKG_MAINTAINER    => P.maintainer := get_text (icol);
+               when PKG_DIGEST        => P.digest := get_text (icol);
+               when PKG_NAME          => P.name := get_text (icol);
+               when PKG_OLD_VERSION   => P.old_version := get_text (icol);
+               when PKG_ORIGIN        => P.origin := get_text (icol);
+               when PKG_PREFIX        => P.prefix := get_text (icol);
+               when PKG_REPOPATH      => P.repopath := get_text (icol);
+               when PKG_REPOURL       => P.repourl := get_text (icol);
+               when PKG_UNIQUEID      => P.uid := get_text (icol);
+               when PKG_VERSION       => P.version := get_text (icol);
+               when PKG_WWW           => P.www := get_text (icol);
+               when PKG_DEP_FORMULA   => P.dep_formula := get_text (icol);
+               when PKG_MESSAGE       => P.messages.Append (get_message (icol));
 
-               when PKG_AUTOMATIC    => P.automatic := get_boolean (icol);
-               when PKG_LOCKED       => P.locked := get_boolean (icol);
-               when PKG_VITAL        => P.vital := get_boolean (icol);
+               when PKG_AUTOMATIC     => P.automatic := get_boolean (icol);
+               when PKG_LOCKED        => P.locked := get_boolean (icol);
+               when PKG_VITAL         => P.vital := get_boolean (icol);
 
-               when PKG_PKGSIZE      => P.pkgsize := get_pkgsize (icol);
-               when PKG_OLD_FLATSIZE => P.old_flatsize := get_pkgsize (icol);
-               when PKG_FLATSIZE     => P.flatsize := get_pkgsize (icol);
-               when PKG_ROWID        => P.id := get_pkgid (icol);
-               when PKG_TIME         => P.timestamp := get_timestamp (icol);
-
-               when PKG_LICENSE_LOGIC => null;  --  TODO: Licenselogic
+               when PKG_PKGSIZE       => P.pkgsize := get_pkgsize (icol);
+               when PKG_OLD_FLATSIZE  => P.old_flatsize := get_pkgsize (icol);
+               when PKG_FLATSIZE      => P.flatsize := get_pkgsize (icol);
+               when PKG_ROWID         => P.id := get_pkgid (icol);
+               when PKG_TIME          => P.timestamp := get_timestamp (icol);
+               when PKG_LICENSE_LOGIC => P.licenselogic := get_liclogic (icol);
 
                   --  Not seen in query
                when PKG_MTREE => null;

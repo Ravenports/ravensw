@@ -43,6 +43,12 @@ package Core.Pkg is
       PKG_OLD_FILE     --  local file old archive.
      );
 
+   type T_licenselogic is
+     (LICENSE_OR,      --  ASCII POS ('|')
+      LICENSE_AND,     --  ASCII POS ('&')
+      LICENSE_SINGLE   --  1
+     );
+
    type T_pkg_id        is mod 2**64;
    type T_pkg_size      is mod 2**64;
    type T_pkg_timestamp is mod 2**64;
@@ -109,7 +115,7 @@ package Core.Pkg is
          repourl      : Text;
          reason       : Text;
          dep_formula  : Text;
-         --  licenselogic
+         licenselogic : T_licenselogic;
          pkgsize      : T_pkg_size;
          flatsize     : T_pkg_size;
          old_flatsize : T_pkg_size;
