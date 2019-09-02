@@ -91,4 +91,10 @@ package Core.Strings is
    function tail (US : Text;   delimiter : Text)   return Text;
    function tail (S  : String; delimiter : String) return String;
 
+   --  Return input surrounded by double quotation marks
+   function DQ (txt : String) return String;
+
+   --  Return input surrounded by single quotation marks
+   function SQ (txt : String) return String;
+
 end Core.Strings;

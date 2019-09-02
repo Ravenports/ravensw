@@ -284,7 +284,7 @@ package Core.Pkg is
          flags          : T_pkg_repo_flags;
          ops_variant    : repo_ops_variant;
          env            : nvpair_crate.Map;
-         sqlite_handle  : sqlite_h.sqlite3_Access;
+         sqlite_handle  : aliased sqlite_h.sqlite3_Access;
          --  ssh
          --  sshio
 

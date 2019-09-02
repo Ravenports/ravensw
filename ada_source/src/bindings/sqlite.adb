@@ -330,4 +330,5 @@ package body SQLite is
                                         callback => callback,
                                         pCtx     => System.Null_Address);
    end set_sqlite_profile;
+
 end SQLite;

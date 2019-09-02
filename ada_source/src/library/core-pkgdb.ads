@@ -4,8 +4,8 @@
 with Interfaces.C.Strings;
 with Core.Pkg;
 with sqlite_h;
+with SQLite;
 
-private with SQLite;
 private with regex_h;
 private with System;
 private with Core.Unix;
@@ -57,6 +57,13 @@ package Core.PkgDB is
                             return Core.Pkg.Pkg_Error_Type;
    function pkgdb_open_all (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
                             return Core.Pkg.Pkg_Error_Type;
+
+   function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        sql     : String;
+                        res     : out SQLite.sql_int64;
+                        silence : Boolean) return Core.Pkg.Pkg_Error_Type;
+
+   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
 
 private
 
@@ -218,8 +225,6 @@ private
    function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
                              return Boolean;
 
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
-
    function pkgdb_open_remote (db : in out struct_pkgdb; dbtype : T_pkgdb; reponame : String)
                                return Core.Pkg.Pkg_Error_Type;
 
@@ -244,12 +249,6 @@ private
    function pkgdb_init (db : sqlite_h.sqlite3_Access) return Core.Pkg.Pkg_Error_Type;
 
    function sql_exec (db : sqlite_h.sqlite3_Access; sql : String) return Core.Pkg.Pkg_Error_Type;
-
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        sql     : String;
-                        res     : out SQLite.sql_int64;
-                        silence : Boolean) return Core.Pkg.Pkg_Error_Type;
-
 
    function pkgdb_upgrade (db : struct_pkgdb) return Core.Pkg.Pkg_Error_Type;
 

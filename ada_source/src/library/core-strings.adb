@@ -4,12 +4,14 @@
 with Ada.Strings.Hash;
 with Ada.Strings.Fixed;
 with Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
 with Ada.Integer_Text_IO;
 
 package body Core.Strings is
 
    package AS  renames Ada.Strings;
    package HAN renames Ada.Characters.Handling;
+   package LAT renames Ada.Characters.Latin_1;
    package IIO renames Ada.Integer_Text_IO;
 
    --------------------------------------------------------------------------------------------
@@ -470,5 +472,21 @@ package body Core.Strings is
       end loop;
    end tail;
 
+
+
+   --------------------------------------------------------------------
+   --  DQ
+   --------------------------------------------------------------------
+   function DQ (txt : String) return String is
+      return LAT.Quotation & txt & LAT.Quotation;
+   end DQ;
+
+
+   --------------------------------------------------------------------
+   --  DQ
+   --------------------------------------------------------------------
+   function SQ (txt : String) return String is
+      return LAT.Apostrophe & txt & LAT.Apostrophe;
+   end SQ;
 
 end Core.Strings;

@@ -6,7 +6,12 @@ with Core.Strings; use Core.Strings;
 
 package Core.Repo is
 
-   type mode_t is new Natural range 0 .. 8#777#;
+   type mode_t is new Natural range 0 .. 2#1111#;
+
+   ACCESS_F_OK : constant Core.Repo.mode_t := 0;
+   ACCESS_X_OK : constant Core.Repo.mode_t := 1;
+   ACCESS_W_OK : constant Core.Repo.mode_t := 2;
+   ACCESS_R_OK : constant Core.Repo.mode_t := 4;
 
    type supported_ops is (init, create, update, close, open, raccess, ensure_loaded);
 
@@ -41,5 +46,6 @@ package Core.Repo is
    --  .get_cached_name = pkg_repo_binary_get_cached_name,
    --  .stat = pkg_repo_binary_stat
 
+   function mode_sets_write_flag (mode : mode_t) return Boolean;
 
 end Core.Repo;

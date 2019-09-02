@@ -10,6 +10,7 @@ with Core.Config;
 with Core.Deps;
 with Core.Version;
 with Core.Repo_Operations;
+with Core.Repo;
 with Core.Event;
 with Core.Pkg;     use Core.Pkg;
 with Core.Strings; use Core.Strings;
@@ -1691,7 +1692,7 @@ package body Core.PkgDB is
    begin
       if Repo_Operations.Ops (variant).all.repo_open
         (reponame => key,
-         mode     => Repo_Operations.ACCESS_R_OK)
+         mode     => Repo.ACCESS_R_OK)
       then
          if Repo_Operations.Ops (variant).all.repo_init (key)
          then
