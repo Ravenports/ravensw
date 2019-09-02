@@ -40,7 +40,11 @@ package SQLite is
 
    --  After stepping, return 64-bit integer from given column
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
-                              column : Integer) return sql_int64;
+                              column : Natural) return sql_int64;
+
+   --  After stepping, return string from given column
+   function retrieve_string (stmt : sqlite_h.sqlite3_stmt_Access;
+                             column : Natural) return String;
 
    --  Close statement after use, don't return result
    procedure finalize_statement (stmt : sqlite_h.sqlite3_stmt_Access);
@@ -88,5 +92,12 @@ package SQLite is
    procedure set_sqlite_profile
      (db       : sqlite_h.sqlite3_Access;
       callback : sqlite_h.cb_trace);
+
+   function reset_statement (pStmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
+
+   function get_number_of_columns (pStmt : sqlite_h.sqlite3_stmt_Access) return Integer;
+
+   function get_column_name (pStmt : sqlite_h.sqlite3_stmt_Access;
+                             column_index : Natural) return String;
 
 end SQLite;

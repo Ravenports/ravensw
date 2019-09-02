@@ -31,7 +31,16 @@ package Core.Pkg is
       EPKG_CONFLICT,   --  A conflict between packages found
       EPKG_AGAIN,      --  Need to repeat operation
       EPKG_NOTINST,    --  Not installed
-      EPKG_VITAL       -- Can not delete the package because it is vital, i.e. a kernel
+      EPKG_VITAL       --  Can not delete the package because it is vital, i.e. a kernel
+     );
+
+   type pkg_type is
+     (PKG_NONE,        --  type cannot be determined
+      PKG_FILE,        --  local file archive
+      PKG_STREAM,      --  data read from a non-regular file (device, pipeline, unix socket etc.)
+      PKG_REMOTE,      --  package available on the remote repository.
+      PKG_INSTALLED,   --  locally installed package
+      PKG_OLD_FILE     --  local file old archive.
      );
 
    type T_pkg_id        is mod 2**64;
@@ -110,7 +119,7 @@ package Core.Pkg is
          --  ...
          rootpath     : Text;
       end record;
-
+   type T_pkg_Access is access all T_pkg;
 
 
    type T_pkg_file is

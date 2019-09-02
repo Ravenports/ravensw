@@ -7,6 +7,9 @@ with Core.Unix;
 
 package body Core.Finalize is
 
+   --------------------------------------------------------------------
+   --  cleanup
+   --------------------------------------------------------------------
    procedure cleanup
    is
       successful_close : Boolean;

@@ -478,6 +478,7 @@ package body Core.Strings is
    --  DQ
    --------------------------------------------------------------------
    function DQ (txt : String) return String is
+   begin
       return LAT.Quotation & txt & LAT.Quotation;
    end DQ;
 
@@ -486,6 +487,7 @@ package body Core.Strings is
    --  DQ
    --------------------------------------------------------------------
    function SQ (txt : String) return String is
+   begin
       return LAT.Apostrophe & txt & LAT.Apostrophe;
    end SQ;
 

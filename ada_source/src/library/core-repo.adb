@@ -14,4 +14,5 @@ package body Core.Repo is
          when others => return False;
       end case;
    end mode_sets_write_flag;
+
 end Core.Repo;

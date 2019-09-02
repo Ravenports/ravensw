@@ -135,13 +135,27 @@ package body SQLite is
    --  retrieve_integer
    --------------------------------------------------------------------
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
-                              column : Integer) return sql_int64
+                              column : Natural) return sql_int64
    is
       result : sqlite_h.sql64;
    begin
       result := sqlite_h.sqlite3_column_int64 (stmt, IC.int (column));
       return sql_int64 (result);
    end retrieve_integer;
+
+
+   --------------------------------------------------------------------
+   --  retrieve_string
+   --------------------------------------------------------------------
+   function retrieve_string (stmt : sqlite_h.sqlite3_stmt_Access;
+                             column : Natural) return String
+   is
+      result : ICS.chars_ptr;
+   begin
+      --  Don't free result!
+      result := sqlite_h.sqlite3_column_text (stmt, IC.int (column));
+      return ICS.Value (result);
+   end retrieve_string;
 
 
    --------------------------------------------------------------------
@@ -330,5 +344,44 @@ package body SQLite is
                                         callback => callback,
                                         pCtx     => System.Null_Address);
    end set_sqlite_profile;
+
+
+   --------------------------------------------------------------------
+   --  reset_statement
+   --------------------------------------------------------------------
+   function reset_statement (pStmt : sqlite_h.sqlite3_stmt_Access) return Boolean
+   is
+      use type IC.int;
+      res : IC.int;
+   begin
+      res := sqlite_h.sqlite3_reset (pStmt);
+      return (res = sqlite_h.SQLITE_OK);
+   end reset_statement;
+
+
+   --------------------------------------------------------------------
+   --  get_number_of_columns
+   --------------------------------------------------------------------
+   function get_number_of_columns (pStmt : sqlite_h.sqlite3_stmt_Access) return Integer
+   is
+      numcols : IC.int;
+   begin
+      numcols := sqlite_h.sqlite3_column_count (pStmt);
+      return (Integer (numcols));
+   end get_number_of_columns;
+
+
+   --------------------------------------------------------------------
+   --  get_column_name
+   --------------------------------------------------------------------
+   function get_column_name (pStmt : sqlite_h.sqlite3_stmt_Access;
+                             column_index : Natural) return String
+   is
+      name : ICS.chars_ptr;
+   begin
+      --  Don't free result!
+      name := sqlite_h.sqlite3_column_name (pStmt, IC.int (column_index));
+      return ICS.Value (name);
+   end get_column_name;
 
 end SQLite;
