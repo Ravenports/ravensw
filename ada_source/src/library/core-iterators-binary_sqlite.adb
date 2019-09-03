@@ -203,16 +203,32 @@ package body Core.Iterators.Binary_sqlite is
       P.dep_formula := blank;
       P.rootpath    := blank;
 
+      P.flags       := 0;
+
       P.pkgsize      := T_pkg_size'First;
       P.flatsize     := T_pkg_size'First;
       P.old_flatsize := T_pkg_size'First;
       P.timestamp    := T_pkg_timestamp'First;
+      P.licenselogic := T_licenselogic'First;
 
       P.depends.Clear;
       P.rdepends.Clear;
       P.messages.Clear;
+      P.categories.Clear;
+      P.licenses.Clear;
+      P.users.Clear;
+      P.groups.Clear;
+      P.shlibs_reqd.Clear;
+      P.shlibs_prov.Clear;
+      P.provides.Clear;
+      P.requires.Clear;
+      P.conflicts.Clear;
+      P.annotations.Clear;
+      P.dirs.Clear;
 
-      --  later: scripts, licenselogic
+      for x in pkg_script_type'Range loop
+         P.scripts (x) := blank;
+      end loop;
 
    end clear_pkg_data;
 
@@ -341,5 +357,443 @@ package body Core.Iterators.Binary_sqlite is
       end loop;
    end populate_pkg;
 
+
+   --------------------------------------------------------------------
+   --  load_val
+   --------------------------------------------------------------------
+   function load_val
+     (db         : sqlite_h.sqlite3_Access;
+      pkg_access : T_pkg_Access;
+      operation  : PKG_LOAD_OPS;
+      sql        : String)
+      return Pkg_Error_Type
+   is
+      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      if (pkg_access.flags and load_on_flag (operation).flag) > 0 then
+         return EPKG_OK;
+      end if;
+
+      Event.pkg_debug (4, "Pkgdb: running '" & sql & "'");
+      if not SQLite.prepare_sql (db, sql, stmt'Access) then
+         PkgDB.ERROR_SQLITE (db, "load_val", sql);
+         return EPKG_FATAL;
+      end if;
+
+      SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pkg_access.id));
+
+      declare
+         problem : Boolean;
+         result  : Pkg_Error_Type;
+      begin
+         loop
+            exit when not SQLite.step_through_statement (stmt, problem);
+            result := load_val_operation (operation) (stmt, pkg_access);
+            if result /= EPKG_OK then
+               problem := True;
+               exit;
+            end if;
+         end loop;
+
+         if problem then
+            case operation is
+               when PKG_LOAD_LICENSES        => pkg_access.licenses.Clear;
+               when PKG_LOAD_CATEGORIES      => pkg_access.categories.Clear;
+               when PKG_LOAD_USERS           => pkg_access.users.Clear;
+               when PKG_LOAD_GROUPS          => pkg_access.groups.Clear;
+               when PKG_LOAD_SHLIBS_REQUIRED => pkg_access.shlibs_reqd.Clear;
+               when PKG_LOAD_SHLIBS_PROVIDED => pkg_access.shlibs_prov.Clear;
+               when PKG_LOAD_PROVIDES        => pkg_access.provides.Clear;
+               when PKG_LOAD_REQUIRES        => pkg_access.requires.Clear;
+               when PKG_LOAD_CONFLICTS       => pkg_access.conflicts.Clear;
+               when PKG_LOAD_ANNOTATIONS     => pkg_access.annotations.Clear;
+               when PKG_LOAD_DEPS            => null;
+               when PKG_LOAD_RDEPS           => null;
+               when PKG_LOAD_DIRS            => pkg_access.dirs.Clear;
+               when PKG_LOAD_FILES           => null;
+               when PKG_LOAD_SCRIPTS         => null;
+               when PKG_LOAD_OPTIONS         => null;
+            end case;
+            PkgDB.ERROR_SQLITE (db, "load_val (step)", sql);
+            return EPKG_FATAL;
+         end if;
+      end;
+
+      SQLite.finalize_statement (stmt);
+
+      pkg_access.flags := pkg_access.flags or load_on_flag (operation).flag;
+      return EPKG_OK;
+   end load_val;
+
+
+   --------------------------------------------------------------------
+   --  add_license
+   --------------------------------------------------------------------
+   function add_license (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                         return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.licenses.Append (data);
+      return EPKG_OK;
+   end add_license;
+
+
+   --------------------------------------------------------------------
+   --  add_category
+   --------------------------------------------------------------------
+   function add_category (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                         return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.categories.Append (data);
+      return EPKG_OK;
+   end add_category;
+
+
+   --------------------------------------------------------------------
+   --  add_user
+   --------------------------------------------------------------------
+   function add_user (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                         return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.users.Append (data);
+      return EPKG_OK;
+   end add_user;
+
+
+   --------------------------------------------------------------------
+   --  add_group
+   --------------------------------------------------------------------
+   function add_group (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                       return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.groups.Append (data);
+      return EPKG_OK;
+   end add_group;
+
+
+   --------------------------------------------------------------------
+   --  add_provides
+   --------------------------------------------------------------------
+   function add_provides (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                          return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.provides.Append (data);
+      return EPKG_OK;
+   end add_provides;
+
+
+   --------------------------------------------------------------------
+   --  add_requires
+   --------------------------------------------------------------------
+   function add_requires (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                          return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.requires.Append (data);
+      return EPKG_OK;
+   end add_requires;
+
+
+   --------------------------------------------------------------------
+   --  add_shlib_reqd
+   --------------------------------------------------------------------
+   function add_shlib_reqd (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                            return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.shlibs_reqd.Append (data);
+      return EPKG_OK;
+   end add_shlib_reqd;
+
+
+   --------------------------------------------------------------------
+   --  add_shlib_prov
+   --------------------------------------------------------------------
+   function add_shlib_prov (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                            return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      pkg_access.shlibs_prov.Append (data);
+      return EPKG_OK;
+   end add_shlib_prov;
+
+
+   --------------------------------------------------------------------
+   --  add_conflict
+   --------------------------------------------------------------------
+   function add_conflict (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                            return Pkg_Error_Type
+   is
+      unique_id : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      conflict : T_pkg_conflict;
+   begin
+      --  silently ignore duplicates in case of conflicts
+      if not pkg_access.conflicts.Contains (unique_id) then
+         Event.pkg_debug (3, "Pkg: add a new conflict origin: " & USS (pkg_access.uid) &
+                            " with " & USS (unique_id));
+         --  don't set conflict.digest or conflict.contype right now
+         conflict.uid := unique_id;
+         pkg_access.conflicts.Insert (unique_id, conflict);
+      end if;
+      return EPKG_OK;
+   end add_conflict;
+
+
+   --------------------------------------------------------------------
+   --  add_annotation
+   --------------------------------------------------------------------
+   function add_annotation (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                            return Pkg_Error_Type
+   is
+      name  : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      value : Text := SUS (SQLite.retrieve_string (stmt, 1));
+   begin
+      if not pkg_access.annotations.Contains (name) then
+         pkg_access.annotations.Insert (name, value);
+      end if;
+      return EPKG_OK;
+   end add_annotation;
+
+
+   --------------------------------------------------------------------
+   --  add_directory
+   --------------------------------------------------------------------
+   function add_directory (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                           return Pkg_Error_Type
+   is
+      data : Text := SUS (SQLite.retrieve_string (stmt, 0));
+   begin
+      return pkg_adddir_attr (pkg_access       => pkg_access,
+                              path             => data,
+                              uname            => blank,
+                              gname            => blank,
+                              perm             => 0,
+                              fflags           => 0,
+                              check_duplicates => False);
+   end add_directory;
+
+
+   --------------------------------------------------------------------
+   --  add_scripts
+   --------------------------------------------------------------------
+   function add_scripts (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                         return Pkg_Error_Type
+   is
+      use type SQLite.sql_int64;
+
+      script : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      type_index : SQLite.sql_int64 := SQLite.retrieve_integer (stmt, 1);
+   begin
+      if type_index < 0 or else
+        type_index > SQLite.sql_int64 (pkg_script_type'Pos (pkg_script_type'Last))
+      then
+         Event.pkg_emit_error (SUS ("add_scripts(): script type out of range"));
+         return EPKG_FATAL;
+      end if;
+
+      pkg_access.scripts (pkg_script_type'Val (type_index)) := script;
+      return EPKG_OK;
+   end add_scripts;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_categories
+   --------------------------------------------------------------------
+   function pkgdb_load_categories (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                   return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT name" &
+        "  FROM pkg_categories, categories AS c" &
+        "  WHERE package_id = ?1" &
+        "    AND category_id = c.id" &
+        "  ORDER by name DESC";
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_CATEGORIES, sql);
+   end pkgdb_load_categories;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_license
+   --------------------------------------------------------------------
+   function pkgdb_load_licenses (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                 return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT ifnull(group_concat(name, ', '), '') AS name" &
+        "  FROM pkg_licenses, licenses AS l" &
+        "  WHERE package_id = ?1" &
+        "    AND license_id = l.id" &
+        "  ORDER by name DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_LICENSES, sql);
+   end pkgdb_load_licenses;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_users
+   --------------------------------------------------------------------
+   function pkgdb_load_users (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                 return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT users.name" &
+        "  FROM pkg_users, users" &
+        "  WHERE package_id = ?1" &
+        "    AND user_id = users.id" &
+        "  ORDER by name DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_USERS, sql);
+   end pkgdb_load_users;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_groups
+   --------------------------------------------------------------------
+   function pkgdb_load_groups (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                 return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT groups.name" &
+        "  FROM pkg_groups, groups" &
+        "  WHERE package_id = ?1" &
+        "    AND group_id = groups.id" &
+        "  ORDER by name DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_GROUPS, sql);
+   end pkgdb_load_groups;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_provides
+   --------------------------------------------------------------------
+   function pkgdb_load_provides (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                 return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT provide" &
+        "  FROM pkg_provides, provides AS s" &
+        "  WHERE package_id = ?1" &
+        "    AND provide_id = s.id" &
+        "  ORDER by provide DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_PROVIDES, sql);
+   end pkgdb_load_provides;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_requires
+   --------------------------------------------------------------------
+   function pkgdb_load_requires (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                 return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT require" &
+        "  FROM pkg_requires, requires AS s" &
+        "  WHERE package_id = ?1" &
+        "    AND require_id = s.id" &
+        "  ORDER by require DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_REQUIRES, sql);
+   end pkgdb_load_requires;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_conflicts
+   --------------------------------------------------------------------
+   function pkgdb_load_conflicts (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                  return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT packages.name" &
+        "  FROM pkg_conflicts" &
+        "    LEFT JOIN packages ON" &
+        "    (packages.id = pkg_conflicts.conflict_id)" &
+        "  WHERE package_id = ?1";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_CONFLICTS, sql);
+   end pkgdb_load_conflicts;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_annotations
+   --------------------------------------------------------------------
+   function pkgdb_load_annotations (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                    return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT k.annotation AS tag, v.annotation AS value" &
+        "  FROM pkg_annotation p" &
+        "    JOIN annotation k ON (p.tag_id = k.annotation_id)" &
+        "    JOIN annotation v ON (p.value_id = v.annotation_id)" &
+        "  WHERE p.package_id = ?1" &
+        "  ORDER BY tag, value";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_ANNOTATIONS, sql);
+   end pkgdb_load_annotations;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_dirs
+   --------------------------------------------------------------------
+   function pkgdb_load_dirs (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                             return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT path, try" &
+        "  FROM pkg_directories, directories" &
+        "  WHERE package_id = ?1" &
+        "    AND directory_id = directories.id" &
+        "  ORDER by path DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_DIRS, sql);
+   end pkgdb_load_dirs;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_scripts
+   --------------------------------------------------------------------
+   function pkgdb_load_scripts (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT script, type" &
+        "  FROM pkg_script" &
+        "    JOIN script USING(script_id)" &
+        "  WHERE package_id = ?1";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_SCRIPTS, sql);
+   end pkgdb_load_scripts;
 
 end Core.Iterators.Binary_sqlite;

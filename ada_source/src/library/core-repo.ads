@@ -6,8 +6,6 @@ with Core.Strings; use Core.Strings;
 
 package Core.Repo is
 
-   type mode_t is new Natural range 0 .. 2#1111#;
-
    ACCESS_F_OK : constant Core.Repo.mode_t := 0;
    ACCESS_X_OK : constant Core.Repo.mode_t := 1;
    ACCESS_W_OK : constant Core.Repo.mode_t := 2;

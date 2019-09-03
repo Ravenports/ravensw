@@ -38,6 +38,11 @@ package SQLite is
    function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
                                     return Boolean;
 
+   --  return True if row found after the step.  Set problem to True if result is not
+   --  SQLITE_DONE or SQLITE_ROW
+   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access;
+                                    problem : out Boolean) return Boolean;
+
    --  After stepping, return 64-bit integer from given column
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
                               column : Natural) return sql_int64;
@@ -99,5 +104,10 @@ package SQLite is
 
    function get_column_name (pStmt : sqlite_h.sqlite3_stmt_Access;
                              column_index : Natural) return String;
+
+   procedure bind_integer
+     (pStmt : sqlite_h.sqlite3_stmt_Access;
+      column_index : Natural;
+      value : sql_int64);
 
 end SQLite;

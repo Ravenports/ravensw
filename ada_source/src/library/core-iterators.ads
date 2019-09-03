@@ -8,8 +8,6 @@ package Core.Iterators is
    type Base_Iterators is abstract tagged null record;
    type Iterators_Access is access all Base_Iterators'Class;
 
-   type Load_Flags is mod 2 ** 15;
-
    PKG_LOAD_FLAG_BASIC            : constant Load_Flags := 0;
    PKG_LOAD_FLAG_DEPS             : constant Load_Flags := 2 ** 0;
    PKG_LOAD_FLAG_RDEPS            : constant Load_Flags := 2 ** 1;

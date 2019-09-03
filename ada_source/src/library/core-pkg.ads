@@ -54,6 +54,7 @@ package Core.Pkg is
    type T_pkg_timestamp is mod 2**64;
    type T_progress_tick is mod 2**64;
    type T_EOL           is mod 2**64;
+   type T_dir_flags     is mod 2**8;
 
    type T_message_type is
      (PKG_MESSAGE_ALWAYS,
@@ -86,6 +87,82 @@ package Core.Pkg is
      (Element_Type => T_pkg_dep,
       Index_Type   => Natural);
 
+   package text_crate is new CON.Vectors
+     (Element_Type => Text,
+      Index_Type   => Natural,
+      "="          => SU."=");
+   package sorter is new text_crate.Generic_Sorting ("<" => SU."<");
+
+   type Load_Flags is mod 2 ** 15;
+
+   type pkg_conflict_type is
+     (PKG_CONFLICT_ALL,
+      PKG_CONFLICT_REMOTE_LOCAL,
+      PKG_CONFLICT_REMOTE_REMOTE,
+      PKG_CONFLICT_LOCAL_LOCAL);
+
+   type T_pkg_conflict is
+      record
+         uid     : Text;
+         digest  : Text;
+         contype : pkg_conflict_type;
+      end record;
+
+   package conflicts_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => T_pkg_conflict,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
+   package nvpair_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => Text,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent,
+      "="             => SU."=");
+
+   type mode_t is new Natural range 0 .. 2#1111#;
+   subtype gid_t is Integer;
+   subtype uid_t is Integer;
+
+   type timespec is
+      record
+         tv_sec  : T_pkg_timestamp;
+         tv_nsec : T_pkg_timestamp;
+      end record;
+
+   type T_pkg_dir is
+      record
+         path    : Text;
+         uname   : Text;
+         gname   : Text;
+         perm    : mode_t;
+         gid     : gid_t;
+         uid     : uid_t;
+         fflags  : T_dir_flags;
+         noattrs : Boolean;
+         stamp   : timespec;
+      end record;
+
+   package directory_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => T_pkg_dir,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
+   type pkg_script_type is
+     (PKG_SCRIPT_PRE_INSTALL,
+      PKG_SCRIPT_POST_INSTALL,
+      PKG_SCRIPT_PRE_DEINSTALL,
+      PKG_SCRIPT_POST_DEINSTALL,
+      PKG_SCRIPT_PRE_UPGRADE,
+      PKG_SCRIPT_POST_UPGRADE,
+      PKG_SCRIPT_INSTALL,
+      PKG_SCRIPT_DEINSTALL,
+      PKG_SCRIPT_UPGRADE);
+
+   type pkg_script_set is array (pkg_script_type) of Text;
+
    type T_pkg is
       record
          direct       : Boolean;
@@ -93,7 +170,6 @@ package Core.Pkg is
          automatic    : Boolean;
          vital        : Boolean;
          id           : T_pkg_id;
-         --  scripts
          name         : Text;
          origin       : Text;
          version      : Text;
@@ -120,8 +196,21 @@ package Core.Pkg is
          flatsize     : T_pkg_size;
          old_flatsize : T_pkg_size;
          timestamp    : T_pkg_timestamp;
+         flags        : Load_Flags;
          depends      : depends_crate.Vector;
          rdepends     : depends_crate.Vector;
+         categories   : text_crate.Vector;
+         licenses     : text_crate.Vector;
+         users        : text_crate.Vector;
+         groups       : text_crate.Vector;
+         shlibs_reqd  : text_crate.Vector;
+         shlibs_prov  : text_crate.Vector;
+         provides     : text_crate.Vector;
+         requires     : text_crate.Vector;
+         conflicts    : conflicts_crate.Map;
+         annotations  : nvpair_crate.Map;
+         scripts      : pkg_script_set;
+         dirs         : directory_crate.Map;
          --  ...
          rootpath     : Text;
       end record;
@@ -267,20 +356,6 @@ package Core.Pkg is
       end record;
    type T_pkg_repo_meta_Access is access all T_pkg_repo_meta;
 
-   package text_crate is new CON.Vectors
-     (Element_Type => Text,
-      Index_Type   => Natural,
-      "="          => SU."=");
-   package sorter is new text_crate.Generic_Sorting ("<" => SU."<");
-
-   package nvpair_crate is new CON.Hashed_Maps
-     (Key_Type        => Text,
-      Element_Type    => Text,
-      Hash            => Strings.map_hash,
-      Equivalent_Keys => Strings.equivalent,
-      "="             => SU."=");
-
-
    type repo_ops_variant is (binary);
 
    type T_pkg_repo is
@@ -344,5 +419,14 @@ package Core.Pkg is
       end record;
 
    context : T_pkg_context;
+
+   function pkg_adddir_attr
+     (pkg_access : T_pkg_Access;
+      path   : Text;
+      uname  : Text;
+      gname  : Text;
+      perm   : mode_t;
+      fflags : T_dir_flags;
+      check_duplicates : Boolean) return Pkg_Error_Type;
 
 end Core.Pkg;

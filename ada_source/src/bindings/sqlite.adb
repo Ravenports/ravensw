@@ -132,6 +132,22 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  step_through_statement
+   --------------------------------------------------------------------
+   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access;
+                                    problem : out Boolean) return Boolean
+   is
+      use type IC.int;
+
+      result : IC.int;
+   begin
+      result := sqlite_h.sqlite3_step (stmt);
+      problem := (result /= sqlite_h.SQLITE_ROW and result /= sqlite_h.SQLITE_DONE);
+      return (result = sqlite_h.SQLITE_ROW);
+   end step_through_statement;
+
+
+   --------------------------------------------------------------------
    --  retrieve_integer
    --------------------------------------------------------------------
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
@@ -383,5 +399,22 @@ package body SQLite is
       name := sqlite_h.sqlite3_column_name (pStmt, IC.int (column_index));
       return ICS.Value (name);
    end get_column_name;
+
+
+   --------------------------------------------------------------------
+   --  bind_integer
+   --------------------------------------------------------------------
+   procedure bind_integer
+     (pStmt : sqlite_h.sqlite3_stmt_Access;
+      column_index : Natural;
+      value : sql_int64)
+   is
+      use type IC.int;
+
+      c_value : constant sqlite_h.sql64 := sqlite_h.sql64 (value);
+      res : IC.int;
+   begin
+      res := sqlite_h.sqlite3_bind_int64 (pStmt, IC.int (column_index), c_value);
+   end bind_integer;
 
 end SQLite;
