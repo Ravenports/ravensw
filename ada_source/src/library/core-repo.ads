@@ -6,10 +6,10 @@ with Core.Strings; use Core.Strings;
 
 package Core.Repo is
 
-   ACCESS_F_OK : constant Core.Repo.mode_t := 0;
-   ACCESS_X_OK : constant Core.Repo.mode_t := 1;
-   ACCESS_W_OK : constant Core.Repo.mode_t := 2;
-   ACCESS_R_OK : constant Core.Repo.mode_t := 4;
+   ACCESS_F_OK : constant mode_t := 0;
+   ACCESS_X_OK : constant mode_t := 1;
+   ACCESS_W_OK : constant mode_t := 2;
+   ACCESS_R_OK : constant mode_t := 4;
 
    type supported_ops is (init, create, update, close, open, raccess, ensure_loaded);
 

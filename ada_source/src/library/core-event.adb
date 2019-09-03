@@ -876,7 +876,7 @@ package body Core.Event is
             tmpl := MC4 (cat, "pkgname", S1, "pkgversion", S2, "force", S3, "required_by", S4);
             declare
                function force_arg (force : Boolean) return String;
-               procedure print_depends (position : depends_crate.Cursor);
+               procedure print_depends (position : rdepends_crate.Cursor);
 
                reqby : Text;
 
@@ -889,9 +889,9 @@ package body Core.Event is
                   end if;
                end force_arg;
 
-               procedure print_depends (position : depends_crate.Cursor)
+               procedure print_depends (position : rdepends_crate.Cursor)
                is
-                  dep : T_pkg_dep renames depends_crate.Element (position);
+                  dep : T_pkg_dep renames rdepends_crate.Element (position);
                begin
                   if not IsBlank (reqby) then
                      SU.Append (reqby, ", ");

@@ -223,8 +223,11 @@ package body Core.Iterators.Binary_sqlite is
       P.provides.Clear;
       P.requires.Clear;
       P.conflicts.Clear;
+      P.options.Clear;
       P.annotations.Clear;
       P.dirs.Clear;
+      P.files.Clear;
+      P.config_files.Clear;
 
       for x in pkg_script_type'Range loop
          P.scripts (x) := blank;
@@ -408,11 +411,16 @@ package body Core.Iterators.Binary_sqlite is
                when PKG_LOAD_CONFLICTS       => pkg_access.conflicts.Clear;
                when PKG_LOAD_ANNOTATIONS     => pkg_access.annotations.Clear;
                when PKG_LOAD_DEPS            => null;
-               when PKG_LOAD_RDEPS           => null;
+               when PKG_LOAD_DEP_FORMULA     => null;
+               when PKG_LOAD_RDEPS           => pkg_access.rdepends.Clear;
                when PKG_LOAD_DIRS            => pkg_access.dirs.Clear;
-               when PKG_LOAD_FILES           => null;
-               when PKG_LOAD_SCRIPTS         => null;
-               when PKG_LOAD_OPTIONS         => null;
+               when PKG_LOAD_OPTIONS         => pkg_access.options.Clear;
+               when PKG_LOAD_FILES           => pkg_access.files.Clear;
+               when PKG_LOAD_CONFIG_FILES    => pkg_access.config_files.Clear;
+               when PKG_LOAD_SCRIPTS         =>
+                  for x in pkg_script_type'Range loop
+                     pkg_access.scripts (x) := blank;
+                  end loop;
             end case;
             PkgDB.ERROR_SQLITE (db, "load_val (step)", sql);
             return EPKG_FATAL;
@@ -422,6 +430,7 @@ package body Core.Iterators.Binary_sqlite is
       SQLite.finalize_statement (stmt);
 
       pkg_access.flags := pkg_access.flags or load_on_flag (operation).flag;
+
       return EPKG_OK;
    end load_val;
 
@@ -606,6 +615,88 @@ package body Core.Iterators.Binary_sqlite is
       pkg_access.scripts (pkg_script_type'Val (type_index)) := script;
       return EPKG_OK;
    end add_scripts;
+
+
+   --------------------------------------------------------------------
+   --  add_rdeps
+   --------------------------------------------------------------------
+   function add_rdeps (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                       return Pkg_Error_Type
+   is
+      name    : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      origin  : Text := SUS (SQLite.retrieve_string (stmt, 1));
+      version : Text := SUS (SQLite.retrieve_string (stmt, 2));
+   begin
+      return pkg_addrdep (pkg_access => pkg_access,
+                          name       => name,
+                          origin     => origin,
+                          version    => version,
+                          locked     => False);
+   end add_rdeps;
+
+
+   --------------------------------------------------------------------
+   --  add_config_files
+   --------------------------------------------------------------------
+   function add_config_files (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                              return Pkg_Error_Type
+   is
+      path    : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      content : Text := SUS (SQLite.retrieve_string (stmt, 1));
+   begin
+      return pkg_addconfig_file (pkg_access, path, content);
+   end add_config_files;
+
+
+   --------------------------------------------------------------------
+   --  add_files
+   --------------------------------------------------------------------
+   function add_files (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                       return Pkg_Error_Type
+   is
+      path   : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      sha256 : Text := SUS (SQLite.retrieve_string (stmt, 1));
+   begin
+      return pkg_addfile_attr (pkg_access       => pkg_access,
+                               path             => path,
+                               uname            => blank,
+                               gname            => blank,
+                               perm             => 0,
+                               fflags           => 0,
+                               sum              => sha256,
+                               check_duplicates => False);
+   end add_files;
+
+
+   --------------------------------------------------------------------
+   --  add_options
+   --------------------------------------------------------------------
+   function add_options (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                         return Pkg_Error_Type
+   is
+      name  : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      value : Text := SUS (SQLite.retrieve_string (stmt, 1));
+   begin
+      return pkg_addoption (pkg_access, name, value);
+   end add_options;
+
+
+   --------------------------------------------------------------------
+   --  add_deps
+   --------------------------------------------------------------------
+   function add_deps (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                      return Pkg_Error_Type
+   is
+      name    : Text := SUS (SQLite.retrieve_string (stmt, 0));
+      origin  : Text := SUS (SQLite.retrieve_string (stmt, 1));
+      version : Text := SUS (SQLite.retrieve_string (stmt, 2));
+   begin
+      return pkg_adddep (pkg_access => pkg_access,
+                          name       => name,
+                          origin     => origin,
+                          version    => version,
+                          locked     => False);
+   end add_deps;
 
 
    --------------------------------------------------------------------
@@ -795,5 +886,173 @@ package body Core.Iterators.Binary_sqlite is
    begin
       return load_val (db, pkg_access, PKG_LOAD_SCRIPTS, sql);
    end pkgdb_load_scripts;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_rdeps
+   --------------------------------------------------------------------
+   function pkgdb_load_rdeps (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                              return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT p.name, p.origin, p.version" &
+        "  FROM packages AS p" &
+        "    INNER JOIN deps AS d ON (p.id = d.package_id)" &
+        "  WHERE d.name = ?1";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_RDEPS, sql);
+   end pkgdb_load_rdeps;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_shlib_reqd
+   --------------------------------------------------------------------
+   function pkgdb_load_shlib_reqd (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                   return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT name" &
+        "  FROM pkg_shlibs_required, shlibs AS s" &
+        "  WHERE package_id = ?1" &
+        "    AND shlib_id = s.id" &
+        "  ORDER by name DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_SHLIBS_REQUIRED, sql);
+   end pkgdb_load_shlib_reqd;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_shlib_prov
+   --------------------------------------------------------------------
+   function pkgdb_load_shlib_prov (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                   return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT name" &
+        "  FROM pkg_shlibs_provided, shlibs AS s" &
+        "  WHERE package_id = ?1" &
+        "    AND shlib_id = s.id" &
+        "  ORDER by name DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_SHLIBS_PROVIDED, sql);
+   end pkgdb_load_shlib_prov;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_files
+   --------------------------------------------------------------------
+   function pkgdb_load_files (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                              return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT path, sha256" &
+        "  FROM files" &
+        "  WHERE package_id = ?1" &
+        "  ORDER BY PATH ASC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_FILES, sql);
+   end pkgdb_load_files;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_config_file
+   --------------------------------------------------------------------
+   function pkgdb_load_config_file (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                    return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT path, content" &
+        "  FROM config_files" &
+        "  WHERE package_id = ?1" &
+        "  ORDER BY PATH ASC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_CONFIG_FILES, sql);
+   end pkgdb_load_config_file;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_options
+   --------------------------------------------------------------------
+   function pkgdb_load_options (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT option, value" &
+        "  FROM option" &
+        "    JOIN pkg_option USING(option_id)" &
+        "  WHERE package_id = ?1" &
+        "  ORDER BY option";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_OPTIONS, sql);
+   end pkgdb_load_options;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_deps
+   --------------------------------------------------------------------
+   function pkgdb_load_deps (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                             return Pkg_Error_Type
+   is
+      sql : constant String :=
+
+        "SELECT d.name, d.origin, d.version" &
+        "  FROM deps AS d" &
+        "    LEFT JOIN packages AS p ON" &
+        "    (p.origin = d.origin AND p.name = d.name)" &
+        "  WHERE d.package_id = ?1" &
+        "  ORDER BY d.origin DESC";
+
+   begin
+      return load_val (db, pkg_access, PKG_LOAD_DEPS, sql);
+   end pkgdb_load_deps;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_load_dep_formula
+   --------------------------------------------------------------------
+   function pkgdb_load_dep_formula (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                    return Pkg_Error_Type
+   is
+      options_sql : constant String :=
+
+        "SELECT option, value" &
+        "  FROM option" &
+        "    JOIN pkg_option USING(option_id)" &
+        "  WHERE package_id = ?1" &
+        "  ORDER BY option";
+
+      formula_preamble : constant String :=
+
+        "SELECT id,name,origin,version,locked FROM packages WHERE ";
+
+      --  stmt : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      if (pkg_access.flags and load_on_flag (PKG_LOAD_DEP_FORMULA).flag) > 0 then
+         return EPKG_OK;
+      end if;
+
+      if IsBlank (pkg_access.dep_formula) then
+         pkg_access.flags := pkg_access.flags or load_on_flag (PKG_LOAD_DEP_FORMULA).flag;
+         return EPKG_OK;
+      end if;
+
+      Event.pkg_debug
+        (4, "Pkgdb: reading package formula '" & USS (pkg_access.dep_formula) & "'");
+
+      --  TODO: pkg_deps_parse_formula
+      return EPKG_FATAL;
+   end pkgdb_load_dep_formula;
 
 end Core.Iterators.Binary_sqlite;

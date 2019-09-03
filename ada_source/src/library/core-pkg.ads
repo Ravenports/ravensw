@@ -83,7 +83,7 @@ package Core.Pkg is
          locked       : Boolean;
       end record;
 
-   package depends_crate is new CON.Vectors
+   package rdepends_crate is new CON.Vectors
      (Element_Type => T_pkg_dep,
       Index_Type   => Natural);
 
@@ -93,7 +93,7 @@ package Core.Pkg is
       "="          => SU."=");
    package sorter is new text_crate.Generic_Sorting ("<" => SU."<");
 
-   type Load_Flags is mod 2 ** 15;
+   type Load_Flags is mod 2 ** 17;
 
    type pkg_conflict_type is
      (PKG_CONFLICT_ALL,
@@ -107,6 +107,12 @@ package Core.Pkg is
          digest  : Text;
          contype : pkg_conflict_type;
       end record;
+
+   package depends_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => T_pkg_dep,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent);
 
    package conflicts_crate is new CON.Hashed_Maps
      (Key_Type        => Text,
@@ -147,6 +153,46 @@ package Core.Pkg is
    package directory_crate is new CON.Hashed_Maps
      (Key_Type        => Text,
       Element_Type    => T_pkg_dir,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
+   type T_pkg_file is
+      record
+         path    : Text;
+         uname   : Text;
+         gname   : Text;
+         perm    : mode_t;
+         gid     : gid_t;
+         uid     : uid_t;
+         fflags  : T_dir_flags;
+         stamp   : timespec;
+
+         size    : T_pkg_size;
+         sum     : Text;
+         tmppath : Text;
+         confile : Text;  --  path to configure file, index to map
+      end record;
+
+   package file_crate is new CON.Vectors
+     (Element_Type => T_pkg_file,
+      Index_Type   => Natural);
+
+   type merge_status is
+     (MERGE_NOTNEEDED,
+      MERGE_FAILED,
+      MERGE_SUCCESS);
+
+   type T_pkg_config_file is
+      record
+         path       : Text;
+         content    : Text;
+         newcontent : Text;
+         status     : merge_status;
+      end record;
+
+   package config_file_crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => T_pkg_config_file,
       Hash            => Strings.map_hash,
       Equivalent_Keys => Strings.equivalent);
 
@@ -197,8 +243,8 @@ package Core.Pkg is
          old_flatsize : T_pkg_size;
          timestamp    : T_pkg_timestamp;
          flags        : Load_Flags;
-         depends      : depends_crate.Vector;
-         rdepends     : depends_crate.Vector;
+         depends      : depends_crate.Map;
+         rdepends     : rdepends_crate.Vector;
          categories   : text_crate.Vector;
          licenses     : text_crate.Vector;
          users        : text_crate.Vector;
@@ -208,30 +254,16 @@ package Core.Pkg is
          provides     : text_crate.Vector;
          requires     : text_crate.Vector;
          conflicts    : conflicts_crate.Map;
+         options      : nvpair_crate.Map;
          annotations  : nvpair_crate.Map;
          scripts      : pkg_script_set;
          dirs         : directory_crate.Map;
+         files        : file_crate.Vector;
+         config_files : config_file_crate.Map;
          --  ...
          rootpath     : Text;
       end record;
    type T_pkg_Access is access all T_pkg;
-
-
-   type T_pkg_file is
-      record
-         path         : Text;
-         size         : T_pkg_size;
-         sum          : Text;
-         uname        : Text;
-         gname        : Text;
-         --  perm
-         --  uid
-         --  gid
-         temppath     : Text;
-         --  fflags
-         --  config
-         --  next, prev
-      end record;
 
    package pkg_event_conflict_crate is new CON.Vectors
      (Element_Type => Text,
@@ -428,5 +460,39 @@ package Core.Pkg is
       perm   : mode_t;
       fflags : T_dir_flags;
       check_duplicates : Boolean) return Pkg_Error_Type;
+
+   function pkg_addrdep
+     (pkg_access : T_pkg_Access;
+      name       : Text;
+      origin     : Text;
+      version    : Text;
+      locked     : Boolean) return Pkg_Error_Type;
+
+   function pkg_addfile_attr
+     (pkg_access : T_pkg_Access;
+      path   : Text;
+      uname  : Text;
+      gname  : Text;
+      perm   : mode_t;
+      fflags : T_dir_flags;
+      sum    : Text;
+      check_duplicates : Boolean) return Pkg_Error_Type;
+
+   function pkg_addconfig_file
+     (pkg_access : T_pkg_Access;
+      path       : Text;
+      content    : Text) return Pkg_Error_Type;
+
+   function pkg_addoption
+     (pkg_access : T_pkg_Access;
+      key        : Text;
+      value      : Text) return Pkg_Error_Type;
+
+   function pkg_adddep
+     (pkg_access : T_pkg_Access;
+      name       : Text;
+      origin     : Text;
+      version    : Text;
+      locked     : Boolean) return Pkg_Error_Type;
 
 end Core.Pkg;

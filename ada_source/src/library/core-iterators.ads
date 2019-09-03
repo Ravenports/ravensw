@@ -25,6 +25,8 @@ package Core.Iterators is
    PKG_LOAD_FLAG_CONFLICTS        : constant Load_Flags := 2 ** 13;
    PKG_LOAD_FLAG_PROVIDES         : constant Load_Flags := 2 ** 14;
    PKG_LOAD_FLAG_REQUIRES         : constant Load_Flags := 2 ** 15;
+   PKG_LOAD_FLAG_CONFIG_FILES     : constant Load_Flags := 2 ** 16;
+   PKG_LOAD_FLAG_DEP_FORMULA      : constant Load_Flags := 2 ** 17;
 
    type Iterator_Flags is mod 2 ** 2;
 

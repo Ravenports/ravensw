@@ -68,6 +68,7 @@ private
      (PKG_LOAD_DEPS,
       PKG_LOAD_RDEPS,
       PKG_LOAD_FILES,
+      PKG_LOAD_CONFIG_FILES,
       PKG_LOAD_DIRS,
       PKG_LOAD_SCRIPTS,
       PKG_LOAD_OPTIONS,
@@ -80,7 +81,8 @@ private
       PKG_LOAD_ANNOTATIONS,
       PKG_LOAD_CONFLICTS,
       PKG_LOAD_PROVIDES,
-      PKG_LOAD_REQUIRES);
+      PKG_LOAD_REQUIRES,
+      PKG_LOAD_DEP_FORMULA);
 
    function get_attribute (column_name : String) return pkg_attr;
 
@@ -107,7 +109,6 @@ private
                                 return Pkg_Error_Type;
    function pkgdb_load_options (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
                                 return Pkg_Error_Type;
-
    function pkgdb_load_categories (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
                                  return Pkg_Error_Type;
    function pkgdb_load_licenses (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
@@ -128,6 +129,10 @@ private
                                  return Pkg_Error_Type;
    function pkgdb_load_requires (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
                                  return Pkg_Error_Type;
+   function pkgdb_load_config_file (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                    return Pkg_Error_Type;
+   function pkgdb_load_dep_formula (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access)
+                                    return Pkg_Error_Type;
 
    type load_on_flag_record is
       record
@@ -137,8 +142,10 @@ private
 
    load_on_flag : constant array (PKG_LOAD_OPS'Range) of load_on_flag_record :=
      (PKG_LOAD_DEPS            => (PKG_LOAD_FLAG_DEPS, pkgdb_load_deps'Access),
+      PKG_LOAD_DEP_FORMULA     => (PKG_LOAD_FLAG_DEP_FORMULA, pkgdb_load_dep_formula'Access),
       PKG_LOAD_RDEPS           => (PKG_LOAD_FLAG_RDEPS, pkgdb_load_rdeps'Access),
       PKG_LOAD_FILES           => (PKG_LOAD_FLAG_FILES, pkgdb_load_files'Access),
+      PKG_LOAD_CONFIG_FILES    => (PKG_LOAD_FLAG_CONFIG_FILES, pkgdb_load_config_file'Access),
       PKG_LOAD_DIRS            => (PKG_LOAD_FLAG_DIRS, pkgdb_load_dirs'Access),
       PKG_LOAD_SCRIPTS         => (PKG_LOAD_FLAG_SCRIPTS, pkgdb_load_scripts'Access),
       PKG_LOAD_OPTIONS         => (PKG_LOAD_FLAG_OPTIONS, pkgdb_load_options'Access),
@@ -177,15 +184,27 @@ private
    function add_directory (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
                            return Pkg_Error_Type;
    function add_scripts (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
-                           return Pkg_Error_Type;
+                         return Pkg_Error_Type;
+   function add_rdeps (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                       return Pkg_Error_Type;
+   function add_files (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                       return Pkg_Error_Type;
+   function add_config_files (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                              return Pkg_Error_Type;
+   function add_options (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                         return Pkg_Error_Type;
+   function add_deps (stmt : sqlite_h.sqlite3_stmt_Access; pkg_access : T_pkg_Access)
+                      return Pkg_Error_Type;
 
    load_val_operation : constant array (PKG_LOAD_OPS'Range) of val_load_callback :=
-     (PKG_LOAD_DEPS            => null,
-      PKG_LOAD_RDEPS           => null,
-      PKG_LOAD_FILES           => null,
+     (PKG_LOAD_DEPS            => add_deps'Access,
+      PKG_LOAD_DEP_FORMULA     => null,
+      PKG_LOAD_RDEPS           => add_rdeps'Access,
+      PKG_LOAD_FILES           => add_files'Access,
+      PKG_LOAD_CONFIG_FILES    => add_config_files'Access,
       PKG_LOAD_DIRS            => add_directory'Access,
       PKG_LOAD_SCRIPTS         => add_scripts'Access,
-      PKG_LOAD_OPTIONS         => null,
+      PKG_LOAD_OPTIONS         => add_options'Access,
       PKG_LOAD_CATEGORIES      => add_category'Access,
       PKG_LOAD_LICENSES        => add_license'Access,
       PKG_LOAD_USERS           => add_user'Access,
