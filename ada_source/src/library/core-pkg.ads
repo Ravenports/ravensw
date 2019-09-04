@@ -93,7 +93,7 @@ package Core.Pkg is
       "="          => SU."=");
    package sorter is new text_crate.Generic_Sorting ("<" => SU."<");
 
-   type Load_Flags is mod 2 ** 17;
+   type Load_Flags is mod 2 ** 18;
 
    type pkg_conflict_type is
      (PKG_CONFLICT_ALL,
