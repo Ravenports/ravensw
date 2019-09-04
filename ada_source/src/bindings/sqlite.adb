@@ -175,6 +175,21 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  retrieve_boolean
+   --------------------------------------------------------------------
+   function retrieve_boolean (stmt : sqlite_h.sqlite3_stmt_Access;
+                              column : Natural) return Boolean
+   is
+      use type sqlite_h.sql64;
+
+      result : sqlite_h.sql64;
+   begin
+      result := sqlite_h.sqlite3_column_int64 (stmt, IC.int (column));
+      return (result /= 0);
+   end retrieve_boolean;
+
+
+   --------------------------------------------------------------------
    --  finalize_statement
    --------------------------------------------------------------------
    procedure finalize_statement (stmt : sqlite_h.sqlite3_stmt_Access)

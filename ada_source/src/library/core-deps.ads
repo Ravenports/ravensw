@@ -69,4 +69,11 @@ package Core.Deps is
 
    function pkg_deps_parse_formula (instr : String) return formula_crate.Vector;
 
+   function pkg_deps_formula_tosql (FI   : pkg_dep_formula_item;
+                                    last : Boolean) return String;
+
+private
+
+   function pkg_deps_op_tostring (op : pkg_dep_version_op) return String;
+
 end Core.Deps;

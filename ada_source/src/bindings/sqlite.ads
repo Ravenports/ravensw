@@ -51,6 +51,10 @@ package SQLite is
    function retrieve_string (stmt : sqlite_h.sqlite3_stmt_Access;
                              column : Natural) return String;
 
+   --  After stepping, return boolean from given column
+   function retrieve_boolean (stmt : sqlite_h.sqlite3_stmt_Access;
+                             column : Natural) return Boolean;
+
    --  Close statement after use, don't return result
    procedure finalize_statement (stmt : sqlite_h.sqlite3_stmt_Access);
 

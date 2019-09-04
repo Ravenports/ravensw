@@ -5,6 +5,7 @@ with Core.PkgDB;
 with Core.Strings;
 with Core.Event;
 with Core.Checksum;
+with Core.Deps;
 with SQLite;
 
 use Core.Strings;
@@ -1035,9 +1036,8 @@ package body Core.Iterators.Binary_sqlite is
 
       formula_preamble : constant String :=
 
-        "SELECT id,name,origin,version,locked FROM packages WHERE ";
+        "SELECT id, name, origin, version, locked FROM packages WHERE ";
 
-      --  stmt : aliased sqlite_h.sqlite3_stmt_Access;
    begin
       if (pkg_access.flags and load_on_flag (PKG_LOAD_DEP_FORMULA).flag) > 0 then
          return EPKG_OK;
@@ -1051,8 +1051,126 @@ package body Core.Iterators.Binary_sqlite is
       Event.pkg_debug
         (4, "Pkgdb: reading package formula '" & USS (pkg_access.dep_formula) & "'");
 
-      --  TODO: pkg_deps_parse_formula
-      return EPKG_FATAL;
+      declare
+         procedure scan_formula (position : Deps.formula_crate.Cursor);
+         procedure scan_item    (item_pos : Deps.pkg_dep_formula.Cursor);
+
+         formula : Deps.formula_crate.Vector :=
+           Deps.pkg_deps_parse_formula (USS (pkg_access.dep_formula));
+
+         abort_scan        : Boolean := False;
+         last_formula_item : Deps.pkg_dep_formula.Cursor;
+
+         procedure scan_formula (position : Deps.formula_crate.Cursor)
+         is
+            one_formula : Deps.pkg_formula renames Deps.formula_crate.Element (position);
+         begin
+            if not abort_scan then
+               last_formula_item := one_formula.items.Last;
+               one_formula.items.Iterate (scan_item'Access);
+            end if;
+         end scan_formula;
+
+         procedure scan_item (item_pos : Deps.pkg_dep_formula.Cursor)
+         is
+            use type Deps.pkg_dep_formula.Cursor;
+
+            last_one : Boolean := (last_formula_item = item_pos);
+            item     : Deps.pkg_dep_formula_item renames Deps.pkg_dep_formula.Element (item_pos);
+            clause   : String := Deps.pkg_deps_formula_tosql (item, last_one);
+            stmt     : aliased sqlite_h.sqlite3_stmt_Access;
+            formula_sql : String := formula_preamble & clause;
+         begin
+            if abort_scan then
+               return;
+            end if;
+
+            if clause'Length > 0 then
+               Event.pkg_debug (4, "Pkgdb: running '" & formula_sql & "'");
+               if not SQLite.prepare_sql (db, formula_sql, stmt'Access) then
+                  PkgDB.ERROR_SQLITE (db, "pkgdb_load_dep_formula", formula_sql);
+                  abort_scan := True;
+               end if;
+
+               --  Fetch matching packages
+               declare
+                  options_match : Boolean := True;
+               begin
+                  loop
+                     exit when not SQLite.step_through_statement (stmt);
+                     --  Load options for a package and check  if they are compatible
+                     if not item.options.Is_Empty then
+                        declare
+                           procedure scan_opt (option_pos : Deps.pkg_dep_option_item_crate.Cursor);
+
+                           opt_stmt : aliased sqlite_h.sqlite3_stmt_Access;
+
+                           procedure scan_opt (option_pos : Deps.pkg_dep_option_item_crate.Cursor)
+                           is
+                              option : Deps.pkg_dep_option_item renames
+                                Deps.pkg_dep_option_item_crate.Element (option_pos);
+                              optname : String := SQLite.retrieve_string (opt_stmt, 0);
+                              optval  : String := SQLite.retrieve_string (opt_stmt, 1);
+                           begin
+                              if options_match then
+                                 if equivalent (option.option, optname) then
+                                    if (option.active and then optval /= "on") or else
+                                      (not option.active and then optval /= "off")
+                                    then
+                                       Event.pkg_debug (4, "incompatible option for " & optname &
+                                                          ":" & optval);
+                                       options_match := False;
+                                    end if;
+                                 end if;
+                              end if;
+                           end scan_opt;
+
+                        begin
+                           Event.pkg_debug (4, "Pkgdb: running '" & options_sql & "'");
+                           if not SQLite.prepare_sql (db, options_sql, opt_stmt'Access) then
+                              PkgDB.ERROR_SQLITE (db, "pkgdb_load_dep_formula", options_sql);
+                              abort_scan := True;
+                              exit;
+                           end if;
+
+                           SQLite.bind_integer (opt_stmt, 1, SQLite.sql_int64 (0));
+                           loop
+                              exit when not SQLite.step_through_statement (opt_stmt);
+                              item.options.Iterate (scan_opt'Access);
+                           end loop;
+                        end;
+                     end if;
+
+                     if options_match then
+                        declare
+                           chain_result  : Pkg_Error_Type;
+                           name    : Text := SUS (SQLite.retrieve_string (stmt, 1));
+                           origin  : Text := SUS (SQLite.retrieve_string (stmt, 2));
+                           version : Text := SUS (SQLite.retrieve_string (stmt, 3));
+                           locked  : Boolean := SQLite.retrieve_boolean (stmt, 4);
+                        begin
+                           chain_result := pkg_adddep (pkg_access => pkg_access,
+                                                       name       => name,
+                                                       origin     => origin,
+                                                       version    => version,
+                                                       locked     => locked);
+                        end;
+                     end if;
+                  end loop;
+                  SQLite.finalize_statement (stmt);
+               end;
+            end if;
+         end scan_item;
+
+      begin
+         formula.Iterate (scan_formula'Access);
+         if abort_scan then
+            return EPKG_FATAL;
+         end if;
+      end;
+
+      pkg_access.flags := pkg_access.flags or load_on_flag (PKG_LOAD_DEP_FORMULA).flag;
+      return EPKG_OK;
    end pkgdb_load_dep_formula;
 
 end Core.Iterators.Binary_sqlite;

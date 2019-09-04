@@ -186,11 +186,15 @@ package body Core.Deps is
 
             when others =>
                if P - C = 2 then
-                  test_op := pkg_deps_string_toop (instr (C .. C + 1));
-                  if test_op = VERSION_ANY then
+                  if C + 1 > instr'Last then
                      state := st_error;
                   else
-                     cur_op := test_op;
+                     test_op := pkg_deps_string_toop (instr (C .. C + 1));
+                     if test_op = VERSION_ANY then
+                        state := st_error;
+                     else
+                        cur_op := test_op;
+                     end if;
                   end if;
                elsif P - C = 1 then
                   test_op := pkg_deps_string_toop (instr (C .. C));
@@ -428,5 +432,48 @@ package body Core.Deps is
 
       return formula;
    end pkg_deps_parse_formula;
+
+
+   --------------------------------------------------------------------
+   --  pkg_deps_formula_tosql
+   --------------------------------------------------------------------
+   function pkg_deps_formula_tosql (FI   : pkg_dep_formula_item;
+                                    last : Boolean) return String
+   is
+      procedure scan_version (position : pkg_dep_version_item_crate.Cursor);
+
+      result : Text := SUS ("(name='" & USS (FI.name) & "'");
+
+      procedure scan_version (position : pkg_dep_version_item_crate.Cursor)
+      is
+         rec : pkg_dep_version_item renames pkg_dep_version_item_crate.Element (position);
+      begin
+         SU.Append (result, " AND vercmp('" & pkg_deps_op_tostring (rec.op) & "',version,'" &
+                      USS (rec.version) & "')");
+      end scan_version;
+   begin
+      FI.versions.Iterate (scan_version'Access);
+      if last then
+         SU.Append (result, " OR ");
+      end if;
+      return USS (result);
+   end pkg_deps_formula_tosql;
+
+
+   --------------------------------------------------------------------
+   --  pkg_deps_formula_tosql
+   --------------------------------------------------------------------
+   function pkg_deps_op_tostring (op : pkg_dep_version_op) return String is
+   begin
+      case op is
+         when VERSION_ANY => return "?";
+         when VERSION_EQ  => return "=";
+         when VERSION_LT  => return "<";
+         when VERSION_GT  => return ">";
+         when VERSION_LE  => return "<=";
+         when VERSION_GE  => return ">=";
+         when VERSION_NOT => return "!=";
+      end case;
+   end pkg_deps_op_tostring;
 
 end Core.Deps;
