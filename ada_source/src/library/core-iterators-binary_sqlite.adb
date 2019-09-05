@@ -143,7 +143,8 @@ package body Core.Iterators.Binary_sqlite is
    function get_attribute (column_name : String) return pkg_attr
    is
       num_aliases : constant := 1;  -- id/rowid
-      total_keywords : constant Positive := pkg_attr'Pos (pkg_attr'Last) + 1 + num_aliases;
+      num_attr    : constant := pkg_attr'Pos (pkg_attr'Last) + 1;
+      total_keywords : constant Positive := num_attr + num_aliases;
 
       subtype keyword_string is String (1 .. 14);
 
@@ -157,6 +158,8 @@ package body Core.Iterators.Binary_sqlite is
       all_keywords : constant array (1 .. total_keywords) of keyword_pair :=
         (
          ("NOTFOUND      ", NOTFOUND),
+         ("abi           ", PKG_ABI),
+         ("annotations   ", PKG_ANNOTATIONS),
          ("arch          ", PKG_ARCH),
          ("automatic     ", PKG_AUTOMATIC),
          ("cksum         ", PKG_CKSUM),
@@ -171,12 +174,16 @@ package body Core.Iterators.Binary_sqlite is
          ("maintainer    ", PKG_MAINTAINER),
          ("manifestdigest", PKG_DIGEST),
          ("message       ", PKG_MESSAGE),
+         ("mtree         ", PKG_MTREE),
          ("name          ", PKG_NAME),
+         ("numfields     ", PKG_NUM_FIELDS),
+         ("olddigest     ", PKG_OLD_DIGEST),
          ("oldflatsize   ", PKG_OLD_FLATSIZE),
          ("oldversion    ", PKG_OLD_VERSION),
          ("origin        ", PKG_ORIGIN),
          ("pkgsize       ", PKG_PKGSIZE),
          ("prefix        ", PKG_PREFIX),
+         ("reason        ", PKG_REASON),
          ("repopath      ", PKG_REPOPATH),
          ("repourl       ", PKG_REPOURL),
          ("rowid         ", PKG_ROWID),
@@ -230,7 +237,7 @@ package body Core.Iterators.Binary_sqlite is
       function get_message (col_index : Natural) return T_message;
       function get_liclogic (col_index : Natural) return T_licenselogic;
 
-      P : T_pkg renames pkg_access.all;
+      P : T_pkg_Access renames pkg_access;
 
       function get_text (col_index : Natural) return Text is
       begin

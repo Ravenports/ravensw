@@ -65,6 +65,8 @@ package Core.PkgDB is
 
    procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
 
+   function  pkgdb_is_case_sensitive return Boolean;
+
 private
 
    case_sensitivity_setting : Boolean := False;
@@ -122,8 +124,6 @@ private
    function prstmt_text_argtypes (index : sql_prstmt_index) return String;
 
    sql_prepared_statements : array (sql_prstmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
-
-   function  pkgdb_is_case_sensitive return Boolean;
 
    --  regex object must be global to assign access to it.
    re : aliased regex_h.regex_t;

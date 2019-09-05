@@ -299,4 +299,27 @@ package body Core.Unix is
       return success (result);
    end relative_file_writable;
 
+
+   --------------------------------------------------------------------
+   --  get_current_working_directory
+   --------------------------------------------------------------------
+   function get_current_working_directory return String
+   is
+      use type IC.Strings.chars_ptr;
+
+      ptr_to_dest : IC.Strings.chars_ptr;
+   begin
+      ptr_to_dest := C_getcwd (IC.Strings.Null_Ptr, IC.size_t (0));  -- will resize to MAXPATHLEN
+      if ptr_to_dest = IC.Strings.Null_Ptr then
+         return "";
+      end if;
+
+      declare
+         result : String := IC.Strings.Value (ptr_to_dest);
+      begin
+         IC.Strings.Free (ptr_to_dest);
+         return result;
+      end;
+   end get_current_working_directory;
+
 end Core.Unix;

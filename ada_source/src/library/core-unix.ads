@@ -114,6 +114,8 @@ package Core.Unix is
      (dfd  : File_Descriptor;
       path : String) return Boolean;
 
+   function get_current_working_directory return String;
+
 private
 
    last_errno : Integer;
@@ -178,5 +180,10 @@ private
      (dfd  : IC.int;
       path : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_faccessat_writable, "port_faccessat_writable");
+
+   function C_getcwd
+     (buf  : IC.Strings.chars_ptr;
+      size : IC.size_t) return IC.Strings.chars_ptr;
+   pragma Import (C, C_getcwd, "getcwd");
 
 end Core.Unix;
