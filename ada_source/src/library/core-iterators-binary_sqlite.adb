@@ -13,12 +13,53 @@ use Core.Strings;
 package body Core.Iterators.Binary_sqlite is
 
    --------------------------------------------------------------------
+   --  create
+   --------------------------------------------------------------------
+   function create
+     (db           : sqlite_h.sqlite3_Access;
+      stmt         : sqlite_h.sqlite3_stmt_Access;
+      package_type : pkg_type;
+      flags        : Iterator_Flags) return Iterator_Binary_Sqlite
+   is
+      product : Iterator_Binary_Sqlite;
+   begin
+      product.db := db;
+      product.stmt := stmt;
+      product.flags := flags;
+      product.package_type := package_type;
+      product.valid := True;
+
+      return product;
+   end create;
+
+
+   --------------------------------------------------------------------
+   --  create_invalid_iterator
+   --------------------------------------------------------------------
+   overriding
+   function create_invalid_iterator return Iterator_Binary_Sqlite
+   is
+      product : Iterator_Binary_Sqlite;
+   begin
+      product.db := null;
+      product.stmt := null;
+      product.flags := 0;
+      product.package_type := PKG_REMOTE;
+      product.valid := False;
+
+      return product;
+   end create_invalid_iterator;
+
+
+   --------------------------------------------------------------------
    --  Free
    --------------------------------------------------------------------
    overriding
    procedure Free (this : in out Iterator_Binary_Sqlite) is
    begin
-      SQLite.finalize_statement (this.stmt);
+      if this.valid then
+         SQLite.finalize_statement (this.stmt);
+      end if;
    end Free;
 
 
@@ -29,8 +70,10 @@ package body Core.Iterators.Binary_sqlite is
    procedure Reset (this : in out Iterator_Binary_Sqlite) is
    begin
       this.counter := 0;
-      if not SQLite.reset_statement (this.stmt) then
-         null;
+      if this.valid then
+         if not SQLite.reset_statement (this.stmt) then
+            null;
+         end if;
       end if;
    end Reset;
 
@@ -39,13 +82,17 @@ package body Core.Iterators.Binary_sqlite is
    --  Next
    --------------------------------------------------------------------
    overriding
-   function Next (this : in out Iterator_Binary_Sqlite;
-                  pkg_ptr : access T_pkg_Access;
-                  flags : Load_Flags) return Pkg_Error_Type
+   function Next (this    : in out Iterator_Binary_Sqlite;
+                  pkg_ptr : in out T_pkg_Access;
+                  flags   : Load_Flags) return Pkg_Error_Type
    is
-      P   : T_pkg renames pkg_ptr.all.all;
+      P   : T_pkg renames pkg_ptr.all;
       ret : Pkg_Error_Type;
    begin
+      if not this.valid then
+         return EPKG_FATAL;
+      end if;
+
       if this.counter > 0 and then
         (this.flags and PKGDB_IT_FLAG_ONCE) > 0
       then
@@ -54,7 +101,7 @@ package body Core.Iterators.Binary_sqlite is
 
       case sqlite_h.sqlite3_step (this.stmt) is
          when sqlite_h.SQLITE_ROW =>
-            populate_pkg (this.stmt, pkg_ptr.all);
+            populate_pkg (this.stmt, pkg_ptr);
             if not IsBlank (P.digest) then
                if not Checksum.pkg_checksum_is_valid (P.digest) then
                   P.digest := blank;
@@ -62,7 +109,7 @@ package body Core.Iterators.Binary_sqlite is
             end if;
             for load_op in PKG_LOAD_OPS'Range loop
                if (flags and load_on_flag (load_op).flag) > 0 then
-                  ret := load_on_flag (load_op).load (this.db, pkg_ptr.all);
+                  ret := load_on_flag (load_op).load (this.db, pkg_ptr);
                   if ret /= EPKG_OK then
                      return ret;
                   end if;
@@ -170,78 +217,10 @@ package body Core.Iterators.Binary_sqlite is
 
 
    --------------------------------------------------------------------
-   --  clear_pkg_data
-   --------------------------------------------------------------------
-   procedure clear_pkg_data (pkg_access : T_pkg_Access)
-   is
-      P : T_pkg renames pkg_access.all;
-   begin
-      P.id        := T_pkg_id'First;
-      P.direct    := False;
-      P.locked    := False;
-      P.automatic := False;
-      P.vital     := False;
-
-      P.name        := blank;
-      P.origin      := blank;
-      P.version     := blank;
-      P.old_version := blank;
-      P.maintainer  := blank;
-      P.www         := blank;
-      P.arch        := blank;
-      P.abi         := blank;
-      P.uid         := blank;
-      P.digest      := blank;
-      P.old_digest  := blank;
-      P.prefix      := blank;
-      P.comment     := blank;
-      P.desc        := blank;
-      P.sum         := blank;
-      P.repopath    := blank;
-      P.reponame    := blank;
-      P.repourl     := blank;
-      P.reason      := blank;
-      P.dep_formula := blank;
-      P.rootpath    := blank;
-
-      P.flags       := 0;
-
-      P.pkgsize      := T_pkg_size'First;
-      P.flatsize     := T_pkg_size'First;
-      P.old_flatsize := T_pkg_size'First;
-      P.timestamp    := T_pkg_timestamp'First;
-      P.licenselogic := T_licenselogic'First;
-
-      P.depends.Clear;
-      P.rdepends.Clear;
-      P.messages.Clear;
-      P.categories.Clear;
-      P.licenses.Clear;
-      P.users.Clear;
-      P.groups.Clear;
-      P.shlibs_reqd.Clear;
-      P.shlibs_prov.Clear;
-      P.provides.Clear;
-      P.requires.Clear;
-      P.conflicts.Clear;
-      P.options.Clear;
-      P.annotations.Clear;
-      P.dirs.Clear;
-      P.files.Clear;
-      P.config_files.Clear;
-
-      for x in pkg_script_type'Range loop
-         P.scripts (x) := blank;
-      end loop;
-
-   end clear_pkg_data;
-
-
-   --------------------------------------------------------------------
    --  populate_pkg
    --------------------------------------------------------------------
    procedure populate_pkg (stmt : sqlite_h.sqlite3_stmt_Access;
-                           pkg_access : T_pkg_Access)
+                           pkg_access : out T_pkg_Access)
    is
       function get_text (col_index : Natural) return Text;
       function get_boolean (col_index : Natural) return Boolean;
@@ -309,7 +288,7 @@ package body Core.Iterators.Binary_sqlite is
       end get_liclogic;
 
    begin
-      clear_pkg_data (pkg_access);
+      pkg_access := new T_pkg;
       for icol in 0 .. SQLite.get_number_of_columns (stmt) - 1 loop
          declare
             colname  : constant String := SQLite.get_column_name (stmt, icol);

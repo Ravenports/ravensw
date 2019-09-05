@@ -114,4 +114,9 @@ package SQLite is
       column_index : Natural;
       value : sql_int64);
 
+   procedure bind_string
+     (pStmt : sqlite_h.sqlite3_stmt_Access;
+      column_index : Natural;
+      value : String);
+
 end SQLite;

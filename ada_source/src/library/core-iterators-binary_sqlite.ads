@@ -14,18 +14,28 @@ package Core.Iterators.Binary_sqlite is
    procedure Reset (this : in out Iterator_Binary_Sqlite);
 
    overriding
-   function Next (this : in out Iterator_Binary_Sqlite;
-                  pkg_ptr : access T_pkg_Access;
-                  flags : Load_Flags) return Pkg_Error_Type;
+   function Next (this    : in out Iterator_Binary_Sqlite;
+                  pkg_ptr : in out T_pkg_Access;
+                  flags   : Load_Flags) return Pkg_Error_Type;
+
+   overriding
+   function create_invalid_iterator return Iterator_Binary_Sqlite;
+
+   function create
+     (db           : sqlite_h.sqlite3_Access;
+      stmt         : sqlite_h.sqlite3_stmt_Access;
+      package_type : pkg_type;
+      flags        : Iterator_Flags) return Iterator_Binary_Sqlite;
+
 private
 
    type Iterator_Binary_Sqlite is new Base_Iterators with
       record
-         db            : sqlite_h.sqlite3_Access;
-         stmt          : sqlite_h.sqlite3_stmt_Access;
-         counter       : Natural;
-         package_type  : pkg_type;
-         flags         : Iterator_Flags;
+         db           : sqlite_h.sqlite3_Access;
+         stmt         : sqlite_h.sqlite3_stmt_Access;
+         counter      : Natural;
+         package_type : pkg_type;
+         flags        : Iterator_Flags;
       end record;
 
    type pkg_attr is
@@ -87,9 +97,7 @@ private
    function get_attribute (column_name : String) return pkg_attr;
 
    procedure populate_pkg (stmt : sqlite_h.sqlite3_stmt_Access;
-                           pkg_access : T_pkg_Access);
-
-   procedure clear_pkg_data (pkg_access : T_pkg_Access);
+                           pkg_access : out T_pkg_Access);
 
    type pkg_load_callback is access function
      (db : sqlite_h.sqlite3_Access; pkg_access : T_pkg_Access) return Pkg_Error_Type;

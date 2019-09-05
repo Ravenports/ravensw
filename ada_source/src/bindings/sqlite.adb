@@ -424,12 +424,31 @@ package body SQLite is
       column_index : Natural;
       value : sql_int64)
    is
-      use type IC.int;
-
       c_value : constant sqlite_h.sql64 := sqlite_h.sql64 (value);
       res : IC.int;
    begin
       res := sqlite_h.sqlite3_bind_int64 (pStmt, IC.int (column_index), c_value);
    end bind_integer;
+
+
+   --------------------------------------------------------------------
+   --  bind_string
+   --------------------------------------------------------------------
+   procedure bind_string
+     (pStmt : sqlite_h.sqlite3_stmt_Access;
+      column_index : Natural;
+      value : String)
+   is
+      txt : ICS.chars_ptr;
+      res : IC.int;
+   begin
+      txt := ICS.New_String (value);
+      res := sqlite_h.sqlite3_bind_text (Handle     => pStmt,
+                                         Index      => IC.int (column_index),
+                                         Text       => txt,
+                                         nBytes     => IC.int (-1),
+                                         destructor => sqlite_h.SQLITE_TRANSIENT);
+      ICS.Free (txt);
+   end bind_string;
 
 end SQLite;

@@ -2,6 +2,10 @@
 --  Reference: ../License.txt
 
 with sqlite_h;
+with Core.PkgDB;
+with Core.Iterators.Binary_sqlite;
+
+use Core.Iterators;
 
 package Core.Repo.Binary is
 
@@ -117,5 +121,12 @@ private
       reponame : String;
       current_version : Integer;
       upgrade : Boolean) return Pkg_Error_Type;
+
+   function pkg_repo_binary_query
+     (db       : sqlite_h.sqlite3_Access;
+      reponame : String;
+      pattern  : String;
+      match    : PkgDB.T_match;
+      flags    : Iterator_Flags) return Binary_sqlite.Iterator_Binary_Sqlite;
 
 end Core.Repo.Binary;

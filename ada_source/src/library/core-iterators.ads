@@ -5,7 +5,7 @@ with Core.Pkg; use Core.Pkg;
 
 package Core.Iterators is
 
-   type Base_Iterators is abstract tagged null record;
+   type Base_Iterators is abstract tagged private;
    type Iterators_Access is access all Base_Iterators'Class;
 
    PKG_LOAD_FLAG_BASIC            : constant Load_Flags := 0;
@@ -39,7 +39,18 @@ package Core.Iterators is
    procedure Free  (this : in out Base_Iterators) is abstract;
    procedure Reset (this : in out Base_Iterators) is abstract;
    function Next   (this : in out Base_Iterators;
-                    pkg_ptr : access T_pkg_Access;
+                    pkg_ptr : in out T_pkg_Access;
                     flags : Load_Flags) return Pkg_Error_Type is abstract;
+
+   function create_invalid_iterator return Base_Iterators is abstract;
+
+   function invalid_iterator (this : Base_Iterators) return Boolean;
+
+private
+
+   type Base_Iterators is abstract tagged
+      record
+         valid : Boolean;
+      end record;
 
 end Core.Iterators;

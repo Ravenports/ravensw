@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Unchecked_Deallocation;
 with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Maps;
 with Core.Unix;
@@ -264,6 +265,9 @@ package Core.Pkg is
          rootpath     : Text;
       end record;
    type T_pkg_Access is access all T_pkg;
+
+   procedure delete_pkg is new Ada.Unchecked_Deallocation
+     (T_pkg, T_pkg_Access);
 
    package pkg_event_conflict_crate is new CON.Vectors
      (Element_Type => Text,

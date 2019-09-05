@@ -5,10 +5,11 @@ with Ada.Directories;
 
 with SQLite;
 with Core.Config;
-with Core.PkgDB;
 with Core.Unix;
 with Core.Event;
 with Core.Repo_Meta;
+with Core.pkgdb_query;
+with Core.Checksum;
 
 package body Core.Repo.Binary is
 
@@ -109,7 +110,7 @@ package body Core.Repo.Binary is
       begin
          --  Open metafile
          declare
-            fd : Unix.File_Descriptor;
+            fd       : Unix.File_Descriptor;
             filename : constant String := S_reponame & ".meta";
             dbfile   : constant String := "repo-" & S_reponame & ".sqlite";
             flags    : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
@@ -235,8 +236,39 @@ package body Core.Repo.Binary is
             end if;
 
             --  Check digests format
+            declare
+               my_pkg : T_pkg_Access;
+               it     : Binary_sqlite.Iterator_Binary_Sqlite :=
+                 pkg_repo_binary_query (db       => repository.sqlite_handle,
+                                        reponame => S_reponame,
+                                        pattern  => "",
+                                        match    => PkgDB.MATCH_ALL,
+                                        flags    => PKGDB_IT_FLAG_ONCE);
+            begin
+               if invalid_iterator (Base_Iterators (it)) then
+                  result := True;
+                  return;
+               end if;
 
-            result := True;
+               if it.Next (my_pkg, PKG_LOAD_FLAG_BASIC) /= EPKG_OK then
+                  delete_pkg (my_pkg);
+                  result := True;
+                  return;
+               end if;
+
+               if IsBlank (my_pkg.digest) or else
+                 not Checksum.pkg_checksum_is_valid (my_pkg.digest)
+               then
+                  Event.pkg_emit_error
+                    (SUS ("Repository " & S_reponame &
+                       " has an incompatible checksum format, database must be recreated"));
+                  SQLite.close_database (repository.sqlite_handle);
+               else
+                  result := True;
+               end if;
+
+               delete_pkg (my_pkg);
+            end;
          end;
       end open_database;
    begin
@@ -747,5 +779,55 @@ package body Core.Repo.Binary is
 
       return rc;
    end pkg_repo_binary_apply_change;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_binary_query
+   --------------------------------------------------------------------
+   function pkg_repo_binary_query
+     (db       : sqlite_h.sqlite3_Access;
+      reponame : String;
+      pattern  : String;
+      match    : PkgDB.T_match;
+      flags    : Iterator_Flags) return Binary_sqlite.Iterator_Binary_Sqlite
+   is
+      use type PkgDB.T_match;
+
+      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      comp : String := pkgdb_query.pkgdb_get_pattern_query (pattern, match);
+      sql  : String :=
+        "SELECT id, origin, name, name as uniqueid, version, comment, prefix, desc, arch, " &
+        "maintainer, www, licenselogic, flatsize, pkgsize, cksum, manifestdigest, " &
+        "path AS repopath, '" & reponame & "' AS dbname" &
+        " FROM packages AS p" &
+        comp &
+        " ORDER BY name;";
+   begin
+      if match /= PkgDB.MATCH_ALL and then IsBlank (pattern) then
+         return Binary_sqlite.create_invalid_iterator;
+      end if;
+
+      if IsBlank (pattern) then
+         Event.pkg_debug (4, "Pkgdb: running '" & sql & "' query for all");
+      else
+         Event.pkg_debug (4, "Pkgdb: running '" & sql & "' query for " & pattern);
+      end if;
+
+      if not SQLite.prepare_sql (db, sql, stmt'Access) then
+         PkgDB.ERROR_SQLITE (db, "pkg_repo_binary_query", sql);
+         return Binary_sqlite.create_invalid_iterator;
+      end if;
+
+      case match is
+         when PkgDB.MATCH_ALL | PkgDB.MATCH_CONDITION => null;
+         when PkgDB.MATCH_EXACT | PkgDB.MATCH_GLOB | PkgDB.MATCH_REGEX =>
+            SQLite.bind_string (stmt, 1, pattern);
+      end case;
+
+      return Binary_sqlite.create (db           => db,
+                                   stmt         => stmt,
+                                   package_type => PKG_REMOTE,
+                                   flags        => PKGDB_IT_FLAG_ONCE);
+   end pkg_repo_binary_query;
 
 end Core.Repo.Binary;
