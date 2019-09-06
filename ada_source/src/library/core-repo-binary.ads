@@ -31,7 +31,7 @@ package Core.Repo.Binary is
 
    overriding
    function repo_access (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
-                         return Boolean;
+                         return Pkg_Error_Type;
 
    overriding
    function repo_ensure_loaded (this : Repo_Operations_Binary; reponame : Text; pkg1 : T_pkg)
@@ -128,5 +128,7 @@ private
       pattern  : String;
       match    : PkgDB.T_match;
       flags    : Iterator_Flags) return Binary_sqlite.Iterator_Binary_Sqlite;
+
+   function pkg_repo_binary_get_filename (reponame : String) return String;
 
 end Core.Repo.Binary;

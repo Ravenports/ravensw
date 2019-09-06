@@ -27,7 +27,7 @@ package Core.Repo is
    function repo_open   (this : Base_Repo_Operations; reponame : Text; mode : mode_t)
                          return Boolean is abstract;
    function repo_access (this : Base_Repo_Operations; reponame : Text; mode : mode_t)
-                         return Boolean is abstract;
+                         return Pkg_Error_Type is abstract;
 
    --  TODO: add flags to repo_ensure loaded
    function repo_ensure_loaded (this : Base_Repo_Operations; reponame : Text; pkg1 : T_pkg)

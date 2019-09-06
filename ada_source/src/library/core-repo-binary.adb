@@ -289,12 +289,14 @@ package body Core.Repo.Binary is
    --  repo_access
    --------------------------------------------------------------------
    overriding
-
    function repo_access (this : Repo_Operations_Binary; reponame : Text; mode : mode_t)
-                         return Boolean
+                         return Pkg_Error_Type
    is
+      dbdir  : constant String := Config.pkg_config_get_string (Config.conf_dbdir);
+      dbname : constant String := pkg_repo_binary_get_filename (USS (reponame));
+      mode1  : constant PkgDB.PkgDB_Mode_Flags := PkgDB.PkgDB_Mode_Flags (mode);
    begin
-      return False;
+      return PkgDB.pkgdb_check_access (mode1, dbdir, dbname);
    end repo_access;
 
 
@@ -829,5 +831,15 @@ package body Core.Repo.Binary is
                                    package_type => PKG_REMOTE,
                                    flags        => PKGDB_IT_FLAG_ONCE);
    end pkg_repo_binary_query;
+
+
+   --------------------------------------------------------------------
+   --  pkg_repo_binary_get_filename
+   --------------------------------------------------------------------
+   function pkg_repo_binary_get_filename (reponame : String) return String
+   is
+   begin
+      return reponame & ".sqlite";
+   end pkg_repo_binary_get_filename;
 
 end Core.Repo.Binary;

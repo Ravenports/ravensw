@@ -18,6 +18,15 @@ package Core.PkgDB is
    type T_match is (MATCH_ALL, MATCH_EXACT, MATCH_GLOB, MATCH_REGEX, MATCH_CONDITION);
    type T_pkgdb is (PKGDB_DEFAULT, PKGDB_REMOTE, PKGDB_MAYBE_REMOTE);
 
+   type PkgDB_Mode_Flags is mod 2 ** 3;
+
+   PKGDB_MODE_EXISTS : constant PkgDB_Mode_Flags := 0;
+   PKGDB_MODE_READ   : constant PkgDB_Mode_Flags := 2 ** 0;
+   PKGDB_MODE_WRITE  : constant PkgDB_Mode_Flags := 2 ** 1;
+   PKGDB_MODE_CREATE : constant PkgDB_Mode_Flags := 2 ** 2;
+
+   type PkgDB_Type is (PKGDB_DB_LOCAL, PKGDB_DB_REPO);
+
    type struct_pkgdb is limited private;
    type struct_pkgdb_Access is access all struct_pkgdb;
 
@@ -66,6 +75,12 @@ package Core.PkgDB is
    procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
 
    function  pkgdb_is_case_sensitive return Boolean;
+
+   function pkgdb_access (mode : PkgDB_Mode_Flags; dtype : PkgDB_Type)
+                          return Core.Pkg.Pkg_Error_Type;
+
+   function pkgdb_check_access (mode : PkgDB_Mode_Flags; dbdir : String; dbname : String)
+                                return Core.Pkg.Pkg_Error_Type;
 
 private
 
@@ -116,6 +131,8 @@ private
       PKG_REQUIRE,
       REQUIRE
      );
+
+   global_sb : aliased Unix.struct_stat;
 
    --  SQL associated with sql_prstmt_index enumeration
    function prstmt_text_sql (index : sql_prstmt_index) return String;
@@ -265,4 +282,6 @@ private
       x    : sqlite_h.Void_Ptr) return IC.int;
    pragma Export (C, pkgdb_profile_callback);
 
+   function pkgdb_is_insecure_mode (path : String; install_as_user : Boolean)
+                                    return Core.Pkg.Pkg_Error_Type;
 end Core.PkgDB;

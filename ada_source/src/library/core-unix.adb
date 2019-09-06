@@ -322,4 +322,96 @@ package body Core.Unix is
       end;
    end get_current_working_directory;
 
+
+   --------------------------------------------------------------------
+   --  stat_ok
+   --------------------------------------------------------------------
+   function stat_ok (path : String; sb : struct_stat_Access) return Boolean
+   is
+      use type IC.int;
+      c_path : IC.Strings.chars_ptr;
+      res : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      res := C_stat (c_path, sb);
+      IC.Strings.Free (c_path);
+      return (res = IC.int (0));
+   end stat_ok;
+
+
+   --------------------------------------------------------------------
+   --  last_error_ACCESS
+   --------------------------------------------------------------------
+   function last_error_ACCESS return Boolean
+   is
+      use type IC.int;
+      target_error : IC.int := C_errno_EACCESS;
+   begin
+      return (target_error /= IC.int (0));
+   end last_error_ACCESS;
+
+
+   --------------------------------------------------------------------
+   --  last_error_NOENT
+   --------------------------------------------------------------------
+   function last_error_NOENT return Boolean
+   is
+      use type IC.int;
+      target_error : IC.int := C_errno_ENOENT;
+   begin
+      return (target_error /= IC.int (0));
+   end last_error_NOENT;
+
+
+   --------------------------------------------------------------------
+   --  bad_perms
+   --------------------------------------------------------------------
+   function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean
+   is
+      use type IC.int;
+      res : IC.int := C_bad_perms (IC.int (fileowner), IC.int (filegroup), sb);
+   begin
+      return (res = IC.int (1));
+   end bad_perms;
+
+
+   --------------------------------------------------------------------
+   --  wrong_owner
+   --------------------------------------------------------------------
+   function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean
+   is
+      use type IC.int;
+      res : IC.int := C_wrong_owner (IC.int (fileowner), IC.int (filegroup), sb);
+   begin
+      return (res = IC.int (1));
+   end wrong_owner;
+
+
+   --------------------------------------------------------------------
+   --  wrong_owner
+   --------------------------------------------------------------------
+   function valid_permissions (path : String; permissions : T_Access_Flags) return Boolean
+   is
+      use type IC.int;
+
+      mode   : IC.int := IC.int (0);
+      res    : IC.int;
+      c_path : IC.Strings.chars_ptr;
+   begin
+      if permissions.flag_read then
+         mode := mode + IC.int (2 ** 0);
+      end if;
+      if permissions.flag_write then
+         mode := mode + IC.int (2 ** 1);
+      end if;
+      if permissions.flag_exec then
+         mode := mode + IC.int (2 ** 2);
+      end if;
+
+      c_path := IC.Strings.New_String (path);
+      res := C_access (c_path, mode);
+      IC.Strings.Free (c_path);
+      return (res = IC.int (0));
+   end valid_permissions;
+
 end Core.Unix;

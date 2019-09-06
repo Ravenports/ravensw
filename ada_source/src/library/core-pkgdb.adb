@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Environment_Variables;
 with Ada.Calendar.Conversions;
 with Ada.Characters.Latin_1;
 with Ada.Directories;
@@ -17,6 +18,7 @@ with Core.Strings; use Core.Strings;
 
 package body Core.PkgDB is
 
+   package ENV renames Ada.Environment_Variables;
    package LAT renames Ada.Characters.Latin_1;
    package DIR renames Ada.Directories;
 
@@ -1748,5 +1750,247 @@ package body Core.PkgDB is
    begin
       return pkgdb_open_all (db, dbtype, "");
    end pkgdb_open;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_is_insecure_mode
+   --------------------------------------------------------------------
+   function pkgdb_is_insecure_mode (path : String; install_as_user : Boolean)
+                                    return Core.Pkg.Pkg_Error_Type
+   is
+      fileowner   : Unix.uid_t;
+      filegroup   : Unix.uid_t;
+   begin
+      if install_as_user then
+         fileowner := Unix.geteuid;
+         filegroup := Unix.getegid;
+      else
+         fileowner := Unix.uid_t (0);
+         filegroup := Unix.uid_t (0);
+      end if;
+
+      if not Unix.stat_ok (path, global_sb'Access) then
+         if Unix.last_error_ACCESS then
+            return EPKG_ENOACCESS;
+         elsif Unix.last_error_NOENT then
+            return EPKG_ENODB;
+         else
+            return EPKG_FATAL;
+         end if;
+      end if;
+
+      --  if fileowner == 0, root ownership and no group or other
+      --  read access.  if fileowner != 0, require no other read
+      --  access and group read access IFF the group ownership == filegroup
+
+      if Unix.bad_perms (fileowner, filegroup, global_sb) then
+         Event.pkg_emit_error (SUS (path & " permissions too lax"));
+         return EPKG_INSECURE;
+      end if;
+
+      if Unix.wrong_owner (fileowner, filegroup, global_sb) then
+         Event.pkg_emit_error
+           (SUS (path & " wrong user or group ownership (expected " &
+              int2str (Integer (fileowner)) & "/" & int2str (Integer (filegroup)) & ")"));
+         return EPKG_INSECURE;
+      end if;
+
+      return EPKG_OK;
+
+   end pkgdb_is_insecure_mode;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_check_access
+   --------------------------------------------------------------------
+   function pkgdb_check_access (mode : PkgDB_Mode_Flags; dbdir : String; dbname : String)
+                                return Core.Pkg.Pkg_Error_Type
+   is
+      function make_dbpath return String;
+      function user_can_install return Boolean;
+
+      function make_dbpath return String is
+      begin
+         if IsBlank (dbname) then
+            return dbdir;
+         else
+            return dbdir & "/" & dbname;
+         end if;
+      end make_dbpath;
+
+      function user_can_install return Boolean is
+      begin
+         declare
+            val  : String := ENV.Value ("INSTALL_AS_USER");
+         begin
+            return True;
+         end;
+      exception
+         when Constraint_Error =>
+            return False;
+      end user_can_install;
+
+      dbpath          : constant String := make_dbpath;
+      install_as_user : constant Boolean := user_can_install;
+      retval          : Pkg_Error_Type;
+      database_exists : Boolean;
+      flags           : Unix.T_Access_Flags := (others => False);
+   begin
+      if (mode and PkgDB.PKGDB_MODE_READ) > 0 then
+         flags.flag_read := True;
+      end if;
+      if (mode and PkgDB.PKGDB_MODE_WRITE) > 0 then
+         flags.flag_write := True;
+      end if;
+
+      retval := pkgdb_is_insecure_mode (dbpath, install_as_user);
+      database_exists := (retval /= EPKG_ENODB);
+
+      if database_exists then
+         if retval /= EPKG_OK then
+            return retval;
+         end if;
+
+         case mode is
+            when PkgDB.PKGDB_MODE_EXISTS |
+                 PkgDB.PKGDB_MODE_READ |
+                 PkgDB.PKGDB_MODE_WRITE |
+                 PkgDB.PKGDB_MODE_READ or PkgDB.PKGDB_MODE_WRITE =>
+               --  PKGDB_MODE_EXISTS is redundant, already known with database_exists
+               if not Unix.valid_permissions (dbpath, flags) then
+                  return EPKG_ENOACCESS;
+               end if;
+            when PkgDB.PKGDB_MODE_CREATE |
+                 PkgDB.PKGDB_MODE_CREATE or PkgDB.PKGDB_MODE_READ |
+                 PkgDB.PKGDB_MODE_CREATE or PkgDB.PKGDB_MODE_WRITE |
+                 PkgDB.PKGDB_MODE_CREATE or PkgDB.PKGDB_MODE_READ or PkgDB.PKGDB_MODE_WRITE =>
+               --  PKG_MODE_CREATE should only be called on directories
+               return EPKG_FATAL;
+         end case;
+         return EPKG_OK;
+
+      else
+         --  database doesn't exist.  Assume it's intended to be called on a directory or
+         --  to create a directory.
+
+         case mode is
+            when PkgDB.PKGDB_MODE_EXISTS |
+                 PkgDB.PKGDB_MODE_READ =>
+               if not Unix.valid_permissions (dbdir, flags) then
+                  return EPKG_ENOACCESS;
+               end if;
+            when PkgDB.PKGDB_MODE_WRITE |
+                 PkgDB.PKGDB_MODE_READ or PkgDB.PKGDB_MODE_WRITE =>
+               if not Unix.valid_permissions (dbdir, flags) then
+                  if Unix.last_error_NOENT then
+                     begin
+                        DIR.Create_Path (dbdir);
+                        if not Unix.valid_permissions (dbdir, flags) then
+                           return EPKG_ENOACCESS;
+                        end if;
+                     exception
+                        when others =>
+                           return EPKG_ENOACCESS;
+                     end;
+                  else
+                     return EPKG_ENOACCESS;
+                  end if;
+               end if;
+            when others =>
+               --  the create routine will handle creating the directories
+               null;
+         end case;
+         return EPKG_OK;
+
+      end if;
+
+   end pkgdb_check_access;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_access
+   --------------------------------------------------------------------
+   function pkgdb_access (mode : PkgDB_Mode_Flags; dtype : PkgDB_Type)
+                          return Core.Pkg.Pkg_Error_Type
+   is
+      --  This will return one of:
+      --
+      --  EPKG_ENODB:  a database doesn't exist and we don't want to create
+      --             it, or dbdir doesn't exist
+      --
+      --  EPKG_INSECURE: the dbfile or one of the directories in the
+      --    path to it are writable by other than root or
+      --    (if $INSTALL_AS_USER is set) the current euid and egid
+      --
+      --  EPKG_ENOACCESS: we don't have privileges to read or write
+      --
+      --  EPKG_FATAL: Couldn't determine the answer for other reason,
+      --     like configuration screwed up, invalid argument values,
+      --     read-only filesystem, etc.
+      --
+      --  EPKG_OK: We can go ahead
+
+      dbdir  : String := Config.pkg_config_get_string (Config.conf_dbdir);
+      retval : Pkg_Error_Type := EPKG_OK;
+      RW     : constant PkgDB_Mode_Flags := (PkgDB.PKGDB_MODE_READ or PkgDB.PKGDB_MODE_WRITE);
+
+      use type Pkg_Error_Type;
+   begin
+      if mode = PkgDB_Mode_Flags (0) then
+         return EPKG_FATAL;
+      end if;
+
+      --  Test the enclosing directory: if we're going to create the
+      --  DB, then we need read and write permissions on the dir.
+      --  Otherwise, just test for read access
+
+      if (mode and PKGDB_MODE_CREATE) > 0 then
+         retval := pkgdb_check_access (RW, dbdir, "");
+      else
+         retval := pkgdb_check_access (PkgDB.PKGDB_MODE_READ, dbdir, "");
+      end if;
+      if retval /= EPKG_OK then
+         return retval;
+      end if;
+
+      case dtype is
+         when PKGDB_DB_LOCAL =>
+            --  Test local.sqlite, if required
+            return pkgdb_check_access (mode, dbdir, "local.sqlite");
+         when PKGDB_DB_REPO =>
+            declare
+               procedure check (position : pkg_repos_priority_crate.Cursor);
+               procedure check (position : pkg_repos_priority_crate.Cursor)
+               is
+                  key     : Text := pkg_repos_priority_crate.Element (position).reponame;
+                  rcursor : pkg_repos_crate.Cursor := Config.repositories.Find (key);
+                  repo    : T_pkg_repo renames pkg_repos_crate.Element (rcursor);
+                  mode2   : constant mode_t := mode_t (mode);
+               begin
+                  --  Ignore if error already seen
+                  if retval /= EPKG_OK then
+                     return;
+                  end if;
+
+                  --  Ignore inactive repositories
+                  if Config.pkg_repo_enabled (repo) then
+                     return;
+                  end if;
+
+                  retval := Repo_Operations.Ops (repo.ops_variant).repo_access (repo.name, mode2);
+                  if retval = EPKG_ENODB and then
+                    (mode and PkgDB.PKGDB_MODE_READ) > 0
+                  then
+                     Event.pkg_emit_error
+                       (SUS ("Repository " & USS (repo.name) & " missing, '" & progname &
+                          " update' command required"));
+                  end if;
+               end check;
+            begin
+               Config.repositories_order.Iterate (check'Access);
+               return retval;
+            end;
+      end case;
+   end pkgdb_access;
 
 end Core.PkgDB;

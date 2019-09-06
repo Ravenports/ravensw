@@ -12,6 +12,7 @@ package Core.Unix is
 
    type Process_ID is new Integer;
    type File_Descriptor is new Integer;
+   type uid_t is new Integer;
    not_connected : constant File_Descriptor := -1;
 
    type T_Open_Flags is
@@ -21,6 +22,13 @@ package Core.Unix is
          NON_BLOCK : Boolean := False;
          DIRECTORY : Boolean := False;
          CLOEXEC   : Boolean := False;
+      end record;
+
+   type T_Access_Flags is
+      record
+         flag_read  : Boolean;
+         flag_write : Boolean;
+         flag_exec  : Boolean;
       end record;
 
    --  strerror from libc
@@ -116,6 +124,29 @@ package Core.Unix is
 
    function get_current_working_directory return String;
 
+   function getuid return uid_t;
+   pragma Import (C, getuid, "getuid");
+
+   function geteuid return uid_t;
+   pragma Import (C, geteuid, "geteuid");
+
+   function getgid return uid_t;
+   pragma Import (C, getgid, "getgid");
+
+   function getegid return uid_t;
+   pragma Import (C, getegid, "getegid");
+
+   function stat_ok (path : String; sb : struct_stat_Access) return Boolean;
+
+   function last_error_ACCESS return Boolean;
+
+   function last_error_NOENT return Boolean;
+
+   function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean;
+   function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean;
+
+   function valid_permissions (path : String; permissions : T_Access_Flags) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -171,6 +202,11 @@ private
       sb   : struct_stat_Access) return IC.int;
    pragma Import (C, C_lstat, "port_lstatat");
 
+   function C_stat
+     (path : IC.Strings.chars_ptr;
+      sb   : struct_stat_Access) return IC.int;
+   pragma Import (C, C_stat, "stat");
+
    function C_faccessat_readable
      (dfd  : IC.int;
       path : IC.Strings.chars_ptr) return IC.int;
@@ -185,5 +221,20 @@ private
      (buf  : IC.Strings.chars_ptr;
       size : IC.size_t) return IC.Strings.chars_ptr;
    pragma Import (C, C_getcwd, "getcwd");
+
+   function C_errno_EACCESS return IC.int;
+   pragma Import (C, C_errno_EACCESS, "last_error_ACCES");
+
+   function C_errno_ENOENT return IC.int;
+   pragma Import (C, C_errno_ENOENT, "last_error_NOENT");
+
+   function C_bad_perms  (fileowner, filegroup : IC.int; sb : struct_stat) return IC.int;
+   pragma Import (C, C_bad_perms, "bad_perms");
+
+   function C_wrong_owner  (fileowner, filegroup : IC.int; sb : struct_stat) return IC.int;
+   pragma Import (C, C_wrong_owner, "wrong_owner");
+
+   function C_access (path : IC.Strings.chars_ptr; mode : IC.int) return IC.int;
+   pragma Import (C, C_access, "access");
 
 end Core.Unix;

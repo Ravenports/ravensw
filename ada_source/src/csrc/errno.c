@@ -16,3 +16,13 @@ reset_errno(void)
 {
     errno = 0;
 }
+
+int last_error_ACCES(void)
+{
+  return (errno == EACCES || errno == EROFS);
+}
+
+int last_error_NOENT(void)
+{
+  return (errno == ENOENT);
+}
