@@ -132,8 +132,6 @@ private
       REQUIRE
      );
 
-   global_sb : aliased Unix.struct_stat;
-
    --  SQL associated with sql_prstmt_index enumeration
    function prstmt_text_sql (index : sql_prstmt_index) return String;
 

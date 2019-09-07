@@ -10,6 +10,10 @@ with Core.Event;
 with Core.Repo_Meta;
 with Core.pkgdb_query;
 with Core.Checksum;
+with Core.Repo.Binary_Update;
+with Core.Repo.Common;
+
+use Core.Repo.Common;
 
 package body Core.Repo.Binary is
 
@@ -21,6 +25,7 @@ package body Core.Repo.Binary is
    overriding
    function repo_init (this : Repo_Operations_Binary; reponame : Text) return Boolean
    is
+      repo : T_pkg_repo renames Config.repositories.Element (reponame);
    begin
       return False;
    end repo_init;
@@ -42,10 +47,9 @@ package body Core.Repo.Binary is
    --------------------------------------------------------------------
    overriding
    function repo_update (this : Repo_Operations_Binary; reponame : Text; force : Boolean)
-                         return Boolean
-   is
+                         return Pkg_Error_Type is
    begin
-      return False;
+      return Repo.Binary_Update.pkg_repo_binary_update (reponame, force);
    end repo_update;
 
 
@@ -58,7 +62,7 @@ package body Core.Repo.Binary is
    is
       procedure close_database (key : Text; Element : in out T_pkg_repo);
 
-      repo    : T_pkg_repo renames Config.repositories.Element (reponame);
+      repo : T_pkg_repo renames Config.repositories.Element (reponame);
 
       procedure close_database (key : Text; Element : in out T_pkg_repo)
       is
@@ -111,7 +115,7 @@ package body Core.Repo.Binary is
          --  Open metafile
          declare
             fd       : Unix.File_Descriptor;
-            filename : constant String := S_reponame & ".meta";
+            filename : constant String := pkg_repo_binary_get_meta (S_reponame);
             dbfile   : constant String := "repo-" & S_reponame & ".sqlite";
             flags    : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
             success  : Pkg_Error_Type;
@@ -831,15 +835,5 @@ package body Core.Repo.Binary is
                                    package_type => PKG_REMOTE,
                                    flags        => PKGDB_IT_FLAG_ONCE);
    end pkg_repo_binary_query;
-
-
-   --------------------------------------------------------------------
-   --  pkg_repo_binary_get_filename
-   --------------------------------------------------------------------
-   function pkg_repo_binary_get_filename (reponame : String) return String
-   is
-   begin
-      return reponame & ".sqlite";
-   end pkg_repo_binary_get_filename;
 
 end Core.Repo.Binary;

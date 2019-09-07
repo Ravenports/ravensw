@@ -19,7 +19,7 @@ package Core.Repo.Binary is
 
    overriding
    function repo_update (this : Repo_Operations_Binary; reponame : Text; force : Boolean)
-                         return Boolean;
+                         return Pkg_Error_Type;
 
    overriding
    function repo_close  (this : Repo_Operations_Binary; reponame : Text; commit : Boolean)
@@ -128,7 +128,5 @@ private
       pattern  : String;
       match    : PkgDB.T_match;
       flags    : Iterator_Flags) return Binary_sqlite.Iterator_Binary_Sqlite;
-
-   function pkg_repo_binary_get_filename (reponame : String) return String;
 
 end Core.Repo.Binary;

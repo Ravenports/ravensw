@@ -44,3 +44,9 @@ wrong_owner (int fileowner, int filegroup, struct stat sb)
   }
   return(0);
 }
+
+long
+get_mtime (struct stat sb)
+{
+  return sb.st_mtime;
+}

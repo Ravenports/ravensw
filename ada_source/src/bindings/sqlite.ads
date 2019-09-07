@@ -119,4 +119,6 @@ package SQLite is
       column_index : Natural;
       value : String);
 
+   procedure get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String;
+
 end SQLite;

@@ -426,6 +426,13 @@ package sqlite_h is
    function sqlite3_sql (pStmt : sqlite3_stmt_Access) return ICS.chars_ptr;
    pragma Import (C, sqlite3_sql);
 
+   function sqlite3_context_db_handle (context : sqlite3_context_Access) return sqlite3_Access;
+   pragma Import (C, sqlite3_context_db_handle);
+
+   function sqlite3_db_filename (db     : sqlite3_Access;
+                                 dbname : ICS.chars_ptr) return ICS.chars_ptr;
+   pragma Import (C, sqlite3_db_filename);
+
 private
 
    type sqlite3              is limited null record;

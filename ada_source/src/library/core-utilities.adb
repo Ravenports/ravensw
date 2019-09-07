@@ -1,6 +1,8 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Interfaces;
+
 with Core.Strings; use Core.Strings;
 with Core.Unix;
 
@@ -73,5 +75,41 @@ package body Core.Utilities is
       return USS (dest);
 
    end pkg_absolutepath;
+
+
+   --------------------------------------------------------------------
+   --  char2hex
+   --------------------------------------------------------------------
+   function char2hex (quattro : Character) return hexrep
+   is
+      type halfbyte is mod 2 ** 4;
+      type fullbyte is mod 2 ** 8;
+      function halfbyte_to_hex (value : halfbyte) return Character;
+
+      std_byte  : Interfaces.Unsigned_8;
+      work_4bit : halfbyte;
+      result    : hexrep;
+
+      function halfbyte_to_hex (value : halfbyte) return Character
+      is
+         zero     : constant Natural := Character'Pos ('0');
+         alpham10 : constant Natural := Character'Pos ('a') - 10;
+      begin
+         case value is
+            when 0 .. 9 => return Character'Val (zero + Natural (value));
+            when others => return Character'Val (alpham10 + Natural (value));
+         end case;
+      end halfbyte_to_hex;
+
+   begin
+      std_byte   := Interfaces.Unsigned_8 (Character'Pos (quattro));
+      work_4bit  := halfbyte (Interfaces.Shift_Right (std_byte, 4));
+      result (1) := halfbyte_to_hex (work_4bit);
+
+      work_4bit  := halfbyte (fullbyte (Character'Pos (quattro)) and 2#1111#);
+      result (2) := halfbyte_to_hex (work_4bit);
+
+      return result;
+   end char2hex;
 
 end Core.Utilities;

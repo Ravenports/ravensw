@@ -1758,8 +1758,9 @@ package body Core.PkgDB is
    function pkgdb_is_insecure_mode (path : String; install_as_user : Boolean)
                                     return Core.Pkg.Pkg_Error_Type
    is
-      fileowner   : Unix.uid_t;
-      filegroup   : Unix.uid_t;
+      fileowner : Unix.uid_t;
+      filegroup : Unix.uid_t;
+      sb        : aliased Unix.struct_stat;
    begin
       if install_as_user then
          fileowner := Unix.geteuid;
@@ -1769,7 +1770,7 @@ package body Core.PkgDB is
          filegroup := Unix.uid_t (0);
       end if;
 
-      if not Unix.stat_ok (path, global_sb'Access) then
+      if not Unix.stat_ok (path, sb'Unchecked_Access) then
          if Unix.last_error_ACCESS then
             return EPKG_ENOACCESS;
          elsif Unix.last_error_NOENT then
@@ -1783,12 +1784,12 @@ package body Core.PkgDB is
       --  read access.  if fileowner != 0, require no other read
       --  access and group read access IFF the group ownership == filegroup
 
-      if Unix.bad_perms (fileowner, filegroup, global_sb) then
+      if Unix.bad_perms (fileowner, filegroup, sb) then
          Event.pkg_emit_error (SUS (path & " permissions too lax"));
          return EPKG_INSECURE;
       end if;
 
-      if Unix.wrong_owner (fileowner, filegroup, global_sb) then
+      if Unix.wrong_owner (fileowner, filegroup, sb) then
          Event.pkg_emit_error
            (SUS (path & " wrong user or group ownership (expected " &
               int2str (Integer (fileowner)) & "/" & int2str (Integer (filegroup)) & ")"));

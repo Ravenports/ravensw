@@ -15,6 +15,10 @@ package Core.Unix is
    type uid_t is new Integer;
    not_connected : constant File_Descriptor := -1;
 
+   --  Technically epochtime is a 64-bit signed number, but we've been using time types as
+   --  unsigned so far, so keep doing it.
+   type T_epochtime is mod 2**64;
+
    type T_Open_Flags is
       record
          RDONLY    : Boolean := False;
@@ -147,6 +151,12 @@ package Core.Unix is
 
    function valid_permissions (path : String; permissions : T_Access_Flags) return Boolean;
 
+   function get_mtime (sb : struct_stat) return T_epochtime;
+
+   procedure set_file_times (path : String;
+                             access_time : T_epochtime;
+                             mod_time : T_epochtime);
+
 private
 
    last_errno : Integer;
@@ -236,5 +246,23 @@ private
 
    function C_access (path : IC.Strings.chars_ptr; mode : IC.int) return IC.int;
    pragma Import (C, C_access, "access");
+
+   function C_get_mtime (sb : struct_stat) return IC.long;
+   pragma Import (C, C_get_mtime, "get_mtime");
+
+   type Timeval_Unit is new IC.int;
+   pragma Convention (C, Timeval_Unit);
+
+   type Timeval is record
+      Tv_Sec  : Timeval_Unit;
+      Tv_Usec : Timeval_Unit;
+   end record;
+   pragma Convention (C, Timeval);
+
+   type Timeval_Access is access all Timeval;
+   pragma Convention (C, Timeval_Access);
+
+   function C_utimes (path : IC.Strings.chars_ptr; times : Timeval_Access) return IC.int;
+   pragma Import (C, C_utimes, "utimes");
 
 end Core.Unix;

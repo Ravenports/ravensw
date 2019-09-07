@@ -451,4 +451,21 @@ package body SQLite is
       ICS.Free (txt);
    end bind_string;
 
+
+   --------------------------------------------------------------------
+   --  get_db_filename
+   --------------------------------------------------------------------
+   procedure get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String
+   is
+      zdbname : ICS.chars_ptr;
+      res     : ICS.chars_ptr;
+   begin
+      zdbname := ICS.New_String (tag);
+      res := sqlite_h.sqlite3_db_filename (db, zdbname);
+      ICS.Free (zdbname);
+
+      --  don't free result!
+      return ICS.Value (res);
+   end get_db_filename;
+
 end SQLite;

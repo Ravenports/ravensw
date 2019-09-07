@@ -21,7 +21,7 @@ package Core.Repo is
    function repo_create (this : Base_Repo_Operations; reponame : Text)
                          return Boolean is abstract;
    function repo_update (this : Base_Repo_Operations; reponame : Text; force : Boolean)
-                         return Boolean is abstract;
+                         return Pkg_Error_Type is abstract;
    function repo_close  (this : Base_Repo_Operations; reponame : Text; commit : Boolean)
                          return Boolean is abstract;
    function repo_open   (this : Base_Repo_Operations; reponame : Text; mode : mode_t)

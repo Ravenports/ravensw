@@ -24,7 +24,7 @@ package Core.Pkg is
       EPKG_LOCKED,     --  Can not operate on package because it is locked
       EPKG_ENODB,      --  Can not create local database or database non-existent
       EPKG_UPTODATE,   --  local file newer than remote
-      EPKG_UNKNOWN,    --  unkown keyword
+      EPKG_UNKNOWN,    --  unknown keyword
       EPKG_REPOSCHEMA, --  repo DB schema incompatible version
       EPKG_ENOACCESS,  --  Insufficient privilege for action
       EPKG_INSECURE,   --  Insecure permissions on any component of $PKGDB_DIR/local.sqlite or

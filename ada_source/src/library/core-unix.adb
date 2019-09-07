@@ -414,4 +414,41 @@ package body Core.Unix is
       return (res = IC.int (0));
    end valid_permissions;
 
+
+   --------------------------------------------------------------------
+   --  get_mtime
+   --------------------------------------------------------------------
+   function get_mtime (sb : struct_stat) return T_epochtime
+   is
+      res : IC.long;
+   begin
+      res := C_get_mtime (sb);
+      return T_epochtime (res);
+   end get_mtime;
+
+
+   --------------------------------------------------------------------
+   --  get_mtime
+   --------------------------------------------------------------------
+   procedure set_file_times (path : String;
+                             access_time : T_epochtime;
+                             mod_time : T_epochtime)
+   is
+
+      ftimes : array (1 .. 2) of aliased Timeval;
+   begin
+      ftimes (1).Tv_Sec := Timeval_Unit (access_time);
+      ftimes (1).Tv_Usec := 0;
+      ftimes (2).Tv_Sec := Timeval_Unit (mod_time);
+      ftimes (2).Tv_Usec := 0;
+      declare
+         c_path : IC.Strings.chars_ptr;
+         res    : IC.int;
+      begin
+         c_path := IC.Strings.New_String (path);
+         res := C_utimes (c_path, ftimes (1)'Unchecked_Access);
+         IC.Strings.Free (c_path);
+      end;
+   end set_file_times;
+
 end Core.Unix;
