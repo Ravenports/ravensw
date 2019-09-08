@@ -1,7 +1,9 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+--  with Ada.Streams.Stream_IO;
 with Interfaces;
+with ssl;
 
 with Core.Event;
 with Core.Utilities;
@@ -9,6 +11,7 @@ with Core.Utilities;
 package body Core.Checksum is
 
    package ITF renames Interfaces;
+   --  package SIO renames Ada.Streams.Stream_IO;
 
    --------------------------------------------------------------------
    --  pkg_checksum_type_from_string
@@ -136,11 +139,56 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function pkg_checksum_hash_sha256 (entries : checksum_entry_crate.Vector) return String
    is
+      procedure add (position : checksum_entry_crate.Cursor);
+
+      sign_ctx : aliased ssl.SHA256_CTX;
+
+      procedure add (position : checksum_entry_crate.Cursor)
+      is
+         item : pkg_checksum_entry renames checksum_entry_crate.Element (position);
+      begin
+         ssl.sha256_update (sign_ctx'Unchecked_Access, USS (item.field));
+         ssl.sha256_update (sign_ctx'Unchecked_Access, USS (item.value));
+      end add;
    begin
-      --  TODO:
-      return "";
+      ssl.sha256_init (sign_ctx'Unchecked_Access);
+      entries.Iterate (add'Access);
+      return ssl.sha256_final (sign_ctx'Unchecked_Access);
    end pkg_checksum_hash_sha256;
 
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_hash_sha256_bulk
+   --------------------------------------------------------------------
+   function pkg_checksum_hash_sha256_bulk (plain : String) return String
+   is
+      sign_ctx : aliased ssl.SHA256_CTX;
+   begin
+      ssl.sha256_init (sign_ctx'Unchecked_Access);
+      ssl.sha256_update (sign_ctx'Unchecked_Access, plain);
+      return ssl.sha256_final (sign_ctx'Unchecked_Access);
+   end pkg_checksum_hash_sha256_bulk;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_hash_sha256_file
+   --------------------------------------------------------------------
+   function pkg_checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String
+   is
+      sign_ctx   : aliased ssl.SHA256_CTX;
+      chunk_size : constant Natural := 16 * 1024;
+   begin
+      ssl.sha256_init (sign_ctx'Unchecked_Access);
+      loop
+         declare
+            chunk : constant String := Unix.read_fd (fd, chunk_size);
+         begin
+            exit when chunk'Length = 0;
+            ssl.sha256_update (sign_ctx'Unchecked_Access, chunk);
+         end;
+      end loop;
+      return ssl.sha256_final (sign_ctx'Unchecked_Access);
+   end pkg_checksum_hash_sha256_file;
 
    --------------------------------------------------------------------
    --  pkg_checksum_hash_blake2
@@ -162,16 +210,6 @@ package body Core.Checksum is
       --  TODO:
       return "";
    end pkg_checksum_hash_blake2s;
-
-
-   --------------------------------------------------------------------
-   --  pkg_checksum_hash_sha256_file
-   --------------------------------------------------------------------
-   function pkg_checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String is
-   begin
-      --  TODO:
-      return "";
-   end pkg_checksum_hash_sha256_file;
 
 
    --------------------------------------------------------------------

@@ -451,4 +451,29 @@ package body Core.Unix is
       end;
    end set_file_times;
 
+
+   --------------------------------------------------------------------
+   --  read_fd
+   --------------------------------------------------------------------
+   function read_fd (fd : File_Descriptor; max_bytes : Natural) return String
+   is
+      buffer : array (1 .. max_bytes) of aliased IC.unsigned_char;
+      res    : IC.Extensions.long_long;
+   begin
+      res := C_read (fd, buffer (1)'Access, IC.size_t (max_bytes));
+      if res <= IC.Extensions.long_long (0) then
+         return "";
+      else
+         declare
+            size   : constant Integer := Integer (res);
+            result : String (1 .. size);
+         begin
+            for x in 1 .. size loop
+               result (x) := Character'Val (buffer (1));
+            end loop;
+            return result;
+         end;
+      end if;
+   end read_fd;
+
 end Core.Unix;

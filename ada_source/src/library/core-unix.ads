@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 with Interfaces.C.Strings;
+with Interfaces.C.Extensions;
 
 package Core.Unix is
 
@@ -157,6 +158,8 @@ package Core.Unix is
                              access_time : T_epochtime;
                              mod_time : T_epochtime);
 
+   function read_fd (fd : File_Descriptor; max_bytes : Natural) return String;
+
 private
 
    last_errno : Integer;
@@ -264,5 +267,9 @@ private
 
    function C_utimes (path : IC.Strings.chars_ptr; times : Timeval_Access) return IC.int;
    pragma Import (C, C_utimes, "utimes");
+
+   function C_read (fd : File_Descriptor; buf : access IC.unsigned_char; nbytes : IC.size_t)
+                    return IC.Extensions.long_long;
+   pragma Import (C, C_read, "read");
 
 end Core.Unix;
