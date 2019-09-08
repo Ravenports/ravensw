@@ -42,13 +42,13 @@ private
       Index_Type   => Natural);
 
    function pkg_checksum_hash_sha256  (entries : checksum_entry_crate.Vector) return String;
-   function pkg_checksum_hash_blake2  (entries : checksum_entry_crate.Vector) return String;
+   function pkg_checksum_hash_blake2b (entries : checksum_entry_crate.Vector) return String;
    function pkg_checksum_hash_blake2s (entries : checksum_entry_crate.Vector) return String;
 
    function pkg_checksum_hash_file         (fd : Unix.File_Descriptor;
                                             checksum_type : T_checksum_type) return String;
    function pkg_checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String;
-   function pkg_checksum_hash_blake2_file  (fd : Unix.File_Descriptor) return String;
+   function pkg_checksum_hash_blake2b_file  (fd : Unix.File_Descriptor) return String;
    function pkg_checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String;
 
    function pkg_checksum_encode        (plain : String;
@@ -56,7 +56,11 @@ private
    function pkg_checksum_encode_base32 (plain : String) return String;
    function pkg_checksum_encode_hex    (plain : String) return String;
 
-   function pkg_checksum_hash_sha256_bulk (plain : String) return String;
+   function pkg_checksum_hash_bulk         (plain : String;
+                                            checksum_type : T_checksum_type) return String;
+   function pkg_checksum_hash_sha256_bulk  (plain : String) return String;
+   function pkg_checksum_hash_blake2b_bulk (plain : String) return String;
+   function pkg_checksum_hash_blake2s_bulk (plain : String) return String;
 
 
 end Core.Checksum;

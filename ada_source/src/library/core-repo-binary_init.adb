@@ -4,6 +4,7 @@
 
 with Ada.Directories;
 with Interfaces.C.Strings;
+with SQLite;
 
 package body Core.Repo.Binary_Init is
 
@@ -33,11 +34,20 @@ package body Core.Repo.Binary_Init is
       end if;
 
       declare
-         path := DIR.Containing_Directory (db_filename);
-         arg1 : IC.Strings.chars_ptr := sqlite_h.sqlite3_value_text (argv (1))
+         path : String := DIR.Containing_Directory (db_filename);
+         arg1 : IC.Strings.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
          fpath : constant String := path & "/" & IC.Strings.Value (arg1);
       begin
          if Unix.valid_permissions (fpath, (flag_read => True, others => False)) then
+            declare
+               cksum : String := Checksum.pkg_checksum_file (fpath, PKG_HASH_TYPE_SHA256_HEX);
+            begin
+               if cksum = arg1 then
+                  sqlite_h.sqlite3_result_int (context, IC.int (1));
+               else
+                  sqlite_h.sqlite3_result_int (context, IC.int (0));
+               end if;
+            end;
          else
             sqlite_h.sqlite3_result_int (context, IC.int (0));
          end if;

@@ -4,6 +4,7 @@
 --  with Ada.Streams.Stream_IO;
 with Interfaces;
 with ssl;
+with blake2;
 
 with Core.Event;
 with Core.Utilities;
@@ -190,15 +191,50 @@ package body Core.Checksum is
       return ssl.sha256_final (sign_ctx'Unchecked_Access);
    end pkg_checksum_hash_sha256_file;
 
+
    --------------------------------------------------------------------
-   --  pkg_checksum_hash_blake2
+   --  pkg_checksum_hash_blake2b
    --------------------------------------------------------------------
-   function pkg_checksum_hash_blake2 (entries : checksum_entry_crate.Vector) return String
-        is
+   function pkg_checksum_hash_blake2b (entries : checksum_entry_crate.Vector) return String
+   is
+      procedure add (position : checksum_entry_crate.Cursor);
+
+      sign_ctx : aliased blake2.blake2b_state;
+
+      procedure add (position : checksum_entry_crate.Cursor)
+      is
+         item : pkg_checksum_entry renames checksum_entry_crate.Element (position);
+      begin
+         blake2.blake2b_update (sign_ctx'Unchecked_Access, USS (item.field));
+         blake2.blake2b_update (sign_ctx'Unchecked_Access, USS (item.value));
+      end add;
    begin
-      --  TODO:
-      return "";
-   end pkg_checksum_hash_blake2;
+      blake2.blake2b_init (sign_ctx'Unchecked_Access);
+      entries.Iterate (add'Access);
+      return blake2.blake2b_final (sign_ctx'Unchecked_Access);
+   end pkg_checksum_hash_blake2b;
+
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_hash_blake2b_file
+   --------------------------------------------------------------------
+   function pkg_checksum_hash_blake2b_file  (fd : Unix.File_Descriptor) return String
+   is
+      sign_ctx   : aliased blake2.blake2b_state;
+      chunk_size : constant Natural := 16 * 1024;
+   begin
+      blake2.blake2b_init (sign_ctx'Unchecked_Access);
+      loop
+         declare
+            chunk : constant String := Unix.read_fd (fd, chunk_size);
+         begin
+            exit when chunk'Length = 0;
+            blake2.blake2b_update (sign_ctx'Unchecked_Access, chunk);
+         end;
+      end loop;
+      return blake2.blake2b_final (sign_ctx'Unchecked_Access);
+   end pkg_checksum_hash_blake2b_file;
 
 
    --------------------------------------------------------------------
@@ -206,34 +242,73 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function pkg_checksum_hash_blake2s (entries : checksum_entry_crate.Vector) return String
    is
+      procedure add (position : checksum_entry_crate.Cursor);
+
+      sign_ctx : aliased blake2.blake2s_state;
+
+      procedure add (position : checksum_entry_crate.Cursor)
+      is
+         item : pkg_checksum_entry renames checksum_entry_crate.Element (position);
+      begin
+         blake2.blake2s_update (sign_ctx'Unchecked_Access, USS (item.field));
+         blake2.blake2s_update (sign_ctx'Unchecked_Access, USS (item.value));
+      end add;
    begin
-      --  TODO:
-      return "";
+      blake2.blake2s_init (sign_ctx'Unchecked_Access);
+      entries.Iterate (add'Access);
+      return blake2.blake2s_final (sign_ctx'Unchecked_Access);
    end pkg_checksum_hash_blake2s;
 
 
    --------------------------------------------------------------------
-   --  pkg_checksum_hash_blake2_file
-   --------------------------------------------------------------------
-   function pkg_checksum_hash_blake2_file  (fd : Unix.File_Descriptor) return String is
-   begin
-      --  TODO:
-      return "";
-   end pkg_checksum_hash_blake2_file;
-
-
-   --------------------------------------------------------------------
    --  pkg_checksum_hash_blake2s_file
    --------------------------------------------------------------------
-   function pkg_checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String is
+   function pkg_checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String
+   is
+      sign_ctx   : aliased blake2.blake2s_state;
+      chunk_size : constant Natural := 16 * 1024;
    begin
-      --  TODO:
-      return "";
+      blake2.blake2s_init (sign_ctx'Unchecked_Access);
+      loop
+         declare
+            chunk : constant String := Unix.read_fd (fd, chunk_size);
+         begin
+            exit when chunk'Length = 0;
+            blake2.blake2s_update (sign_ctx'Unchecked_Access, chunk);
+         end;
+      end loop;
+      return blake2.blake2s_final (sign_ctx'Unchecked_Access);
    end pkg_checksum_hash_blake2s_file;
 
 
    --------------------------------------------------------------------
-   --  pkg_checksum_hash_blake2s_file
+   --  pkg_checksum_hash_blake2b_bulk
+   --------------------------------------------------------------------
+   function pkg_checksum_hash_blake2b_bulk (plain : String) return String
+   is
+      sign_ctx : aliased blake2.blake2b_state;
+   begin
+      blake2.blake2b_init (sign_ctx'Unchecked_Access);
+      blake2.blake2b_update (sign_ctx'Unchecked_Access, plain);
+      return blake2.blake2b_final (sign_ctx'Unchecked_Access);
+   end pkg_checksum_hash_blake2b_bulk;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_hash_blake2s_bulk
+   --------------------------------------------------------------------
+   function pkg_checksum_hash_blake2s_bulk (plain : String) return String
+   is
+      sign_ctx : aliased blake2.blake2s_state;
+   begin
+      blake2.blake2s_init (sign_ctx'Unchecked_Access);
+      blake2.blake2s_update (sign_ctx'Unchecked_Access, plain);
+      return blake2.blake2s_final (sign_ctx'Unchecked_Access);
+   end pkg_checksum_hash_blake2s_bulk;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_hash_file
    --------------------------------------------------------------------
    function pkg_checksum_hash_file (fd : Unix.File_Descriptor;
                                     checksum_type : T_checksum_type) return String is
@@ -243,7 +318,7 @@ package body Core.Checksum is
               PKG_HASH_TYPE_SHA256_RAW     |
               PKG_HASH_TYPE_SHA256_HEX     => return pkg_checksum_hash_sha256_file (fd);
          when PKG_HASH_TYPE_BLAKE2_BASE32  |
-              PKG_HASH_TYPE_BLAKE2_RAW     => return pkg_checksum_hash_blake2_file (fd);
+              PKG_HASH_TYPE_BLAKE2_RAW     => return pkg_checksum_hash_blake2b_file (fd);
          when PKG_HASH_TYPE_BLAKE2S_BASE32 |
               PKG_HASH_TYPE_BLAKE2S_RAW    => return pkg_checksum_hash_blake2s_file (fd);
          when PKG_HASH_TYPE_UNKNOWN        => return "";
@@ -368,6 +443,25 @@ package body Core.Checksum is
 
       return result;
    end pkg_checksum_encode_hex;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_hash_bulk
+   --------------------------------------------------------------------
+   function pkg_checksum_hash_bulk (plain : String;  checksum_type : T_checksum_type)
+                                    return String is
+   begin
+      case checksum_type is
+         when PKG_HASH_TYPE_SHA256_BASE32  |
+              PKG_HASH_TYPE_SHA256_HEX     |
+              PKG_HASH_TYPE_SHA256_RAW     => return pkg_checksum_hash_sha256_bulk (plain);
+         when PKG_HASH_TYPE_BLAKE2_BASE32  |
+              PKG_HASH_TYPE_BLAKE2_RAW     => return pkg_checksum_hash_blake2b_bulk (plain);
+         when PKG_HASH_TYPE_BLAKE2S_BASE32 |
+              PKG_HASH_TYPE_BLAKE2S_RAW    => return pkg_checksum_hash_blake2s_bulk (plain);
+         when PKG_HASH_TYPE_UNKNOWN        => return "";
+      end case;
+   end pkg_checksum_hash_bulk;
 
 
 end Core.Checksum;
