@@ -7,7 +7,9 @@ TESTS=	\
 	pkg_add_dir_to_del \
 	pkg_printf \
 	pkg_validation \
-	plist \
+	plist
+
+TESTS2=	checksum
 
 TESTS_SH= \
 	frontend/pkg.sh \
@@ -67,6 +69,8 @@ SRCS=	\
 	$(pkg_add_dir_to_del_OBJS:.o=.c) \
 	$(pkg_validation_OBJS:.o=.c)
 
+SRCS :=	$(checksum_OBJS:.o=.c)
+
 include $(MK)/common.mk
 
 TESTS_SHELL=	$(TESTS_SH:.sh=)
@@ -78,6 +82,7 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/external/klib \
 		@PKG_ATF_C_CFLAGS@ \
 		-DTESTING
 
+LIBRAVENSW=	-L$(top_builddir)/ada_source/libobj -lravensw
 LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
 LIBREPO_PIC=	-L$(top_builddir)/libpkg/repo/binary -lrepo-binary_pic
 SQLITE_PIC=	-L$(top_builddir)/external/sqlite -lsqlite_pic
@@ -96,29 +101,47 @@ LIBS+=		-lpicosat_pic
 LIBS+=		-lfetch_pic
 LIBS+=		-lssl_pic
 LIBS+=		-lcrypto_pic
-OTHER_LIBS=	-lm -pthread
+OTHER_LIBS+=	-lm -pthread
+
+LIBS2=		${SQLITE_PIC}
+LIBS2+=		-llinenoise_pic
+LIBS2+=		-lucl_pic
+LIBS2+=		-lssl_pic
+LIBS2+=		-lcrypto_pic
+OTHER_LIBS2+=	-pthread
+
 @if HAVE_LIBFTS
 OTHER_LIBS+=	-lfts
+OTHER_LIBS2+=	-lfts
 @endif
 @if HAVE_LIBDL
 OTHER_LIBS+=	-ldl
+OTHER_LIBS2+=	-ldl
 @endif
 @if HAVE_LIBRESOLV
 OTHER_LIBS+=	-lresolv
+OTHER_LIBS2+=	-lresolv
 @endif
 
 @if libabidir == libelf
 LIBS+=		-lelf_pic
+LIBS2+=		-lelf_pic
 @endif
 
 @if system_type == solaris
 OTHER_LIBS+=	-lsocket -lrt -lgen
+OTHER_LIBS2+=	-lsocket -lrt -lgen
 @endif
 
-LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBREPO_PIC) -lpkg_pic $(LIBS) $(OTHER_LIBS)
+LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBREPO_PIC) $(LIBS) $(OTHER_LIBS)
 LOCAL_LDFLAGS+=	@PKG_ATF_C_LDFLAGS@ @PKG_ATF_C_LIBS@
+LOCAL_LDFLAGS2= $(LIBRAVENSW) $(LIBS2) $(OTHER_LIBS2)
 
-all: $(TESTS) Kyuafile ${TESTS_SHELL} frontend/Kyuafile
+# all: $(TESTS) Kyuafile ${TESTS_SHELL} frontend/Kyuafile
+all: $(TESTS2) Kyuafile2
+
+$(TESTS2): $(OBJS)
+	$(CC) -o $@ $($@_OBJS) $(LDFLAGS) $(LOCAL_LDFLAGS2)
 
 $(TESTS): $(OBJS)
 	$(CC) -o $@ $($@_OBJS) $(LDFLAGS) $(LOCAL_LDFLAGS)
@@ -140,6 +163,14 @@ Kyuafile: $(TESTS)
 		echo "atf_test_program{name='$$p'}" >> $@ ; \
 	done
 	@echo 'include("frontend/Kyuafile")' >> $@
+
+Kyuafile2: $(TESTS2)
+	@echo "Generating $@"
+	@echo 'syntax(2)' > $@
+	@echo 'test_suite("ravensw")' >> $@
+	@for p in $(TESTS2); do \
+		echo "atf_test_program{name='$$p'}" >> $@ ; \
+	done
 
 frontend/Kyuafile: $(TESTS_SHELL)
 	@echo "Generating $@"
