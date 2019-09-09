@@ -11,4 +11,7 @@ package Core.Utilities is
    --  Converts an 8-bit character to a 2-digit lower-case hex string
    function char2hex (quattro : Character) return hexrep;
 
+   --  String leading forward slash if it exists
+   function relative_path (input_path : String) return String;
+
 end Core.Utilities;

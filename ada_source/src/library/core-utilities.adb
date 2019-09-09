@@ -112,4 +112,21 @@ package body Core.Utilities is
       return result;
    end char2hex;
 
+
+   --------------------------------------------------------------------
+   --  relative_path
+   --------------------------------------------------------------------
+   function relative_path (input_path : String) return String is
+   begin
+      if input_path (input_path'First) = '/' then
+         if input_path'Length = 1 then
+            return "";
+         else
+            return input_path (input_path'First + 1 .. input_path'Last);
+         end if;
+      else
+         return input_path;
+      end if;
+   end relative_path;
+
 end Core.Utilities;

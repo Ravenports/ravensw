@@ -143,6 +143,8 @@ package Core.Unix is
 
    function stat_ok (path : String; sb : struct_stat_Access) return Boolean;
 
+   function lstat_ok (path : String; sb : struct_stat_Access) return Boolean;
+
    function last_error_ACCESS return Boolean;
 
    function last_error_NOENT return Boolean;
@@ -159,6 +161,11 @@ package Core.Unix is
                              mod_time : T_epochtime);
 
    function read_fd (fd : File_Descriptor; max_bytes : Natural) return String;
+
+   function readlink (path : String) return String;
+   function readlink (fd : File_Descriptor; relative_path : String) return String;
+
+   function is_link (sb : struct_stat) return Boolean;
 
 private
 
@@ -209,16 +216,21 @@ private
    function C_fnmatch (pattern, teststring : IC.Strings.chars_ptr; flags : IC.int) return IC.int;
    pragma Import (C, C_fnmatch, "fnmatch");
 
-   function C_lstat
+   function C_lstatat
      (dfd  : IC.int;
       path : IC.Strings.chars_ptr;
       sb   : struct_stat_Access) return IC.int;
-   pragma Import (C, C_lstat, "port_lstatat");
+   pragma Import (C, C_lstatat, "port_lstatat");
 
    function C_stat
      (path : IC.Strings.chars_ptr;
       sb   : struct_stat_Access) return IC.int;
    pragma Import (C, C_stat, "stat");
+
+   function C_lstat
+     (path : IC.Strings.chars_ptr;
+      sb   : struct_stat_Access) return IC.int;
+   pragma Import (C, C_lstat, "lstat");
 
    function C_faccessat_readable
      (dfd  : IC.int;
@@ -271,5 +283,19 @@ private
    function C_read (fd : File_Descriptor; buf : access IC.unsigned_char; nbytes : IC.size_t)
                     return IC.Extensions.long_long;
    pragma Import (C, C_read, "read");
+
+   function C_readlink (path   : IC.Strings.chars_ptr;
+                        buf    : access IC.unsigned_char;
+                        bufsiz : IC.size_t) return IC.Extensions.long_long;
+   pragma Import (C, C_readlink, "readlink");
+
+   function C_readlinkat (fd     : File_Descriptor;
+                          path   : IC.Strings.chars_ptr;
+                          buf    : access IC.unsigned_char;
+                          bufsiz : IC.size_t) return IC.Extensions.long_long;
+   pragma Import (C, C_readlinkat, "port_readlinkat");
+
+   function C_is_link  (sb : struct_stat) return IC.int;
+   pragma Import (C, C_is_link, "is_link");
 
 end Core.Unix;

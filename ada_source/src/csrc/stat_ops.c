@@ -14,6 +14,7 @@
 #ifdef _WIN32
 #define S_IWGRP 0
 #define S_IWOTH 0
+#define S_ISLNK
 #endif
 
 
@@ -50,3 +51,10 @@ get_mtime (struct stat sb)
 {
   return sb.st_mtime;
 }
+
+int
+is_link (struct stat sb)
+{
+  return S_ISLNK(sb.st_mode);
+}
+

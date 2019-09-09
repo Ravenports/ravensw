@@ -258,9 +258,9 @@ package body Core.Unix is
       result       : IC.int;
    begin
       c_path := IC.Strings.New_String (path);
-      result := C_lstat (dfd  => IC.int (dfd),
-                         path => c_path,
-                         sb   => sb);
+      result := C_lstatat (dfd  => IC.int (dfd),
+                           path => c_path,
+                           sb   => sb);
       IC.Strings.Free (c_path);
       return success (result);
    end lstatat;
@@ -337,6 +337,22 @@ package body Core.Unix is
       IC.Strings.Free (c_path);
       return (res = IC.int (0));
    end stat_ok;
+
+
+   --------------------------------------------------------------------
+   --  lstat_ok
+   --------------------------------------------------------------------
+   function lstat_ok (path : String; sb : struct_stat_Access) return Boolean
+   is
+      use type IC.int;
+      c_path : IC.Strings.chars_ptr;
+      res : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      res := C_lstat (c_path, sb);
+      IC.Strings.Free (c_path);
+      return (res = IC.int (0));
+   end lstat_ok;
 
 
    --------------------------------------------------------------------
@@ -475,5 +491,68 @@ package body Core.Unix is
          end;
       end if;
    end read_fd;
+
+
+   --------------------------------------------------------------------
+   --  readlink #1
+   --------------------------------------------------------------------
+   function readlink (path : String) return String
+   is
+      bufsiz : constant IC.size_t := 1024;
+      buffer : array (1 .. bufsiz) of aliased IC.unsigned_char;
+      c_path : IC.Strings.chars_ptr;
+      res    : IC.Extensions.long_long;
+   begin
+      c_path := IC.Strings.New_String (path);
+      res := C_readlink (c_path, buffer (1)'Access, bufsiz);
+      IC.Strings.Free (c_path);
+      declare
+         size   : constant Integer := Integer (res);
+         result : String (1 .. size);
+      begin
+         for x in 1 .. size loop
+            result (x) := Character'Val (buffer (1));
+         end loop;
+         return result;
+      end;
+   end readlink;
+
+
+   --------------------------------------------------------------------
+   --  readlink #2
+   --------------------------------------------------------------------
+   function readlink (fd : File_Descriptor; relative_path : String) return String
+   is
+      bufsiz : constant IC.size_t := 1024;
+      buffer : array (1 .. bufsiz) of aliased IC.unsigned_char;
+      c_path : IC.Strings.chars_ptr;
+      res    : IC.Extensions.long_long;
+   begin
+      c_path := IC.Strings.New_String (relative_path);
+      res := C_readlinkat (fd, c_path, buffer (1)'Access, bufsiz);
+      IC.Strings.Free (c_path);
+      declare
+         size   : constant Integer := Integer (res);
+         result : String (1 .. size);
+      begin
+         for x in 1 .. size loop
+            result (x) := Character'Val (buffer (1));
+         end loop;
+         return result;
+      end;
+   end readlink;
+
+
+   --------------------------------------------------------------------
+   --  is_link
+   --------------------------------------------------------------------
+   function is_link (sb : struct_stat) return Boolean
+   is
+      use type IC.int;
+      res : IC.int;
+   begin
+      res := C_is_link (sb);
+      return (res = IC.int (1));
+   end is_link;
 
 end Core.Unix;

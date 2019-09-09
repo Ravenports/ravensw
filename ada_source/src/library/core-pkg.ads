@@ -318,6 +318,7 @@ package Core.Pkg is
        PKG_HASH_TYPE_BLAKE2S_BASE32,
        PKG_HASH_TYPE_BLAKE2S_RAW,
        PKG_HASH_TYPE_UNKNOWN);
+   pragma Convention (C, T_checksum_type);
 
    type T_pubkey_Type is
      (rsa);

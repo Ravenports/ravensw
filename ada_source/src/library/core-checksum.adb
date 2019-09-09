@@ -1,7 +1,6 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
---  with Ada.Streams.Stream_IO;
 with Interfaces;
 with ssl;
 with blake2;
@@ -12,7 +11,6 @@ with Core.Utilities;
 package body Core.Checksum is
 
    package ITF renames Interfaces;
-   --  package SIO renames Ada.Streams.Stream_IO;
 
    --------------------------------------------------------------------
    --  pkg_checksum_type_from_string
@@ -463,5 +461,206 @@ package body Core.Checksum is
       end case;
    end pkg_checksum_hash_bulk;
 
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_fileat
+   --------------------------------------------------------------------
+   function pkg_checksum_fileat
+     (rootfd        : Unix.File_Descriptor;
+      path          : String;
+      checksum_type : T_checksum_type)
+      return String
+   is
+      fd : Unix.File_Descriptor;
+   begin
+      fd := Unix.open_file (dirfd         => rootfd,
+                            relative_path => path,
+                            flags         => (RDONLY => True, others => False));
+      if not Unix.file_connected (fd) then
+         Event.pkg_emit_errno
+           (SUS ("pkg_checksum_fileat/open"), SUS ("rootfd, " & path), Unix.errno);
+         return "";
+      end if;
+
+      declare
+         result : constant String := pkg_checksum_fd (fd, checksum_type);
+      begin
+         if not Unix.close_file (fd) then
+            Event.pkg_emit_errno
+              (SUS ("pkg_checksum_fileat/close"), SUS ("fd"), Unix.errno);
+         end if;
+         return result;
+      end;
+   end pkg_checksum_fileat;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_symlink
+   --------------------------------------------------------------------
+   function pkg_checksum_symlink (path : String; checksum_type : T_checksum_type) return String
+   is
+      link_path : String := Unix.readlink (path);
+   begin
+      if IsBlank (link_path) then
+         Event.pkg_emit_errno (SUS ("pkg_checksum_symlink"), SUS (path), Unix.errno);
+         return link_path;
+      end if;
+      return pkg_checksum_symlink_readlink (link_path, checksum_type);
+   end pkg_checksum_symlink;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_symlinkat
+   --------------------------------------------------------------------
+   function pkg_checksum_symlinkat
+     (fd            : Unix.File_Descriptor;
+      relative_path : String;
+      checksum_type : T_checksum_type) return String
+   is
+      link_path : String := Unix.readlink (fd, relative_path);
+   begin
+      if IsBlank (link_path) then
+         Event.pkg_emit_errno (SUS ("pkg_checksum_symlinkat"),
+                               SUS ("fd, " & relative_path), Unix.errno);
+         return link_path;
+      end if;
+      return pkg_checksum_symlink_readlink (link_path, checksum_type);
+   end pkg_checksum_symlinkat;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_data
+   --------------------------------------------------------------------
+   function pkg_checksum_data (instr : String;  checksum_type : T_checksum_type) return String is
+   begin
+      if instr'Length = 0 then
+         return "";
+      end if;
+
+      return pkg_checksum_encode
+        (plain         => pkg_checksum_hash_bulk (instr, checksum_type),
+         checksum_type => checksum_type);
+   end pkg_checksum_data;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_symlink_readlink
+   --------------------------------------------------------------------
+   function pkg_checksum_symlink_readlink
+     (link_path     : String;
+      checksum_type : T_checksum_type) return String is
+   begin
+      return pkg_checksum_data (Utilities.relative_path (link_path), checksum_type);
+   end pkg_checksum_symlink_readlink;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_file_get_type
+   --------------------------------------------------------------------
+   function pkg_checksum_file_get_type (cksum : String) return T_checksum_type
+   is
+      --  <hashtype>$<hash>
+   begin
+      if not contains (cksum, PKG_CKSUM_SEPARATOR) then
+         return PKG_HASH_TYPE_UNKNOWN;
+      end if;
+      return pkg_checksum_get_type_helper (specific_field (cksum, 1, PKG_CKSUM_SEPARATOR));
+   end pkg_checksum_file_get_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_get_type
+   --------------------------------------------------------------------
+   function pkg_checksum_get_type (cksum : String) return T_checksum_type
+   is
+      --  <version>$<hashtype>$<hash>
+   begin
+      if count_char (cksum, PKG_CKSUM_SEPARATOR (1)) /= 2 then
+         return PKG_HASH_TYPE_UNKNOWN;
+      end if;
+      return pkg_checksum_get_type_helper (specific_field (cksum, 2, PKG_CKSUM_SEPARATOR));
+   end pkg_checksum_get_type;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_get_type_helper
+   --------------------------------------------------------------------
+   function pkg_checksum_get_type_helper (frag : String) return T_checksum_type is
+   begin
+      case Integer'Value (frag) is
+         when 0 => return PKG_HASH_TYPE_SHA256_BASE32;
+         when 1 => return PKG_HASH_TYPE_SHA256_HEX;
+         when 2 => return PKG_HASH_TYPE_BLAKE2_BASE32;
+         when 3 => return PKG_HASH_TYPE_SHA256_RAW;
+         when 4 => return PKG_HASH_TYPE_BLAKE2_RAW;
+         when 5 => return PKG_HASH_TYPE_BLAKE2S_BASE32;
+         when 6 => return PKG_HASH_TYPE_BLAKE2S_RAW;
+         when others => return PKG_HASH_TYPE_UNKNOWN;
+      end case;
+   exception
+      when others =>
+         return PKG_HASH_TYPE_UNKNOWN;
+   end pkg_checksum_get_type_helper;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_validate_file
+   --------------------------------------------------------------------
+   function pkg_checksum_validate_file (path : String; sum : String) return Boolean
+   is
+      checksum_type : T_checksum_type;
+      sum_txt       : Text;
+      newsum_txt    : Text;
+      sb            : aliased Unix.struct_stat;
+   begin
+      checksum_type := pkg_checksum_file_get_type (sum);
+      case checksum_type is
+         when PKG_HASH_TYPE_UNKNOWN =>
+            checksum_type := PKG_HASH_TYPE_SHA256_HEX;
+            sum_txt := SUS (sum);
+         when others =>
+            sum_txt := SUS (specific_field (sum, 2, PKG_CKSUM_SEPARATOR));
+      end case;
+
+      if not Unix.lstat_ok (path, sb'Unchecked_Access) then
+         return False;
+      end if;
+
+      if Unix.is_link (sb) then
+         newsum_txt := SUS (pkg_checksum_symlink (path, checksum_type));
+      else
+         newsum_txt := SUS (pkg_checksum_file (path, checksum_type));
+      end if;
+
+      return equivalent (newsum_txt, newsum_txt);
+   end pkg_checksum_validate_file;
+
+
+   --------------------------------------------------------------------
+   --  pkg_checksum_generate_file
+   --------------------------------------------------------------------
+   function pkg_checksum_generate_file (path : String; checksum_type : T_checksum_type)
+                                        return String
+   is
+      sb      : aliased Unix.struct_stat;
+      sum_txt : Text;
+   begin
+      if not Unix.lstat_ok (path, sb'Unchecked_Access) then
+         Event.pkg_emit_errno (SUS ("pkg_checksum_generate_file/lstat"),
+                               SUS (path), Unix.errno);
+         return "";
+      end if;
+      if Unix.is_link (sb) then
+         sum_txt := SUS (pkg_checksum_symlink (path, checksum_type));
+      else
+         sum_txt := SUS (pkg_checksum_file (path, checksum_type));
+      end if;
+
+      if IsBlank (sum_txt) then
+         return "";
+      end if;
+
+      return int2str (T_checksum_type'Pos (checksum_type)) & PKG_CKSUM_SEPARATOR & USS (sum_txt);
+   end pkg_checksum_generate_file;
 
 end Core.Checksum;

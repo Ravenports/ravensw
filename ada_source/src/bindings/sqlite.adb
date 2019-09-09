@@ -455,7 +455,7 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_db_filename
    --------------------------------------------------------------------
-   procedure get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String
+   function get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String
    is
       zdbname : ICS.chars_ptr;
       res     : ICS.chars_ptr;
