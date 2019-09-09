@@ -9,6 +9,7 @@ TESTS=	\
 	pkg_validation \
 	plist
 
+TESTS:=
 TESTS2=	checksum
 
 TESTS_SH= \
@@ -82,7 +83,7 @@ LOCAL_CFLAGS=	-I$(top_srcdir)/external/klib \
 		@PKG_ATF_C_CFLAGS@ \
 		-DTESTING
 
-LIBRAVENSW=	-L$(top_builddir)/ada_source/libobj -lravensw
+LIBRAVENSW=	-L$(top_builddir)/ada_source/libobj -lravensw -Wl,-rpath,$(top_builddir)/ada_source/libobj
 LIBPKG_PIC=	-L$(top_builddir)/libpkg -lpkg_pic
 LIBREPO_PIC=	-L$(top_builddir)/libpkg/repo/binary -lrepo-binary_pic
 SQLITE_PIC=	-L$(top_builddir)/external/sqlite -lsqlite_pic
@@ -108,7 +109,7 @@ LIBS2+=		-llinenoise_pic
 LIBS2+=		-lucl_pic
 LIBS2+=		-lssl_pic
 LIBS2+=		-lcrypto_pic
-OTHER_LIBS2+=	-pthread
+OTHER_LIBS2+=	-lm -pthread
 
 @if HAVE_LIBFTS
 OTHER_LIBS+=	-lfts
@@ -153,7 +154,7 @@ lib/pkg_printf.c:
 	install -m 755 $< $@
 
 clean:
-	rm -f lib/pkg_printf.c $(OBJS) $(TESTS) $(TESTS_SHELL) Kyuafile frontend/Kyuafile
+	rm -f lib/pkg_printf.c $(OBJS) $(TESTS) $(TESTS2) $(TESTS_SHELL) Kyuafile frontend/Kyuafile
 
 Kyuafile: $(TESTS)
 	@echo "Generating $@"

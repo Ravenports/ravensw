@@ -5,7 +5,7 @@ project Lib4Atf is
    for Languages use ("Ada", "C");
    for Library_Name use "ravensw";
    for Library_Dir use "libobj";
-   for Library_Kind use "static";
+   for Library_Kind use "dynamic";
    for Externally_Built use "False";
 
    package Compiler is
