@@ -1,10 +1,12 @@
 /*
  * This file is covered by the Internet Software Consortium (ISC) License
- * Reference: ../License.txt
+ * Reference: ../../License.txt
  */
 
 #ifndef _WIN32
+#include <unistd.h>
 #include <sqlite3.h>
+#include "sqlite3_interface.h"
 
 void
 pkgdb_syscall_overload(void)
@@ -16,7 +18,7 @@ pkgdb_syscall_overload(void)
 	vfs->xSetSystemCall(vfs, "access", (sqlite3_syscall_ptr)vfs_dbdir_access);
 	vfs->xSetSystemCall(vfs, "stat", (sqlite3_syscall_ptr)vfs_dbdir_stat);
 	vfs->xSetSystemCall(vfs, "lstat", (sqlite3_syscall_ptr)vfs_dbdir_lstat);
-	vfs->xSetSystemCall(vfs, "unlink", (sqlite3_syscall_ptr)vgs_dbdir_unlink);
+	vfs->xSetSystemCall(vfs, "unlink", (sqlite3_syscall_ptr)vfs_dbdir_unlink);
 	vfs->xSetSystemCall(vfs, "mkdir", (sqlite3_syscall_ptr)vfs_dbdir_mkdir);
 }
 #endif

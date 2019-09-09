@@ -8,5 +8,9 @@ project Lib4Atf is
    for Library_Kind use "static";
    for Externally_Built use "False";
 
+   package Compiler is
+      for Switches ("c") use ("-I../../external/sqlite");
+   end Compiler;
+
 end Lib4Atf;
 

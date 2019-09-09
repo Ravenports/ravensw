@@ -139,7 +139,7 @@ port_unlinkat(int fd, const char *path, int flag)
 	return(ret);
 }
 
-int port_lstatat (int fd, const char *path, struct stat *buf)
+int port_lstatat (int fd, const char *path, struct stat *sb)
 {
   return fstatat(fd, path, sb, AT_SYMLINK_NOFOLLOW);
 }
