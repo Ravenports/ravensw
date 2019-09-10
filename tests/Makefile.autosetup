@@ -70,7 +70,7 @@ SRCS=	\
 	$(pkg_add_dir_to_del_OBJS:.o=.c) \
 	$(pkg_validation_OBJS:.o=.c)
 
-SRCS :=	$(checksum_OBJS:.o=.c)
+SRCS:=	$(checksum_OBJS:.o=.c)
 
 include $(MK)/common.mk
 
@@ -137,6 +137,7 @@ OTHER_LIBS2+=	-lsocket -lrt -lgen
 LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBREPO_PIC) $(LIBS) $(OTHER_LIBS)
 LOCAL_LDFLAGS+=	@PKG_ATF_C_LDFLAGS@ @PKG_ATF_C_LIBS@
 LOCAL_LDFLAGS2= $(LIBRAVENSW) $(LIBS2) $(OTHER_LIBS2)
+LOCAL_LDFLAGS2+= @PKG_ATF_C_LDFLAGS@ @PKG_ATF_C_LIBS@
 
 # all: $(TESTS) Kyuafile ${TESTS_SHELL} frontend/Kyuafile
 all: $(TESTS2) Kyuafile2
