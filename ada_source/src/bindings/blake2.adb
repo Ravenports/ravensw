@@ -11,7 +11,7 @@ package body blake2 is
    is
       res : IC.int;
    begin
-      res := C_blake2b_init (b2b, BLAKE2B_BLOCKBYTES);
+      res := C_blake2b_init (b2b, BLAKE2B_OUTBYTES);
    end blake2b_init;
 
 
@@ -22,7 +22,7 @@ package body blake2 is
    is
       res : IC.int;
    begin
-      res := C_blake2s_init (b2b, BLAKE2S_BLOCKBYTES);
+      res := C_blake2s_init (b2b, BLAKE2S_OUTBYTES);
    end blake2s_init;
 
 
@@ -37,7 +37,7 @@ package body blake2 is
       for x in plain'Range loop
          buffer (x) := IC.unsigned_char (Character'Pos (plain (x)));
       end loop;
-      res := C_blake2b_update (b2b, buffer (buffer'Last)'Access, plain'Length);
+      res := C_blake2b_update (b2b, buffer (buffer'First)'Access, plain'Length);
    end blake2b_update;
 
 
@@ -52,7 +52,7 @@ package body blake2 is
       for x in plain'Range loop
          buffer (x) := IC.unsigned_char (Character'Pos (plain (x)));
       end loop;
-      res := C_blake2s_update (b2b, buffer (buffer'Last)'Access, plain'Length);
+      res := C_blake2s_update (b2b, buffer (buffer'First)'Access, plain'Length);
    end blake2s_update;
 
 

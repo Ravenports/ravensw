@@ -7,9 +7,11 @@ package blake2 is
 
    type blake2b_state is private;
    type blake2b_state_Access is access all blake2b_state;
+   pragma Convention (C, blake2b_state_Access);
 
    type blake2s_state is private;
    type blake2s_state_Access is access all blake2s_state;
+   pragma Convention (C, blake2s_state_Access);
 
    subtype blake2b_hash is String (1 .. 64);
    subtype blake2s_hash is String (1 .. 32);
@@ -25,33 +27,35 @@ package blake2 is
 
 private
 
-   package IC  renames Interfaces.C;
+   package IC renames Interfaces.C;
 
-   BLAKE2B_BLOCKBYTES : constant IC.size_t := 128;
-   BLAKE2B_OUTBYTES   : constant IC.size_t := 64;
+   BLAKE2B_BLOCKBYTES   : constant IC.size_t := 128;
+   BLAKE2B_BLOCKBYTESx2 : constant IC.size_t := 256;
+   BLAKE2B_OUTBYTES     : constant IC.size_t := 64;
 
-   BLAKE2S_BLOCKBYTES : constant IC.size_t := 64;
-   BLAKE2S_OUTBYTES   : constant IC.size_t := 32;
+   BLAKE2S_BLOCKBYTES   : constant IC.size_t := 64;
+   BLAKE2S_BLOCKBYTESx2 : constant IC.size_t := 128;
+   BLAKE2S_OUTBYTES     : constant IC.size_t := 32;
 
-   type blake2b_tf  is array (1 .. 2) of IC.Extensions.unsigned_long_long;
-   type blake2b_h   is array (1 .. 8) of IC.Extensions.unsigned_long_long;
-   type blake2b_buf is array (1 .. BLAKE2B_BLOCKBYTES) of IC.unsigned_char;
+   type uint32 is mod 2 ** 32;
+   type uint64 is mod 2 ** 64;
+   type blake2b_tf  is array (1 .. 2) of uint64;
+   type blake2b_h   is array (1 .. 8) of uint64;
+   type blake2b_buf is array (1 .. BLAKE2B_BLOCKBYTESx2) of IC.unsigned_char;
    type blake2b_state is
       record
          h         : blake2b_h;
          t         : blake2b_tf;
          f         : blake2b_tf;
          buf       : blake2b_buf;
-         buflen    : IC.size_t;
-         outlen    : IC.size_t;
+         buflen    : uint32;
+         outlen    : IC.unsigned_char;
          last_node : IC.unsigned_char;
       end record;
-   pragma Convention (C, blake2b_state);
 
-   type uint32 is mod 2 ** 32;
    type blake2s_tf  is array (1 .. 2) of uint32;
    type blake2s_h   is array (1 .. 8) of uint32;
-   type blake2s_buf is array (1 .. BLAKE2S_BLOCKBYTES) of IC.unsigned_char;
+   type blake2s_buf is array (1 .. BLAKE2S_BLOCKBYTESx2) of IC.unsigned_char;
 
    type blake2s_state is
       record
@@ -59,11 +63,10 @@ private
          t         : blake2s_tf;
          f         : blake2s_tf;
          buf       : blake2s_buf;
-         buflen    : IC.size_t;
-         outlen    : IC.size_t;
+         buflen    : uint32;
+         outlen    : IC.unsigned_char;
          last_node : IC.unsigned_char;
       end record;
-   pragma Convention (C, blake2s_state);
 
    function C_blake2b_init (S : blake2b_state_Access; outlen : IC.size_t) return IC.int;
    pragma Import (C, C_blake2b_init, "blake2b_init");

@@ -350,6 +350,10 @@ package body Core.Checksum is
       type fullbyte is mod 2 ** 8;
       subtype bits5 is Natural range 0 .. 4;
 
+      function SR (number : fullbyte; places : Natural) return fullbyte;
+      function SL (number : fullbyte; places : Natural) return fullbyte;
+      procedure sendout (x : fullbyte);
+
       --  We use here z-base32 encoding described here:
       --  http://philzimmermann.com/docs/human-oriented-base-32-encoding.txt
       b32 : constant String := "ybndrfg8ejkmcpqxot1uwisza345h769";
@@ -363,12 +367,30 @@ package body Core.Checksum is
       x2        : fullbyte;
       remain    : fullbyte;
       remaining : Boolean := False;
+
+      function SR (number : fullbyte; places : Natural) return fullbyte is
+      begin
+         return fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (number), places));
+      end SR;
+
+      function SL (number : fullbyte; places : Natural) return fullbyte is
+      begin
+         return fullbyte (ITF.Shift_Left (ITF.Unsigned_8 (number), places));
+      end SL;
+
+      procedure sendout (x : fullbyte) is
+      begin
+         result (index) := b32 (b32'First + Integer (x and 16#1F#));
+         index := index + 1;
+      end sendout;
+
    begin
       declare
          b : Natural := rawbytes'First;
       begin
          for k in plain'Range loop
             rawbytes (b) := fullbyte (Character'Pos (plain (k)));
+            b := b + 1;
          end loop;
       end;
 
@@ -378,42 +400,34 @@ package body Core.Checksum is
             when 0 =>
                --  8 bits of input and 3 to remain
                x := rawbytes (k);
-               remain := fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (rawbytes (k)), 5));
-               result (index) := b32 (b32'First + Integer (x and 16#1F#));
-               index := index + 1;
+               remain := SR (rawbytes (k), 5);
+               sendout (x);
                remaining := True;
             when 1 =>
                --  11 bits of input, 1 to remain
-               x  := (remain or fullbyte (ITF.Shift_Left (ITF.Unsigned_8 (rawbytes (k)), 3)));
-               x2 := fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (x), 5));
-               result (index) := b32 (b32'First + Integer (x and 16#1F#));
-               index := index + 1;
-               result (index) := b32 (b32'First + Integer (x2 and 16#1F#));
-               index := index + 1;
-               remain := fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (x), 10));
+               x  := (remain or SL (rawbytes (k), 3));
+               x2 := SR (x, 5);
+               sendout (x);
+               sendout (x2);
+               remain := SR (x, 10);
             when 2 =>
                --  9 bits of input, 4 to remain
-               x  := (remain or fullbyte (ITF.Shift_Left (ITF.Unsigned_8 (rawbytes (k)), 1)));
-               result (index) := b32 (b32'First + Integer (x and 16#1F#));
-               index := index + 1;
-               remain := fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (x), 5));
+               x := (remain or SL (rawbytes (k), 1));
+               sendout (x);
+               remain := SR (x, 5);
             when 3 =>
                --  12 bits of input, 2 to remain
-               x  := (remain or fullbyte (ITF.Shift_Left (ITF.Unsigned_8 (rawbytes (k)), 4)));
-               x2 := fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (x), 5));
-               result (index) := b32 (b32'First + Integer (x and 16#1F#));
-               index := index + 1;
-               result (index) := b32 (b32'First + Integer (x2 and 16#1F#));
-               index := index + 1;
-               remain := (fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (x), 10)) and 16#3#);
+               x  := (remain or SL (rawbytes (k), 4));
+               x2 := SR (x, 5);
+               sendout (x);
+               sendout (x2);
+               remain := (SR (x, 10) and 16#3#);
             when 4 =>
                --  10 bits of output, nothing to remain
-               x  := (remain or fullbyte (ITF.Shift_Left (ITF.Unsigned_8 (rawbytes (k)), 2)));
-               x2 := fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (x), 5));
-               result (index) := b32 (b32'First + Integer (x and 16#1F#));
-               index := index + 1;
-               result (index) := b32 (b32'First + Integer (x2 and 16#1F#));
-               index := index + 1;
+               x  := (remain or SL (rawbytes (k), 2));
+               x2 := SR (x, 5);
+               sendout (x);
+               sendout (x2);
                remaining := False;
          end case;
       end loop;
