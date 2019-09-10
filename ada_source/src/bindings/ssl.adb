@@ -29,7 +29,7 @@ package body ssl is
       for x in plain'Range loop
          buffer (x) := IC.unsigned_char (Character'Pos (plain (x)));
       end loop;
-      C_sha256_update (ctx, buffer (buffer'Last)'Access, plain'Length);
+      C_sha256_update (ctx, buffer (buffer'First)'Access, plain'Length);
    end sha256_update;
 
 end ssl;
