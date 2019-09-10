@@ -158,4 +158,19 @@ port_mkdirat(int fd, const char *path, int mode)
   return(ret);
 }
 
+ssize_t
+port_readlinkat(int fd, const char *restrict path, char *restrict buf,
+	   size_t bufsize)
+{
+	int ret;
+
+	if ((ret = file_chdir_lock(fd) != 0))
+		return(ret);
+
+	ret = readlink(path, buf, bufsize);
+
+	file_chdir_unlock(fd);
+	return(ret);
+}
+
 #endif

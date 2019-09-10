@@ -24,9 +24,6 @@ procedure checksum is
    package TIO renames Ada.Text_IO;
    package DIR renames Ada.Directories;
 
-   action_arg : String renames CLI.Argument (1);
-   filename   : String renames CLI.Argument (2);
-   arg3       : String renames CLI.Argument (3);
 
    type action_type is (file, validate, generate, symlink);
 
@@ -44,52 +41,58 @@ begin
       return;
    end if;
 
-   if action_arg = "file" then
-      action := file;
-   elsif action_arg = "validate" then
-      action := validate;
-   elsif action_arg = "generate" then
-      action := generate;
-   elsif action_arg = "symlink" then
-      action := symlink;
-   else
-      TIO.Put_Line ("Wrong first argument. " & usage);
-      return;
-   end if;
+   declare
+      action_arg : String renames CLI.Argument (1);
+      filename   : String renames CLI.Argument (2);
+      arg3       : String renames CLI.Argument (3);
+   begin
+      if action_arg = "file" then
+         action := file;
+      elsif action_arg = "validate" then
+         action := validate;
+      elsif action_arg = "generate" then
+         action := generate;
+      elsif action_arg = "symlink" then
+         action := symlink;
+      else
+         TIO.Put_Line ("Wrong first argument. " & usage);
+         return;
+      end if;
 
-   if not DIR.Exists (filename) then
-      TIO.Put_Line ("filename does not exist.");
-      return;
-   end if;
+      if not DIR.Exists (filename) then
+         TIO.Put_Line ("filename does not exist.");
+         return;
+      end if;
 
-   case action is
-      when symlink | generate | file =>
-         declare
-            number : Integer;
-         begin
-            number := Integer'Value (arg3);
-            if number >= T_checksum_type'Pos (T_checksum_type'Last) and then
-              number <=  T_checksum_type'Pos (T_checksum_type'Last)
-            then
-               hashtype := T_checksum_type'Val (number);
+      case action is
+         when symlink | generate | file =>
+            declare
+               number : Integer;
+            begin
+               number := Integer'Value (arg3);
+               if number >= T_checksum_type'Pos (T_checksum_type'Last) and then
+                 number <=  T_checksum_type'Pos (T_checksum_type'Last)
+               then
+                  hashtype := T_checksum_type'Val (number);
+               end if;
+            exception
+               when others => null;
+            end;
+         when validate =>
+            null;  --  this is a checksum
+      end case;
+
+      case action is
+         when file     => TIO.Put_Line (pkg_checksum_file (filename, hashtype));
+         when symlink  => TIO.Put_Line (pkg_checksum_symlink (filename, hashtype));
+         when generate => TIO.Put_Line (pkg_checksum_generate_file (filename, hashtype));
+         when validate =>
+            if pkg_checksum_validate_file (filename, arg3) then
+               TIO.Put_Line ("checksum matches");
+            else
+               TIO.Put_Line ("invalid checksum");
             end if;
-         exception
-            when others => null;
-         end;
-      when validate =>
-         null;  --  this is a checksum
-   end case;
-
-   case action is
-      when file     => TIO.Put_Line (pkg_checksum_file (filename, hashtype));
-      when symlink  => TIO.Put_Line (pkg_checksum_symlink (filename, hashtype));
-      when generate => TIO.Put_Line (pkg_checksum_generate_file (filename, hashtype));
-      when validate =>
-         if pkg_checksum_validate_file (filename, arg3) then
-            TIO.Put_Line ("checksum matches");
-         else
-            TIO.Put_Line ("invalid checksum");
-         end if;
-   end case;
+      end case;
+   end;
 
 end checksum;

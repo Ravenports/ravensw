@@ -12,7 +12,7 @@ package ssl is
    pragma Convention (C, SHA256_CTX_Access);
 
    procedure sha256_init (ctx : SHA256_CTX_Access);
-   pragma Import (C, sha256_init);
+   pragma Import (C, sha256_init, "SHA256_Init");
 
    function sha256_final (ctx : SHA256_CTX_Access) return SHA256_hash;
 
@@ -35,10 +35,10 @@ private
    pragma Convention (C, SHA256_CTX);
 
    procedure C_sha256_final (ctx : SHA256_CTX_Access; outhash : access IC.unsigned_char);
-   pragma Import (C, C_sha256_final, "sha256_final");
+   pragma Import (C, C_sha256_final, "SHA256_Final");
 
    procedure C_sha256_update (ctx  : SHA256_CTX_Access;
                               data : access IC.unsigned_char;
                               len  : IC.size_t);
-   pragma Import (C, C_sha256_update, "sha256_update");
+   pragma Import (C, C_sha256_update, "SHA256_Update");
 end ssl;
