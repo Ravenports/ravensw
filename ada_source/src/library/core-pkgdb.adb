@@ -1784,12 +1784,12 @@ package body Core.PkgDB is
       --  read access.  if fileowner != 0, require no other read
       --  access and group read access IFF the group ownership == filegroup
 
-      if Unix.bad_perms (fileowner, filegroup, sb) then
+      if Unix.bad_perms (fileowner, filegroup, sb'Unchecked_Access) then
          Event.pkg_emit_error (SUS (path & " permissions too lax"));
          return EPKG_INSECURE;
       end if;
 
-      if Unix.wrong_owner (fileowner, filegroup, sb) then
+      if Unix.wrong_owner (fileowner, filegroup, sb'Unchecked_Access) then
          Event.pkg_emit_error
            (SUS (path & " wrong user or group ownership (expected " &
               int2str (Integer (fileowner)) & "/" & int2str (Integer (filegroup)) & ")"));

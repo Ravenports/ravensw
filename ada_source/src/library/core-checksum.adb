@@ -355,14 +355,14 @@ package body Core.Checksum is
       b32 : constant String := "ybndrfg8ejkmcpqxot1uwisza345h769";
 
       scenario  : bits5;
-      mylast    : Natural := (plain'Length * 8) / 5;
+      mylast    : Natural := (plain'Length * 8 + 4) / 5;
       result    : String (1 .. mylast);
       index     : Natural := result'First;
       rawbytes  : array (0 .. plain'Length - 1) of fullbyte;
       x         : fullbyte;
       x2        : fullbyte;
       remain    : fullbyte;
-      remaining : Boolean;
+      remaining : Boolean := False;
    begin
       declare
          b : Natural := rawbytes'First;
@@ -626,13 +626,13 @@ package body Core.Checksum is
          return False;
       end if;
 
-      if Unix.is_link (sb) then
+      if Unix.is_link (sb'Unchecked_Access) then
          newsum_txt := SUS (pkg_checksum_symlink (path, checksum_type));
       else
          newsum_txt := SUS (pkg_checksum_file (path, checksum_type));
       end if;
 
-      return equivalent (newsum_txt, newsum_txt);
+      return equivalent (newsum_txt, sum_txt);
    end pkg_checksum_validate_file;
 
 
@@ -650,7 +650,7 @@ package body Core.Checksum is
                                SUS (path), Unix.errno);
          return "";
       end if;
-      if Unix.is_link (sb) then
+      if Unix.is_link (sb'Unchecked_Access) then
          sum_txt := SUS (pkg_checksum_symlink (path, checksum_type));
       else
          sum_txt := SUS (pkg_checksum_file (path, checksum_type));

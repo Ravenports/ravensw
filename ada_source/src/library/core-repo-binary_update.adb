@@ -48,11 +48,11 @@ package body Core.Repo.Binary_Update is
          if not realforce then
             if Unix.stat_ok (metapath, rbu_sb'Unchecked_Access) then
                got_meta := True;
-               mtime := Unix.get_mtime (rbu_sb);
+               mtime := Unix.get_mtime (rbu_sb'Unchecked_Access);
             end if;
             if not got_meta then
                if Unix.stat_ok (dbpath, rbu_sb'Unchecked_Access) then
-                  mtime := Unix.get_mtime (rbu_sb);
+                  mtime := Unix.get_mtime (rbu_sb'Unchecked_Access);
                end if;
             end if;
          end if;

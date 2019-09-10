@@ -382,7 +382,8 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  bad_perms
    --------------------------------------------------------------------
-   function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean
+   function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
+      return Boolean
    is
       use type IC.int;
       res : IC.int := C_bad_perms (IC.int (fileowner), IC.int (filegroup), sb);
@@ -394,7 +395,8 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  wrong_owner
    --------------------------------------------------------------------
-   function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean
+   function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
+      return Boolean
    is
       use type IC.int;
       res : IC.int := C_wrong_owner (IC.int (fileowner), IC.int (filegroup), sb);
@@ -434,7 +436,7 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  get_mtime
    --------------------------------------------------------------------
-   function get_mtime (sb : struct_stat) return T_epochtime
+   function get_mtime (sb : struct_stat_Access) return T_epochtime
    is
       res : IC.long;
    begin
@@ -511,7 +513,7 @@ package body Core.Unix is
          result : String (1 .. size);
       begin
          for x in 1 .. size loop
-            result (x) := Character'Val (buffer (1));
+            result (x) := Character'Val (buffer (IC.size_t (x)));
          end loop;
          return result;
       end;
@@ -536,7 +538,7 @@ package body Core.Unix is
          result : String (1 .. size);
       begin
          for x in 1 .. size loop
-            result (x) := Character'Val (buffer (1));
+            result (x) := Character'Val (buffer (IC.size_t (x)));
          end loop;
          return result;
       end;
@@ -546,7 +548,7 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  is_link
    --------------------------------------------------------------------
-   function is_link (sb : struct_stat) return Boolean
+   function is_link (sb : struct_stat_Access) return Boolean
    is
       use type IC.int;
       res : IC.int;

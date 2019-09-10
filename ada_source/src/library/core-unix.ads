@@ -149,12 +149,14 @@ package Core.Unix is
 
    function last_error_NOENT return Boolean;
 
-   function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean;
-   function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat) return Boolean;
+   function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
+                       return Boolean;
+   function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
+                         return Boolean;
 
    function valid_permissions (path : String; permissions : T_Access_Flags) return Boolean;
 
-   function get_mtime (sb : struct_stat) return T_epochtime;
+   function get_mtime (sb : struct_stat_Access) return T_epochtime;
 
    procedure set_file_times (path : String;
                              access_time : T_epochtime;
@@ -165,13 +167,19 @@ package Core.Unix is
    function readlink (path : String) return String;
    function readlink (fd : File_Descriptor; relative_path : String) return String;
 
-   function is_link (sb : struct_stat) return Boolean;
+   function is_link (sb : struct_stat_Access) return Boolean;
 
 private
 
    last_errno : Integer;
 
-   type struct_stat is limited null record;
+   type stat_block is array (1 .. 256) of IC.unsigned_char;
+   type struct_stat is limited
+      record
+         --  sizeof(struct stat) is 128 on DragonFly
+         --  Double that to ensure we allocate enough
+         block : stat_block;
+      end record;
 
    function success (rc : IC.int) return Boolean;
 
@@ -253,16 +261,18 @@ private
    function C_errno_ENOENT return IC.int;
    pragma Import (C, C_errno_ENOENT, "last_error_NOENT");
 
-   function C_bad_perms  (fileowner, filegroup : IC.int; sb : struct_stat) return IC.int;
+   function C_bad_perms  (fileowner, filegroup : IC.int; sb : struct_stat_Access)
+      return IC.int;
    pragma Import (C, C_bad_perms, "bad_perms");
 
-   function C_wrong_owner  (fileowner, filegroup : IC.int; sb : struct_stat) return IC.int;
+   function C_wrong_owner  (fileowner, filegroup : IC.int; sb : struct_stat_Access)
+      return IC.int;
    pragma Import (C, C_wrong_owner, "wrong_owner");
 
    function C_access (path : IC.Strings.chars_ptr; mode : IC.int) return IC.int;
    pragma Import (C, C_access, "access");
 
-   function C_get_mtime (sb : struct_stat) return IC.long;
+   function C_get_mtime (sb : struct_stat_Access) return IC.long;
    pragma Import (C, C_get_mtime, "get_mtime");
 
    type Timeval_Unit is new IC.int;
@@ -295,7 +305,7 @@ private
                           bufsiz : IC.size_t) return IC.Extensions.long_long;
    pragma Import (C, C_readlinkat, "port_readlinkat");
 
-   function C_is_link  (sb : struct_stat) return IC.int;
+   function C_is_link  (sb : struct_stat_Access) return IC.int;
    pragma Import (C, C_is_link, "is_link");
 
 end Core.Unix;

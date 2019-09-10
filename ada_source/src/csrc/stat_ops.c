@@ -19,42 +19,42 @@
 
 
 int
-bad_perms (int fileowner, int filegroup, struct stat sb)
+bad_perms (int fileowner, int filegroup, struct stat *sb)
 {
   if (fileowner == 0) {
-    if ((sb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
+    if ((sb->st_mode & (S_IWGRP|S_IWOTH)) != 0)
       return(1);
   } else {
-    if ((sb.st_mode & S_IWOTH) != 0)
+    if ((sb->st_mode & S_IWOTH) != 0)
       return(1);
-    if (sb.st_gid != filegroup && (sb.st_mode & S_IWGRP) != 0)
+    if (sb->st_gid != filegroup && (sb->st_mode & S_IWGRP) != 0)
       return(1);
   }
   return(0);
 }
 
 int
-wrong_owner (int fileowner, int filegroup, struct stat sb)
+wrong_owner (int fileowner, int filegroup, struct stat *sb)
 {
   if (fileowner == 0) {
-    if (sb.st_uid != fileowner)
+    if (sb->st_uid != fileowner)
       return(1);
   } else {
-    if (sb.st_uid != 0 && sb.st_uid != fileowner && sb.st_gid != filegroup)
+    if (sb->st_uid != 0 && sb->st_uid != fileowner && sb->st_gid != filegroup)
       return(1);
   }
   return(0);
 }
 
 long
-get_mtime (struct stat sb)
+get_mtime (struct stat *sb)
 {
-  return sb.st_mtime;
+  return sb->st_mtime;
 }
 
 int
-is_link (struct stat sb)
+is_link (struct stat *sb)
 {
-  return S_ISLNK(sb.st_mode);
+  return S_ISLNK(sb->st_mode);
 }
 
