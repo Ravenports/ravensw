@@ -88,7 +88,7 @@ package body Core.Checksum is
    function pkg_checksum_file (path : String; checksum_type : T_checksum_type) return String
    is
       fd : Unix.File_Descriptor;
-      R  : Unix.T_Open_Flags := (RDONLY => False, others => True);
+      R  : Unix.T_Open_Flags := (RDONLY => True, others => False);
    begin
       fd := Unix.open_file (path, R);
       if Unix.file_connected (fd) then

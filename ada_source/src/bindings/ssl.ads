@@ -27,14 +27,16 @@ private
 
    type SHA256_CTX is
       record
-         data    : T_sha256_data;
-         datalen : IC.unsigned;
-         bitlen  : IC.Extensions.unsigned_long_long;
-         state   : T_sha256_state;
+         h      : T_sha256_state;
+         Nl     : IC.unsigned;
+         Nh     : IC.unsigned;
+         data   : T_sha256_data;
+         num    : IC.unsigned;
+         md_len : IC.unsigned;
       end record;
    pragma Convention (C, SHA256_CTX);
 
-   procedure C_sha256_final (ctx : SHA256_CTX_Access; outhash : access IC.unsigned_char);
+   procedure C_sha256_final (outhash : access IC.unsigned_char; ctx : SHA256_CTX_Access);
    pragma Import (C, C_sha256_final, "SHA256_Final");
 
    procedure C_sha256_update (ctx  : SHA256_CTX_Access;

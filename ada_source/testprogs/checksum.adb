@@ -70,7 +70,7 @@ begin
                number : Integer;
             begin
                number := Integer'Value (arg3);
-               if number >= T_checksum_type'Pos (T_checksum_type'Last) and then
+               if number >= T_checksum_type'Pos (T_checksum_type'First) and then
                  number <=  T_checksum_type'Pos (T_checksum_type'Last)
                then
                   hashtype := T_checksum_type'Val (number);

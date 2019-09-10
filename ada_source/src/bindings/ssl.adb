@@ -1,7 +1,6 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-
 package body ssl is
 
    --------------------------------------------------------------------
@@ -12,7 +11,7 @@ package body ssl is
       result : SHA256_hash;
       buffer : array (SHA256_hash'Range) of aliased IC.unsigned_char;
    begin
-      C_sha256_final (ctx, buffer (buffer'First)'Access);
+      C_sha256_final (buffer (buffer'First)'Access, ctx);
       for x in SHA256_hash'Range loop
          result (x) := Character'Val (buffer (x));
       end loop;

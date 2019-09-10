@@ -485,7 +485,7 @@ package body Core.Unix is
             result : String (1 .. size);
          begin
             for x in 1 .. size loop
-               result (x) := Character'Val (buffer (1));
+               result (x) := Character'Val (buffer (x));
             end loop;
             return result;
          end;
