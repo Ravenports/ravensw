@@ -94,6 +94,7 @@ package body Core.Deps is
 
       state      : state_state := st_parse_dep_name;
       next_state : state_state := st_parse_dep_name;
+      instrnull  : constant String (1 .. instr'Length + 1) := instr & LAT.NUL;
 
       P : Integer;   --  Index
       C : Integer;   --  Index
@@ -103,7 +104,7 @@ package body Core.Deps is
       --   ==============
       procedure alpha is
       begin
-         case instr (P) is
+         case instrnull (P) is
             when LAT.Space |
                  LAT.NUL =>
                state := st_skip_spaces;
@@ -114,7 +115,7 @@ package body Core.Deps is
                else
                   --  Spaces after the name
                   cur_item := new pkg_dep_formula_item;
-                  cur_item.name := SUS (instr (C .. P));
+                  cur_item.name := SUS (instrnull (C .. P - 1));
                   next_state := st_parse_after_name;
                end if;
 
@@ -123,8 +124,8 @@ package body Core.Deps is
                   state := st_error;
                else
                   cur_item := new pkg_dep_formula_item;
-                  cur_item.name := SUS (instr (C .. P));
-                  next_state := st_parse_after_name;
+                  cur_item.name := SUS (instrnull (C .. P - 1));
+                  state := st_parse_after_name;
                end if;
 
             when LAT.Exclamation .. LAT.Plus_Sign |
@@ -144,7 +145,7 @@ package body Core.Deps is
       --   ==============
       procedure bravo is
       begin
-         case instr (P) is
+         case instrnull (P) is
             when LAT.Comma |
                  LAT.NUL =>
                state := st_parse_comma;
@@ -176,7 +177,7 @@ package body Core.Deps is
       --   ================
       procedure charlie is
       begin
-         case instr (P) is
+         case instrnull (P) is
 
             when LAT.Greater_Than_Sign |
                  LAT.Less_Than_Sign |
@@ -186,10 +187,10 @@ package body Core.Deps is
 
             when others =>
                if P - C = 2 then
-                  if C + 1 > instr'Last then
+                  if C + 1 > instrnull'Last then
                      state := st_error;
                   else
-                     test_op := pkg_deps_string_toop (instr (C .. C + 1));
+                     test_op := pkg_deps_string_toop (instrnull (C .. C + 1));
                      if test_op = VERSION_ANY then
                         state := st_error;
                      else
@@ -197,7 +198,7 @@ package body Core.Deps is
                      end if;
                   end if;
                elsif P - C = 1 then
-                  test_op := pkg_deps_string_toop (instr (C .. C));
+                  test_op := pkg_deps_string_toop (instrnull (C .. C));
                   if test_op = VERSION_ANY then
                      state := st_error;
                   else
@@ -236,7 +237,7 @@ package body Core.Deps is
       is
          use_main : Boolean;
       begin
-         case instr (P) is
+         case instrnull (P) is
             when '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' |
                  LAT.Minus_Sign |
                  LAT.Low_Line |
@@ -245,7 +246,7 @@ package body Core.Deps is
                use_main := False;
 
             when LAT.Comma =>
-               case instr (P + 1) is
+               case instrnull (P + 1) is
                   when '0' .. '9' =>
                      P := P + 1;
                      use_main := False;
@@ -263,7 +264,7 @@ package body Core.Deps is
                declare
                   VI : pkg_dep_version_item;
                begin
-                  VI.version := SUS (instr (C .. P));
+                  VI.version := SUS (instrnull (C .. P - 1));
                   VI.op := cur_op;
                   cur_item.versions.Append (VI);
                end;
@@ -281,7 +282,7 @@ package body Core.Deps is
       --   =============
       procedure golf is
       begin
-         case instr (P) is
+         case instrnull (P) is
             when LAT.Plus_Sign =>
                opt_on := True;
             when others =>
@@ -298,7 +299,7 @@ package body Core.Deps is
       --   ==============
       procedure hotel is
       begin
-         case instr (P) is
+         case instrnull (P) is
             when '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' |
                  LAT.Minus_Sign |
                  LAT.Low_Line =>
@@ -308,7 +309,7 @@ package body Core.Deps is
                   declare
                      OI : pkg_dep_option_item;
                   begin
-                     OI.option := SUS (instr (C .. P));
+                     OI.option := SUS (instrnull (C .. P - 1));
                      OI.active := opt_on;
                      cur_item.options.Append (OI);
                   end;
@@ -365,7 +366,7 @@ package body Core.Deps is
       --   =============
       procedure kilo is
       begin
-         case instr (P) is
+         case instrnull (P) is
             when LAT.Space =>
                P := P + 1;
             when LAT.NUL =>
@@ -382,7 +383,7 @@ package body Core.Deps is
       --   =============
       procedure lima is
       begin
-         Event.pkg_emit_error (SUS ("Cannot parse pkg formula: " & instr));
+         Event.pkg_emit_error (SUS ("Lima: Cannot parse pkg formula: " & instrnull));
          formula.Clear;
          if cur_item /= null then
             delete_formula_item (cur_item);
@@ -393,11 +394,11 @@ package body Core.Deps is
       end lima;
 
    begin
-      P := instr'First;
-      C := instr'First;
+      P := instrnull'First;
+      C := instrnull'First;
 
       loop
-         exit when P > instr'Last;
+         exit when P > instrnull'Last;
 
          case state is
             when st_parse_dep_name        => alpha;
@@ -419,7 +420,7 @@ package body Core.Deps is
       if state /= st_skip_spaces and then
         state /= st_parse_comma
       then
-         Event.pkg_emit_error (SUS ("Cannot parse pkg formula: " & instr));
+         Event.pkg_emit_error (SUS ("Later: Cannot parse pkg formula: " & instr));
          formula.Clear;
       end if;
 
@@ -454,10 +455,13 @@ package body Core.Deps is
    begin
       FI.versions.Iterate (scan_version'Access);
       if last then
-         SU.Append (result, " OR ");
+         SU.Append (result, ")");
+      else
+         SU.Append (result, ") OR ");
       end if;
       return USS (result);
    end pkg_deps_formula_tosql;
+
 
    --------------------------------------------------------------------
    --  pkg_deps_formula_tosql
@@ -553,9 +557,9 @@ package body Core.Deps is
          io : pkg_dep_option_item renames pkg_dep_option_item_crate.Element (io_position);
       begin
          if io.active then
-            SU.Append (result, "+" & USS (io.option));
+            SU.Append (result, " +" & USS (io.option));
          else
-            SU.Append (result, "-" & USS (io.option));
+            SU.Append (result, " -" & USS (io.option));
          end if;
       end scan_item_option;
 

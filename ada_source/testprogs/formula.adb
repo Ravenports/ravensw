@@ -143,8 +143,8 @@ procedure formula is
                if instr = backout then
                   TIO.Put_Line ("PASSED: " & instr);
                else
-                  TIO.Put_Line ("FAILED: " & instr);
-                  TIO.Put_Line ("     => " & backout);
+                  TIO.Put_Line ("FAILED: " & instr & ":len=" & instr'Length'Img);
+                  TIO.Put_Line ("     => " & backout & ":len=" & backout'Length'Img);
                end if;
             end;
          end;
@@ -186,16 +186,20 @@ procedure formula is
                formula : Deps.formula_crate.Vector;
             begin
                formula := Deps.pkg_deps_parse_formula (get_input (test));
-               declare
-                  backout : String := Deps.pkg_deps_formula_tosql (formula.First_Element.items);
-               begin
-                  if backout = exp_output (test) then
-                     TIO.Put_Line ("PASSED: " & get_input (test));
-                  else
-                     TIO.Put_Line ("FAILED: " & get_input (test));
-                     TIO.Put_Line ("     => " & exp_output (test));
-                  end if;
-               end;
+               if not formula.is_empty then
+                  declare
+                     backout : String := Deps.pkg_deps_formula_tosql (formula.First_Element.items);
+                  begin
+                     if backout = exp_output (test) then
+                        TIO.Put_Line ("PASSED: " & get_input (test));
+                        TIO.Put_Line (" got => " & backout);
+                     else
+                        TIO.Put_Line ("FAILED: " & get_input (test));
+                        TIO.Put_Line (" exp => " & exp_output (test));
+                        TIO.Put_Line (" got => " & backout);
+                     end if;
+                  end;
+               end if;
             end;
          end loop;
       else
@@ -203,16 +207,18 @@ procedure formula is
             formula : Deps.formula_crate.Vector;
          begin
             formula := Deps.pkg_deps_parse_formula (instr);
-            declare
-               backout : String := Deps.pkg_deps_formula_tosql (formula.First_Element.items);
-            begin
-               if backout = expected then
-                  TIO.Put_Line ("PASSED: " & instr);
-               else
-                  TIO.Put_Line ("FAILED: " & instr);
-               end if;
-               TIO.Put_Line ("     => " & backout);
-            end;
+            if not formula.is_empty then
+               declare
+                  backout : String := Deps.pkg_deps_formula_tosql (formula.First_Element.items);
+               begin
+                  if backout = expected then
+                     TIO.Put_Line ("PASSED: " & instr);
+                  else
+                     TIO.Put_Line ("FAILED: " & instr);
+                  end if;
+                  TIO.Put_Line ("     => " & backout);
+               end;
+            end if;
          end;
       end if;
    end check_sql;
