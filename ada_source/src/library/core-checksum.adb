@@ -347,38 +347,38 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function pkg_checksum_encode_base32 (plain : String) return String
    is
-      type fullbyte is mod 2 ** 8;
+      type fullword is mod 2 ** 16;
       subtype bits5 is Natural range 0 .. 4;
 
-      function SR (number : fullbyte; places : Natural) return fullbyte;
-      function SL (number : fullbyte; places : Natural) return fullbyte;
-      procedure sendout (x : fullbyte);
+      function SR (number : fullword; places : Natural) return fullword;
+      function SL (number : fullword; places : Natural) return fullword;
+      procedure sendout (x : fullword);
 
       --  We use here z-base32 encoding described here:
       --  http://philzimmermann.com/docs/human-oriented-base-32-encoding.txt
-      b32 : constant String := "ybndrfg8ejkmcpqxot1uwisza345h769";
+      b32 : constant String (1 .. 32) := "ybndrfg8ejkmcpqxot1uwisza345h769";
 
       scenario  : bits5;
       mylast    : Natural := (plain'Length * 8 + 4) / 5;
       result    : String (1 .. mylast);
       index     : Natural := result'First;
-      rawbytes  : array (0 .. plain'Length - 1) of fullbyte;
-      x         : fullbyte;
-      x2        : fullbyte;
-      remain    : fullbyte;
+      rawbytes  : array (0 .. plain'Length - 1) of fullword;
+      x         : fullword;
+      x2        : fullword;
+      remain    : fullword := 0;
       remaining : Boolean := False;
 
-      function SR (number : fullbyte; places : Natural) return fullbyte is
+      function SR (number : fullword; places : Natural) return fullword is
       begin
-         return fullbyte (ITF.Shift_Right (ITF.Unsigned_8 (number), places));
+         return fullword (ITF.Shift_Right (ITF.Unsigned_16 (number), places));
       end SR;
 
-      function SL (number : fullbyte; places : Natural) return fullbyte is
+      function SL (number : fullword; places : Natural) return fullword is
       begin
-         return fullbyte (ITF.Shift_Left (ITF.Unsigned_8 (number), places));
+         return fullword (ITF.Shift_Left (ITF.Unsigned_16 (number), places));
       end SL;
 
-      procedure sendout (x : fullbyte) is
+      procedure sendout (x : fullword) is
       begin
          result (index) := b32 (b32'First + Integer (x and 16#1F#));
          index := index + 1;
@@ -389,7 +389,7 @@ package body Core.Checksum is
          b : Natural := rawbytes'First;
       begin
          for k in plain'Range loop
-            rawbytes (b) := fullbyte (Character'Pos (plain (k)));
+            rawbytes (b) := fullword (Character'Pos (plain (k)));
             b := b + 1;
          end loop;
       end;
@@ -399,33 +399,34 @@ package body Core.Checksum is
          case scenario is
             when 0 =>
                --  8 bits of input and 3 to remain
-               x := rawbytes (k);
-               remain := SR (rawbytes (k), 5);
+               x := SR (rawbytes (k), 3);
+               remain := SL (rawbytes (k) and 2#111#, 2);
                sendout (x);
                remaining := True;
             when 1 =>
                --  11 bits of input, 1 to remain
-               x  := (remain or SL (rawbytes (k), 3));
-               x2 := SR (x, 5);
+               x  := remain or SR (rawbytes (k), 6);
+               x2 := SR ((rawbytes (k) and 2#00111110#), 1);
+               remain := SL (rawbytes (k) and 2#1#, 4);
                sendout (x);
                sendout (x2);
-               remain := SR (x, 10);
             when 2 =>
                --  9 bits of input, 4 to remain
-               x := (remain or SL (rawbytes (k), 1));
+               x := remain or SR (rawbytes (k), 4);
+               remain := SL (rawbytes (k) and 2#1111#, 1);
                sendout (x);
-               remain := SR (x, 5);
             when 3 =>
                --  12 bits of input, 2 to remain
-               x  := (remain or SL (rawbytes (k), 4));
-               x2 := SR (x, 5);
+               x  := remain or SR (rawbytes (k), 7);
+               x2 := SR ((rawbytes (k) and 2#01111100#), 2);
+               remain := SL (rawbytes (k) and 2#11#, 3);
                sendout (x);
                sendout (x2);
-               remain := (SR (x, 10) and 16#3#);
             when 4 =>
                --  10 bits of output, nothing to remain
-               x  := (remain or SL (rawbytes (k), 2));
-               x2 := SR (x, 5);
+               x  := remain or SR (rawbytes (k), 5);
+               x2 := rawbytes (k) and 2#11111#;
+               remain := 0;
                sendout (x);
                sendout (x2);
                remaining := False;
@@ -433,7 +434,7 @@ package body Core.Checksum is
       end loop;
 
       if remaining then
-         result (index) := b32 (b32'First + Integer (remain));
+         sendout (remain);
       end if;
 
       return result;
