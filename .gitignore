@@ -118,3 +118,4 @@ scripts/sbin/pkg2ng
 /tests/plist
 /ada_source/obj
 /ada_source/libobj
+/ada_source/libobj0

@@ -1,7 +1,7 @@
 project Lib4Atf is
 
    for Source_Dirs use ("src/csrc", "src/library", "src/bindings");
-   for Object_Dir use "obj";
+   for Object_Dir use "libobj0";
    for Languages use ("Ada", "C");
    for Library_Name use "ravensw";
    for Library_Dir use "libobj";
