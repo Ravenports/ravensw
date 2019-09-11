@@ -3,14 +3,18 @@
 
 with Ada.Command_Line;
 with Ada.Text_IO;
+with Core.Event;
 with Core.Deps;
-with Core.Pkg; use Core.Pkg;
+with Core.Pkg;     use Core.Pkg;
+with Core.Strings; use Core.Strings;
+with Core.Unix;
 
 use Core;
 
 --  input: arg1 = operation (parse, sql, ops)
 --         arg2 = "default" or <string to parse | sql > (not used for ops)
 --         arg3 = parse: not used, sql: expected translation, ops: not used
+
 
 procedure formula is
 
@@ -31,6 +35,9 @@ procedure formula is
 
    --  if instr=default, ignore expected and run through default tests
    procedure check_sql (instr : String; expected : String);
+
+   function event_callback (eventx : Event.pkg_event; data : Text) return Boolean;
+   procedure regevent;
 
    procedure do_ops_check
    is
@@ -209,7 +216,40 @@ procedure formula is
          end;
       end if;
    end check_sql;
+
+   function event_callback (eventx : Event.pkg_event; data : Text) return Boolean
+   is
+   begin
+      case eventx.this_event is
+
+         when Event.PKG_EVENT_ERRNO =>
+            TIO.Put_Line
+              (TIO.Standard_Error,
+               (USS (eventx.err_function) & '(' & USS (eventx.err_argument) & "): " &
+                  Unix.strerror (eventx.err_number)));
+
+         when Event.PKG_EVENT_ERROR =>
+            TIO.Put_Line (TIO.Standard_Error, (USS (eventx.message)));
+
+         when Event.PKG_EVENT_NOTICE =>
+            TIO.Put_Line (USS (eventx.message));
+
+         when Event.PKG_EVENT_DEVELOPER_MODE =>
+            TIO.Put_Line (TIO.Standard_Error, ("DEVELOPER_MODE: " & USS (eventx.message)));
+
+         when others => null;
+      end case;
+      return True;
+   end event_callback;
+
+   procedure regevent is
+   begin
+      Event.pkg_event_register (callback      => event_callback'Unrestricted_Access,
+                                callback_data => blank);
+   end regevent;
 begin
+
+   regevent;
 
    if CLI.Argument_Count < 1 then
       TIO.Put_Line ("Not enough arguments. " & usage);
