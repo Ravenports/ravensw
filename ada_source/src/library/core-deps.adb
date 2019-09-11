@@ -459,6 +459,31 @@ package body Core.Deps is
       return USS (result);
    end pkg_deps_formula_tosql;
 
+   --------------------------------------------------------------------
+   --  pkg_deps_formula_tosql
+   --------------------------------------------------------------------
+   function pkg_deps_formula_tosql (Fitems : pkg_dep_formula.Vector) return String
+   is
+      procedure scan_item (item_position : pkg_dep_formula.Cursor);
+
+      last_item    : pkg_dep_formula.Cursor;
+      result       : Text;
+
+      procedure scan_item (item_position : pkg_dep_formula.Cursor)
+      is
+         item : pkg_dep_formula_item renames pkg_dep_formula.Element (item_position);
+         use type pkg_dep_formula.Cursor;
+      begin
+         SU.Append (result, pkg_deps_formula_tosql (item, (item_position = last_item)));
+      end scan_item;
+
+   begin
+      last_item := Fitems.Last;
+      Fitems.Iterate (scan_item'Access);
+
+      return USS (result);
+   end pkg_deps_formula_tosql;
+
 
    --------------------------------------------------------------------
    --  pkg_deps_formula_tosql
@@ -475,5 +500,69 @@ package body Core.Deps is
          when VERSION_NOT => return "!=";
       end case;
    end pkg_deps_op_tostring;
+
+
+   --------------------------------------------------------------------
+   --  pkg_deps_formula_tostring
+   --------------------------------------------------------------------
+   function pkg_deps_formula_tostring (F : formula_crate.Vector) return String
+   is
+      procedure scan_formula (position : formula_crate.Cursor);
+      procedure scan_item (item_position : pkg_dep_formula.Cursor);
+      procedure scan_item_version (iv_position : pkg_dep_version_item_crate.Cursor);
+      procedure scan_item_option  (io_position : pkg_dep_option_item_crate.Cursor);
+
+      result : Text;
+      last_formula : formula_crate.Cursor;
+      last_item    : pkg_dep_formula.Cursor;
+
+      procedure scan_formula (position : formula_crate.Cursor)
+      is
+         formula : pkg_formula renames formula_crate.Element (position);
+         use type formula_crate.Cursor;
+      begin
+         last_item := formula.items.Last;
+         formula.items.Iterate (scan_item'Access);
+         if position /= last_formula then
+            SU.Append (result, ", ");
+         end if;
+      end scan_formula;
+
+      procedure scan_item (item_position : pkg_dep_formula.Cursor)
+      is
+         item : pkg_dep_formula_item renames pkg_dep_formula.Element (item_position);
+         use type pkg_dep_formula.Cursor;
+      begin
+         SU.Append (result, item.name);
+         item.versions.Iterate (scan_item_version'Access);
+         item.options.Iterate (scan_item_option'Access);
+         if item_position /= last_item then
+            SU.Append (result, " | ");
+         end if;
+      end scan_item;
+
+      procedure scan_item_version (iv_position : pkg_dep_version_item_crate.Cursor)
+      is
+         iv : pkg_dep_version_item renames pkg_dep_version_item_crate.Element (iv_position);
+      begin
+         SU.Append (result, " " & pkg_deps_op_tostring (iv.op) & " " & USS (iv.version));
+      end scan_item_version;
+
+      procedure scan_item_option  (io_position : pkg_dep_option_item_crate.Cursor)
+      is
+         io : pkg_dep_option_item renames pkg_dep_option_item_crate.Element (io_position);
+      begin
+         if io.active then
+            SU.Append (result, "+" & USS (io.option));
+         else
+            SU.Append (result, "-" & USS (io.option));
+         end if;
+      end scan_item_option;
+
+   begin
+      last_formula := F.Last;
+      F.Iterate (scan_formula'Access);
+      return USS (result);
+   end pkg_deps_formula_tostring;
 
 end Core.Deps;
