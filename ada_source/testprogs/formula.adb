@@ -186,7 +186,7 @@ procedure formula is
                formula : Deps.formula_crate.Vector;
             begin
                formula := Deps.pkg_deps_parse_formula (get_input (test));
-               if not formula.is_empty then
+               if not formula.Is_Empty then
                   declare
                      backout : String := Deps.pkg_deps_formula_tosql (formula.First_Element.items);
                   begin
@@ -207,7 +207,7 @@ procedure formula is
             formula : Deps.formula_crate.Vector;
          begin
             formula := Deps.pkg_deps_parse_formula (instr);
-            if not formula.is_empty then
+            if not formula.Is_Empty then
                declare
                   backout : String := Deps.pkg_deps_formula_tosql (formula.First_Element.items);
                begin

@@ -7,18 +7,23 @@ private with Ucl;
 
 package Core.Manifest is
 
+   function pkg_parse_manifest
+     (pkg_access : T_pkg_Access;
+      manifest   : String) return Pkg_Error_Type;
+
 private
 
    type pkg_field is
-     (annotations,
+     (NOTFOUND,
       abi,
+      annotations,
       arch,
       categories,
-      comment,
       checksum,
-      description,
+      comment,
       depend_formula,
       deps,
+      description,
       directories,
       files,
       flatsize,
@@ -35,13 +40,14 @@ private
       pkg_groups,
       pkg_provides,
       pkg_requires,
-      pkg_shlibs_reqd,
       pkg_shlibs_prov,
+      pkg_shlibs_reqd,
       pkg_users,
       pkgsize,
       prefix,
       repopath,
       scripts,
+      version,
       vital,
       www
      );
@@ -93,5 +99,11 @@ private
    function script_type
      (scrtype_string : String;
       valid : out Boolean) return pkg_script_type;
+
+   function pkg_parse_manifest_ucl
+     (pkg_access : T_pkg_Access;
+      obj : access constant libucl.ucl_object_t) return Pkg_Error_Type;
+
+   function get_field (key : String) return pkg_field;
 
 end Core.Manifest;

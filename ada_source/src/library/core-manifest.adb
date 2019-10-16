@@ -92,6 +92,8 @@ package body Core.Manifest is
             pkg_access.repopath := SUS (str);
          when www =>
             pkg_access.www := SUS (str);
+         when version =>
+            pkg_access.version := SUS (str);
          when others =>
             Event.pkg_emit_error (SUS ("Developer failure, not a string : " & field'Img));
             return EPKG_FATAL;
@@ -214,6 +216,13 @@ package body Core.Manifest is
                      return pkg_set_dirs_from_object (pkg_access, item);
                   else
                      Event.pkg_emit_error (SUS ("Skipping malformed directories " & key));
+                  end if;
+
+               when pkg_dirs =>
+                  if Ucl.type_is_object (item) then
+                     return pkg_set_dirs_from_object (pkg_access, item);
+                  else
+                     Event.pkg_emit_error (SUS ("Skipping malformed dirs  " & key));
                   end if;
 
                when files =>
@@ -696,6 +705,22 @@ package body Core.Manifest is
                         Event.pkg_emit_error (SUS ("Skipping malformed provide name"));
                      end if;
 
+                  when pkg_dirs =>
+                     if Ucl.type_is_string (item) then
+                        if pkg_adddir (pkg_access       => pkg_access,
+                                       path             => Ucl.ucl_object_tostring (item),
+                                       check_duplicates => False) /= EPKG_OK
+                        then
+                           result := EPKG_FATAL;
+                        end if;
+                     elsif Ucl.type_is_object (item) then
+                        if pkg_obj (pkg_access, item, field) /= EPKG_OK then
+                           result := EPKG_FATAL;
+                        end if;
+                     else
+                        Event.pkg_emit_error (SUS ("Skipping malformed dirs"));
+                     end if;
+
                   when others =>
                      Event.pkg_emit_error (SUS ("Developer failure, not an array : " & field'Img));
                end case;
@@ -720,15 +745,7 @@ package body Core.Manifest is
    begin
       case field is
          when messages =>
-            if Ucl.type_is_string (obj'Access) then
-               declare
-                  msg : T_message;
-               begin
-                  msg.message_type := PKG_MESSAGE_ALWAYS;
-                  msg.contents := SUS (Ucl.ucl_object_tostring (obj'Access));
-                  pkg_access.messages.Append (msg);
-               end;
-            elsif Ucl.type_is_array (obj'Access) then
+            if Ucl.type_is_array (obj'Access) then
                --  New format of pkg message
                loop
                   cur := Ucl.ucl_object_iterate (obj'Access, iter'Access, True);
@@ -790,5 +807,217 @@ package body Core.Manifest is
       end case;
       return EPKG_OK;
    end pkg_message;
+
+
+   --------------------------------------------------------------------
+   --  pkg_parse_manifest
+   --------------------------------------------------------------------
+   function pkg_parse_manifest
+     (pkg_access : T_pkg_Access;
+      manifest   : String) return Pkg_Error_Type
+   is
+      parser : Ucl.T_parser;
+      obj    : access libucl.ucl_object_t;
+      rc     : Pkg_Error_Type;
+   begin
+      Event.pkg_debug (2, "Parsing manifest from buffer");
+
+      parser := Ucl.ucl_parser_new_nofilevars;
+
+      if not Ucl.ucl_parser_add_chunk (parser, manifest) then
+         Event.pkg_emit_error
+           (SUS ("Error parsing manifest: " & Ucl.ucl_parser_get_error (parser)));
+         libucl.ucl_parser_free (parser);
+         return EPKG_FATAL;
+      end if;
+
+      obj := Ucl.ucl_parser_get_object (parser);
+      libucl.ucl_parser_free (parser);
+
+      if obj = null then
+         return EPKG_FATAL;
+      end if;
+
+      rc := pkg_parse_manifest_ucl (pkg_access, obj);
+      libucl.ucl_object_unref (obj);
+
+      return rc;
+   end pkg_parse_manifest;
+
+
+   --------------------------------------------------------------------
+   --  pkg_parse_manifest_ucl
+   --------------------------------------------------------------------
+   function pkg_parse_manifest_ucl
+     (pkg_access : T_pkg_Access;
+      obj : access constant libucl.ucl_object_t) return Pkg_Error_Type
+   is
+      iter : aliased libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
+      cur  : access constant libucl.ucl_object_t;
+      rc   : Pkg_Error_Type := EPKG_OK;
+   begin
+      loop
+         cur := Ucl.ucl_object_iterate (obj, iter'Access, True);
+         exit when cur = null;
+
+         declare
+            key : String := Ucl.ucl_object_key (cur);
+            field : pkg_field := get_field (key);
+         begin
+            case field is
+               when NOTFOUND =>
+                  Event.pkg_emit_error (SUS ("Unrecognized manifest key: " & key));
+                  rc := EPKG_FATAL;
+
+               when annotations |
+                    directories |
+                    options     |
+                    scripts     |
+                    files       |
+                    deps =>
+                  if pkg_obj (pkg_access, cur.all, field) /= EPKG_OK then
+                     rc := EPKG_FATAL;
+                  end if;
+
+               when depend_formula |
+                    description    |
+                    maintainer     |
+                    repopath       |
+                    checksum       |
+                    liclogic       |
+                    comment        |
+                    version        |
+                    origin         |
+                    prefix         |
+                    arch           |
+                    name           |
+                    abi            |
+                    www =>
+                  if pkg_string (pkg_access, cur.all, field) /= EPKG_OK then
+                     rc := EPKG_FATAL;
+                  end if;
+
+               when pkg_config_files |
+                    pkg_conflicts    |
+                    pkg_shlibs_reqd  |
+                    pkg_shlibs_prov  |
+                    pkg_requires     |
+                    pkg_provides     |
+                    categories       |
+                    pkg_groups       |
+                    pkg_users        |
+                    pkg_dirs         |
+                    licenses =>
+                  if pkg_array (pkg_access, cur.all, field)  /= EPKG_OK then
+                     rc := EPKG_FATAL;
+                  end if;
+
+               when flatsize |
+                    pkgsize =>
+                  if pkg_int (pkg_access, cur.all, field) /= EPKG_OK then
+                     rc := EPKG_FATAL;
+                  end if;
+
+               when vital =>
+                  if pkg_boolean (pkg_access, cur.all, field) /= EPKG_OK then
+                     rc := EPKG_FATAL;
+                  end if;
+
+               when messages =>
+                  if pkg_message (pkg_access, cur.all, field) /= EPKG_OK then
+                     rc := EPKG_FATAL;
+                  end if;
+
+            end case;
+         end;
+      end loop;
+
+      return rc;
+   end pkg_parse_manifest_ucl;
+
+
+   --------------------------------------------------------------------
+   --  get_field
+   --------------------------------------------------------------------
+   function get_field (key : String) return pkg_field
+   is
+      total_keywords : constant := pkg_field'Pos (pkg_field'Last) + 1;
+
+      subtype keyword_string is String (1 .. 15);
+
+      type keyword_pair is
+         record
+            keyword : keyword_string;
+            keytype : pkg_field;
+         end record;
+
+      --  Keep in alphabetical order (critical!)
+      all_keywords : constant array (1 .. total_keywords) of keyword_pair :=
+        (
+         ("NOTFOUND       ", NOTFOUND),
+         ("abi            ", abi),
+         ("annotations    ", annotations),
+         ("arch           ", arch),
+         ("categories     ", categories),
+         ("comment        ", comment),
+         ("config         ", pkg_config_files),
+         ("conflicts      ", pkg_conflicts),
+         ("dep_formula    ", depend_formula),
+         ("deps           ", deps),
+         ("desc           ", description),
+         ("directories    ", directories),
+         ("dirs           ", pkg_dirs),
+         ("files          ", files),
+         ("flatsize       ", flatsize),
+         ("groups         ", pkg_groups),
+         ("licenselogic   ", liclogic),
+         ("licenses       ", licenses),
+         ("maintainer     ", maintainer),
+         ("messages       ", messages),
+         ("name           ", name),
+         ("options        ", options),
+         ("origin         ", origin),
+         ("pkgsize        ", pkgsize),
+         ("prefix         ", prefix),
+         ("provides       ", pkg_provides),
+         ("repopath       ", repopath),
+         ("requires       ", pkg_requires),
+         ("scripts        ", scripts),
+         ("shlibs_provided", pkg_shlibs_prov),
+         ("shlibs_required", pkg_shlibs_reqd),
+         ("sum            ", checksum),
+         ("users          ", pkg_users),
+         ("version        ", version),
+         ("vital          ", vital),
+         ("www            ", www)
+        );
+
+      bandolier : keyword_string := (others => ' ');
+      Low       : Natural := all_keywords'First;
+      High      : Natural := all_keywords'Last;
+      Mid       : Natural;
+   begin
+      if key'Length > keyword_string'Length or else
+        key'Length < 2
+      then
+         return NOTFOUND;
+      end if;
+
+      bandolier (1 .. key'Length) := key;
+
+      loop
+         Mid := (Low + High) / 2;
+         if bandolier = all_keywords (Mid).keyword  then
+            return all_keywords (Mid).keytype;
+         elsif bandolier < all_keywords (Mid).keyword then
+            exit when Low = Mid;
+            High := Mid - 1;
+         else
+            exit when High = Mid;
+            Low := Mid + 1;
+         end if;
+      end loop;
+      return NOTFOUND;
+   end get_field;
 
 end Core.Manifest;
