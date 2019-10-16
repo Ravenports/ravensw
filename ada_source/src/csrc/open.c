@@ -11,15 +11,20 @@ try_open(const char *path,
 	 int flag_wronly,
 	 int flag_nonblock,
 	 int flag_directory,
-	 int flag_cloexec)
+	 int flag_cloexec,
+	 int flag_creat,
+         int flag_trunc)
 {
   int flags = 0;
 
-  if (flag_rdonly)
+  if (flag_rdonly && !flag_wronly)
     flags |= O_RDONLY;
 
-  if (flag_wronly)
+  if (flag_wronly && !flag_rdonly)
     flags |= O_WRONLY;
+
+  if (flag_rdonly && flag_wronly)
+    flags |= O_RDWR;
 
 #ifdef O_NONBLOCK
   if (flag_nonblock)
@@ -36,7 +41,16 @@ try_open(const char *path,
     flags |= O_DIRECTORY;
 #endif
 
-  return (open (path, flags));
+  if (flag_creat)
+    flags |= O_CREAT;
+
+  if (flag_trunc)
+    flags |= O_TRUNC;
+
+  if (flag_creat)
+    return (open (path, flags, 0644));
+  else
+    return (open (path, flags));
 }
 
 int
@@ -47,15 +61,20 @@ try_openat
   int flag_wronly,
   int flag_nonblock,
   int flag_directory,
-  int flag_cloexec)
+  int flag_cloexec,
+  int flag_creat,
+  int flag_trunc)
 {
   int flags = 0;
 
-  if (flag_rdonly)
+  if (flag_rdonly && !flag_wronly)
     flags |= O_RDONLY;
 
-  if (flag_wronly)
+  if (flag_wronly && !flag_rdonly)
     flags |= O_WRONLY;
+
+  if (flag_rdonly && flag_wronly)
+    flags |= O_RDWR;
 
 #ifdef O_NONBLOCK
   if (flag_nonblock)
@@ -72,8 +91,17 @@ try_openat
     flags |= O_DIRECTORY;
 #endif
 
+  if (flag_creat)
+    flags |= O_CREAT;
+
+  if (flag_trunc)
+    flags |= O_TRUNC;
+
 #ifndef _WIN32
-  return (openat (dirfd, path, flags));
+  if (flag_creat)
+    return (openat (dirfd, path, flags, 0644));
+  else
+    return (openat (dirfd, path, flags));
 #else
   return (0);
 #endif

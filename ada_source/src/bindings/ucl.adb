@@ -314,6 +314,35 @@ package body Ucl is
 
 
    --------------------------------------------------------------------
+   --  type_is_boolean
+   --------------------------------------------------------------------
+   function type_is_boolean (obj : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type libucl.ucl_type;
+      otype : libucl.ucl_type_t;
+   begin
+      otype := libucl.ucl_object_type (obj);
+
+      return otype = libucl.UCL_BOOLEAN;
+   end type_is_boolean;
+
+
+   --------------------------------------------------------------------
+   --  type_is_array
+   --------------------------------------------------------------------
+   function type_is_array (obj : access constant libucl.ucl_object_t) return Boolean
+   is
+      use type libucl.ucl_type;
+      otype : libucl.ucl_type_t;
+   begin
+      otype := libucl.ucl_object_type (obj);
+
+      return otype = libucl.UCL_ARRAY;
+   end type_is_array;
+
+
+
+   --------------------------------------------------------------------
    --  ucl_object_replace_key
    --------------------------------------------------------------------
    function ucl_object_replace_key (top : access libucl.ucl_object_t;

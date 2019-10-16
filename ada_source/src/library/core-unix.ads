@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+private with System;
 with Interfaces.C.Strings;
 with Interfaces.C.Extensions;
 
@@ -20,6 +21,7 @@ package Core.Unix is
    --  unsigned so far, so keep doing it.
    type T_epochtime is mod 2**64;
 
+   --  Set both RDONLY and WRONLY to get RDRW flags
    type T_Open_Flags is
       record
          RDONLY    : Boolean := False;
@@ -27,6 +29,8 @@ package Core.Unix is
          NON_BLOCK : Boolean := False;
          DIRECTORY : Boolean := False;
          CLOEXEC   : Boolean := False;
+         CREAT     : Boolean := False;
+         TRUNC     : Boolean := False;
       end record;
 
    type T_Access_Flags is
@@ -169,6 +173,9 @@ package Core.Unix is
 
    function is_link (sb : struct_stat_Access) return Boolean;
 
+   --   Attempts to set mode.  Returns -1 on failure, and 0 .. 0xFFFF on success
+   function get_mode (mode_str : String) return Integer;
+
 private
 
    last_errno : Integer;
@@ -198,7 +205,9 @@ private
       wronly    : IC.int;
       nonblock  : IC.int;
       directory : IC.int;
-      cloexec   : IC.int) return IC.int;
+      cloexec   : IC.int;
+      creat     : IC.int;
+      trunc     : IC.int) return IC.int;
    pragma Import (C, C_Open, "try_open");
 
    function C_Openat
@@ -208,7 +217,9 @@ private
       wronly    : IC.int;
       nonblock  : IC.int;
       directory : IC.int;
-      cloexec   : IC.int) return IC.int;
+      cloexec   : IC.int;
+      creat     : IC.int;
+      trunc     : IC.int) return IC.int;
    pragma Import (C, C_Openat, "try_openat");
 
    function C_IPC (path : IC.Strings.chars_ptr) return IC.int;
@@ -307,5 +318,15 @@ private
 
    function C_is_link  (sb : struct_stat_Access) return IC.int;
    pragma Import (C, C_is_link, "is_link");
+
+   function C_setmode (mode_str : IC.Strings.chars_ptr) return IC.Extensions.void_ptr;
+   pragma Import (C, C_setmode, "port_setmode");
+
+   function C_getmode (set  : IC.Extensions.void_ptr;
+                       mode : IC.unsigned_short) return IC.unsigned_short;
+   pragma Import (C, C_getmode, "port_getmode");
+
+   procedure C_free (Ptr : System.Address);
+   pragma Import (C, C_free, "free");
 
 end Core.Unix;

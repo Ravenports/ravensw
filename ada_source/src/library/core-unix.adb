@@ -84,6 +84,8 @@ package body Core.Unix is
       flag_rdonly    : IC.int := IC.int (0);
       flag_directory : IC.int := IC.int (0);
       flag_cloexec   : IC.int := IC.int (0);
+      flag_creat     : IC.int := IC.int (0);
+      flag_trunc     : IC.int := IC.int (0);
       name           : IC.Strings.chars_ptr;
    begin
       if flags.WRONLY then
@@ -101,13 +103,22 @@ package body Core.Unix is
       if flags.CLOEXEC then
          flag_cloexec := IC.int (1);
       end if;
+      if flags.CREAT then
+         flag_creat := IC.int (1);
+      end if;
+      if flags.TRUNC then
+         flag_trunc := IC.int (1);
+      end if;
+
       name := IC.Strings.New_String (filename);
       result := File_Descriptor (C_Open (path      => name,
                                          rdonly    => flag_rdonly,
                                          wronly    => flag_wronly,
                                          nonblock  => flag_nonblock,
                                          directory => flag_directory,
-                                         cloexec   => flag_cloexec));
+                                         cloexec   => flag_cloexec,
+                                         creat     => flag_creat,
+                                         trunc     => flag_trunc));
       IC.Strings.Free (name);
       if not file_connected (result) then
          last_errno := Integer (C_Errno);
@@ -129,6 +140,8 @@ package body Core.Unix is
       flag_rdonly    : IC.int := IC.int (0);
       flag_directory : IC.int := IC.int (0);
       flag_cloexec   : IC.int := IC.int (0);
+      flag_creat     : IC.int := IC.int (0);
+      flag_trunc     : IC.int := IC.int (0);
       name           : IC.Strings.chars_ptr;
    begin
       if flags.WRONLY then
@@ -146,6 +159,12 @@ package body Core.Unix is
       if flags.CLOEXEC then
          flag_cloexec := IC.int (1);
       end if;
+      if flags.CREAT then
+         flag_creat := IC.int (1);
+      end if;
+      if flags.TRUNC then
+         flag_trunc := IC.int (1);
+      end if;
       name := IC.Strings.New_String (relative_path);
       result := File_Descriptor (C_Openat (dirfd     => IC.int (dirfd),
                                            path      => name,
@@ -153,7 +172,9 @@ package body Core.Unix is
                                            wronly    => flag_wronly,
                                            nonblock  => flag_nonblock,
                                            directory => flag_directory,
-                                           cloexec   => flag_cloexec));
+                                           cloexec   => flag_cloexec,
+                                           creat     => flag_creat,
+                                           trunc     => flag_trunc));
       IC.Strings.Free (name);
       if not file_connected (result) then
          last_errno := Integer (C_Errno);
@@ -556,5 +577,28 @@ package body Core.Unix is
       res := C_is_link (sb);
       return (res = IC.int (1));
    end is_link;
+
+
+   --------------------------------------------------------------------
+   --  get_mode
+   --------------------------------------------------------------------
+   function get_mode (mode_str : String) return Integer
+   is
+      pv : IC.Extensions.void_ptr;
+      c_modestr : IC.Strings.chars_ptr;
+      cres      : IC.unsigned_short;
+
+      use type System.Address;
+   begin
+      c_modestr := IC.Strings.New_String (mode_str);
+      pv := C_setmode (c_modestr);
+      IC.Strings.Free (c_modestr);
+      if pv = System.Null_Address then
+         return -1;
+      end if;
+      cres := C_getmode (pv, IC.unsigned_short (0));
+      C_free (pv);
+      return Integer (cres);
+   end get_mode;
 
 end Core.Unix;

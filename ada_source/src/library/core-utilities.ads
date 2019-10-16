@@ -14,4 +14,8 @@ package Core.Utilities is
    --  String leading forward slash if it exists
    function relative_path (input_path : String) return String;
 
+   --  Converts a 2-hexchar string into an ascii character
+   --  hexchar must contain 0-9,A-F,a-f on both characters.  If not, return NUL character
+   function hex2char (hex : hexrep) return Character;
+
 end Core.Utilities;

@@ -87,7 +87,6 @@ package body Cmd.Update is
          return EPKG_FATAL;
       end if;
 
---      TODO: main
       if IsBlank (reponame) then
          Config.repositories_order.Iterate (update'Access);
          if update_count = total_count then

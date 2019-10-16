@@ -129,4 +129,33 @@ package body Core.Utilities is
       end if;
    end relative_path;
 
+
+   --------------------------------------------------------------------
+   --  hex2char
+   --------------------------------------------------------------------
+   function hex2char (hex : hexrep) return Character
+   is
+      value : Natural;
+      V10   : Character := hex (hex'First);
+      V01   : Character := hex (hex'Last);
+   begin
+      --  16ths place
+      case V10 is
+         when '0' .. '9' => value := (Character'Pos (V10) - Character'Pos ('0')) * 16;
+         when 'a' .. 'f' => value := (Character'Pos (V10) - Character'Pos ('a') + 10) * 16;
+         when 'A' .. 'F' => value := (Character'Pos (V10) - Character'Pos ('A') + 10) * 16;
+         when others => return Character'Val (0);
+      end case;
+
+      --  1s place
+      case V01 is
+         when '0' .. '9' => value := value + (Character'Pos (V10) - Character'Pos ('0'));
+         when 'a' .. 'f' => value := value + (Character'Pos (V10) - Character'Pos ('a') + 10);
+         when 'A' .. 'F' => value := value + (Character'Pos (V10) - Character'Pos ('A') + 10);
+         when others => return Character'Val (0);
+      end case;
+
+      return Character'Val (value);
+   end hex2char;
+
 end Core.Utilities;

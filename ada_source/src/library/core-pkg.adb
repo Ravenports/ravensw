@@ -235,4 +235,161 @@ package body Core.Pkg is
       return EPKG_OK;
    end pkg_adddep;
 
+
+   --------------------------------------------------------------------
+   --  pkg_adddir
+   --------------------------------------------------------------------
+   function pkg_adddir
+     (pkg_access : T_pkg_Access;
+      path       : Text;
+      check_duplicates : Boolean) return Pkg_Error_Type
+   is
+   begin
+      return pkg_adddir_attr (pkg_access       => pkg_access,
+                              path             => path,
+                              uname            => blank,
+                              gname            => blank,
+                              perm             => 0,
+                              fflags           => 0,
+                              check_duplicates => check_duplicates);
+   end pkg_adddir;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addfile
+   --------------------------------------------------------------------
+   function pkg_addfile
+     (pkg_access : T_pkg_Access;
+      path       : Text;
+      sum        : Text;
+      check_duplicates : Boolean) return Pkg_Error_Type
+   is
+   begin
+      return pkg_addfile_attr (pkg_access       => pkg_access,
+                               path             => path,
+                               uname            => blank,
+                               gname            => blank,
+                               perm             => 0,
+                               fflags           => 0,
+                               sum              => sum,
+                               check_duplicates => check_duplicates);
+   end pkg_addfile;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addscript
+   --------------------------------------------------------------------
+   function pkg_addscript
+     (pkg_access : T_pkg_Access;
+      data       : Text;
+      script     : pkg_script_type) return Pkg_Error_Type is
+   begin
+      pkg_access.scripts (script) := data;
+      return EPKG_OK;
+   end pkg_addscript;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addstring
+   --------------------------------------------------------------------
+   function pkg_addstring
+     (crate      : in out text_crate.Vector;
+      data       : String;
+      title      : String) return Pkg_Error_Type
+   is
+      datatxt : Text := SUS (data);
+   begin
+      if crate.Contains (datatxt) then
+         if context.developer_mode then
+            Event.pkg_emit_error
+              (SUS ("duplicate " & title & " listing: " & data & ", fatal (developer mode)"));
+            return EPKG_FATAL;
+         else
+            Event.pkg_emit_error
+              (SUS ("duplicate " & title & " listing: " & data & ", ignoring"));
+         end if;
+      else
+         crate.Append (datatxt);
+      end if;
+      return EPKG_OK;
+   end pkg_addstring;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addstring_silent_unique
+   --------------------------------------------------------------------
+   function pkg_addstring_silent_unique
+     (crate      : in out text_crate.Vector;
+      data       : String) return Pkg_Error_Type
+   is
+      datatxt : Text := SUS (data);
+   begin
+      if not crate.Contains (datatxt) then
+         crate.Append (datatxt);
+      end if;
+      return EPKG_OK;
+   end pkg_addstring_silent_unique;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addshlib_required
+   --------------------------------------------------------------------
+   function pkg_addshlib_required
+     (pkg_access : T_pkg_Access;
+      data       : String) return Pkg_Error_Type
+   is
+      datatxt : Text := SUS (data);
+   begin
+      --  silently ignore duplicates in case of shlibs
+      if not pkg_access.shlibs_reqd.Contains (datatxt) then
+         pkg_access.shlibs_reqd.Append (datatxt);
+         Event.pkg_debug (3, "added shlib deps for " & USS (pkg_access.name) & " on " & data);
+      end if;
+      return EPKG_OK;
+   end pkg_addshlib_required;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addshlib_provided
+   --------------------------------------------------------------------
+   function pkg_addshlib_provided
+     (pkg_access : T_pkg_Access;
+      data       : String) return Pkg_Error_Type
+   is
+      datatxt : Text := SUS (data);
+   begin
+      --  silently ignore files which are not starting with lib
+      if leads (data, "lib") then
+         --  silently ignore duplicates in case of shlibs
+         if not pkg_access.shlibs_prov.Contains (datatxt) then
+            pkg_access.shlibs_prov.Append (datatxt);
+            Event.pkg_debug
+              (3, "added shlib provided for " & USS (pkg_access.name) & " on " & data);
+         end if;
+      end if;
+      return EPKG_OK;
+   end pkg_addshlib_provided;
+
+
+   --------------------------------------------------------------------
+   --  pkg_addconflict
+   --------------------------------------------------------------------
+   function pkg_addconflict
+     (pkg_access : T_pkg_Access;
+      data       : String) return Pkg_Error_Type
+   is
+      unique_id : Text := SUS (data);
+      conflict  : T_pkg_conflict;
+   begin
+      --  silently ignore duplicates in case of conflicts
+      if not pkg_access.conflicts.Contains (unique_id) then
+         conflict.uid := unique_id;  --  digest and type not set (should it be?)
+         pkg_access.conflicts.Insert (unique_id, conflict);
+         Event.pkg_debug
+           (3, "add a new conflict origin: " & USS (pkg_access.uid) & ", with " & data);
+      end if;
+      return EPKG_OK;
+   end pkg_addconflict;
+
+
 end Core.Pkg;

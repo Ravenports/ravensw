@@ -128,7 +128,7 @@ package Core.Pkg is
       Equivalent_Keys => Strings.equivalent,
       "="             => SU."=");
 
-   type mode_t is new Natural range 0 .. 2#1111#;
+   type mode_t is new Natural range 0 .. 16#FFFF#;
    subtype gid_t is Integer;
    subtype uid_t is Integer;
 
@@ -499,5 +499,42 @@ package Core.Pkg is
       origin     : Text;
       version    : Text;
       locked     : Boolean) return Pkg_Error_Type;
+
+   function pkg_adddir
+     (pkg_access : T_pkg_Access;
+      path       : Text;
+      check_duplicates : Boolean) return Pkg_Error_Type;
+
+   function pkg_addfile
+     (pkg_access : T_pkg_Access;
+      path       : Text;
+      sum        : Text;
+      check_duplicates : Boolean) return Pkg_Error_Type;
+
+   function pkg_addscript
+     (pkg_access : T_pkg_Access;
+      data       : Text;
+      script     : pkg_script_type) return Pkg_Error_Type;
+
+   function pkg_addstring
+     (crate      : in out text_crate.Vector;
+      data       : String;
+      title      : String) return Pkg_Error_Type;
+
+   function pkg_addstring_silent_unique
+     (crate      : in out text_crate.Vector;
+      data       : String) return Pkg_Error_Type;
+
+   function pkg_addshlib_required
+     (pkg_access : T_pkg_Access;
+      data       : String) return Pkg_Error_Type;
+
+   function pkg_addshlib_provided
+     (pkg_access : T_pkg_Access;
+      data       : String) return Pkg_Error_Type;
+
+   function pkg_addconflict
+     (pkg_access : T_pkg_Access;
+      data       : String) return Pkg_Error_Type;
 
 end Core.Pkg;

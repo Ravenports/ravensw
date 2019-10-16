@@ -89,6 +89,12 @@ package Ucl is
    --  Return true if UCL_INT
    function type_is_integer (obj : access constant libucl.ucl_object_t) return Boolean;
 
+   --  Return true if UCL_BOOLEAN
+   function type_is_boolean (obj : access constant libucl.ucl_object_t) return Boolean;
+
+   --  Return true if UCL_ARRAY
+   function type_is_array (obj : access constant libucl.ucl_object_t) return Boolean;
+
    function ucl_object_replace_key (top : access libucl.ucl_object_t;
                                     elt : access libucl.ucl_object_t;
                                     key : String;
