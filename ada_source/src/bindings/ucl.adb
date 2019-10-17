@@ -385,10 +385,16 @@ package body Ucl is
    function ucl_object_tostring_forced (obj : access constant libucl.ucl_object_t) return String
    is
       result : ICS.chars_ptr;
+
+      use type ICS.chars_ptr;
    begin
       result := libucl.ucl_object_tostring_forced (obj);
       --  Do NOT free result memory!
-      return ICS.Value (result);
+      if result = ICS.Null_Ptr then
+         return "";
+      else
+         return ICS.Value (result);
+      end if;
    end ucl_object_tostring_forced;
 
 
@@ -398,10 +404,16 @@ package body Ucl is
    function ucl_object_tostring (obj : access constant libucl.ucl_object_t) return String
    is
       result : ICS.chars_ptr;
+
+      use type ICS.chars_ptr;
    begin
       result := libucl.ucl_object_tostring (obj);
       --  Do NOT free result memory!
-      return ICS.Value (result);
+      if result = ICS.Null_Ptr then
+         return "";
+      else
+         return ICS.Value (result);
+      end if;
    end ucl_object_tostring;
 
 

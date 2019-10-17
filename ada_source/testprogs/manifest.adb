@@ -4,8 +4,13 @@
 with Ada.Characters.Latin_1;   use Ada.Characters.Latin_1;
 with Ada.Text_IO;
 with Core.Pkg;                 use Core.Pkg;
+with Core.Strings;             use Core.Strings;
 with Core.Printf;
 with Core.Manifest;
+with Core.Event;
+with Core.Unix;
+
+use Core;
 
 procedure manifest
 is
@@ -15,6 +20,8 @@ is
    package TIO renames Ada.Text_IO;
 
    procedure test_require (A, B : String);
+   function event_callback (eventx : Event.pkg_event; data : Text) return Boolean;
+   procedure regevent;
 
    manifest0 : constant String :=
      "name: foobar" & LF &
@@ -26,19 +33,20 @@ is
      "www: http://www.foobar.com" & LF &
      "maintainer: test@pkgng.lan" & LF &
      "flatsize: 10000" & LF &
-     "deps:" & LF &
-     "  depfoo: {origin: dep/foo, version: 1.2}" & LF &
-     "  depbar: {origin: dep/bar, version: 3.4}" & LF &
+     "deps: {" & LF &
+     "  depfoo: {origin: dep/foo, version: 1.2}," & LF &
+     "  depbar: {origin: dep/bar, version: 3.4}," & LF &
+     "}" & LF &
      "hello: world" & LF &  -- unknown keyword should not be a problem
      "conflicts: [foo-*, bar-*]" & LF &
      "prefix: /opt/prefix" & LF &
-     "desc: |" & LF &
-     "  port description" & LF &
-     "message: |" & LF &
-     "  pkg message" & LF &
-     "options:" & LF &
-     "  foo: true" & LF &
-     "  bar: false" & LF &
+     "desc: <<EOD" & LF &
+     "port description" & LF &
+     "EOD" & LF &
+     "options: {" & LF &
+     "  foo: true," & LF &
+     "  bar: false," & LF &
+     "}" & LF &
      "files:" & LF &
      "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
 
@@ -135,7 +143,39 @@ is
       end if;
    end test_require;
 
+   function event_callback (eventx : Event.pkg_event; data : Text) return Boolean
+   is
+   begin
+      case eventx.this_event is
+
+         when Event.PKG_EVENT_ERRNO =>
+            TIO.Put_Line
+              (TIO.Standard_Error,
+               (USS (eventx.err_function) & '(' & USS (eventx.err_argument) & "): " &
+                  Unix.strerror (eventx.err_number)));
+
+         when Event.PKG_EVENT_ERROR =>
+            TIO.Put_Line (TIO.Standard_Error, (USS (eventx.message)));
+
+         when Event.PKG_EVENT_NOTICE =>
+            TIO.Put_Line (USS (eventx.message));
+
+         when Event.PKG_EVENT_DEVELOPER_MODE =>
+            TIO.Put_Line (TIO.Standard_Error, ("DEVELOPER_MODE: " & USS (eventx.message)));
+
+         when others => null;
+      end case;
+      return True;
+   end event_callback;
+
+   procedure regevent is
+   begin
+      Event.pkg_event_register (callback      => event_callback'Unrestricted_Access,
+                                callback_data => blank);
+   end regevent;
 begin
+
+    regevent;
 
    if CM.pkg_parse_manifest (P'Unchecked_Access, manifest0) /= EPKG_OK then
       TIO.Put_Line ("Failed to parse manifest0");
@@ -143,7 +183,7 @@ begin
    end if;
 
    test_require (CP.format_attribute (P, CP.PKG_NAME),    "foobar");
-   test_require (CP.format_attribute (P, CP.PKG_VERSION), "0.3");
+   test_require (CP.format_attribute (P, CP.PKG_VERSION), "0.300000");
    test_require (CP.format_attribute (P, CP.PKG_ORIGIN),  "foo/bar");
    test_require (CP.format_attribute (P, CP.PKG_COMMENT), "A dummy manifest");
    test_require (CP.format_attribute (P, CP.PKG_ARCH),    "amd64");
@@ -151,7 +191,6 @@ begin
    test_require (CP.format_attribute (P, CP.PKG_PREFIX),  "/opt/prefix");
    test_require (CP.format_attribute (P, CP.PKG_MAINTAINER),  "test@pkgng.lan");
    test_require (CP.format_attribute (P, CP.PKG_DESCRIPTION), "port description");
-   test_require (CP.format_attribute (P, CP.PKG_MSG_ALWAYS),  "pkg message");
 
 
 

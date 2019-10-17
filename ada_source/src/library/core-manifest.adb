@@ -54,7 +54,7 @@ package body Core.Manifest is
       obj : aliased libucl.ucl_object_t;
       field : pkg_field) return Pkg_Error_Type
    is
-      str : String := Ucl.ucl_object_tostring_forced (obj'Access);
+      str : String := Ucl.ucl_object_tostring (obj'Access);
    begin
       case field is
          when liclogic =>
@@ -93,7 +93,11 @@ package body Core.Manifest is
          when www =>
             pkg_access.www := SUS (str);
          when version =>
-            pkg_access.version := SUS (str);
+            if Ucl.type_is_string (obj'Access) then
+               pkg_access.version := SUS (str);
+            else
+               pkg_access.version := SUS (Ucl.ucl_object_tostring_forced (obj'Access));
+            end if;
          when others =>
             Event.pkg_emit_error (SUS ("Developer failure, not a string : " & field'Img));
             return EPKG_FATAL;
