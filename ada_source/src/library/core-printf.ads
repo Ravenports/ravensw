@@ -39,4 +39,18 @@ package Core.Printf is
 
    function format_attribute (pkg : T_pkg; attribute : string_attribute) return String;
 
+   type dep_attribute is
+     (DEP_ORIGIN,
+      DEP_NAME,
+      DEP_VERSION,
+      DEP_UNIQUE_ID
+     );
+
+   function dependency_count (pkg : T_pkg) return Integer;
+
+   function format_dep_attribute
+     (pkg       : T_pkg;
+      index     : Natural;
+      attribute : dep_attribute) return String;
+
 end Core.Printf;

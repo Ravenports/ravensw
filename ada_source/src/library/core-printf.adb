@@ -88,4 +88,46 @@ package body Core.Printf is
       end case;
    end format_attribute;
 
+
+   --------------------------------------------------------------------
+   --  dependency_count
+   --------------------------------------------------------------------
+   function dependency_count (pkg : T_pkg) return Integer is
+   begin
+      return Integer (pkg.depends.Length);
+   end dependency_count;
+
+
+   --------------------------------------------------------------------
+   --  format_dep_attribute
+   --------------------------------------------------------------------
+   function format_dep_attribute
+     (pkg       : T_pkg;
+      index     : Natural;
+      attribute : dep_attribute) return String
+   is
+      procedure scan (position : depends_crate.Cursor);
+
+      track  : Integer := 0;
+      result : Text;
+
+      procedure scan (position : depends_crate.Cursor)
+      is
+         item : T_pkg_dep renames depends_crate.Element (position);
+      begin
+         track := track + 1;
+         if track = index then
+            case attribute is
+               when DEP_ORIGIN    => result := item.origin;
+               when DEP_NAME      => result := item.name;
+               when DEP_VERSION   => result := item.version;
+               when DEP_UNIQUE_ID => result := item.uid;
+            end case;
+         end if;
+      end scan;
+   begin
+      pkg.depends.Iterate (scan'Access);
+      return USS (result);
+   end format_dep_attribute;
+
 end Core.Printf;

@@ -20,6 +20,7 @@ is
    package TIO renames Ada.Text_IO;
 
    procedure test_require (A, B : String);
+   procedure test_require (A, B : Integer);
    function event_callback (eventx : Event.pkg_event; data : Text) return Boolean;
    procedure regevent;
 
@@ -60,14 +61,16 @@ is
      "www: http://www.foobar.com" & LF &
      "maintainer: test@pkgng.lan" & LF &
      "flatsize: 10000" & LF &
-     "deps:" & LF &
-     "  depfoo: {origin: dep/foo, version: 1.2}" & LF &
-     "  depbar: {origin: dep/bar, version: 3.4}" & LF &
+     "deps: {" & LF &
+     "  depfoo: {origin: dep/foo, version: 1.2}," & LF &
+     "  depbar: {origin: dep/bar, version: 3.4}," & LF &
+     "}" & LF &
      "hello: world" & LF & --  unknown keyword should not be a problem
      "conflicts: [foo-*, bar-*]" & LF &
-     "options:" & LF &
-     "  foo: true" & LF &
-     "  bar: false" & LF &
+     "options: {" & LF &
+     "  foo: true," & LF &
+     "  bar: false," & LF &
+     "}" & LF &
      "files:" & LF &
      "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
 
@@ -81,14 +84,16 @@ is
      "www: http://www.foobar.com" & LF &
      "maintainer: test@pkgng.lan" & LF &
      "flatsize: 10000" & LF &
-     "deps:" & LF &
-     "  depfoo: {origin: dep/foo}" & LF &
-     "  depbar: {origin: dep/bar, version: 3.4}" & LF &
+     "deps: {" & LF &
+     "  depfoo: {origin: dep/foo}," & LF &
+     "  depbar: {origin: dep/bar, version: 3.4}," & LF &
+     "}" & LF &
      "hello: world" & LF & --  unknown keyword should not be a problem
      "conflicts: [foo-*, bar-*]" & LF &
-     "options:" & LF &
-     "  foo: true" & LF &
-     "  bar: false" & LF &
+     "options: {" & LF &
+     "  foo: true," & LF &
+     "  bar: false," & LF &
+     "}" & LF &
      "files:" & LF &
      "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
 
@@ -102,14 +107,16 @@ is
      "www: http://www.foobar.com" & LF &
      "maintainer: test@pkgng.lan" & LF &
      "flatsize: 10000" & LF &
-     "deps:" & LF &
-     "  depfoo: {origin: dep/foo, version: 1.2}" & LF &
-     "  depbar: {origin: dep/bar, version: 3.4}" & LF &
+     "deps: {" & LF &
+     "  depfoo: {origin: dep/foo, version: 1.2}," & LF &
+     "  depbar: {origin: dep/bar, version: 3.4}," & LF &
+     "}" & LF &
      "hello: world" & LF & --  unknown keyword should not be a problem
      "conflicts: []" & LF &
-     "options:" & LF &
-     "  foo: true" & LF &
-     "  bar: false" & LF &
+     "options: {" & LF &
+     "  foo: true," & LF &
+     "  bar: false," & LF &
+     "}" & LF &
      "files:" & LF &
      "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
 
@@ -128,18 +135,29 @@ is
      "  depbar: {origin: dep/bar, version: 3.4}" & LF &
      "hello: world" & LF & --  unknown keyword should not be a problem
      "conflicts: [foo-*, bar-*]" & LF &
-     "options:" & LF &
-     "  foo:" & LF &
-     "  bar: false" & LF &
+     "options: {" & LF &
+     "  foo," & LF &
+     "  bar: false," & LF &
+     "}" & LF &
      "files:" & LF &
      "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
 
    P : aliased T_pkg;
+   all_good : Boolean := True;
 
    procedure test_require (A, B : String) is
    begin
       if A /= B then
          TIO.Put_Line ("Equality test failure: " & A & " /= " & B);
+         all_good := False;
+      end if;
+   end test_require;
+
+   procedure test_require (A, B : Integer) is
+   begin
+      if A /= B then
+         TIO.Put_Line ("Equality test failure: " & A'Img & " /= " & B'Img);
+         all_good := False;
       end if;
    end test_require;
 
@@ -175,7 +193,7 @@ is
    end regevent;
 begin
 
-    regevent;
+   regevent;
 
    if CM.pkg_parse_manifest (P'Unchecked_Access, manifest0) /= EPKG_OK then
       TIO.Put_Line ("Failed to parse manifest0");
@@ -191,7 +209,20 @@ begin
    test_require (CP.format_attribute (P, CP.PKG_PREFIX),  "/opt/prefix");
    test_require (CP.format_attribute (P, CP.PKG_MAINTAINER),  "test@pkgng.lan");
    test_require (CP.format_attribute (P, CP.PKG_DESCRIPTION), "port description");
+   test_require (Integer (P.flatsize), 10000);
 
+   test_require (CP.dependency_count (P), 2);
+   test_require (CP.format_dep_attribute (P, 1, CP.DEP_NAME),    "depfoo");
+   test_require (CP.format_dep_attribute (P, 1, CP.DEP_ORIGIN),  "dep/foo");
+   test_require (CP.format_dep_attribute (P, 1, CP.DEP_VERSION), "1.200000");
+   test_require (CP.format_dep_attribute (P, 2, CP.DEP_NAME),    "depbar");
+   test_require (CP.format_dep_attribute (P, 2, CP.DEP_ORIGIN),  "dep/bar");
+   test_require (CP.format_dep_attribute (P, 2, CP.DEP_VERSION), "3.400000");
 
+   if all_good then
+      TIO.Put_Line ("Success!");
+   else
+      TIO.Put_Line ("one or more tests failed.");
+   end if;
 
 end manifest;
