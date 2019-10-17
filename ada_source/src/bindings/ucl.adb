@@ -230,10 +230,16 @@ package body Ucl is
    function ucl_object_key (obj : access constant libucl.ucl_object_t) return String
    is
       result : ICS.chars_ptr;
+
+      use type ICS.chars_ptr;
    begin
       result := libucl.ucl_object_key (obj);
       --  Don't free result
-      return ICS.Value (result);
+      if result = ICS.Null_Ptr then
+         return "";
+      else
+         return ICS.Value (result);
+      end if;
    end ucl_object_key;
 
 

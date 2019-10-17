@@ -563,169 +563,162 @@ package body Core.Manifest is
          item := Ucl.ucl_object_iterate (obj'Access, iter'Access, True);
          exit when item = null;
 
-         declare
-            key : constant String := Ucl.ucl_object_key (item);
-            keytxt : Text := SUS (key);
-         begin
-            if not IsBlank (key) then
-               case field is
-                  when categories =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addstring (crate => pkg_access.categories,
-                                          data  => Ucl.ucl_object_tostring (item),
-                                          title => "category") /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed category"));
-                     end if;
+         case field is
+            when categories =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addstring (crate => pkg_access.categories,
+                                    data  => Ucl.ucl_object_tostring (item),
+                                    title => "category") /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed category"));
+               end if;
 
-                  when licenses =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addstring (crate => pkg_access.licenses,
-                                          data  => Ucl.ucl_object_tostring (item),
-                                          title => "license") /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed license"));
-                     end if;
+            when licenses =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addstring (crate => pkg_access.licenses,
+                                    data  => Ucl.ucl_object_tostring (item),
+                                    title => "license") /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed license"));
+               end if;
 
-                  when pkg_users =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addstring (crate => pkg_access.users,
-                                          data  => Ucl.ucl_object_tostring (item),
-                                          title => "user") /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     elsif Ucl.type_is_object (item) then
-                        if pkg_obj (pkg_access => pkg_access,
-                                    obj        => item.all,
-                                    field      => field) /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed users"));
-                     end if;
+            when pkg_users =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addstring (crate => pkg_access.users,
+                                    data  => Ucl.ucl_object_tostring (item),
+                                    title => "user") /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               elsif Ucl.type_is_object (item) then
+                  if pkg_obj (pkg_access => pkg_access,
+                              obj        => item.all,
+                              field      => field) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed users"));
+               end if;
 
-                  when pkg_groups =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addstring (crate => pkg_access.groups,
-                                          data  => Ucl.ucl_object_tostring (item),
-                                          title => "group") /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     elsif Ucl.type_is_object (item) then
-                        if pkg_obj (pkg_access => pkg_access,
-                                    obj        => item.all,
-                                    field      => field) /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed groups"));
-                     end if;
+            when pkg_groups =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addstring (crate => pkg_access.groups,
+                                    data  => Ucl.ucl_object_tostring (item),
+                                    title => "group") /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               elsif Ucl.type_is_object (item) then
+                  if pkg_obj (pkg_access => pkg_access,
+                              obj        => item.all,
+                              field      => field) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed groups"));
+               end if;
 
 
-                  when pkg_shlibs_reqd =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addshlib_required
-                          (pkg_access => pkg_access,
-                           data       => Ucl.ucl_object_tostring (item)) /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed required shared library"));
-                     end if;
+            when pkg_shlibs_reqd =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addshlib_required
+                    (pkg_access => pkg_access,
+                     data       => Ucl.ucl_object_tostring (item)) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed required shared library"));
+               end if;
 
-                  when pkg_shlibs_prov =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addshlib_provided
-                          (pkg_access => pkg_access,
-                           data       => Ucl.ucl_object_tostring (item)) /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed provided shared library"));
-                     end if;
+            when pkg_shlibs_prov =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addshlib_provided
+                    (pkg_access => pkg_access,
+                     data       => Ucl.ucl_object_tostring (item)) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed provided shared library"));
+               end if;
 
-                  when pkg_conflicts =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addconflict
-                          (pkg_access => pkg_access,
-                           data       => Ucl.ucl_object_tostring (item)) /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed conflict name"));
-                     end if;
+            when pkg_conflicts =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addconflict
+                    (pkg_access => pkg_access,
+                     data       => Ucl.ucl_object_tostring (item)) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed conflict name"));
+               end if;
 
-                  when pkg_config_files =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addconfig_file
-                          (pkg_access => pkg_access,
-                           path       => SUS (Ucl.ucl_object_tostring (item)),
-                           content    => blank) /= EPKG_OK
-                        then
-                           return EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed config file name"));
-                     end if;
+            when pkg_config_files =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addconfig_file
+                    (pkg_access => pkg_access,
+                     path       => SUS (Ucl.ucl_object_tostring (item)),
+                     content    => blank) /= EPKG_OK
+                  then
+                     return EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed config file name"));
+               end if;
 
-                  when pkg_requires =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addstring_silent_unique
-                          (crate => pkg_access.requires,
-                           data  => Ucl.ucl_object_tostring (item)) /= EPKG_OK
-                        then
-                           return EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed require name"));
-                     end if;
+            when pkg_requires =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addstring_silent_unique
+                    (crate => pkg_access.requires,
+                     data  => Ucl.ucl_object_tostring (item)) /= EPKG_OK
+                  then
+                     return EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed require name"));
+               end if;
 
-                  when pkg_provides =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_addstring_silent_unique
-                          (crate => pkg_access.provides,
-                           data  => Ucl.ucl_object_tostring (item)) /= EPKG_OK
-                        then
-                           return EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed provide name"));
-                     end if;
+            when pkg_provides =>
+               if Ucl.type_is_string (item) then
+                  if pkg_addstring_silent_unique
+                    (crate => pkg_access.provides,
+                     data  => Ucl.ucl_object_tostring (item)) /= EPKG_OK
+                  then
+                     return EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed provide name"));
+               end if;
 
-                  when pkg_dirs =>
-                     if Ucl.type_is_string (item) then
-                        if pkg_adddir (pkg_access       => pkg_access,
-                                       path             => SUS (Ucl.ucl_object_tostring (item)),
-                                       check_duplicates => False) /= EPKG_OK
-                        then
-                           result := EPKG_FATAL;
-                        end if;
-                     elsif Ucl.type_is_object (item) then
-                        if pkg_obj (pkg_access, item.all, field) /= EPKG_OK then
-                           result := EPKG_FATAL;
-                        end if;
-                     else
-                        Event.pkg_emit_error (SUS ("Skipping malformed dirs"));
-                     end if;
+            when pkg_dirs =>
+               if Ucl.type_is_string (item) then
+                  if pkg_adddir (pkg_access       => pkg_access,
+                                 path             => SUS (Ucl.ucl_object_tostring (item)),
+                                 check_duplicates => False) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
+                  end if;
+               elsif Ucl.type_is_object (item) then
+                  if pkg_obj (pkg_access, item.all, field) /= EPKG_OK then
+                     result := EPKG_FATAL;
+                  end if;
+               else
+                  Event.pkg_emit_error (SUS ("Skipping malformed dirs"));
+               end if;
 
-                  when others =>
-                     Event.pkg_emit_error (SUS ("Developer failure, not an array : " & field'Img));
-               end case;
-            end if;
-         end;
+            when others =>
+               Event.pkg_emit_error (SUS ("Developer failure, not an array : " & field'Img));
+         end case;
       end loop;
       return result;
    end pkg_array;
@@ -866,8 +859,7 @@ package body Core.Manifest is
          begin
             case field is
                when NOTFOUND =>
-                  Event.pkg_emit_error (SUS ("Unrecognized manifest key: " & key));
-                  rc := EPKG_FATAL;
+                  Event.pkg_emit_notice (SUS ("Unrecognized manifest key: " & key));
 
                when annotations |
                     directories |
