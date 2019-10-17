@@ -2,7 +2,7 @@ project Ravensw is
 
    for Source_Dirs use ("src", "src/library", "src/commands", "src/bindings", "src/csrc", "testprogs");
    for Object_Dir use "obj";
-   for Main use ("ravensw.adb", "checksum.adb", "formula.adb");
+   for Main use ("ravensw.adb", "checksum.adb", "formula.adb", "manifest.adb");
    for Languages use ("Ada", "C");
 
    package Compiler is

@@ -708,13 +708,13 @@ package body Core.Manifest is
                   when pkg_dirs =>
                      if Ucl.type_is_string (item) then
                         if pkg_adddir (pkg_access       => pkg_access,
-                                       path             => Ucl.ucl_object_tostring (item),
+                                       path             => SUS (Ucl.ucl_object_tostring (item)),
                                        check_duplicates => False) /= EPKG_OK
                         then
                            result := EPKG_FATAL;
                         end if;
                      elsif Ucl.type_is_object (item) then
-                        if pkg_obj (pkg_access, item, field) /= EPKG_OK then
+                        if pkg_obj (pkg_access, item.all, field) /= EPKG_OK then
                            result := EPKG_FATAL;
                         end if;
                      else

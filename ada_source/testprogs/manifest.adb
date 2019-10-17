@@ -137,21 +137,21 @@ is
 
 begin
 
-   if CM.pkg_parse_manifest (P'Access, manifest0) /= EPKG_OK then
+   if CM.pkg_parse_manifest (P'Unchecked_Access, manifest0) /= EPKG_OK then
       TIO.Put_Line ("Failed to parse manifest0");
       return;
    end if;
 
-   test_require (CP.format_attribute (P, PKG_NAME),    "foobar");
-   test_require (CP.format_attribute (P, PKG_VERSION), "0.3");
-   test_require (CP.format_attribute (P, PKG_ORIGIN),  "foo/bar");
-   test_require (CP.format_attribute (P, PKG_COMMENT), "A dummy manifest");
-   test_require (CP.format_attribute (P, PKG_ARCH),    "amd64");
-   test_require (CP.format_attribute (P, PKG_WWW),     "http://www.foobar.com");
-   test_require (CP.format_attribute (P, PKG_PREFIX),  "/opt/prefix");
-   test_require (CP.format_attribute (P, PKG_MAINTAINER),  "test@pkgng.lan");
-   test_require (CP.format_attribute (P, PKG_DESCRIPTION), "port description");
-   test_require (CP.format_attribute (P, PKG_MSG_ALWAYS),  "pkg message");
+   test_require (CP.format_attribute (P, CP.PKG_NAME),    "foobar");
+   test_require (CP.format_attribute (P, CP.PKG_VERSION), "0.3");
+   test_require (CP.format_attribute (P, CP.PKG_ORIGIN),  "foo/bar");
+   test_require (CP.format_attribute (P, CP.PKG_COMMENT), "A dummy manifest");
+   test_require (CP.format_attribute (P, CP.PKG_ARCH),    "amd64");
+   test_require (CP.format_attribute (P, CP.PKG_WWW),     "http://www.foobar.com");
+   test_require (CP.format_attribute (P, CP.PKG_PREFIX),  "/opt/prefix");
+   test_require (CP.format_attribute (P, CP.PKG_MAINTAINER),  "test@pkgng.lan");
+   test_require (CP.format_attribute (P, CP.PKG_DESCRIPTION), "port description");
+   test_require (CP.format_attribute (P, CP.PKG_MSG_ALWAYS),  "pkg message");
 
 
 
