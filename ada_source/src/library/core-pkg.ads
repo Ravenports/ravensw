@@ -263,6 +263,8 @@ package Core.Pkg is
          config_files : config_file_crate.Map;
          --  ...
          rootpath     : Text;
+         rootfd       : Unix.File_Descriptor := Unix.not_connected;
+         package_type : pkg_type             := PKG_FILE;
       end record;
    type T_pkg_Access is access all T_pkg;
 

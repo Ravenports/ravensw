@@ -2,11 +2,21 @@
 --  Reference: ../License.txt
 
 with Ada.Characters.Latin_1;   use Ada.Characters.Latin_1;
+with Ada.Text_IO;
+with Core.Pkg;                 use Core.Pkg;
+with Core.Printf;
+with Core.Manifest;
 
 procedure manifest
 is
 
-   manifest : constant String :=
+   package CM  renames Core.Manifest;
+   package CP  renames Core.Printf;
+   package TIO renames Ada.Text_IO;
+
+   procedure test_require (A, B : String);
+
+   manifest0 : constant String :=
      "name: foobar" & LF &
      "version: 0.3" & LF &
      "origin: foo/bar" & LF &
@@ -116,6 +126,33 @@ is
      "files:" & LF &
      "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
 
+   P : aliased T_pkg;
+
+   procedure test_require (A, B : String) is
+   begin
+      if A /= B then
+         TIO.Put_Line ("Equality test failure: " & A & " /= " & B);
+      end if;
+   end test_require;
+
 begin
+
+   if CM.pkg_parse_manifest (P'Access, manifest0) /= EPKG_OK then
+      TIO.Put_Line ("Failed to parse manifest0");
+      return;
+   end if;
+
+   test_require (CP.format_attribute (P, PKG_NAME),    "foobar");
+   test_require (CP.format_attribute (P, PKG_VERSION), "0.3");
+   test_require (CP.format_attribute (P, PKG_ORIGIN),  "foo/bar");
+   test_require (CP.format_attribute (P, PKG_COMMENT), "A dummy manifest");
+   test_require (CP.format_attribute (P, PKG_ARCH),    "amd64");
+   test_require (CP.format_attribute (P, PKG_WWW),     "http://www.foobar.com");
+   test_require (CP.format_attribute (P, PKG_PREFIX),  "/opt/prefix");
+   test_require (CP.format_attribute (P, PKG_MAINTAINER),  "test@pkgng.lan");
+   test_require (CP.format_attribute (P, PKG_DESCRIPTION), "port description");
+   test_require (CP.format_attribute (P, PKG_MSG_ALWAYS),  "pkg message");
+
+
 
 end manifest;
