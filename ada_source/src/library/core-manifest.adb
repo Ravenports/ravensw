@@ -483,69 +483,68 @@ package body Core.Manifest is
       version : Text;
       origin  : Text;
       result  : Pkg_Error_Type := EPKG_OK;
+      expval  : Boolean := Ucl.type_is_array (obj);
    begin
       if IsBlank (okey) then
          return EPKG_FATAL;
       end if;
 
       Event.pkg_debug (2, "Found " & okey);
-      if Ucl.type_is_array (obj) then
-         declare
-            iter : aliased libucl.ucl_object_iter_t :=
-                           libucl.ucl_object_iter_t (System.Null_Address);
-            self : access constant libucl.ucl_object_t;
-         begin
-            loop
-               self := Ucl.ucl_object_iterate (obj, iter'Access, True);
-               exit when self = null;
-               declare
-                  iter2 : aliased libucl.ucl_object_iter_t :=
-                                  libucl.ucl_object_iter_t (System.Null_Address);
-                  cur   : access constant libucl.ucl_object_t;
-               begin
-                  loop
-                     cur := Ucl.ucl_object_iterate (self, iter2'Access, True);
-                     exit when cur = null;
-                     declare
-                        ckey : constant String := Ucl.ucl_object_key (cur);
-                     begin
-                        if not IsBlank (ckey) then
-                           if Ucl.type_is_string (cur) then
-                              if ckey = "origin" then
-                                 origin := SUS (Ucl.ucl_object_tostring (cur));
-                              elsif ckey = "version" then
-                                 version := SUS (Ucl.ucl_object_tostring (cur));
-                              end if;
+      declare
+         iter : aliased libucl.ucl_object_iter_t :=
+           libucl.ucl_object_iter_t (System.Null_Address);
+         self : access constant libucl.ucl_object_t;
+      begin
+         loop
+            self := Ucl.ucl_object_iterate (obj, iter'Access, expval);
+            exit when self = null;
+            declare
+               iter2 : aliased libucl.ucl_object_iter_t :=
+                 libucl.ucl_object_iter_t (System.Null_Address);
+               cur   : access constant libucl.ucl_object_t;
+            begin
+               loop
+                  cur := Ucl.ucl_object_iterate (self, iter2'Access, True);
+                  exit when cur = null;
+                  declare
+                     ckey : constant String := Ucl.ucl_object_key (cur);
+                  begin
+                     if not IsBlank (ckey) then
+                        if Ucl.type_is_string (cur) then
+                           if ckey = "origin" then
+                              origin := SUS (Ucl.ucl_object_tostring (cur));
+                           elsif ckey = "version" then
+                              version := SUS (Ucl.ucl_object_tostring (cur));
+                           end if;
+                        else
+                           --  accept version to be an integer
+                           if ckey = "version" and then
+                             Ucl.type_is_integer (cur)
+                           then
+                              version := SUS (Ucl.ucl_object_tostring_forced (cur));
                            else
-                              --  accept version to be an integer
-                              if ckey = "version" and then
-                                Ucl.type_is_integer (cur)
-                              then
-                                 version := SUS (Ucl.ucl_object_tostring_forced (cur));
-                              else
-                                 Event.pkg_emit_error
-                                   (SUS ("Skipping malformed dependency entry for " & okey));
-                              end if;
+                              Event.pkg_emit_error
+                                (SUS ("Skipping malformed dependency entry for " & okey));
                            end if;
                         end if;
-                     end;
-                  end loop;
-                  if IsBlank (origin) then
-                     Event.pkg_emit_error (SUS ("Skipping malformed dependency " & okey));
-                  else
-                     if pkg_adddep (pkg_access => pkg_access,
-                                    name       => SUS (okey),
-                                    origin     => origin,
-                                    version    => version,
-                                    locked     => False) /= EPKG_OK
-                     then
-                        result := EPKG_FATAL;
                      end if;
+                  end;
+               end loop;
+               if IsBlank (origin) then
+                  Event.pkg_emit_error (SUS ("Skipping malformed dependency " & okey));
+               else
+                  if pkg_adddep (pkg_access => pkg_access,
+                                 name       => SUS (okey),
+                                 origin     => origin,
+                                 version    => version,
+                                 locked     => False) /= EPKG_OK
+                  then
+                     result := EPKG_FATAL;
                   end if;
-               end;
-            end loop;
-         end;
-      end if;
+               end if;
+            end;
+         end loop;
+      end;
       return result;
    end pkg_set_deps_from_object;
 
