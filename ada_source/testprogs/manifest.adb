@@ -165,13 +165,13 @@ is
                   Unix.strerror (eventx.err_number)));
 
          when Event.PKG_EVENT_ERROR =>
-            TIO.Put_Line (TIO.Standard_Error, (USS (eventx.message)));
+            TIO.Put_Line (TIO.Standard_Error, "ERROR: " & USS (eventx.message));
 
          when Event.PKG_EVENT_NOTICE =>
-            TIO.Put_Line (USS (eventx.message));
+            TIO.Put_Line ("NOTICE: " & USS (eventx.message));
 
          when Event.PKG_EVENT_DEVELOPER_MODE =>
-            TIO.Put_Line (TIO.Standard_Error, ("DEVELOPER_MODE: " & USS (eventx.message)));
+            TIO.Put_Line (TIO.Standard_Error, "DEVELOPER_MODE: " & USS (eventx.message));
 
          when others => null;
       end case;
