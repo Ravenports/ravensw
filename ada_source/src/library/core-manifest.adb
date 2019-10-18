@@ -509,23 +509,15 @@ package body Core.Manifest is
                   declare
                      ckey : constant String := Ucl.ucl_object_key (cur);
                   begin
-                     if not IsBlank (ckey) then
+                     if ckey = "origin" then
                         if Ucl.type_is_string (cur) then
-                           if ckey = "origin" then
-                              origin := SUS (Ucl.ucl_object_tostring (cur));
-                           elsif ckey = "version" then
-                              version := SUS (Ucl.ucl_object_tostring (cur));
-                           end if;
+                           origin := SUS (Ucl.ucl_object_tostring (cur));
+                        end if;
+                     elsif ckey = "version" then
+                        if Ucl.type_is_string then
+                           version := SUS (Ucl.ucl_object_tostring (cur));
                         else
-                           --  accept version to be an integer
-                           if ckey = "version" and then
-                             Ucl.type_is_integer (cur)
-                           then
-                              version := SUS (Ucl.ucl_object_tostring_forced (cur));
-                           else
-                              Event.pkg_emit_error
-                                (SUS ("Skipping malformed dependency entry for " & okey));
-                           end if;
+                           version := SUS (Ucl.ucl_object_tostring_forced (cur));
                         end if;
                      end if;
                   end;
