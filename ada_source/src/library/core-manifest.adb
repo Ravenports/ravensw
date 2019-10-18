@@ -514,7 +514,7 @@ package body Core.Manifest is
                            origin := SUS (Ucl.ucl_object_tostring (cur));
                         end if;
                      elsif ckey = "version" then
-                        if Ucl.type_is_string then
+                        if Ucl.type_is_string (cur) then
                            version := SUS (Ucl.ucl_object_tostring (cur));
                         else
                            version := SUS (Ucl.ucl_object_tostring_forced (cur));
