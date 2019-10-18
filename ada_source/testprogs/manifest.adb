@@ -21,6 +21,7 @@ is
 
    procedure test_require (A, B : String);
    procedure test_require (A, B : Integer);
+   procedure test_require_fail (id : String; result : Pkg_Error_Type);
    function event_callback (eventx : Event.pkg_event; data : Text) return Boolean;
    procedure regevent;
 
@@ -167,6 +168,14 @@ is
       end if;
    end test_require;
 
+   procedure test_require_fail (id : String; result : Pkg_Error_Type) is
+   begin
+      if result = EPKG_OK then
+         TIO.Put_Line ("Unexpected pass on test " & id);
+         all_good := False;
+      end if;
+   end test_require_fail;
+
    function event_callback (eventx : Event.pkg_event; data : Text) return Boolean
    is
    begin
@@ -237,8 +246,31 @@ begin
 
    test_require (CP.files_count (P), 1);
    test_require (CP.format_file_attribute (P, 1, CP.FILE_PATH), "/usr/local/bin/foo");
-   test_require (CP.format_file_attribute (P, 1, CP.FILE_CHECKSUM),
-                 "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b");
+   test_require (CP.format_file_attribute (P, 1, CP.FILE_CHECKSUM), csum);
+
+   declare
+      PX : aliased T_pkg;
+   begin
+      test_require_fail ("M1", CM.pkg_parse_manifest (PX'Unchecked_Access, wrong_manifest1));
+   end;
+
+   declare
+      PX : aliased T_pkg;
+   begin
+      test_require_fail ("M2", CM.pkg_parse_manifest (PX'Unchecked_Access, wrong_manifest2));
+   end;
+
+   declare
+      PX : aliased T_pkg;
+   begin
+      test_require_fail ("M3", CM.pkg_parse_manifest (PX'Unchecked_Access, wrong_manifest3));
+   end;
+
+   declare
+      PX : aliased T_pkg;
+   begin
+      test_require_fail ("M4", CM.pkg_parse_manifest (PX'Unchecked_Access, wrong_manifest4));
+   end;
 
    if all_good then
       TIO.Put_Line ("Success!");
