@@ -219,6 +219,21 @@ begin
    test_require (CP.format_dep_attribute (P, 2, CP.DEP_ORIGIN),  "dep/bar");
    test_require (CP.format_dep_attribute (P, 2, CP.DEP_VERSION), "3.400000");
 
+   test_require (CP.option_count (P), 2);
+   test_require (CP.format_option (P, 1, CP.OPT_NAME),  "foo");
+   test_require (CP.format_option (P, 1, CP.OPT_VALUE), "on");
+   test_require (CP.format_option (P, 2, CP.OPT_NAME),  "bar");
+   test_require (CP.format_option (P, 2, CP.OPT_VALUE), "off");
+
+   test_require (CP.category_count (P), 2);
+   test_require (CP.format_category (P, 1), "foo");
+   test_require (CP.format_category (P, 2), "bar");
+
+   test_require (CP.files_count (P), 1);
+   test_require (CP.format_file_attribute (P, 1, CP.FILE_PATH), "/usr/local/bin/foo");
+   test_require (CP.format_file_attribute (P, 1, CP.FILE_CHECKSUM),
+                 "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b");
+
    if all_good then
       TIO.Put_Line ("Success!");
    else

@@ -103,7 +103,7 @@ package body Core.Printf is
    --------------------------------------------------------------------
    function format_dep_attribute
      (pkg       : T_pkg;
-      index     : Natural;
+      index     : Positive;
       attribute : dep_attribute) return String
    is
       procedure scan (position : depends_crate.Cursor);
@@ -129,5 +129,119 @@ package body Core.Printf is
       pkg.depends.Iterate (scan'Access);
       return USS (result);
    end format_dep_attribute;
+
+
+   --------------------------------------------------------------------
+   --  option_count
+   --------------------------------------------------------------------
+   function option_count (pkg : T_pkg) return Integer is
+   begin
+      return Integer (pkg.options.Length);
+   end option_count;
+
+
+   --------------------------------------------------------------------
+   --  format_option
+   --------------------------------------------------------------------
+   function format_option
+     (pkg       : T_pkg;
+      index     : Positive;
+      attribute : option_attribute) return String
+   is
+      procedure scan (position : nvpair_crate.Cursor);
+
+      track  : Integer := 0;
+      result : Text;
+
+      procedure scan (position : nvpair_crate.Cursor) is
+      begin
+         track := track + 1;
+         if track = index then
+            case attribute is
+               when OPT_VALUE => result := nvpair_crate.Element (position);
+               when OPT_NAME  => result := nvpair_crate.Key (position);
+            end case;
+         end if;
+      end scan;
+   begin
+      pkg.options.Iterate (scan'Access);
+      return USS (result);
+   end format_option;
+
+
+   --------------------------------------------------------------------
+   --  category_count
+   --------------------------------------------------------------------
+   function category_count (pkg : T_pkg) return Integer is
+   begin
+      return Integer (pkg.categories.Length);
+   end category_count;
+
+
+   --------------------------------------------------------------------
+   --  format_category
+   --------------------------------------------------------------------
+   function format_category (pkg : T_pkg; index : Positive) return String
+   is
+      procedure scan (position : text_crate.Cursor);
+
+      track  : Integer := 0;
+      result : Text;
+
+      procedure scan (position : text_crate.Cursor) is
+      begin
+         track := track + 1;
+         if track = index then
+            result := text_crate.Element (position);
+         end if;
+      end scan;
+   begin
+      pkg.categories.Iterate (scan'Access);
+      return USS (result);
+   end format_category;
+
+
+   --------------------------------------------------------------------
+   --  files_count
+   --------------------------------------------------------------------
+   function files_count (pkg : T_pkg) return Integer is
+   begin
+      return Integer (pkg.files.Length);
+   end files_count;
+
+
+   --------------------------------------------------------------------
+   --  format_file_attribute
+   --------------------------------------------------------------------
+   function format_file_attribute
+     (pkg       : T_pkg;
+      index     : Positive;
+      attribute : file_attribute) return String
+   is
+      procedure scan (position : file_crate.Cursor);
+
+      track  : Integer := 0;
+      result : Text;
+
+      procedure scan (position : file_crate.Cursor)
+      is
+         item : T_pkg_file renames file_crate.Element (position);
+      begin
+         track := track + 1;
+         if track = index then
+            case attribute is
+               when FILE_PATH        => result := item.path;
+               when FILE_UNAME       => result := item.uname;
+               when FILE_GNAME       => result := item.gname;
+               when FILE_CHECKSUM    => result := item.sum;
+               when FILE_TMPPATH     => result := item.tmppath;
+               when FILE_CONFIG_FILE => result := item.confile;
+            end case;
+         end if;
+      end scan;
+   begin
+      pkg.files.Iterate (scan'Access);
+      return USS (result);
+   end format_file_attribute;
 
 end Core.Printf;

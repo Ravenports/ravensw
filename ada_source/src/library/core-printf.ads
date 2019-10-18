@@ -50,7 +50,38 @@ package Core.Printf is
 
    function format_dep_attribute
      (pkg       : T_pkg;
-      index     : Natural;
+      index     : Positive;
       attribute : dep_attribute) return String;
+
+   function option_count (pkg : T_pkg) return Integer;
+
+   type option_attribute is
+     (OPT_NAME,
+      OPT_VALUE);
+
+   function format_option
+     (pkg       : T_pkg;
+      index     : Positive;
+      attribute : option_attribute) return String;
+
+   function category_count (pkg : T_pkg) return Integer;
+
+   function format_category (pkg : T_pkg; index : Positive) return String;
+
+   function files_count (pkg : T_pkg) return Integer;
+
+   type file_attribute is
+     (FILE_PATH,
+      FILE_UNAME,
+      FILE_GNAME,
+      FILE_CHECKSUM,
+      FILE_TMPPATH,
+      FILE_CONFIG_FILE
+     );
+
+   function format_file_attribute
+     (pkg       : T_pkg;
+      index     : Positive;
+      attribute : file_attribute) return String;
 
 end Core.Printf;
