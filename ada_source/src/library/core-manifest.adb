@@ -162,8 +162,18 @@ package body Core.Manifest is
       obj   : aliased libucl.ucl_object_t;
       field : pkg_field) return Pkg_Error_Type
    is
+      procedure setres (result : Pkg_Error_Type);
+
       iter : aliased libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
       item : access constant libucl.ucl_object_t;
+      rc   : Pkg_Error_Type := EPKG_OK;
+
+      procedure setres (result : Pkg_Error_Type) is
+      begin
+         if result /= EPKG_OK then
+            rc := EPKG_FATAL;
+         end if;
+      end setres;
    begin
       Event.pkg_debug (3, "Manifest: parsing object");
       loop
@@ -213,18 +223,18 @@ package body Core.Manifest is
 
                when directories =>
                   if Ucl.type_is_boolean (item) then
-                     return pkg_adddir (pkg_access, SUS (url_decode (key)), False);
+                     setres (pkg_adddir (pkg_access, SUS (url_decode (key)), False));
                   elsif Ucl.type_is_string (item) then
-                     return pkg_adddir (pkg_access, SUS (url_decode (key)), False);
+                     setres (pkg_adddir (pkg_access, SUS (url_decode (key)), False));
                   elsif Ucl.type_is_object (item) then
-                     return pkg_set_dirs_from_object (pkg_access, item);
+                     setres (pkg_set_dirs_from_object (pkg_access, item));
                   else
                      Event.pkg_emit_error (SUS ("Skipping malformed directories " & key));
                   end if;
 
                when pkg_dirs =>
                   if Ucl.type_is_object (item) then
-                     return pkg_set_dirs_from_object (pkg_access, item);
+                     setres (pkg_set_dirs_from_object (pkg_access, item));
                   else
                      Event.pkg_emit_error (SUS ("Skipping malformed dirs  " & key));
                   end if;
@@ -235,19 +245,19 @@ package body Core.Manifest is
                         chksum : String := Ucl.ucl_object_tostring (item);
                      begin
                         if chksum'Length > 1 then
-                           return pkg_addfile (pkg_access       => pkg_access,
-                                               path             => SUS (url_decode (key)),
-                                               sum              => SUS (chksum),
-                                               check_duplicates => False);
+                           setres (pkg_addfile (pkg_access       => pkg_access,
+                                                path             => SUS (url_decode (key)),
+                                                sum              => SUS (chksum),
+                                                check_duplicates => False));
                         else
-                           return pkg_addfile (pkg_access       => pkg_access,
-                                               path             => SUS (url_decode (key)),
-                                               sum              => blank,
-                                               check_duplicates => False);
+                           setres (pkg_addfile (pkg_access       => pkg_access,
+                                                path             => SUS (url_decode (key)),
+                                                sum              => blank,
+                                                check_duplicates => False));
                         end if;
                      end;
                   elsif Ucl.type_is_object (item) then
-                     return pkg_set_files_from_object (pkg_access, item);
+                     setres (pkg_set_files_from_object (pkg_access, item));
                   else
                      Event.pkg_emit_error (SUS ("Skipping malformed files " & key));
                   end if;
@@ -263,7 +273,7 @@ package body Core.Manifest is
                      begin
                         stype := script_type (key, valid);
                         if valid then
-                           return pkg_addscript (pkg_access, SUS (url_decode (payload)), stype);
+                           setres (pkg_addscript (pkg_access, SUS (url_decode (payload)), stype));
                         else
                            Event.pkg_emit_error (SUS ("Skipping unknown script type: " & key));
                         end if;
@@ -276,7 +286,7 @@ package body Core.Manifest is
                   then
                      Event.pkg_emit_error (SUS ("Skipping malformed dependency " & key));
                   else
-                     return pkg_set_deps_from_object (pkg_access, item);
+                     setres (pkg_set_deps_from_object (pkg_access, item));
                   end if;
 
                when others =>
@@ -286,7 +296,7 @@ package body Core.Manifest is
          end;
       end loop;
 
-      return EPKG_OK;
+      return rc;
    end pkg_obj;
 
 
