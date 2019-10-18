@@ -121,4 +121,6 @@ package SQLite is
 
    function get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String;
 
+   function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer;
+
 end SQLite;

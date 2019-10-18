@@ -1994,4 +1994,254 @@ package body Core.PkgDB is
       end case;
    end pkgdb_access;
 
+
+   --------------------------------------------------------------------
+   --  pkgdb_obtain_lock
+   --------------------------------------------------------------------
+   function pkgdb_obtain_lock
+     (db        : in out struct_pkgdb;
+      lock_type : PkgDB_Lock_Type) return Boolean is
+   begin
+      case lock_type is
+         when PKGDB_LOCK_READONLY  =>
+            if not Config.pkg_config_get_boolean (Config.conf_read_lock) then
+               return True;
+            end if;
+            Event.pkg_debug (1, "want to get a read only lock on a database");
+            return
+              pkgdb_try_lock
+                (db        => db,
+                 lock_sql  => "UPDATE pkg_lock SET read=read+1 WHERE exclusive=0;",
+                 lock_type => lock_type,
+                 upgrade   => False);
+
+         when PKGDB_LOCK_ADVISORY  =>
+            Event.pkg_debug (1, "want to get an advisory lock on a database");
+            return
+              pkgdb_try_lock
+                (db        => db,
+                 lock_sql  => "UPDATE pkg_lock SET advisory=1 WHERE exclusive=0 AND advisory=0;",
+                 lock_type => lock_type,
+                 upgrade   => False);
+
+         when PKGDB_LOCK_EXCLUSIVE =>
+            Event.pkg_debug (1, "want to get an exclusive lock on a database");
+            return
+              pkgdb_try_lock
+                (db        => db,
+                 lock_sql  => "UPDATE pkg_lock SET exclusive=1 " &
+                              "WHERE exclusive=0 AND advisory=0 AND read=0;",
+                 lock_type => lock_type,
+                 upgrade   => False);
+
+      end case;
+   end pkgdb_obtain_lock;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_try_lock
+   --------------------------------------------------------------------
+   function pkgdb_try_lock
+     (db        : in out struct_pkgdb;
+      lock_sql  : String;
+      lock_type : PkgDB_Lock_Type;
+      upgrade   : Boolean) return Boolean
+   is
+      reset_lock_sql : constant String :=
+        "DELETE FROM pkg_lock; INSERT INTO pkg_lock VALUES (0,0,0);";
+
+      max_retries    : Integer;
+      timeout_secs   : Integer;
+      retrys         : Integer := 0;
+      retcode        : Pkg_Error_Type := EPKG_END;
+      msg            : Text;
+   begin
+      max_retries  := Integer (Config.pkg_config_get_int64 (Config.conf_lock_retries));
+      timeout_secs := Integer (Config.pkg_config_get_int64 (Config.conf_lock_wait));
+      loop
+         exit when retrys > max_retries;
+         if not SQLite.exec_sql (db.sqlite, lock_sql, msg) then
+            retcode := EPKG_FATAL;
+            exit;
+         end if;
+
+         retcode := EPKG_END;
+         if SQLite.get_number_of_changes (db.sqlite) = 0 then
+            if pkgdb_check_lock_pid (db) = EPKG_END then
+               --  No live processes found, so we can safely reset lock
+               Event.pkg_debug (1, "no concurrent processes found, cleanup the lock");
+               if not pkgdb_reset_lock (db) then
+                  retcode := EPKG_FATAL;
+                  exit;
+               end if;
+
+               if upgrade then
+                  --  In case of upgrade we should obtain a lock from the beginning
+                  --  hence switch upgrade to retain
+                  if pkgdb_remove_lock_pid (db, Unix.getpid) then
+                     if pkgdb_obtain_lock (db, lock_type) then
+                        retcode := EPKG_OK;
+                     else
+                        retcode := EPKG_FATAL;
+                     end if;
+                  else
+                     retcode := EPKG_FATAL;
+                  end if;
+               else
+                  --  We might have inconsistent db, or some strange issue, so
+                  --  just insert new record and go forward
+                  if pkgdb_remove_lock_pid (db, Unix.getpid) then
+                     if SQLite.exec_sql (db.sqlite, lock_sql, msg) then
+                        retcode := EPKG_OK;
+                     else
+                        retcode := EPKG_FATAL;
+                     end if;
+                  else
+                     retcode := EPKG_FATAL;
+                  end if;
+               end if;
+               exit;
+            elsif max_retries > 0 then
+               Event.pkg_debug
+                 (1, "waiting for database lock for a maximum of" & max_retries'Img &
+                    " retries, next try in" & timeout_secs'Img & " seconds");
+               delay Duration (timeout_secs);
+            else
+               exit;
+            end if;
+         elsif not upgrade then
+            retcode := pkgdb_write_lock_pid (db);
+            exit;
+         else
+            retcode := EPKG_OK;
+            exit;
+         end if;
+
+         retrys := retrys + 1;
+      end loop;
+
+      return (retcode = EPKG_OK);
+   end pkgdb_try_lock;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_remove_lock_pid
+   --------------------------------------------------------------------
+   function pkgdb_remove_lock_pid
+     (db  : in out struct_pkgdb;
+      pid : Unix.Process_ID) return Boolean
+   is
+      lock_pid_sql : constant String := "DELETE FROM pkg_lock_pid WHERE pid = ?1;";
+      stmt         : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      if SQLite.prepare_sql (pDB    => db.sqlite,
+                             sql    => lock_pid_sql,
+                             ppStmt => stmt'Access)
+      then
+         SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pid));
+         if not SQLite.step_through_statement (stmt) then
+            ERROR_SQLITE (db.sqlite, "pkgdb_remove_lock_pid (step)", lock_pid_sql);
+            SQLite.finalize_statement (stmt);
+            return False;
+         end if;
+         SQLite.finalize_statement (stmt);
+         return True;
+      else
+         ERROR_SQLITE (db.sqlite, "pkgdb_remove_lock_pid (prep)", lock_pid_sql);
+         return False;
+      end if;
+   end pkgdb_remove_lock_pid;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_reset_lock
+   --------------------------------------------------------------------
+   function pkgdb_reset_lock (db : in out struct_pkgdb) return Boolean
+   is
+      init_sql : constant String := "UPDATE pkg_lock SET exclusive=0, advisory=0, read=0;";
+      msg      : Text;
+   begin
+      return SQLite.exec_sql (db  => db.sqlite, sql => init_sql, msg => msg);
+   end pkgdb_reset_lock;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_write_lock_pid
+   --------------------------------------------------------------------
+   function pkgdb_write_lock_pid (db : in out struct_pkgdb) return Core.Pkg.Pkg_Error_Type
+   is
+      lock_pid_sql : constant String := "INSERT INTO pkg_lock_pid VALUES (?1);";
+      stmt         : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      if SQLite.prepare_sql (pDB    => db.sqlite,
+                             sql    => lock_pid_sql,
+                             ppStmt => stmt'Access)
+      then
+         SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (Unix.getpid));
+         if not SQLite.step_through_statement (stmt) then
+            ERROR_SQLITE (db.sqlite, "pkgdb_write_lock_pid (step)", lock_pid_sql);
+            SQLite.finalize_statement (stmt);
+            return EPKG_FATAL;
+         end if;
+         SQLite.finalize_statement (stmt);
+         return EPKG_OK;
+      else
+         ERROR_SQLITE (db.sqlite, "pkgdb_write_lock_pid (prep)", lock_pid_sql);
+         return EPKG_FATAL;
+      end if;
+   end pkgdb_write_lock_pid;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_check_lock_pid
+   --------------------------------------------------------------------
+   function pkgdb_check_lock_pid (db : in out struct_pkgdb) return Core.Pkg.Pkg_Error_Type
+   is
+      use type Unix.Process_ID;
+
+      query : constant String := "SELECT pid FROM pkg_lock_pid;";
+      stmt  : aliased sqlite_h.sqlite3_stmt_Access;
+      lpid  : Unix.Process_ID;
+      pid   : Unix.Process_ID;
+      found : Integer := 0;
+   begin
+      if SQLite.prepare_sql (pDB    => db.sqlite,
+                             sql    => query,
+                             ppStmt => stmt'Access)
+      then
+         lpid := Unix.getpid;
+
+         loop
+            exit when not SQLite.step_through_statement (stmt);
+
+            pid := Unix.Process_ID (SQLite.retrieve_integer (stmt, 0));
+            if pid /= lpid then
+               if Unix.kill (pid) then
+                  Event.pkg_emit_notice
+                    (SUS ("process with pid" & pid'Img & " still holds the lock"));
+                  found := found + 1;
+               else
+                  Event.pkg_debug
+                    (1, "found stale pid" & pid'Img & " in lock database, my pid is:" & lpid'Img);
+                  if not pkgdb_remove_lock_pid (db, pid) then
+                     SQLite.finalize_statement (stmt);
+                     return EPKG_FATAL;
+                  end if;
+               end if;
+            end if;
+         end loop;
+      else
+         ERROR_SQLITE (db.sqlite, "pkgdb_check_lock_pid (prep)", query);
+         return EPKG_FATAL;
+      end if;
+      SQLite.finalize_statement (stmt);
+
+      if found = 0 then
+         return EPKG_END;
+      else
+         return EPKG_OK;
+      end if;
+   end pkgdb_check_lock_pid;
+
+
 end Core.PkgDB;

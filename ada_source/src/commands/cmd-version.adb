@@ -1,11 +1,13 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Core.Pkg;      use Core.Pkg;
 with Core.Version;  use Core.Version;
 with Core.Strings;  use Core.Strings;
 with Core.Unix;
 with Core.Event;
 with Core.PkgDB;
+with Cmd.Update;
 
 package body Cmd.Version is
 
@@ -82,6 +84,7 @@ package body Cmd.Version is
             matchorigin => USS (comline.version_origin),
             matchname   => USS (comline.version_pkg_name),
             auto_update => not comline.verb_skip_catalog,
+            quiet       => comline.verb_quiet,
             reponame    => USS (comline.verb_repo_name));
       end if;
 
@@ -140,9 +143,29 @@ package body Cmd.Version is
       matchorigin : String;
       matchname   : String;
       auto_update : Boolean;
+      quiet       : Boolean;
       reponame    : String) return Boolean
    is
+      retcode : Pkg_Error_Type;
+      db      : PkgDB.struct_pkgdb;
    begin
+      if auto_update then
+         retcode := Cmd.Update.pkgcli_update (force    => False,
+                                              strict   => False,
+                                              quiet    => quiet,
+                                              reponame => reponame);
+         if retcode /= EPKG_OK then
+            return False;
+         end if;
+      end if;
+
+      if PkgDB.pkgdb_open_all (db       => db,
+                               dbtype   => PkgDB.PKGDB_REMOTE,
+                               reponame => reponame) /= EPKG_OK
+      then
+         return False;
+      end if;
+
       --  TODO: Implement
       return False;
    end do_remote_index;

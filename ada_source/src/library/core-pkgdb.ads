@@ -26,6 +26,7 @@ package Core.PkgDB is
    PKGDB_MODE_CREATE : constant PkgDB_Mode_Flags := 2 ** 2;
 
    type PkgDB_Type is (PKGDB_DB_LOCAL, PKGDB_DB_REPO);
+   type PkgDB_Lock_Type is (PKGDB_LOCK_READONLY, PKGDB_LOCK_ADVISORY, PKGDB_LOCK_EXCLUSIVE);
 
    type struct_pkgdb is limited private;
    type struct_pkgdb_Access is access all struct_pkgdb;
@@ -81,6 +82,10 @@ package Core.PkgDB is
 
    function pkgdb_check_access (mode : PkgDB_Mode_Flags; dbdir : String; dbname : String)
                                 return Core.Pkg.Pkg_Error_Type;
+
+   function pkgdb_obtain_lock
+     (db        : in out struct_pkgdb;
+      lock_type : PkgDB_Lock_Type) return Boolean;
 
 private
 
@@ -282,4 +287,21 @@ private
 
    function pkgdb_is_insecure_mode (path : String; install_as_user : Boolean)
                                     return Core.Pkg.Pkg_Error_Type;
+
+   function pkgdb_try_lock
+     (db        : in out struct_pkgdb;
+      lock_sql  : String;
+      lock_type : PkgDB_Lock_Type;
+      upgrade   : Boolean) return Boolean;
+
+   function pkgdb_write_lock_pid (db : in out struct_pkgdb) return Core.Pkg.Pkg_Error_Type;
+
+   function pkgdb_check_lock_pid (db : in out struct_pkgdb) return Core.Pkg.Pkg_Error_Type;
+
+   function pkgdb_reset_lock (db : in out struct_pkgdb) return Boolean;
+
+   function pkgdb_remove_lock_pid
+     (db  : in out struct_pkgdb;
+      pid : Unix.Process_ID) return Boolean;
+
 end Core.PkgDB;

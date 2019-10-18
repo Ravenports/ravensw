@@ -176,6 +176,9 @@ package Core.Unix is
    --   Attempts to set mode.  Returns -1 on failure, and 0 .. 0xFFFF on success
    function get_mode (mode_str : String) return Integer;
 
+   --  Returns True if kill operation was successful
+   function kill (pid : Process_ID) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -328,5 +331,8 @@ private
 
    procedure C_free (Ptr : System.Address);
    pragma Import (C, C_free, "free");
+
+   function C_kill (pid : Process_ID; sig : IC.int) return IC.int;
+   pragma Import (C, C_kill, "kill");
 
 end Core.Unix;

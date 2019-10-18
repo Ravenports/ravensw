@@ -34,5 +34,6 @@ private
       matchorigin : String;
       matchname   : String;
       auto_update : Boolean;
+      quiet       : Boolean;
       reponame    : String) return Boolean;
 end Cmd.Version;

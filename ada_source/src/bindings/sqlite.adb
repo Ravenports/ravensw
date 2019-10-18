@@ -468,4 +468,16 @@ package body SQLite is
       return ICS.Value (res);
    end get_db_filename;
 
+
+   --------------------------------------------------------------------
+   --  get_number_of_changes
+   --------------------------------------------------------------------
+   function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer
+   is
+      res : IC.int;
+   begin
+      res := sqlite_h.sqlite3_changes (db);
+      return (Integer (res));
+   end get_number_of_changes;
+
 end SQLite;

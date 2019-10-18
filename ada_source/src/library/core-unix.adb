@@ -601,4 +601,19 @@ package body Core.Unix is
       return Integer (cres);
    end get_mode;
 
+
+   --------------------------------------------------------------------
+   --  kill
+   --------------------------------------------------------------------
+   function kill (pid : Process_ID) return Boolean
+   is
+      use type IC.int;
+
+      res : IC.int;
+      sig : IC.int := IC.int (0);
+   begin
+      res := C_kill (pid, sig);
+      return (res = IC.int (0));
+   end kill;
+
 end Core.Unix;
