@@ -139,29 +139,17 @@ package body Core.Printf is
       name      : String;
       attribute : dep_attribute) return String
    is
-      procedure scan (position : depends_crate.Cursor);
-
       result : Text;
-      found  : Boolean := False;
-
-      procedure scan (position : depends_crate.Cursor)
-      is
-         item : T_pkg_dep renames depends_crate.Element (position);
-      begin
-         if not found then
-            if name = USS (item.name) then
-               case attribute is
-                  when DEP_ORIGIN    => result := item.origin;
-                  when DEP_NAME      => result := item.name;
-                  when DEP_VERSION   => result := item.version;
-                  when DEP_UNIQUE_ID => result := item.uid;
-               end case;
-               found := True;
-            end if;
-         end if;
-      end scan;
+      nametxt : Text := SUS (name);
    begin
-      pkg.depends.Iterate (scan'Access);
+      if pkg.depends.Contains (nametxt) then
+         case attribute is
+            when DEP_ORIGIN    => result := pkg.depends.Element (nametxt).origin;
+            when DEP_NAME      => result := pkg.depends.Element (nametxt).name;
+            when DEP_VERSION   => result := pkg.depends.Element (nametxt).version;
+            when DEP_UNIQUE_ID => result := pkg.depends.Element (nametxt).uid;
+         end case;
+      end if;
       return USS (result);
    end format_dep_attribute;
 
@@ -212,25 +200,15 @@ package body Core.Printf is
       name      : String;
       attribute : option_attribute) return String
    is
-      procedure scan (position : nvpair_crate.Cursor);
-
-      result : Text;
-      found  : Boolean := False;
-
-      procedure scan (position : nvpair_crate.Cursor) is
-      begin
-         if not found then
-            if name = USS (nvpair_crate.Key (position)) then
-               case attribute is
-               when OPT_VALUE => result := nvpair_crate.Element (position);
-               when OPT_NAME  => result := nvpair_crate.Key (position);
-               end case;
-            end if;
-            found := True;
-         end if;
-      end scan;
+      result  : Text;
+      nametxt : Text := SUS (name);
    begin
-      pkg.options.Iterate (scan'Access);
+      if pkg.options.Contains (nametxt) then
+         case attribute is
+            when OPT_VALUE => result := pkg.options.Element (nametxt);
+            when OPT_NAME  => result := nametxt;
+         end case;
+      end if;
       return USS (result);
    end format_option;
 
