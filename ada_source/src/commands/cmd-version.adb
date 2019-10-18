@@ -7,9 +7,14 @@ with Core.Strings;  use Core.Strings;
 with Core.Unix;
 with Core.Event;
 with Core.PkgDB;
+with Core.PkgDB_Query;
+with Core.Iterators.Binary_sqlite;
+with Core.Printf;
 with Cmd.Update;
 
 package body Cmd.Version is
+
+   package IBS renames Core.Iterators.Binary_sqlite;
 
    --------------------------------------------------------------------
    --  execute_version_command
@@ -146,8 +151,18 @@ package body Cmd.Version is
       quiet       : Boolean;
       reponame    : String) return Boolean
    is
+      procedure cleanup;
+
       retcode : Pkg_Error_Type;
       db      : PkgDB.struct_pkgdb;
+
+      procedure cleanup is
+      begin
+         if PkgDB.pkgdb_release_lock (db, PkgDB.PKGDB_LOCK_READONLY) then
+            null;
+         end if;
+         PkgDB.pkgdb_close (db);
+      end cleanup;
    begin
       if auto_update then
          retcode := Cmd.Update.pkgcli_update (force    => False,
@@ -166,8 +181,66 @@ package body Cmd.Version is
          return False;
       end if;
 
-      --  TODO: Implement
-      return False;
+      if not PkgDB.pkgdb_obtain_lock (db, PkgDB.PKGDB_LOCK_READONLY) then
+         PkgDB.pkgdb_close (db);
+         TIO.Put_Line
+           (TIO.Standard_Error,
+            "Cannot get a read lock on a database. It is locked by another process");
+         return False;
+      end if;
+
+      declare
+         iter : IBS.Iterator_Binary_Sqlite;
+         pkg  : aliased T_pkg;
+         check_origin : Boolean := not IsBlank (matchorigin);
+         check_name   : Boolean := not IsBlank (matchname);
+         good_result  : Boolean := True;
+      begin
+         iter := PkgDB_Query.pkgdb_query (db, pattern, match);
+         if iter.invalid_iterator then
+            cleanup;
+            return False;
+         end if;
+
+         loop
+            exit when iter.Next (pkg'Unchecked_Access, Iterators.PKG_LOAD_FLAG_BASIC) /= EPKG_OK;
+            declare
+               name   : constant String := Printf.format_attribute (pkg, Printf.PKG_NAME);
+               origin : constant String := Printf.format_attribute (pkg, Printf.PKG_ORIGIN);
+               skip   : Boolean := False;
+
+               iter_remote : IBS.Iterator_Binary_Sqlite;
+            begin
+               if check_origin then
+                  if origin /= matchorigin then
+                     skip := True;
+                  end if;
+               elsif check_name then
+                  if name /= matchname then
+                     skip := True;
+                  end if;
+               end if;
+
+               if not skip then
+                  --  TODO: it_remote = pkgdb_repo_query
+                  --     (db, is_origin ? origin : name, MATCH_EXACT, reponame);
+                  if iter_remote.invalid_iterator then
+                     good_result := False;
+                     exit;
+                  end if;
+
+                  --  loop
+                  --  end loop
+                  IBS.Free (iter_remote);
+               end if;
+            end;
+         end loop;
+
+         IBS.Free (iter);
+         cleanup;
+         return good_result;
+      end;
+
    end do_remote_index;
 
 end Cmd.Version;

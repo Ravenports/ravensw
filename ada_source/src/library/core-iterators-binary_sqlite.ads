@@ -15,7 +15,7 @@ package Core.Iterators.Binary_sqlite is
 
    overriding
    function Next (this    : in out Iterator_Binary_Sqlite;
-                  pkg_ptr : in out T_pkg_Access;
+                  pkg_ptr : T_pkg_Access;
                   flags   : Load_Flags) return Pkg_Error_Type;
 
    overriding

@@ -39,7 +39,7 @@ package Core.Iterators is
    procedure Free  (this : in out Base_Iterators) is abstract;
    procedure Reset (this : in out Base_Iterators) is abstract;
    function Next   (this : in out Base_Iterators;
-                    pkg_ptr : in out T_pkg_Access;
+                    pkg_ptr : T_pkg_Access;
                     flags : Load_Flags) return Pkg_Error_Type is abstract;
 
    function create_invalid_iterator return Base_Iterators is abstract;

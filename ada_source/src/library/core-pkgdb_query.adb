@@ -2,8 +2,14 @@
 --  Reference: ../License.txt
 
 with Core.Strings; use Core.Strings;
+with Core.Pkg;     use Core.Pkg;
+with Core.Event;
+with Core.Iterators;
 
-package body Core.pkgdb_query is
+with SQLite;
+with sqlite_h;
+
+package body Core.PkgDB_Query is
 
    --------------------------------------------------------------------
    --  pkgdb_get_pattern_query
@@ -80,4 +86,52 @@ package body Core.pkgdb_query is
       end case;
    end pkgdb_get_pattern_query;
 
-end Core.pkgdb_query;
+
+   --------------------------------------------------------------------
+   --  pkgdb_query
+   --------------------------------------------------------------------
+   function pkgdb_query
+     (db      : PkgDB.struct_pkgdb;
+      pattern : String;
+      match   : PkgDB.T_match) return IBS.Iterator_Binary_Sqlite
+   is
+      use type PkgDB.T_match;
+   begin
+      if match /= PkgDB.MATCH_ALL and then IsBlank (pattern) then
+         return IBS.create_invalid_iterator;
+      end if;
+
+      declare
+         stmt : aliased sqlite_h.sqlite3_stmt_Access;
+         comp : constant String := pkgdb_get_pattern_query (pattern, match);
+         dbs  : sqlite_h.sqlite3_Access := PkgDB.get_sqlite_access (db);
+         sql  : constant String :=
+           "SELECT id, origin, name, name as uniqueid, version, comment, desc," &
+           "  message, arch, maintainer, www, prefix, flatsize, licenselogic, automatic," &
+           "  locked, time, manifestdigest, vital " &
+           "FROM packages AS p" &
+           comp & " " &
+           "ORDER BY p.name;";
+      begin
+         Event.pkg_debug (4, "Pkgdb: running '" & sql & "'");
+         if SQLite.prepare_sql (pDB    => dbs,
+                                sql    => sql,
+                                ppStmt => stmt'Access)
+         then
+            if match /= PkgDB.MATCH_ALL and then
+              match /= PkgDB.MATCH_CONDITION
+            then
+               SQLite.bind_string (stmt, 1, pattern);
+            end if;
+            return IBS.create (db           => dbs,
+                               stmt         => stmt,
+                               package_type => PKG_INSTALLED,
+                               flags        => Iterators.PKGDB_IT_FLAG_ONCE);
+         else
+            PkgDB.ERROR_SQLITE (dbs, "pkgdb_query (prep)", sql);
+            return IBS.create_invalid_iterator;
+         end if;
+      end;
+   end pkgdb_query;
+
+end Core.PkgDB_Query;

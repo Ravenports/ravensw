@@ -87,6 +87,12 @@ package Core.PkgDB is
      (db        : in out struct_pkgdb;
       lock_type : PkgDB_Lock_Type) return Boolean;
 
+   function pkgdb_release_lock
+     (db        : in out struct_pkgdb;
+      lock_type : PkgDB_Lock_Type) return Boolean;
+
+   function get_sqlite_access (db : struct_pkgdb) return sqlite_h.sqlite3_Access;
+
 private
 
    case_sensitivity_setting : Boolean := False;

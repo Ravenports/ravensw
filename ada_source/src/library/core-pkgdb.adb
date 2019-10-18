@@ -2244,4 +2244,55 @@ package body Core.PkgDB is
    end pkgdb_check_lock_pid;
 
 
+   --------------------------------------------------------------------
+   --  get_sqlite_access
+   --------------------------------------------------------------------
+   function get_sqlite_access (db : struct_pkgdb) return sqlite_h.sqlite3_Access is
+   begin
+      return db.sqlite;
+   end get_sqlite_access;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_release_lock
+   --------------------------------------------------------------------
+   function pkgdb_release_lock
+     (db        : in out struct_pkgdb;
+      lock_type : PkgDB_Lock_Type) return Boolean
+   is
+      exec_good : Boolean;
+      msg       : Text;
+   begin
+      case lock_type is
+         when PKGDB_LOCK_READONLY  =>
+            if not Config.pkg_config_get_boolean (Config.conf_read_lock) then
+               return True;
+            end if;
+            Event.pkg_debug (1, "release a read only lock on a database");
+            exec_good := SQLite.exec_sql
+              (db.sqlite, "UPDATE pkg_lock SET read=read-1 WHERE read>0;", msg);
+
+         when PKGDB_LOCK_ADVISORY  =>
+            Event.pkg_debug (1, "release an advisory lock on a database");
+            exec_good := SQLite.exec_sql
+              (db.sqlite, "UPDATE pkg_lock SET advisory=0 WHERE advisory=1;", msg);
+
+         when PKGDB_LOCK_EXCLUSIVE =>
+            Event.pkg_debug (1, "release an exclusive lock on a database");
+            exec_good := SQLite.exec_sql
+              (db.sqlite, "UPDATE pkg_lock SET exclusive=0 WHERE exclusive=1;", msg);
+      end case;
+      if not exec_good then
+         return False;
+      end if;
+
+      if SQLite.get_number_of_changes (db.sqlite) = 0 then
+         return True;
+      end if;
+
+      return pkgdb_remove_lock_pid (db, Unix.getpid);
+
+   end pkgdb_release_lock;
+
+
 end Core.PkgDB;
