@@ -550,13 +550,18 @@ package body Core.Manifest is
                if IsBlank (origin) then
                   Event.pkg_emit_error (SUS ("Skipping malformed dependency " & okey));
                else
-                  if pkg_adddep (pkg_access => pkg_access,
-                                 name       => SUS (okey),
-                                 origin     => origin,
-                                 version    => version,
-                                 locked     => False) /= EPKG_OK
-                  then
+                  if IsBlank (version) then
+                     Event.pkg_emit_error (SUS ("dependency " & USS (origin) & " has no version"));
                      result := EPKG_FATAL;
+                  else
+                     if pkg_adddep (pkg_access => pkg_access,
+                                    name       => SUS (okey),
+                                    origin     => origin,
+                                    version    => version,
+                                    locked     => False) /= EPKG_OK
+                     then
+                        result := EPKG_FATAL;
+                     end if;
                   end if;
                end if;
             end;

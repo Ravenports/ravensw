@@ -54,9 +54,9 @@ is
      "  /usr/local/bin/foo: " & csum & LF &
      "}" & LF;
 
-   --  Name empty
+   --  Name empty (requires quotes, otherwise parses to name="version: 0.3")
    wrong_manifest1 : constant String :=
-     "name:" & LF &
+     "name:" & Quotation & Quotation & LF &
      "version: 0.3" & LF &
      "origin: foo/bar" & LF &
      "comment: A dummy manifest" & LF &
@@ -102,31 +102,7 @@ is
      "  /usr/local/bin/foo: " & csum & LF &
      "}" & LF;
 
-   --  bad conflict line
-   wrong_manifest3 : constant String :=
-     "name: foobar" & LF &
-     "version: 0.3" & LF &
-     "origin: foo/bar" & LF &
-     "comment: A dummy manifest" & LF &
-     "arch: amd64" & LF &
-     "www: http://www.foobar.com" & LF &
-     "maintainer: test@pkgng.lan" & LF &
-     "flatsize: 10000" & LF &
-     "deps: {" & LF &
-     "  depfoo: {origin: dep/foo, version: 1.2}," & LF &
-     "  depbar: {origin: dep/bar, version: 3.4}," & LF &
-     "}" & LF &
-     "hello: world" & LF & --  unknown keyword should not be a problem
-     "conflicts: []" & LF &
-     "options: {" & LF &
-     "  foo: true," & LF &
-     "  bar: false," & LF &
-     "}" & LF &
-     "files: {" & LF &
-     "  /usr/local/bin/foo: " & csum & LF &
-     "}" & LF;
-
-   --  bad option line
+   --  bad option line (won't parse at all)
    wrong_manifest4 : constant String :=
      "name: foobar" & LF &
      "version: 0.3" & LF &
@@ -259,12 +235,6 @@ begin
       PX : aliased T_pkg;
    begin
       test_require_fail ("M2", CM.pkg_parse_manifest (PX'Unchecked_Access, wrong_manifest2));
-   end;
-
-   declare
-      PX : aliased T_pkg;
-   begin
-      test_require_fail ("M3", CM.pkg_parse_manifest (PX'Unchecked_Access, wrong_manifest3));
    end;
 
    declare
