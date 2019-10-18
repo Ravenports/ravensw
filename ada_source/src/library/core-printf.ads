@@ -53,6 +53,11 @@ package Core.Printf is
       index     : Positive;
       attribute : dep_attribute) return String;
 
+   function format_dep_attribute
+     (pkg       : T_pkg;
+      name      : String;
+      attribute : dep_attribute) return String;
+
    function option_count (pkg : T_pkg) return Integer;
 
    type option_attribute is
@@ -62,6 +67,11 @@ package Core.Printf is
    function format_option
      (pkg       : T_pkg;
       index     : Positive;
+      attribute : option_attribute) return String;
+
+   function format_option
+     (pkg       : T_pkg;
+      name      : String;
       attribute : option_attribute) return String;
 
    function category_count (pkg : T_pkg) return Integer;

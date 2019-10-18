@@ -24,6 +24,7 @@ is
    function event_callback (eventx : Event.pkg_event; data : Text) return Boolean;
    procedure regevent;
 
+   csum : constant String := "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b";
    manifest0 : constant String :=
      "name: foobar" & LF &
      "version: 0.3" & LF &
@@ -48,8 +49,9 @@ is
      "  foo: true," & LF &
      "  bar: false," & LF &
      "}" & LF &
-     "files:" & LF &
-     "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
+     "files: {" & LF &
+     "  /usr/local/bin/foo: " & csum & LF &
+     "}" & LF;
 
    --  Name empty
    wrong_manifest1 : constant String :=
@@ -71,8 +73,9 @@ is
      "  foo: true," & LF &
      "  bar: false," & LF &
      "}" & LF &
-     "files:" & LF &
-     "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
+     "files: {" & LF &
+     "  /usr/local/bin/foo: " & csum & LF &
+     "}" & LF;
 
    --  bad dependency line
    wrong_manifest2 : constant String :=
@@ -94,8 +97,9 @@ is
      "  foo: true," & LF &
      "  bar: false," & LF &
      "}" & LF &
-     "files:" & LF &
-     "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
+     "files: {" & LF &
+     "  /usr/local/bin/foo: " & csum & LF &
+     "}" & LF;
 
    --  bad conflict line
    wrong_manifest3 : constant String :=
@@ -117,8 +121,9 @@ is
      "  foo: true," & LF &
      "  bar: false," & LF &
      "}" & LF &
-     "files:" & LF &
-     "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
+     "files: {" & LF &
+     "  /usr/local/bin/foo: " & csum & LF &
+     "}" & LF;
 
    --  bad option line
    wrong_manifest4 : constant String :=
@@ -139,8 +144,9 @@ is
      "  foo," & LF &
      "  bar: false," & LF &
      "}" & LF &
-     "files:" & LF &
-     "  /usr/local/bin/foo: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b" & LF;
+     "files: {" & LF &
+     "  /usr/local/bin/foo: " & csum & LF &
+     "}" & LF;
 
    P : aliased T_pkg;
    all_good : Boolean := True;
@@ -212,18 +218,18 @@ begin
    test_require (Integer (P.flatsize), 10000);
 
    test_require (CP.dependency_count (P), 2);
-   test_require (CP.format_dep_attribute (P, 1, CP.DEP_NAME),    "depfoo");
-   test_require (CP.format_dep_attribute (P, 1, CP.DEP_ORIGIN),  "dep/foo");
-   test_require (CP.format_dep_attribute (P, 1, CP.DEP_VERSION), "1.200000");
-   test_require (CP.format_dep_attribute (P, 2, CP.DEP_NAME),    "depbar");
-   test_require (CP.format_dep_attribute (P, 2, CP.DEP_ORIGIN),  "dep/bar");
-   test_require (CP.format_dep_attribute (P, 2, CP.DEP_VERSION), "3.400000");
+   test_require (CP.format_dep_attribute (P, "depfoo", CP.DEP_NAME),    "depfoo");
+   test_require (CP.format_dep_attribute (P, "depfoo", CP.DEP_ORIGIN),  "dep/foo");
+   test_require (CP.format_dep_attribute (P, "depfoo", CP.DEP_VERSION), "1.200000");
+   test_require (CP.format_dep_attribute (P, "depbar", CP.DEP_NAME),    "depbar");
+   test_require (CP.format_dep_attribute (P, "depbar", CP.DEP_ORIGIN),  "dep/bar");
+   test_require (CP.format_dep_attribute (P, "depbar", CP.DEP_VERSION), "3.400000");
 
    test_require (CP.option_count (P), 2);
-   test_require (CP.format_option (P, 1, CP.OPT_NAME),  "foo");
-   test_require (CP.format_option (P, 1, CP.OPT_VALUE), "on");
-   test_require (CP.format_option (P, 2, CP.OPT_NAME),  "bar");
-   test_require (CP.format_option (P, 2, CP.OPT_VALUE), "off");
+   test_require (CP.format_option (P, "foo", CP.OPT_NAME),  "foo");
+   test_require (CP.format_option (P, "foo", CP.OPT_VALUE), "on");
+   test_require (CP.format_option (P, "bar", CP.OPT_NAME),  "bar");
+   test_require (CP.format_option (P, "bar", CP.OPT_VALUE), "off");
 
    test_require (CP.category_count (P), 2);
    test_require (CP.format_category (P, 1), "foo");

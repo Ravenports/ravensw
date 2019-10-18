@@ -99,7 +99,7 @@ package body Core.Printf is
 
 
    --------------------------------------------------------------------
-   --  format_dep_attribute
+   --  format_dep_attribute #1
    --------------------------------------------------------------------
    function format_dep_attribute
      (pkg       : T_pkg;
@@ -132,6 +132,41 @@ package body Core.Printf is
 
 
    --------------------------------------------------------------------
+   --  format_dep_attribute #2
+   --------------------------------------------------------------------
+   function format_dep_attribute
+     (pkg       : T_pkg;
+      name      : String;
+      attribute : dep_attribute) return String
+   is
+      procedure scan (position : depends_crate.Cursor);
+
+      result : Text;
+      found  : Boolean := False;
+
+      procedure scan (position : depends_crate.Cursor)
+      is
+         item : T_pkg_dep renames depends_crate.Element (position);
+      begin
+         if not found then
+            if name = USS (item.name) then
+               case attribute is
+                  when DEP_ORIGIN    => result := item.origin;
+                  when DEP_NAME      => result := item.name;
+                  when DEP_VERSION   => result := item.version;
+                  when DEP_UNIQUE_ID => result := item.uid;
+               end case;
+               found := True;
+            end if;
+         end if;
+      end scan;
+   begin
+      pkg.depends.Iterate (scan'Access);
+      return USS (result);
+   end format_dep_attribute;
+
+
+   --------------------------------------------------------------------
    --  option_count
    --------------------------------------------------------------------
    function option_count (pkg : T_pkg) return Integer is
@@ -141,7 +176,7 @@ package body Core.Printf is
 
 
    --------------------------------------------------------------------
-   --  format_option
+   --  format_option #1
    --------------------------------------------------------------------
    function format_option
      (pkg       : T_pkg;
@@ -161,6 +196,37 @@ package body Core.Printf is
                when OPT_VALUE => result := nvpair_crate.Element (position);
                when OPT_NAME  => result := nvpair_crate.Key (position);
             end case;
+         end if;
+      end scan;
+   begin
+      pkg.options.Iterate (scan'Access);
+      return USS (result);
+   end format_option;
+
+
+   --------------------------------------------------------------------
+   --  format_option #2
+   --------------------------------------------------------------------
+   function format_option
+     (pkg       : T_pkg;
+      name      : String;
+      attribute : option_attribute) return String
+   is
+      procedure scan (position : nvpair_crate.Cursor);
+
+      result : Text;
+      found  : Boolean := False;
+
+      procedure scan (position : nvpair_crate.Cursor) is
+      begin
+         if not found then
+            if name = USS (nvpair_crate.Key (position)) then
+               case attribute is
+               when OPT_VALUE => result := nvpair_crate.Element (position);
+               when OPT_NAME  => result := nvpair_crate.Key (position);
+               end case;
+            end if;
+            found := True;
          end if;
       end scan;
    begin
