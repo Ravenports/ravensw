@@ -54,8 +54,27 @@ package body Core.Manifest is
       obj : aliased libucl.ucl_object_t;
       field : pkg_field) return Pkg_Error_Type
    is
-      str : String := Ucl.ucl_object_tostring (obj'Access);
+      function get_value return String;
+      function get_value return String is
+      begin
+         case field is
+            when version =>
+               if Ucl.type_is_string (obj'Access) then
+                  return Ucl.ucl_object_tostring (obj'Access);
+               else
+                  return Ucl.ucl_object_tostring_forced (obj'Access);
+               end if;
+            when others =>
+               return Ucl.ucl_object_tostring (obj'Access);
+         end case;
+      end get_value;
+
+      str : String := get_value;
    begin
+      if IsBlank (str) then
+         Event.pkg_emit_error (SUS (field'Img & " field is blank"));
+         return EPKG_FATAL;
+      end if;
       case field is
          when liclogic =>
             if str = "single" then
@@ -93,11 +112,7 @@ package body Core.Manifest is
          when www =>
             pkg_access.www := SUS (str);
          when version =>
-            if Ucl.type_is_string (obj'Access) then
-               pkg_access.version := SUS (str);
-            else
-               pkg_access.version := SUS (Ucl.ucl_object_tostring_forced (obj'Access));
-            end if;
+            pkg_access.version := SUS (str);
          when others =>
             Event.pkg_emit_error (SUS ("Developer failure, not a string : " & field'Img));
             return EPKG_FATAL;

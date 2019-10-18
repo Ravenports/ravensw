@@ -136,9 +136,10 @@ is
      "www: http://www.foobar.com" & LF &
      "maintainer: test@pkgng.lan" & LF &
      "flatsize: 10000" & LF &
-     "deps:" & LF &
-     "  depfoo: {origin: dep/foo, version: 1.2}" & LF &
-     "  depbar: {origin: dep/bar, version: 3.4}" & LF &
+     "deps: {" & LF &
+     "  depfoo: {origin: dep/foo, version: 1.2}," & LF &
+     "  depbar: {origin: dep/bar, version: 3.4}," & LF &
+     "}" & LF &
      "hello: world" & LF & --  unknown keyword should not be a problem
      "conflicts: [foo-*, bar-*]" & LF &
      "options: {" & LF &
