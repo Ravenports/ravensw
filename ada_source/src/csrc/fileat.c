@@ -67,7 +67,7 @@ file_chdir_lock(int dfd)
 	file_at_dfd = dfd;
 
 	if (dfd == AT_FDCWD)
-		return 0;
+		return(0);
 
 	ret = fchdir(dfd);
 	if (ret != 0) {
@@ -88,7 +88,7 @@ file_chdir_unlock(int dfd)
 	file_at_dfd = -1;
 
 	if (dfd == AT_FDCWD)
-		return;
+		return(0);
 
 	if (saved_cwd[0] != '\0')
 		chdir(saved_cwd);
