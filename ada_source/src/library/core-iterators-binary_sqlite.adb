@@ -83,7 +83,7 @@ package body Core.Iterators.Binary_sqlite is
    --------------------------------------------------------------------
    overriding
    function Next (this    : in out Iterator_Binary_Sqlite;
-                  pkg_ptr : T_pkg_Access;
+                  pkg_ptr : in out T_pkg_Access;
                   flags   : Load_Flags) return Pkg_Error_Type
    is
       P   : T_pkg renames pkg_ptr.all;
@@ -1158,5 +1158,48 @@ package body Core.Iterators.Binary_sqlite is
       pkg_access.flags := pkg_access.flags or load_on_flag (PKG_LOAD_DEP_FORMULA).flag;
       return EPKG_OK;
    end pkgdb_load_dep_formula;
+
+
+   --------------------------------------------------------------------
+   --  count
+   --------------------------------------------------------------------
+   overriding
+   function count (this : in out Iterator_Binary_Sqlite) return Integer
+   is
+      result : Integer := 0;
+   begin
+      loop
+         exit when not SQLite.step_through_statement (this.stmt);
+         result := result + 1;
+      end loop;
+      this.Reset;
+      return result;
+   end count;
+
+
+   --------------------------------------------------------------------
+   --  pkgdb_ensure_loaded_sqlite
+   --------------------------------------------------------------------
+   function pkgdb_ensure_loaded_sqlite
+     (db      : sqlite_h.sqlite3_Access;
+      pkg_ptr : in out T_pkg_Access;
+      flags   : Load_Flags) return Pkg_Error_Type
+   is
+      ret : Pkg_Error_Type;
+   begin
+      for load_op in PKG_LOAD_OPS'Range loop
+         if (flags and load_on_flag (load_op).flag) > 0 then
+            if (pkg_ptr.flags and load_on_flag (load_op).flag) = 0 then
+               ret := load_on_flag (load_op).load (db, pkg_ptr);
+               if ret /= EPKG_OK then
+                  return ret;
+               end if;
+            end if;
+         end if;
+      end loop;
+
+      return EPKG_OK;
+   end pkgdb_ensure_loaded_sqlite;
+
 
 end Core.Iterators.Binary_sqlite;

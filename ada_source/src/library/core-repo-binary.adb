@@ -8,8 +8,9 @@ with Core.Config;
 with Core.Unix;
 with Core.Event;
 with Core.Repo_Meta;
-with Core.pkgdb_query;
+with Core.PkgDB_Query;
 with Core.Checksum;
+with Core.Iterators.Binary_sqlite;
 with Core.Repo.Binary_Update;
 with Core.Repo.Common;
 
@@ -18,6 +19,7 @@ use Core.Repo.Common;
 package body Core.Repo.Binary is
 
    package DIR renames Ada.Directories;
+   package IBS renames Core.Iterators.Binary_sqlite;
 
    --------------------------------------------------------------------
    --  repo_init
@@ -308,11 +310,63 @@ package body Core.Repo.Binary is
    --  repo_ensure_loaded
    --------------------------------------------------------------------
    overriding
-   function repo_ensure_loaded (this : Repo_Operations_Binary; reponame : Text; pkg1 : T_pkg)
-                                return Boolean
+   function repo_ensure_loaded
+     (this     : Repo_Operations_Binary;
+      reponame : Text;
+      pkg_ptr  : in out T_pkg_Access;
+      flags    : Load_Flags)
+      return Boolean
    is
+      procedure transfer_file (position : file_crate.Cursor);
+      procedure transfer_directory (position : directory_crate.Cursor);
+
+      repo : T_pkg_repo renames Config.repositories.Element (reponame);
+      cached_pkg : T_pkg_Access;
+
+      procedure transfer_file (position : file_crate.Cursor)
+      is
+         item : T_pkg_file renames file_crate.Element (position);
+      begin
+         pkg_ptr.files.Append (item);
+      end transfer_file;
+
+      procedure transfer_directory (position : directory_crate.Cursor)
+      is
+         item : T_pkg_dir renames directory_crate.Element (position);
+         key  : Text renames directory_crate.Key (position);
+      begin
+         pkg_ptr.dirs.Insert (key, item);
+      end transfer_directory;
    begin
-      return False;
+      if pkg_ptr.package_type /= PKG_INSTALLED and then
+        (flags and (PKG_LOAD_FLAG_FILES or PKG_LOAD_FLAG_DIRS)) /= 0 and then
+        (pkg_ptr.flags and (PKG_LOAD_FLAG_FILES or PKG_LOAD_FLAG_DIRS)) /= 0
+      then
+         --  Try to get that information from fetched package in cache
+         declare
+            path : constant String := this.get_cached_name (reponame, pkg_ptr);
+         begin
+            if IsBlank (path) then
+               return False;
+            end if;
+
+            Event.pkg_debug (1, "Binary> loading " & path);
+            --  TODO: pkg_open
+         end;
+
+         pkg_ptr.files.Clear;
+         pkg_ptr.dirs.Clear;
+
+         cached_pkg.files.Iterate (transfer_file'Access);
+         cached_pkg.dirs.Iterate (transfer_directory'Access);
+
+         --  TODO: pkg_free
+
+         pkg_ptr.flags := pkg_ptr.flags or (PKG_LOAD_FLAG_FILES or PKG_LOAD_FLAG_DIRS);
+
+      end if;
+
+      return IBS.pkgdb_ensure_loaded_sqlite (repo.sqlite_handle, pkg_ptr, flags) = EPKG_OK;
    end repo_ensure_loaded;
 
 
@@ -800,7 +854,7 @@ package body Core.Repo.Binary is
       use type PkgDB.T_match;
 
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      comp : String := pkgdb_query.pkgdb_get_pattern_query (pattern, match);
+      comp : String := PkgDB_Query.pkgdb_get_pattern_query (pattern, match);
       sql  : String :=
         "SELECT id, origin, name, name as uniqueid, version, comment, prefix, desc, arch, " &
         "maintainer, www, licenselogic, flatsize, pkgsize, cksum, manifestdigest, " &

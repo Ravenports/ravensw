@@ -170,11 +170,15 @@ port_fchmodat(int fd, const char* path, mode_t mode, int flag)
 	if ((ret = file_chdir_lock(fd) != 0))
 		return(ret);
 
+#if defined(__sun__) || defined(__linux__)
+	ret = chmod(path, mode);
+#else
 	if (flag & AT_SYMLINK_NOFOLLOW) {
 		ret = lchmod(path, mode);
 	} else {
 		ret = chmod(path, mode);
 	}
+#endif
 
 	file_chdir_unlock(fd);
 	return(ret);

@@ -34,15 +34,15 @@ package Core.Iterators is
    PKGDB_IT_FLAG_ONCE        : constant Iterator_Flags := 2 ** 1;
    PKGDB_IT_FLAG_AUTO        : constant Iterator_Flags := 2 ** 2;
 
-   type pkgdb_iterator_type is (PKGDB_IT_LOCAL, PKGDB_IT_REPO);
-
    procedure Free  (this : in out Base_Iterators) is abstract;
    procedure Reset (this : in out Base_Iterators) is abstract;
    function Next   (this : in out Base_Iterators;
-                    pkg_ptr : T_pkg_Access;
+                    pkg_ptr : in out T_pkg_Access;
                     flags : Load_Flags) return Pkg_Error_Type is abstract;
 
    function create_invalid_iterator return Base_Iterators is abstract;
+
+   function count (this : in out Base_Iterators) return Integer is abstract;
 
    function invalid_iterator (this : Base_Iterators) return Boolean;
 

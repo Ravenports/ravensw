@@ -191,7 +191,7 @@ package body Cmd.Version is
 
       declare
          iter : IBS.Iterator_Binary_Sqlite;
-         pkg  : aliased T_pkg;
+         pkg  : T_pkg_Access;
          check_origin : Boolean := not IsBlank (matchorigin);
          check_name   : Boolean := not IsBlank (matchname);
          good_result  : Boolean := True;
@@ -203,10 +203,11 @@ package body Cmd.Version is
          end if;
 
          loop
-            exit when iter.Next (pkg'Unchecked_Access, Iterators.PKG_LOAD_FLAG_BASIC) /= EPKG_OK;
+            delete_pkg (pkg);
+            exit when iter.Next (pkg, Iterators.PKG_LOAD_FLAG_BASIC) /= EPKG_OK;
             declare
-               name   : constant String := Printf.format_attribute (pkg, Printf.PKG_NAME);
-               origin : constant String := Printf.format_attribute (pkg, Printf.PKG_ORIGIN);
+               name   : constant String := Printf.format_attribute (pkg.all, Printf.PKG_NAME);
+               origin : constant String := Printf.format_attribute (pkg.all, Printf.PKG_ORIGIN);
                skip   : Boolean := False;
 
                iter_remote : IBS.Iterator_Binary_Sqlite;

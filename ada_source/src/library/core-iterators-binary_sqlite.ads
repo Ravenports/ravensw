@@ -14,9 +14,10 @@ package Core.Iterators.Binary_sqlite is
    procedure Reset (this : in out Iterator_Binary_Sqlite);
 
    overriding
-   function Next (this    : in out Iterator_Binary_Sqlite;
-                  pkg_ptr : T_pkg_Access;
-                  flags   : Load_Flags) return Pkg_Error_Type;
+   function Next
+     (this    : in out Iterator_Binary_Sqlite;
+      pkg_ptr : in out T_pkg_Access;
+      flags   : Load_Flags) return Pkg_Error_Type;
 
    overriding
    function create_invalid_iterator return Iterator_Binary_Sqlite;
@@ -26,6 +27,14 @@ package Core.Iterators.Binary_sqlite is
       stmt         : sqlite_h.sqlite3_stmt_Access;
       package_type : pkg_type;
       flags        : Iterator_Flags) return Iterator_Binary_Sqlite;
+
+   overriding
+   function count (this : in out Iterator_Binary_Sqlite) return Integer;
+
+   function pkgdb_ensure_loaded_sqlite
+     (db      : sqlite_h.sqlite3_Access;
+      pkg_ptr : in out T_pkg_Access;
+      flags   : Load_Flags) return Pkg_Error_Type;
 
 private
 

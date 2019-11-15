@@ -12,8 +12,6 @@ package Core.Repo_Meta is
 
 private
 
-
-
    function pkg_repo_meta_version (top : access libucl.ucl_object_t) return T_meta_version;
 
    function pkg_repo_meta_open_schema_v1 return access libucl.ucl_object_t;

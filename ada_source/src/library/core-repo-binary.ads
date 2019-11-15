@@ -34,8 +34,18 @@ package Core.Repo.Binary is
                          return Pkg_Error_Type;
 
    overriding
-   function repo_ensure_loaded (this : Repo_Operations_Binary; reponame : Text; pkg1 : T_pkg)
-                                return Boolean;
+   function repo_ensure_loaded
+     (this     : Repo_Operations_Binary;
+      reponame : Text;
+      pkg_ptr  : in out T_pkg_Access;
+      flags    : Load_Flags)
+      return Boolean;
+
+   function get_cached_name
+     (this     : Repo_Operations_Binary;
+      reponame : Text;
+      pkg_ptr  : in out T_pkg_Access)
+      return String;
 
 private
    --  The package repo schema major revision */
