@@ -57,7 +57,7 @@ package body libarchive is
    procedure read_open_filename
      (arc        : archive_Access;
       path       : String;
-      chunk_size : Positive)
+      block_size : Positive)
    is
       --  archive_read_open_filename() treats a path of NULL as
       --  meaning "read from stdin," but we want this behaviour if
@@ -67,7 +67,7 @@ package body libarchive is
       read_from_stdin : Boolean := (path = "-");
    begin
       if read_from_stdin then
-         if archive_read_open_filename (arc, ICS.Null_Ptr, IC.size_t (chunk_size)) /= ARCHIVE_OK
+         if archive_read_open_filename (arc, ICS.Null_Ptr, IC.size_t (block_size)) /= ARCHIVE_OK
          then
             raise archive_error;
          end if;
@@ -77,7 +77,7 @@ package body libarchive is
             res     : archive_result;
          begin
             c_path := ICS.New_String (path);
-            res := archive_read_open_filename (arc, c_path, IC.size_t (chunk_size));
+            res := archive_read_open_filename (arc, c_path, IC.size_t (block_size));
             ICS.Free (c_path);
             if res /= ARCHIVE_OK then
                raise archive_error;
@@ -93,15 +93,86 @@ package body libarchive is
    procedure read_open_fd
      (arc        : archive_Access;
       fd         : Core.Unix.File_Descriptor;
-      chunk_size : Positive)
-   is
+      block_size : Positive) is
    begin
       if archive_read_open_fd (arc_handle => arc,
                                fd         => IC.int (fd),
-                               block_size => IC.size_t (chunk_size)) /= ARCHIVE_OK
+                               block_size => IC.size_t (block_size)) /= ARCHIVE_OK
       then
          raise archive_error;
       end if;
    end read_open_fd;
+
+
+   --------------------------------------------------------------------
+   --  entry_pathname
+   --------------------------------------------------------------------
+   function entry_pathname (arcent : archive_entry_Access) return String is
+   begin
+      return ICS.Value (archive_entry_pathname (arcent));
+   end entry_pathname;
+
+
+   --------------------------------------------------------------------
+   --  entry_size
+   --------------------------------------------------------------------
+   function entry_size (arcent : archive_entry_Access) return arc64 is
+   begin
+      return arc64 (archive_entry_size (arcent));
+   end entry_size;
+
+
+   --------------------------------------------------------------------
+   --  read_data
+   --------------------------------------------------------------------
+   function read_data (arc : archive_Access; chunk_size : arc64) return String
+   is
+      data       : String (1 .. Integer (chunk_size)) := (others => ' ');
+      buffer     : array (data'Range) of aliased IC.unsigned_char;
+      bytes_read : IC.long;
+   begin
+      bytes_read := archive_read_data (arc_handle => arc,
+                                       data       => buffer (buffer'First)'Access,
+                                       size       => IC.size_t (chunk_size));
+      if Integer (bytes_read) < 0 then
+         --  some kind of error encountered if this function is truly like read(2)
+         raise archive_error;
+      elsif Integer (bytes_read) = 0 then
+         --  END OF FILE
+         return "";
+      else
+         for x in 1 .. Integer (bytes_read) loop
+            data (x) := Character'Val (buffer (x));
+         end loop;
+         return data (1 .. Integer (bytes_read));
+      end if;
+   end read_data;
+
+
+   --------------------------------------------------------------------
+   --  error_string
+   --------------------------------------------------------------------
+   function error_string (arc : archive_Access) return String is
+   begin
+      return ICS.Value (archive_error_string (arc));
+   end error_string;
+
+
+   --------------------------------------------------------------------
+   --  read_next_header
+   --------------------------------------------------------------------
+   function read_next_header
+     (arc    : archive_Access;
+      arcent : archive_entry_Access;
+      error  : out Boolean;
+      final  : out Boolean) return Boolean
+   is
+      result : archive_result;
+   begin
+      result := archive_read_next_header2 (arc, arcent);
+      final  := (result = ARCHIVE_EOF);
+      error  := (result /= ARCHIVE_OK) and (result /= ARCHIVE_EOF);
+      return (result = ARCHIVE_OK);
+   end read_next_header;
 
 end libarchive;

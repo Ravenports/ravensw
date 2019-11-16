@@ -4,6 +4,8 @@
 with Core.Event;
 with Core.Utilities;
 with Core.Strings;
+with Core.Manifest;
+with libarchive;
 
 use Core.Strings;
 
@@ -391,5 +393,215 @@ package body Core.Pkg is
       return EPKG_OK;
    end pkg_addconflict;
 
+
+   --------------------------------------------------------------------
+   --  pkg_open
+   --------------------------------------------------------------------
+   function pkg_open
+     (pkg_ptr : in out T_pkg_Access;
+      path    : String;
+      flags   : T_open_flags) return Pkg_Error_Type
+   is
+      arc     : libarchive_h.archive_Access;
+      arcent  : libarchive_h.archive_entry_Access;
+      retcode : Pkg_Error_Type;
+   begin
+
+      retcode := pkg_open2 (pkg_ptr => pkg_ptr,
+                            arc     => arc,
+                            arcent  => arcent,
+                            path    => path,
+                            flags   => flags,
+                            fd      => Unix.not_connected);
+
+      if retcode /= EPKG_OK and then
+        retcode /= EPKG_END
+      then
+         return EPKG_FATAL;
+      end if;
+
+      return EPKG_OK;
+   end pkg_open;
+
+
+   --------------------------------------------------------------------
+   --  pkg_open_fd
+   --------------------------------------------------------------------
+   function pkg_open_fd
+     (pkg_ptr : in out T_pkg_Access;
+      fd      : Unix.File_Descriptor;
+      flags   : T_open_flags) return Pkg_Error_Type
+   is
+      arc     : libarchive_h.archive_Access;
+      arcent  : libarchive_h.archive_entry_Access;
+      retcode : Pkg_Error_Type;
+   begin
+
+      retcode := pkg_open2 (pkg_ptr => pkg_ptr,
+                            arc     => arc,
+                            arcent  => arcent,
+                            path    => "",
+                            flags   => flags,
+                            fd      => fd);
+
+      if retcode /= EPKG_OK and then
+        retcode /= EPKG_END
+      then
+         return EPKG_FATAL;
+      end if;
+
+      return EPKG_OK;
+   end pkg_open_fd;
+
+
+   --------------------------------------------------------------------
+   --  pkg_open2
+   --------------------------------------------------------------------
+   function pkg_open2
+     (pkg_ptr : in out T_pkg_Access;
+      arc     : in out libarchive_h.archive_Access;
+      arcent  : in out libarchive_h.archive_entry_Access;
+      path    : String;
+      flags   : T_open_flags;
+      fd      : Unix.File_Descriptor) return Pkg_Error_Type
+   is
+      procedure cleanup (arc_only : Boolean := False);
+
+      block_size     : constant := 4096;
+      manifest_found : Boolean := False;
+      data_final     : Boolean;
+      data_error     : Boolean;
+
+      procedure cleanup (arc_only : Boolean := False)
+      is
+         --  only called when result not EPKG_OK or EPKG_END
+      begin
+         libarchive.read_close (arc);
+         libarchive.read_free (arc);
+         arc     := null;
+         arcent  := null;
+
+         if not arc_only then
+            delete_pkg (pkg_ptr);
+            pkg_ptr := null;
+         end if;
+      end cleanup;
+   begin
+      arc := libarchive_h.archive_read_new;
+      libarchive.read_support_filter_all (arc);
+      libarchive.read_support_format_tar (arc);
+
+      if Unix.file_connected (fd) then
+         begin
+            libarchive.read_open_fd (arc, fd, block_size);
+         exception
+            when libarchive.archive_error =>
+               if (flags and PKG_OPEN_TRY) = 0 then
+                  Event.pkg_emit_error (SUS ("archive_read_open_filename (" & path & "): " &
+                                          libarchive.error_string (arc)));
+               end if;
+               cleanup;
+               return EPKG_FATAL;
+         end;
+      else
+         begin
+            libarchive.read_open_filename (arc, path, block_size);
+         exception
+            when libarchive.archive_error =>
+               if (flags and PKG_OPEN_TRY) = 0 then
+                  Event.pkg_emit_error (SUS ("archive_read_open_fd: " &
+                                          libarchive.error_string (arc)));
+               end if;
+               cleanup;
+               return EPKG_FATAL;
+         end;
+      end if;
+
+      pkg_ptr := new T_pkg;
+
+      loop
+         exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
+
+         declare
+            fpath   : constant String := libarchive.entry_pathname (arcent);
+            len     : libarchive.arc64;
+            retcode : Pkg_Error_Type;
+         begin
+            if fpath'Length > 0 and then fpath (fpath'First) = '+' then
+               if fpath = "+COMPACT_MANIFEST" then
+                  len := libarchive.entry_size (arcent);
+                  begin
+                     declare
+                        data : String := libarchive.read_data (arc, len);
+                     begin
+                        retcode := Manifest.pkg_parse_manifest (pkg_ptr, data);
+                        if retcode /= EPKG_OK then
+                           cleanup;
+                           return EPKG_FATAL;
+                        end if;
+                        manifest_found := True;
+                        exit;
+                     end;
+                  exception
+                     when libarchive.archive_error =>
+                        cleanup;
+                        return EPKG_FATAL;
+                  end;
+               elsif fpath = "+MANIFEST" then
+                  len := libarchive.entry_size (arcent);
+                  begin
+                     declare
+                        data : String := libarchive.read_data (arc, len);
+                     begin
+                        retcode := Manifest.pkg_parse_manifest (pkg_ptr, data);
+                        if retcode /= EPKG_OK then
+                           if (flags and PKG_OPEN_TRY) = 0 then
+                              Event.pkg_emit_error
+                                (SUS (path & " is not a valid package: invalid manifest"));
+                           end if;
+                           cleanup;
+                           return EPKG_FATAL;
+                        end if;
+                        manifest_found := True;
+                        if (flags and PKG_OPEN_MANIFEST_ONLY) > 0 then
+                           exit;
+                        end if;
+                     end;
+                  exception
+                     when libarchive.archive_error =>
+                        cleanup;
+                        return EPKG_FATAL;
+                  end;
+               end if;
+            end if;
+         end;
+      end loop;
+
+      if data_error then
+         if (flags and PKG_OPEN_TRY) = 0 then
+            Event.pkg_emit_error
+              (SUS ("archive_read_next_header(): " & libarchive.error_string (arc)));
+         end if;
+         cleanup;
+         return EPKG_FATAL;
+      end if;
+
+      if not manifest_found then
+         if (flags and PKG_OPEN_TRY) = 0 then
+            Event.pkg_emit_error (SUS (path & " is not a valid package: no manifest found"));
+         end if;
+         cleanup;
+         return EPKG_FATAL;
+      end if;
+
+      cleanup (arc_only => True);
+
+      if data_final then
+         return EPKG_END;
+      else
+         return EPKG_OK;
+      end if;
+
+   end pkg_open2;
 
 end Core.Pkg;

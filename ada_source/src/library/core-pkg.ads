@@ -7,6 +7,7 @@ with Ada.Containers.Hashed_Maps;
 with Core.Unix;
 with Core.Strings;
 with sqlite_h;
+with libarchive_h;
 
 package Core.Pkg is
 
@@ -56,6 +57,7 @@ package Core.Pkg is
    type T_progress_tick is mod 2**64;
    type T_EOL           is mod 2**64;
    type T_dir_flags     is mod 2**8;
+   type T_open_flags    is mod 2**3;
 
    type T_message_type is
      (PKG_MESSAGE_ALWAYS,
@@ -538,5 +540,29 @@ package Core.Pkg is
    function pkg_addconflict
      (pkg_access : T_pkg_Access;
       data       : String) return Pkg_Error_Type;
+
+   PKG_OPEN_MANIFEST_ONLY    : constant T_open_flags := 2 ** 0;
+   PKG_OPEN_MANIFEST_COMPACT : constant T_open_flags := 2 ** 1;
+   PKG_OPEN_TRY              : constant T_open_flags := 2 ** 2;
+
+   function pkg_open
+     (pkg_ptr : in out T_pkg_Access;
+      path    : String;
+      flags   : T_open_flags) return Pkg_Error_Type;
+
+   function pkg_open_fd
+     (pkg_ptr : in out T_pkg_Access;
+      fd      : Unix.File_Descriptor;
+      flags   : T_open_flags) return Pkg_Error_Type;
+
+private
+
+   function pkg_open2
+     (pkg_ptr : in out T_pkg_Access;
+      arc     : in out libarchive_h.archive_Access;
+      arcent  : in out libarchive_h.archive_entry_Access;
+      path    : String;
+      flags   : T_open_flags;
+      fd      : Unix.File_Descriptor) return Pkg_Error_Type;
 
 end Core.Pkg;

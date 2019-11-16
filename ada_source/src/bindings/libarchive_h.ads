@@ -2,7 +2,6 @@
 --  Reference: ../License.txt
 
 with Interfaces.C.Strings;
-with Interfaces.C.Extensions;
 
 package libarchive_h is
 
@@ -10,14 +9,11 @@ package libarchive_h is
 
    package IC  renames Interfaces.C;
    package ICS renames Interfaces.C.Strings;
-   package ICX renames Interfaces.C.Extensions;
 
 
    ------------------------
    --  Type Definitions  --
    ------------------------
-
-   type arc64 is new Interfaces.Integer_64;
 
    type archive is limited private;
    type archive_entry is limited private;
@@ -78,9 +74,14 @@ package libarchive_h is
       header     : AEA_Access) return archive_result;
    pragma Import (C, archive_read_next_header);
 
+   function archive_read_next_header2
+     (arc_handle : archive_Access;
+      header     : archive_entry_Access) return archive_result;
+   pragma Import (C, archive_read_next_header2);
+
    function archive_read_data
      (arc_handle : archive_Access;
-      data       : ICX.void_ptr;
+      data       : access IC.unsigned_char;
       size       : IC.size_t) return IC.long;
    pragma Import (C, archive_read_data);
 
@@ -90,6 +91,9 @@ package libarchive_h is
    function archive_read_free (arc_handle : archive_Access) return archive_result;
    pragma Import (C, archive_read_free);
 
+   function archive_error_string (arc_handle : archive_Access) return ICS.chars_ptr;
+   pragma Import (C, archive_error_string);
+
    -------------------------
    --  <archive_entry.h>  --
    -------------------------
@@ -97,7 +101,7 @@ package libarchive_h is
    function archive_entry_pathname (header : archive_entry_Access) return ICS.chars_ptr;
    pragma Import (C, archive_entry_pathname);
 
-   function archive_entry_size (header : archive_entry_Access) return arc64;
+   function archive_entry_size (header : archive_entry_Access) return IC.size_t;
    pragma Import (C, archive_entry_size);
 
 private
