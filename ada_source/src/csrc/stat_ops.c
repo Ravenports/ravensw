@@ -58,3 +58,9 @@ is_link (struct stat *sb)
   return S_ISLNK(sb->st_mode);
 }
 
+off_t
+get_size (struct stat *sb)
+{
+  return sb->st_size;
+}
+

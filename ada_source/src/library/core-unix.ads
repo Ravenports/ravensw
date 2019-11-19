@@ -21,6 +21,8 @@ package Core.Unix is
    --  unsigned so far, so keep doing it.
    type T_epochtime is mod 2**64;
 
+   type T_filesize  is mod 2**64;
+
    --  Set both RDONLY and WRONLY to get RDRW flags
    type T_Open_Flags is
       record
@@ -162,6 +164,8 @@ package Core.Unix is
 
    function get_mtime (sb : struct_stat_Access) return T_epochtime;
 
+   function get_file_size (sb : struct_stat_Access) return T_filesize;
+
    procedure set_file_times (path : String;
                              access_time : T_epochtime;
                              mod_time : T_epochtime);
@@ -288,6 +292,9 @@ private
 
    function C_get_mtime (sb : struct_stat_Access) return IC.long;
    pragma Import (C, C_get_mtime, "get_mtime");
+
+   function C_get_size (sb : struct_stat_Access) return IC.Extensions.long_long;
+   pragma Import (C, C_get_size, "get_size");
 
    type Timeval_Unit is new IC.int;
    pragma Convention (C, Timeval_Unit);

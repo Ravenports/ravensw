@@ -13,6 +13,7 @@ with Core.Checksum;
 with Core.Iterators.Binary_sqlite;
 with Core.Repo.Binary_Update;
 with Core.Repo.Common;
+with Core.Printf;
 
 use Core.Repo.Common;
 
@@ -29,6 +30,7 @@ package body Core.Repo.Binary is
    is
       repo : T_pkg_repo renames Config.repositories.Element (reponame);
    begin
+      --  TODO:
       return False;
    end repo_init;
 
@@ -351,7 +353,10 @@ package body Core.Repo.Binary is
             end if;
 
             Event.pkg_debug (1, "Binary> loading " & path);
-            --  TODO: pkg_open
+            if pkg_open (cached_pkg, path, PKG_OPEN_TRY) /= EPKG_OK then
+               delete_pkg (cached_pkg);
+               return False;
+            end if;
          end;
 
          pkg_ptr.files.Clear;
@@ -360,13 +365,13 @@ package body Core.Repo.Binary is
          cached_pkg.files.Iterate (transfer_file'Access);
          cached_pkg.dirs.Iterate (transfer_directory'Access);
 
-         --  TODO: pkg_free
+         delete_pkg (cached_pkg);
 
          pkg_ptr.flags := pkg_ptr.flags or (PKG_LOAD_FLAG_FILES or PKG_LOAD_FLAG_DIRS);
 
       end if;
 
-      return IBS.pkgdb_ensure_loaded_sqlite (repo.sqlite_handle, pkg_ptr, flags) = EPKG_OK;
+      return (IBS.pkgdb_ensure_loaded_sqlite (repo.sqlite_handle, pkg_ptr, flags) = EPKG_OK);
    end repo_ensure_loaded;
 
 
@@ -889,5 +894,63 @@ package body Core.Repo.Binary is
                                    package_type => PKG_REMOTE,
                                    flags        => PKGDB_IT_FLAG_ONCE);
    end pkg_repo_binary_query;
+
+
+   --------------------------------------------------------------------
+   --  get_cached_name
+   --------------------------------------------------------------------
+   function get_cached_name
+     (this     : Repo_Operations_Binary;
+      reponame : Text;
+      pkg_ptr  : in out T_pkg_Access)
+      return String
+   is
+      repo : T_pkg_repo renames Config.repositories.Element (reponame);
+      packagesite : constant String := USS (repo.url);
+      repopath    : constant String := USS (pkg_ptr.repopath);
+      cachedir    : constant String := USS (context.cachedir) & "/";
+   begin
+      if leads (packagesite, "file:/") then
+         return packagesite (packagesite'First + 6 .. packagesite'Last) & "/" & repopath;
+      end if;
+
+      if contains (repopath, ".") then
+         --  The real naming scheme:
+         --  <cachedir>/<name>-<version>-<checksum>.tzst
+         --  %S/%n-%v-%z%S
+         declare
+            function get_extension return String;
+            function get_extension return String
+            is
+               numdot : constant Natural := count_char (repopath, '.');
+            begin
+               return specific_field (repopath, numdot + 1);
+            end get_extension;
+
+            dest : constant String := cachedir &
+              Printf.format_attribute (pkg_ptr.all, Printf.PKG_NAME) & '-' &
+              Printf.format_attribute (pkg_ptr.all, Printf.PKG_VERSION) & '-' &
+              Printf.format_attribute (pkg_ptr.all, Printf.PKG_CHECKSUM) & '.' & get_extension;
+
+            sb : aliased Unix.struct_stat;
+         begin
+            if Unix.stat_ok (dest, sb'Unchecked_Access) and then
+              T_pkg_size (Unix.get_file_size (sb'Unchecked_Access)) = pkg_ptr.pkgsize
+            then
+               return dest;
+            else
+               return "";
+            end if;
+         end;
+      else
+         --  %S/%n-%v-%z
+         return cachedir &
+           Printf.format_attribute (pkg_ptr.all, Printf.PKG_NAME) & '-' &
+           Printf.format_attribute (pkg_ptr.all, Printf.PKG_VERSION) & '-' &
+           Printf.format_attribute (pkg_ptr.all, Printf.PKG_CHECKSUM);
+      end if;
+
+   end get_cached_name;
+
 
 end Core.Repo.Binary;

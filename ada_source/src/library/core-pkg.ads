@@ -453,6 +453,7 @@ package Core.Pkg is
          debug_level    : ST_Debug_Level := ST_Debug_Level'First;
          developer_mode : Boolean        := False;
          pkg_rootdir    : Text;
+         cachedir       : Text;
          rootfd         : Unix.File_Descriptor := Unix.not_connected;
          cachedirfd     : Unix.File_Descriptor := Unix.not_connected;
          dbdirfd        : Unix.File_Descriptor := Unix.not_connected;

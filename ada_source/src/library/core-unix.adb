@@ -455,6 +455,18 @@ package body Core.Unix is
 
 
    --------------------------------------------------------------------
+   --  get_file_size
+   --------------------------------------------------------------------
+   function get_file_size (sb : struct_stat_Access) return T_filesize
+   is
+      res : IC.Extensions.long_long;
+   begin
+      res := C_get_size (sb);
+      return T_filesize (res);
+   end get_file_size;
+
+
+   --------------------------------------------------------------------
    --  get_mtime
    --------------------------------------------------------------------
    function get_mtime (sb : struct_stat_Access) return T_epochtime
