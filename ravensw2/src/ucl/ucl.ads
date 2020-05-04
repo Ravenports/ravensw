@@ -12,7 +12,6 @@ use Core.Strings;
 package Ucl is
 
    subtype T_parser is System.Address;
-   type int64 is range -(2**63) .. +(2**63 - 1);
 
    function ucl_object_find_key (obj : access constant libucl.ucl_object_t;
                                  key : String) return access constant libucl.ucl_object_t;
