@@ -203,7 +203,6 @@ package body Cmd.Version is
          end if;
 
          loop
-            delete_pkg (pkg);
             exit when iter.Next (pkg, Iterators.PKG_LOAD_FLAG_BASIC) /= EPKG_OK;
             declare
                name   : constant String := Printf.format_attribute (pkg.all, Printf.PKG_NAME);
@@ -235,6 +234,7 @@ package body Cmd.Version is
                   IBS.Free (iter_remote);
                end if;
             end;
+            delete_pkg (pkg);
          end loop;
 
          IBS.Free (iter);
