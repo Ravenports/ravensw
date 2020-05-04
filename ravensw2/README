@@ -1,0 +1,16 @@
+This is the second attempt to reimplement FreeBSD's pkg program in Ada.
+The first one was a direct C-to-Ada conversion, which led to strange
+coding that wouldn't normally be seen.  Moreover, the original pkg went
+through organic changes which are still present.  This led to implementing
+code that wasn't even used.  Moreover, pkg was designed as a library/client
+instantiation but there is only one variant, leading to unnecesarily complex
+and hard-to-follow coding.
+
+After frustration, I'm starting over.  Ravensw2 is going to be a work-alike,
+not a direct translation.  I'm not going to support a library model, nor use
+the event manager heavily used in pkg.  For now the plan is to have an
+identical database schema as pkg (and maintaining functional compatibily in
+the future) but lets see how that plays out.
+
+I'll try to salvage as much code from the first attempt as I can.  There's a
+lot that can be reused.
