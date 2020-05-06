@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 with Core.Config;  use Core.Config;
+with Core.Strings; use Core.Strings;
 
 package body Core.Context is
 
@@ -67,6 +68,15 @@ package body Core.Context is
    begin
       success := Unix.close_file (context.dbdirfd);
    end close_db_directory_fd;
+
+
+   --------------------------------------------------------------------
+   --  reveal_pkg_rootdir
+   --------------------------------------------------------------------
+   function reveal_pkg_rootdir return String is
+   begin
+      return USS (context.pkg_rootdir);
+   end reveal_pkg_rootdir;
 
 
 

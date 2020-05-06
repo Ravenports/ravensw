@@ -7,6 +7,7 @@ with Core.Unix;
 package Core.Context is
 
    function reveal_db_directory_fd return Unix.File_Descriptor;
+   function reveal_pkg_rootdir return String;
 
    procedure close_eventpipe;
    procedure close_root_fd;

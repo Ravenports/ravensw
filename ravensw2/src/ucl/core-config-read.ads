@@ -6,6 +6,8 @@ private with libucl;
 
 package Core.Config.Read is
 
+   Unsupported_Type : exception;
+
    --  Expand config_object into human-readable text, configuration format
    function config_dump return String;
 
@@ -31,5 +33,18 @@ private
 
    --  Retrieve signed 64-bit integer converted from ucl object given its key`
    function config_get_int64 (key : String) return int64;
+
+   function convert (obj : access constant libucl.ucl_object_t) return Config_Entry_Type;
+   function convert_string_to_ucl_object (cetype  : Config_Entry_Type;
+                                          payload : String) return access libucl.ucl_object_t;
+
+   procedure walk_repo_obj     (fileobj  : access constant libucl.ucl_object_t;
+                                filename : String;
+                                flags    : Pkg_init_flags);
+   procedure load_repo_file    (dfd      : Unix.File_Descriptor;
+                                repodir  : String;
+                                repofile : String;
+                                flags    : Pkg_init_flags);
+   procedure load_repo_files   (repodir  : String; flags : Pkg_init_flags);
 
 end Core.Config.Read;
