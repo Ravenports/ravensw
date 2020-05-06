@@ -33,6 +33,14 @@ package Core.Config is
 private
 
    config_object : access libucl.ucl_object_t;
+   parsed        : Boolean := False;
+
+   type Config_Entry_Type is
+     (pkg_string,
+      pkg_bool,
+      pkg_array,
+      pkg_int,
+      pkg_object);
 
    --  Retrieve configuration item key given enum
    function get_ci_key (ci : Configuration_Item) return String;
@@ -48,5 +56,11 @@ private
 
    --  Retrieve signed 64-bit integer converted from ucl object given its key`
    function config_get_int64 (key : String) return int64;
+
+   function config_get_type (ci : Configuration_Item) return Config_Entry_Type;
+
+   function config_get_description (ci : Configuration_Item) return String;
+
+   function config_get_default_value (ci : Configuration_Item) return String;
 
 end Core.Config;
