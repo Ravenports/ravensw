@@ -4,8 +4,6 @@
 with Core;         use Core;
 with Core.Strings; use Core.Strings;
 
-private with libucl;
-
 package Core.Config is
 
    config_type_mismatch : exception;
@@ -27,13 +25,10 @@ package Core.Config is
    function configuration_value (ci : Configuration_Item) return Boolean;
    function configuration_value (ci : Configuration_Item) return int64;
 
-   --  Expand config_object into human-readable text, configuration format
-   function config_dump return String;
-
 private
 
-   config_object : access libucl.ucl_object_t;
-   parsed        : Boolean := False;
+   --  Current values of configuration items
+   configuration_entry : array (Configuration_Item'Range) of Text;
 
    type Config_Entry_Type is
      (pkg_string,
@@ -44,18 +39,6 @@ private
 
    --  Retrieve configuration item key given enum
    function get_ci_key (ci : Configuration_Item) return String;
-
-   --  Retrieve configuration object given its key
-   function config_get (key : String) return access constant libucl.ucl_object_t;
-
-   --  Retrieve string converted from ucl object given its key`
-   function config_get_string (key : String) return String;
-
-   --  Retrieve boolean converted from ucl object given its key`
-   function config_get_boolean (key : String) return Boolean;
-
-   --  Retrieve signed 64-bit integer converted from ucl object given its key`
-   function config_get_int64 (key : String) return int64;
 
    function config_get_type (ci : Configuration_Item) return Config_Entry_Type;
 
