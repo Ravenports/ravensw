@@ -5,5 +5,9 @@ project Ravensw is
    for Main use ("main.adb");
    for Languages use ("Ada", "C");
 
+   package Compiler is
+      for Switches ("ada") use ("-gnatyabABcdefiIklnOptx", "-gnatyM100", "-fstack-check");
+   end Compiler;
+
 end Ravensw;
 

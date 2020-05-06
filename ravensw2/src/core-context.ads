@@ -8,11 +8,16 @@ package Core.Context is
 
    function reveal_db_directory_fd return Unix.File_Descriptor;
 
+   procedure close_eventpipe;
+   procedure close_root_fd;
+   procedure close_cache_directory_fd;
+   procedure close_db_directory_fd;
+
 private
 
    type A_context is
       record
-         -- eventpipe      : Unix.File_Descriptor := Unix.not_connected;
+         eventpipe      : Unix.File_Descriptor := Unix.not_connected;
          debug_level    : ST_Debug_Level := ST_Debug_Level'First;
          developer_mode : Boolean        := False;
          pkg_rootdir    : Text;

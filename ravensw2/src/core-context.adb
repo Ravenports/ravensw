@@ -13,16 +13,61 @@ package body Core.Context is
    begin
       if not Unix.file_connected (context.dbdirfd) then
          declare
-            dbdir : String := config_get_string (conf_dbdir);
+            db_dir : String := configuration_value (dbdir);
             flags : Unix.T_Open_Flags := (DIRECTORY => True,
                                           CLOEXEC => True,
                                           others => False);
          begin
-            context.dbdirfd := Unix.open_file (dbdir, flags);
+            context.dbdirfd := Unix.open_file (db_dir, flags);
          end;
       end if;
       return context.dbdirfd;
    end reveal_db_directory_fd;
+
+
+   --------------------------------------------------------------------
+   --  close_eventpipe
+   --------------------------------------------------------------------
+   procedure close_eventpipe
+   is
+      success : Boolean;
+   begin
+      success := Unix.close_file (context.eventpipe);
+   end close_eventpipe;
+
+
+   --------------------------------------------------------------------
+   --  close_root_fd
+   --------------------------------------------------------------------
+   procedure close_root_fd
+   is
+      success : Boolean;
+   begin
+      success := Unix.close_file (context.rootfd);
+   end close_root_fd;
+
+
+   --------------------------------------------------------------------
+   --  close_cache_directory_fd
+   --------------------------------------------------------------------
+   procedure close_cache_directory_fd
+   is
+      success : Boolean;
+   begin
+      success := Unix.close_file (Context.cachedirfd);
+   end close_cache_directory_fd;
+
+
+   --------------------------------------------------------------------
+   --  close_db_directory_fd
+   --------------------------------------------------------------------
+   procedure close_db_directory_fd
+   is
+      success : Boolean;
+   begin
+      success := Unix.close_file (context.dbdirfd);
+   end close_db_directory_fd;
+
 
 
 end Core.Context;
