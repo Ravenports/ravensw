@@ -2,19 +2,24 @@
 --  Reference: ../../License.txt
 
 with Ada.Characters.Latin_1;
+with Ada.Directories;
 with System;
 
 with Core.Strings;
 with Core.Context;
 with Core.Object;
+with Core.Event;
 with Ucl;
 
 
 package body Core.Config.Read is
 
    package LAT renames Ada.Characters.Latin_1;
+   package DIR renames Ada.Directories;
    package COB renames Core.Object;
+   package EV  renames Core.Event;
    package CS  renames Core.Strings;
+
 
    --------------------------------------------------------------------
    --  config_get
@@ -201,7 +206,7 @@ package body Core.Config.Read is
    --------------------------------------------------------------------
    procedure walk_repo_obj (fileobj  : access constant libucl.ucl_object_t;
                             filename : String;
-                            flags    : Pkg_init_flags)
+                            flags    : Init_protocol)
    is
       iter : aliased libucl.ucl_object_iter_t := libucl.ucl_object_iter_t (System.Null_Address);
       item : access constant libucl.ucl_object_t;
@@ -215,15 +220,15 @@ package body Core.Config.Read is
             key    : String := Ucl.ucl_object_key (item);
             keystr : Text := SUS (key);
          begin
-            EV.pkg_debug (1, "PkgConfig: parsing key '" & key & "'");
+            EV.emit_debug (1, "RepoConfig: parsing key '" & key & "'");
             if repositories.Contains (keystr) then
-               EV.pkg_debug (1, "PkgConfig: overwriting repository " & key);
+               EV.emit_debug (1, "RepoConfig: overwriting repository " & key);
             end if;
             if Ucl.type_is_object (item) then
                add_repo (repo_obj => item, reponame => key, flags => flags);
             else
-               EV.pkg_emit_error (SUS ("Ignoring bad configuration entry in " &
-                                    filename & ": " & Ucl.ucl_emit_yaml (item)));
+               EV.emit_error ("Ignoring bad configuration entry in " &
+                                   filename & ": " & Ucl.ucl_emit_yaml (item));
             end if;
          end;
       end loop;
@@ -236,7 +241,7 @@ package body Core.Config.Read is
    procedure load_repo_file (dfd      : Unix.File_Descriptor;
                              repodir  : String;
                              repofile : String;
-                             flags    : Pkg_init_flags)
+                             flags    : Init_protocol)
    is
       parser  : Ucl.T_parser;
       obj     : access libucl.ucl_object_t;
@@ -251,11 +256,11 @@ package body Core.Config.Read is
       begin
          Ucl.ucl_parser_register_variable (parser, key_ABI, myarch);
       end;
-      EV.pkg_debug (1, "PkgConfig: loading " & repodir & "/" & repofile);
+      EV.emit_debug (1, "PkgConfig: loading " & repodir & "/" & repofile);
       fd := Unix.open_file (dfd, repofile, (RDONLY => True, others => False));
 
       if not Unix.file_connected (fd) then
-         EV.pkg_emit_with_strerror (SUS ("Unable to open '" & repodir & "/" & repofile & "'"));
+         EV.emit_with_strerror ("Unable to open '" & repodir & "/" & repofile & "'");
          return;
       end if;
 
@@ -263,7 +268,7 @@ package body Core.Config.Read is
       res := Unix.close_file (fd);
 
       if not success then
-         EV.pkg_emit_with_strerror (SUS ("Error parsing: '" & repodir & "/" & repofile & "'"));
+         EV.emit_with_strerror ("Error parsing: '" & repodir & "/" & repofile & "'");
          libucl.ucl_parser_free (parser);
          return;
       end if;
@@ -287,7 +292,7 @@ package body Core.Config.Read is
    --------------------------------------------------------------------
    --  load_repo_files
    --------------------------------------------------------------------
-   procedure load_repo_files (repodir : String; flags : Pkg_init_flags)
+   procedure load_repo_files (repodir : String; flags : Init_protocol)
    is
       procedure loadfile (position : text_crate.Cursor);
       procedure populate_priority (position : pkg_repos_crate.Cursor);
@@ -316,7 +321,7 @@ package body Core.Config.Read is
       end populate_priority;
 
    begin
-      EV.pkg_debug (1, "PkgConfig: loading repositories in " & repodir);
+      EV.emit_debug (1, "PkgConfig: loading repositories in " & repodir);
 
       --  Don't bother to load in alphabetical order like pkg(8) does
       --  1) it loads into a hashed map which is a random order anyway

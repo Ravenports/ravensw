@@ -116,6 +116,7 @@ package body Cmd.Usage is
          return False;
       end alert;
 
+      use type Config.Init_protocol;
    begin
       if comline.parse_error then
          return alert (USS (comline.error_message));
@@ -293,10 +294,10 @@ package body Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       else
-         if not IsBlank (comline.backup_dump) and not IsBlank (comline.backup_restore) then
+         if not IsBlank (comline.backup_dump) and then not IsBlank (comline.backup_restore) then
             return alert ("The -d and -r switches are mutually exclusive");
          end if;
-         if IsBlank (comline.backup_dump) and IsBlank (comline.backup_restore) then
+         if IsBlank (comline.backup_dump) and then IsBlank (comline.backup_restore) then
             return alert ("Either a backup or a restore operation must be requested");
          end if;
 
@@ -459,7 +460,7 @@ package body Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       else
-         if not comline.verb_all_packages and comline.verb_work_queue.Is_Empty then
+         if not comline.verb_all_packages and then comline.verb_work_queue.Is_Empty then
             return alert ("Missing <pkg-name> ...");
          end if;
          return True;

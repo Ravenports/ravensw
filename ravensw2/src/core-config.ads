@@ -25,6 +25,12 @@ package Core.Config is
    function configuration_value (ci : Configuration_Item) return Boolean;
    function configuration_value (ci : Configuration_Item) return int64;
 
+--     package repository_crate is new CON.Hashed_Maps
+--       (Key_Type        => Text,
+--        Element_Type    => Repo.A_repo,
+--        Hash            => Strings.map_hash,
+--        Equivalent_Keys => Strings.equivalent);
+
 private
 
    --  Current values of configuration items

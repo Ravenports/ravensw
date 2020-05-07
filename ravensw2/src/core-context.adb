@@ -79,5 +79,23 @@ package body Core.Context is
    end reveal_pkg_rootdir;
 
 
+   --------------------------------------------------------------------
+   --  reveal_debug_level
+   --------------------------------------------------------------------
+   function reveal_debug_level return ST_Debug_Level is
+   begin
+      return Context.debug_level;
+   end reveal_debug_level;
+
+
+   --------------------------------------------------------------------
+   --  register_debug_level
+   --------------------------------------------------------------------
+   procedure register_debug_level (level : ST_Debug_Level) is
+   begin
+      Context.debug_level := level;
+   end register_debug_level;
+
+
 
 end Core.Context;

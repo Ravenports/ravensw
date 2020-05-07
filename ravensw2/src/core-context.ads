@@ -8,11 +8,14 @@ package Core.Context is
 
    function reveal_db_directory_fd return Unix.File_Descriptor;
    function reveal_pkg_rootdir return String;
+   function reveal_debug_level return ST_Debug_Level;
 
    procedure close_eventpipe;
    procedure close_root_fd;
    procedure close_cache_directory_fd;
    procedure close_db_directory_fd;
+
+   procedure register_debug_level (level : ST_Debug_Level);
 
 private
 
