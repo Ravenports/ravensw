@@ -143,4 +143,87 @@ package body Core.Repo is
       return repo.flags;
    end repo_ipv_type;
 
+
+   --------------------------------------------------------------------
+   --  repo_priority_less_than
+   --------------------------------------------------------------------
+   function repo_priority_less_than (A, B : Repo_Priority) return Boolean
+   is
+      --  Display 100 before 90, so it's reverse order (use greater than for "<")
+   begin
+      if A.priority = B.priority then
+         return SU.">" (A.reponame, B.reponame);
+      else
+         return A.priority > B.priority;
+      end if;
+   end repo_priority_less_than;
+
+
+   --------------------------------------------------------------------
+   --  count_of_active_repositories
+   --------------------------------------------------------------------
+   function count_of_active_repositories return Natural
+   is
+      procedure scan (position : Repository_Crate.Cursor);
+
+      total_active : Natural := 0;
+
+      procedure scan (position : Repository_Crate.Cursor)
+      is
+         item : A_repo renames Repository_Crate.Element (position);
+      begin
+         if item.enable then
+            total_active := total_active + 1;
+         end if;
+      end scan;
+   begin
+      repositories.Iterate (scan'Access);
+      return total_active;
+   end count_of_active_repositories;
+
+
+   --------------------------------------------------------------------
+   --  repository_is_active
+   --------------------------------------------------------------------
+   function repository_is_active (reponame : String) return Boolean
+   is
+      reponame_txt : Text := SUS (reponame);
+   begin
+      if repositories.Contains (reponame_txt) then
+         return repositories.Element (reponame_txt).enable;
+      else
+         return False;
+      end if;
+   end repository_is_active;
+
+
+   --------------------------------------------------------------------
+   --  first_active_repository
+   --------------------------------------------------------------------
+   function first_active_repository return String
+   is
+      procedure list (position : Repos_Priority_Crate.Cursor);
+
+      key   : Text;
+      found : Boolean := False;
+
+      procedure list (position : Repos_Priority_Crate.Cursor) is
+      begin
+         if not found then
+            key := Repos_Priority_Crate.Element (position).reponame;
+            if Repository_Crate.Element (repositories.Find (key)).enable then
+               found := True;
+            end if;
+         end if;
+      end list;
+
+   begin
+      repositories_order.Iterate (list'Access);
+      if found then
+         return USS (key);
+      else
+         return "";
+      end if;
+   end first_active_repository;
+
 end Core.Repo;

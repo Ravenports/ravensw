@@ -8,6 +8,10 @@ private with sqlite_h;
 
 package Core.Repo is
 
+   --  TODO: remove A_repo declaration and change all these "get_repo" commands to accept
+   --  repo name instead.  It's not a performance hit to just look up the repository
+   --  in the hash each time
+
    type A_repo is private;
    type A_mirror is (SRV, HTTP, NOMIRROR);
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
@@ -57,6 +61,16 @@ package Core.Repo is
    --  Return repo's IP protocol type natively
    function repo_ipv_type (repo : A_repo) return A_repo_flag;
 
+   --  Return number of configured repositories that are active.
+   function count_of_active_repositories return Natural;
+
+   --  Return True if repo identified by reponame is active
+   --  Returns False if reponame doesn't refer to any repo at all.
+   function repository_is_active (reponame : String) return Boolean;
+
+   --  Returns blank string if no repositories are active, otherwise it returns
+   --  The name of the first one.
+   function first_active_repository return String;
 
 private
 
