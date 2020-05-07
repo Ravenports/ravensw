@@ -8,7 +8,6 @@ package Core.Config is
 
    config_type_mismatch : exception;
 
-   type Init_protocol is (init_none, init_use_ipv4, init_use_ipv6);
    type Configuration_Item is
      (dbdir, cachedir, ravenports, rc_scripts, always_yes, assume_yes, repos_dir,
       keywords_dir, syslog, abi, dev_mode, fetch_retry, fetch_timeout, debug_scripts,
@@ -25,11 +24,8 @@ package Core.Config is
    function configuration_value (ci : Configuration_Item) return Boolean;
    function configuration_value (ci : Configuration_Item) return int64;
 
---     package repository_crate is new CON.Hashed_Maps
---       (Key_Type        => Text,
---        Element_Type    => Repo.A_repo,
---        Hash            => Strings.map_hash,
---        Equivalent_Keys => Strings.equivalent);
+   --  Retrieve configuration item key given enum
+   function get_ci_key (ci : Configuration_Item) return String;
 
 private
 
@@ -42,9 +38,6 @@ private
       pkg_array,
       pkg_int,
       pkg_object);
-
-   --  Retrieve configuration item key given enum
-   function get_ci_key (ci : Configuration_Item) return String;
 
    function config_get_type (ci : Configuration_Item) return Config_Entry_Type;
 

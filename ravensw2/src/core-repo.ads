@@ -12,6 +12,7 @@ package Core.Repo is
    type A_mirror is (SRV, HTTP, NOMIRROR);
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
    type A_repo_flag is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
+   type Init_protocol is (INIT_NONE, INIT_USE_IPV4, INIT_USE_IPV6);
    subtype A_priority is Integer;
 
    --  Return repo's url
@@ -181,5 +182,30 @@ private
          srv            : A_DNS_srvinfo_crate.Vector;
          http           : A_http_mirror_crate.Vector;
       end record;
+
+   package Repository_Crate is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => A_repo,
+      Hash            => Strings.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
+   type Repo_Priority is
+      record
+         reponame : Text;
+         priority : A_priority;
+      end record;
+
+   --  Order to sort A_repo
+   function repo_priority_less_than (A, B : Repo_Priority) return Boolean;
+
+   package Repos_Priority_Crate is new CON.Vectors
+     (Element_Type => Repo_Priority,
+      Index_Type   => Natural);
+
+   package Priority_Sorter is new Repos_Priority_Crate.Generic_Sorting
+     ("<" => repo_priority_less_than);
+
+   repositories       : Repository_Crate.Map;
+   repositories_order : Repos_Priority_Crate.Vector;
 
 end Core.Repo;
