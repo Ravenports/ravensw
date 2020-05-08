@@ -8,9 +8,7 @@ private with sqlite_h;
 
 package Core.Repo is
 
-   --  TODO: remove A_repo declaration and change all these "get_repo" commands to accept
-   --  repo name instead.  It's not a performance hit to just look up the repository
-   --  in the hash each time
+   invalid_repo_name : exception;
 
    type A_repo is private;
    type A_mirror is (SRV, HTTP, NOMIRROR);
@@ -71,6 +69,14 @@ package Core.Repo is
    --  Returns blank string if no repositories are active, otherwise it returns
    --  The name of the first one.
    function first_active_repository return String;
+
+   --  Returns the private repository records given its reponame.  If that reponame
+   --  doesn't match a known repository, the invalid_repo_name exception is thrown
+   function get_repository (reponame : String) return A_repo;
+
+   --  The repositories_order repo names are joined with unix line feeds and returned
+   --  as a single string.
+   function joined_priority_order return String;
 
 private
 

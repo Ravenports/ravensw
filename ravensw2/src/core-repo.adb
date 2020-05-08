@@ -1,7 +1,11 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Characters.Latin_1;
+
 package body Core.Repo is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    --------------------------------------------------------------------
    --  repo_url
@@ -225,5 +229,44 @@ package body Core.Repo is
          return "";
       end if;
    end first_active_repository;
+
+
+   --------------------------------------------------------------------
+   --  get_repository
+   --------------------------------------------------------------------
+   function get_repository (reponame : String) return A_repo
+   is
+      reponame_txt : Text := SUS (reponame);
+   begin
+      if repositories.Contains (reponame_txt) then
+         return repositories.Element (reponame_txt);
+      else
+         raise invalid_repo_name;
+      end if;
+   end get_repository;
+
+
+   --------------------------------------------------------------------
+   --  joined_priority_order
+   --------------------------------------------------------------------
+   function joined_priority_order return String
+   is
+      procedure list (position : Repos_Priority_Crate.Cursor);
+
+      result : Text;
+
+      procedure list (position : Repos_Priority_Crate.Cursor)
+      is
+         key : Text := Repos_Priority_Crate.Element (position).reponame;
+      begin
+         if not IsBlank (result) then
+            SU.Append (result, LAT.LF);
+         end if;
+         SU.Append (result, key);
+      end list;
+   begin
+      repositories_order.Iterate (list'Access);
+      return USS (result);
+   end joined_priority_order;
 
 end Core.Repo;

@@ -2,8 +2,9 @@
 --  Reference: ../License.txt
 
 with Ada.Characters.Latin_1;
-with Core.Pkg;     use Core.Pkg;
 with Core.Strings; use Core.Strings;
+with Core.Repo;
+with Core.Config.Read;
 with Core.Status;
 
 package body Cmd.Unset is
@@ -51,7 +52,7 @@ package body Cmd.Unset is
                       reposdir => USS (comline.glob_repo_config_dir),
                       flags    => comline.global_init_flags,
                       dlevel   => comline.glob_debug,
-                      options  => USS (comline.glob_option)) = EPKG_OK;
+                      options  => USS (comline.glob_option)) = RESULT_OK;
    end Initialize_ravensw;
 
 
@@ -73,7 +74,7 @@ package body Cmd.Unset is
       --  Don't pad with 24 characters like FreeBSD pkg, it looks weird.
       --  It must be a holdover from a previous design (pre-ucl?)
       TIO.Put_Line ("Version: " & progversion);
-      TIO.Put_Line (pkg_config_dump);
+      TIO.Put_Line (Config.Read.config_dump);
 
       show_repository_info;
 
@@ -128,18 +129,17 @@ package body Cmd.Unset is
 
       numwords    : constant Natural := Command_verb'Range_Length - 1;
       minlength   : constant Natural := numwords / cols'Range_Length;
-      cols_plus1  : constant Natural := numwords mod cols'Range_Length;
+      cols_minus1 : constant Natural := numwords mod cols'Range_Length;
 
       col_length  : array (cols) of Natural := (others => minlength);
       print_order : array (1 .. numwords) of Command_verb;
 
       column : cols := cols'First;
    begin
-      if cols_plus1 > 0 then
-         for N in 1 .. cols_plus1 loop
-            col_length (cols (N)) := minlength + 1;
-         end loop;
-      end if;
+      --  Loop will not execute when total commands - 1 is divisible by 5
+      for N in 1 .. cols_minus1 loop
+         col_length (cols (N)) := minlength + 1;
+      end loop;
 
       declare
          po_index : Natural := 1;  --  Zero-indexed, but we want to skip the first command
@@ -185,38 +185,56 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    --  show_repository_info
    --------------------------------------------------------------------
-   procedure show_repository_info is
-      procedure list (position : pkg_repos_priority_crate.Cursor);
-      procedure list (position : pkg_repos_priority_crate.Cursor)
-      is
-         key     : Text := pkg_repos_priority_crate.Element (position).reponame;
-         rcursor : pkg_repos_crate.Cursor := repositories.Find (key);
-         repo    : T_pkg_repo renames pkg_repos_crate.Element (rcursor);
-      begin
-         TIO.Put_Line ("  " & USS (repo.name) & ": {");
-         print_extconfig ("url", pkg_repo_url (repo), True);
-         print_extconfig ("enabled", pkg_repo_enabled (repo), False);
-         if pkg_repo_mirror_type (repo) /= NOMIRROR then
-            print_extconfig ("mirror_type", pkg_repo_mirror_type (repo), True);
-         end if;
-         if pkg_repo_signature_type (repo) /= SIG_NONE then
-            print_extconfig ("signature_type", pkg_repo_signature_type (repo), True);
-         end if;
-         if not IsBlank (pkg_repo_fingerprints (repo)) then
-            print_extconfig ("fingerprints", pkg_repo_fingerprints (repo), True);
-         end if;
-         if not IsBlank (pkg_repo_pubkey (repo)) then
-            print_extconfig ("pubkey", pkg_repo_pubkey (repo), True);
-         end if;
-         if pkg_repo_ipv_type (repo) /= REPO_FLAGS_DEFAULT then
-            print_extconfig ("ip_version", pkg_repo_ipv_type (repo), False);
-         end if;
-         print_extconfig ("priority", pkg_repo_priority_type (repo), False, True);
-         TIO.Put_Line ("  }");
-      end list;
+   procedure show_repository_info
+   is
+      joined_list : constant String := Repo.joined_priority_order;
+      num_repos   : Natural;
    begin
       TIO.Put_Line ("Repositories:");
-      Config.repositories_order.Iterate (list'Access);
+      if joined_list /= "" then
+         num_repos := count_char (joined_list, LAT.LF) + 1;
+         for x in 1 .. num_repos loop
+            declare
+               reponame : constant String := specific_field (joined_list, x, LAT.LF & "");
+               R        : Repo.A_repo := repo.get_repository (reponame);
+            begin
+               TIO.Put_Line ("  " & Repo.repo_name (R) & ": {");
+               print_extconfig ("url", Repo.repo_url (R), True);
+               print_extconfig ("enabled", Repo.repo_enabled (R), False);
+               case Repo.repo_mirror_type (R) is
+                  when Repo.NOMIRROR => null;
+                  when Repo.HTTP | Repo.SRV =>
+                     print_extconfig ("mirror_type", Repo.repo_mirror_type (R), True);
+               end case;
+               case Repo.repo_signature_type (R) is
+                  when Repo.SIG_NONE => null;
+                  when Repo.SIG_PUBKEY | Repo.SIG_FINGERPRINT =>
+                     print_extconfig ("signature_type", Repo.repo_signature_type (R), True);
+               end case;
+               declare
+                  setting : constant String := Repo.repo_fingerprints (R);
+               begin
+                  if setting /= "" then
+                     print_extconfig ("fingerprints", setting, True);
+                  end if;
+               end;
+               declare
+                  setting : constant String := Repo.repo_pubkey (R);
+               begin
+                  if setting /= "" then
+                     print_extconfig ("pubkey", setting, True);
+                  end if;
+               end;
+               case Repo.repo_ipv_type (R) is
+                  when Repo.REPO_FLAGS_DEFAULT => null;
+                  when Repo.REPO_FLAGS_LIMIT_IPV4 | Repo.REPO_FLAGS_LIMIT_IPV6 =>
+                     print_extconfig ("ip_version", Repo.repo_ipv_type (R), False);
+               end case;
+               print_extconfig ("priority", Repo.repo_priority_type (R), False, True);
+               TIO.Put_Line ("  }");
+            end;
+         end loop;
+      end if;
    end show_repository_info;
 
 
@@ -241,10 +259,11 @@ package body Cmd.Unset is
       end case;
 
       case result.status is
-         when Status.PKG_STATUS_ACTIVE => return True;
-         when others            => return False;
+         when Status.PKG_STATUS_ACTIVE =>
+            return True;
+         when others =>
+            return False;
       end case;
-
    end do_activation_test;
 
 end Cmd.Unset;
