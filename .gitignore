@@ -66,6 +66,7 @@ scripts/sbin/pkg2ng
 /scripts/periodic/490.status-ravensw-changes
 /src/Makefile
 /mk/defs.mk
+/autosetup/jimsh0
 
 /tests/Kyuafile
 /tests/Makefile

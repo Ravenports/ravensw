@@ -73,4 +73,8 @@ private
    --  Check loaded repositories URL and protocol for validity.
    function check_repository_scheme_validity return Action_Result;
 
+   --  Set debug level in context.  If dlevel > 0 then overwrite current configuration
+   --  value (default < conf file < environment < CLI)
+   procedure set_debug_level (dlevel : ST_Debug_Level);
+
 end Core.Config.Read;

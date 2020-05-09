@@ -527,6 +527,44 @@ package body Core.Config.Read is
    --------------------------------------------------------------------
    --  establish_configuration
    --------------------------------------------------------------------
+   procedure set_debug_level (dlevel : ST_Debug_Level) is
+   begin
+      if dlevel > 0 then
+         --  Let command line option override conf and environment
+         declare
+            inserted : Boolean;
+            obj      : access libucl.ucl_object_t;
+            name     : constant String := get_ci_key (debug_level);
+            contype  : Config_Entry_Type := config_get_type (debug_level);
+            val      : constant String := int2str (Integer (dlevel));
+         begin
+            obj := convert_string_to_ucl_object (contype, val);
+            inserted := Ucl.ucl_object_replace_key
+              (top      => config_object,
+               elt      => obj,
+               key      => name,
+               copy_key => True);
+         end;
+         context.register_debug_level (dlevel);
+      else
+         declare
+            DL : int64 := config_get_int64 (get_ci_key (debug_level));
+         begin
+            if DL >= int64 (ST_Debug_Level'First) and then
+              DL <= int64 (ST_Debug_Level'Last)
+            then
+               context.register_debug_level (ST_Debug_Level (DL));
+            else
+               EV.emit_notice ("DEBUG_LEVEL out of range, ignoring");
+            end if;
+         end;
+      end if;
+   end set_debug_level;
+
+
+   --------------------------------------------------------------------
+   --  establish_configuration
+   --------------------------------------------------------------------
    function establish_configuration
      (path     : String;
       reposdir : String;
@@ -615,23 +653,6 @@ package body Core.Config.Read is
       override_configuration_from_command_line (options);
       parsed := True;
 
-      if dlevel > 0 then
-         --  Let command line option override conf
-         context.register_debug_level (dlevel);
-      else
-         declare
-            DL : int64 := config_get_int64 (get_ci_key (debug_level));
-         begin
-            if DL >= int64 (ST_Debug_Level'First) and then
-              DL <= int64 (ST_Debug_Level'Last)
-            then
-               context.register_debug_level (ST_Debug_Level (DL));
-            else
-               EV.emit_notice ("DEBUG_LEVEL out of range, ignoring");
-            end if;
-         end;
-      end if;
-
       EV.emit_debug (1, "ravensw initialized");
 
       --  Start the event pipe if defined
@@ -683,6 +704,8 @@ package body Core.Config.Read is
             end if;
          end if;
       end;
+
+      set_debug_level (dlevel);
 
       if IsBlank (reposdir) then
          declare
