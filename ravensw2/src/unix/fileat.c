@@ -88,10 +88,11 @@ file_chdir_unlock(int dfd)
 	file_at_dfd = -1;
 
 	if (dfd == AT_FDCWD)
-		return(0);
+		return;
 
 	if (saved_cwd[0] != '\0')
 		chdir(saved_cwd);
+
 	pthread_mutex_unlock(&file_at_lock);
 }
 
