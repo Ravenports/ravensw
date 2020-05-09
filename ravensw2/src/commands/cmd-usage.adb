@@ -115,8 +115,6 @@ package body Cmd.Usage is
          display_help_suggestion (cv_unset);
          return False;
       end alert;
-
-      use type Config.Init_protocol;
    begin
       if comline.parse_error then
          return alert (USS (comline.error_message));
@@ -132,7 +130,7 @@ package body Cmd.Usage is
            IsBlank (comline.glob_root_dir) and then
            IsBlank (comline.glob_option) and then
            IsBlank (comline.glob_jail) and then
-           comline.global_init_flags = Config.init_none
+           comline.global_init_flags = init_none
          then
             return alert ("Not enough arguments");
          end if;

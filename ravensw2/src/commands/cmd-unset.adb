@@ -48,11 +48,12 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    function Initialize_ravensw (comline : Cldata) return Boolean is
    begin
-      return pkg_ini (path     => USS (comline.glob_config_file),
-                      reposdir => USS (comline.glob_repo_config_dir),
-                      flags    => comline.global_init_flags,
-                      dlevel   => comline.glob_debug,
-                      options  => USS (comline.glob_option)) = RESULT_OK;
+      return Config.Read.establish_configuration
+        (path     => USS (comline.glob_config_file),
+         reposdir => USS (comline.glob_repo_config_dir),
+         flags    => comline.global_init_flags,
+         dlevel   => comline.glob_debug,
+         options  => USS (comline.glob_option)) = RESULT_OK;
    end Initialize_ravensw;
 
 
@@ -137,9 +138,10 @@ package body Cmd.Unset is
       column : cols := cols'First;
    begin
       --  Loop will not execute when total commands - 1 is divisible by 5
-      for N in 1 .. cols_minus1 loop
-         col_length (cols (N)) := minlength + 1;
-      end loop;
+      --  Currently at this point, uncomment when new commands are added
+--        for N in 1 .. cols_minus1 loop
+--           col_length (cols (N)) := minlength + 1;
+--        end loop;
 
       declare
          po_index : Natural := 1;  --  Zero-indexed, but we want to skip the first command

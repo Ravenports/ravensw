@@ -29,8 +29,15 @@ package Core.Config is
 
 private
 
+   type Configuration_Data is
+      record
+         data_string : Text;
+         data_number : int64;
+         data_bool   : Boolean;
+      end record;
+
    --  Current values of configuration items
-   configuration_entry : array (Configuration_Item'Range) of Text;
+   configuration_entry : array (Configuration_Item'Range) of Configuration_Data;
 
    type Config_Entry_Type is
      (pkg_string,

@@ -727,6 +727,20 @@ package body Core.Config.Read is
          end if;
       end;
 
+      --  Partial copy of final configuration to parent
+      for ci in Configuration_Item'Range loop
+         case config_get_type (ci) is
+            when pkg_bool =>
+               configuration_entry (ci).data_bool := config_get_boolean (get_ci_key (ci));
+            when pkg_int =>
+               configuration_entry (ci).data_number := config_get_int64 (get_ci_key (ci));
+            when pkg_string =>
+               configuration_entry (ci).data_string := SUS (config_get_string (get_ci_key (ci)));
+            when pkg_array | pkg_object =>
+               null;   --  Not used by parent (at the moment)
+         end case;
+      end loop;
+
       return RESULT_OK;
    end establish_configuration;
 

@@ -505,7 +505,7 @@ package body Ucl is
       msg  : ICS.chars_ptr;
    begin
       res := libucl.ucl_object_validate (schema, obj_to_validate, serr'Access);
-      if (res = 0) then
+      if res = 0 then
          msg := ICS.New_Char_Array (serr.msg);
          error_message := SUS (ICS.Value (msg));
          ICS.Free (msg);

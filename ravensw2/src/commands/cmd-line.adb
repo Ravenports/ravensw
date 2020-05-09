@@ -1188,10 +1188,10 @@ package body Cmd.Line is
                      result.glob_list := True;
                   elsif datum = "-4" or else datum = "--only-ipv4"
                   then
-                     result.global_init_flags := Config.init_use_ipv4;
+                     result.global_init_flags := init_use_ipv4;
                   elsif datum = "-6" or else datum = "--only-ipv6"
                   then
-                     result.global_init_flags := Config.init_use_ipv6;
+                     result.global_init_flags := init_use_ipv6;
                   elsif datum = "-N"
                   then
                      result.glob_status_check := True;

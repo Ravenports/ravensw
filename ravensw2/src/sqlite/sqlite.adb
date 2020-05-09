@@ -142,7 +142,7 @@ package body SQLite is
       result : IC.int;
    begin
       result := sqlite_h.sqlite3_step (stmt);
-      problem := (result /= sqlite_h.SQLITE_ROW and result /= sqlite_h.SQLITE_DONE);
+      problem := (result /= sqlite_h.SQLITE_ROW and then result /= sqlite_h.SQLITE_DONE);
       return (result = sqlite_h.SQLITE_ROW);
    end step_through_statement;
 

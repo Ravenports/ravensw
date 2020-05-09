@@ -54,6 +54,8 @@ private
    --  cv_register
    --  cv_plugins
 
+   --  Currently 31 commands.  When new commands are added, uncomment section at
+   --  cmd-unset.adb:list_available_commands (and comment again when 36 commands achieved)
    type Command_verb is
      (cv_unset,
       cv_add,
@@ -172,7 +174,7 @@ private
          glob_jail            : Text;
          glob_list            : Boolean := False;
          glob_status_check    : Boolean := False;
-         global_init_flags    : Config.Init_protocol := Config.init_none;
+         global_init_flags    : Init_protocol := init_none;
          command              : Command_verb := cv_unset;
          parse_error          : Boolean := False;
 

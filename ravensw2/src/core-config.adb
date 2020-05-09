@@ -64,7 +64,7 @@ package body Core.Config is
    function configuration_value (ci : Configuration_Item) return Boolean is
    begin
       if config_get_type (ci) = pkg_bool then
-         return (uppercase (USS (configuration_entry (ci))) = "YES");
+         return configuration_entry (ci).data_bool;
       else
          raise config_type_mismatch;
       end if;
@@ -77,8 +77,7 @@ package body Core.Config is
    function configuration_value (ci : Configuration_Item) return int64 is
    begin
       if config_get_type (ci) = pkg_int then
-         --  may raise exception
-         return int64'Value (USS (configuration_entry (ci)));
+         return configuration_entry (ci).data_number;
       else
          raise config_type_mismatch;
       end if;
@@ -91,7 +90,7 @@ package body Core.Config is
    function configuration_value (ci : Configuration_Item) return String is
    begin
       if config_get_type (ci) = pkg_string then
-         return USS (configuration_entry (ci));
+         return USS (configuration_entry (ci).data_string);
       else
          raise config_type_mismatch;
       end if;
