@@ -1,8 +1,8 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+private with Core.Unix;
 private with libucl;
-
 
 package Core.Config.Read is
 
@@ -57,5 +57,20 @@ private
    --  When provided a FIFO or socket, open file descriptor to it.
    --  Closed by Core.Finalize.cleanup
    procedure connect_evpipe (event_pipe : String);
+
+   --  Pass open file descriptor to configuration file to parse it.
+   --  Returns True if any fatal errors encountered
+   function parse_configuration_file (conffd  : Unix.File_Descriptor;
+                                      elf_abi : String) return Action_Result;
+
+   --  Check all known configuration keys in the environment.
+   --  If found, overwrite current value with environment's value
+   procedure override_configuration_with_environment;
+
+   --  Check pipe-delimited namepair settings from command line to override configuration
+   procedure override_configuration_from_command_line (options : String);
+
+   --  Check loaded repositories URL and protocol for validity.
+   function check_repository_scheme_validity return Action_Result;
 
 end Core.Config.Read;

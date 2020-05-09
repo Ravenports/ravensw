@@ -666,7 +666,7 @@ package body Core.Elf_Operations is
                      EV.emit_debug (3, "elf-note: NT_GNU_ABI_TAG found, but tag < 16 chars");
                   end if;
                end if;
-            elsif name = "" then
+            elsif IsBlank (name) then
                if Natural (note.n_type) = NT_VERSION then
                   found := True;
                   info.use_gnu_tag := False;

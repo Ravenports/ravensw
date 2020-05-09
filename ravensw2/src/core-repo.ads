@@ -74,7 +74,7 @@ package Core.Repo is
    function get_repository (reponame : String) return A_repo;
 
    --  The repositories_order repo names are joined with unix line feeds and returned
-   --  as a single string.
+   --  as a single string.  This are in order of priority
    function joined_priority_order return String;
 
 private

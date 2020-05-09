@@ -191,7 +191,7 @@ package body Cmd.Unset is
       num_repos   : Natural;
    begin
       TIO.Put_Line ("Repositories:");
-      if joined_list /= "" then
+      if not IsBlank (joined_list) then
          num_repos := count_char (joined_list, LAT.LF) + 1;
          for x in 1 .. num_repos loop
             declare
@@ -214,14 +214,14 @@ package body Cmd.Unset is
                declare
                   setting : constant String := Repo.repo_fingerprints (R);
                begin
-                  if setting /= "" then
+                  if not IsBlank (setting) then
                      print_extconfig ("fingerprints", setting, True);
                   end if;
                end;
                declare
                   setting : constant String := Repo.repo_pubkey (R);
                begin
-                  if setting /= "" then
+                  if not IsBlank (setting) then
                      print_extconfig ("pubkey", setting, True);
                   end if;
                end;

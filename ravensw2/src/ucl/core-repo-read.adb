@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 with Ada.Directories;
+with Ada.Characters.Latin_1;
 with System;
 
 with Core.Config;
@@ -10,6 +11,7 @@ with Ucl;
 
 package body Core.Repo.Read is
 
+   package LAT renames Ada.Characters.Latin_1;
    package DIR renames Ada.Directories;
    package EV  renames Core.Event;
 
@@ -421,4 +423,28 @@ package body Core.Repo.Read is
          repositories.Insert (reponame_txt, new_repo);
       end if;
    end add_repo;
+
+
+   --------------------------------------------------------------------
+   --  load_repositories
+   --------------------------------------------------------------------
+   procedure load_repositories (repodirs : String; flags : Init_protocol)
+   is
+      num_dirs : Natural;
+   begin
+      if IsBlank (repodirs) then
+         return;
+      end if;
+
+      num_dirs := count_char (repodirs, LAT.LF) + 1;
+
+      for D in 1 .. num_dirs loop
+         declare
+            repodir : constant String := specific_field (repodirs, D, LAT.LF & "");
+         begin
+            load_repo_files (repodir, flags);
+         end;
+      end loop;
+   end load_repositories;
+
 end Core.Repo.Read;

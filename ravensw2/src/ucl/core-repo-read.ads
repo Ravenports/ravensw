@@ -6,6 +6,10 @@ private with libucl;
 
 package Core.Repo.Read is
 
+   --  Load one or more directories (Unix line-feed delimited "repodirs")
+   procedure load_repositories (repodirs : String;
+                                flags    : Init_protocol);
+
 private
 
    procedure walk_repo_obj     (fileobj  : access constant libucl.ucl_object_t;
