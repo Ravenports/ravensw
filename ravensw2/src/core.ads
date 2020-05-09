@@ -52,5 +52,6 @@ package Core is
       RESULT_NOTINST,    --  Not installed
       RESULT_VITAL       --  Can not delete the package because it is vital, i.e. a kernel
      );
+   type Init_protocol is (INIT_NONE, INIT_USE_IPV4, INIT_USE_IPV6);
 
 end Core;

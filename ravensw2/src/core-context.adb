@@ -27,6 +27,77 @@ package body Core.Context is
 
 
    --------------------------------------------------------------------
+   --  reveal_root_fd
+   --------------------------------------------------------------------
+   function reveal_root_fd return Unix.File_Descriptor is
+   begin
+      if not Unix.file_connected (context.rootfd) then
+         declare
+            flags : Unix.T_Open_Flags;
+         begin
+            flags.DIRECTORY := True;
+            flags.RDONLY    := True;
+            flags.CLOEXEC   := True;
+            context.rootfd := Unix.open_file ("/", flags);
+            --  Caller has to check for success.
+         end;
+      end if;
+      return context.rootfd;
+   end reveal_root_fd;
+
+
+   --------------------------------------------------------------------
+   --  reveal_event_pipe
+   --------------------------------------------------------------------
+   function reveal_event_pipe (name : String) return Unix.File_Descriptor is
+   begin
+      return context.eventpipe;
+   end reveal_event_pipe;
+
+
+   --------------------------------------------------------------------
+   --  register_event_pipe_via_file
+   --------------------------------------------------------------------
+   function register_event_pipe_via_file (pipe_name : String) return Boolean
+   is
+      sock_flags  : Unix.T_Open_Flags;
+   begin
+      if Unix.file_connected (context.eventpipe) then
+         return True;
+      else
+         sock_flags.WRONLY := True;
+         sock_flags.NON_BLOCK := True;
+         context.eventpipe := Unix.open_file (pipe_name, sock_flags);
+         return Unix.file_connected (context.eventpipe);
+      end if;
+   end register_event_pipe_via_file;
+
+
+   --------------------------------------------------------------------
+   --  register_event_pipe_via_socket
+   --------------------------------------------------------------------
+   function register_event_pipe_via_socket (pipe_name : String) return Unix.Unix_Socket_Result
+   is
+      fd     : Unix.File_Descriptor;
+      result : Unix.Unix_Socket_Result;
+   begin
+      if Unix.file_connected (context.eventpipe) then
+         return Unix.connected;
+      else
+         result := Unix.connect_unix_socket (pipe_name, fd);
+         case result is
+            when Unix.connected =>
+               context.eventpipe := fd;
+            when others =>
+               --  Caller has to handle failure
+               null;
+         end case;
+         return result;
+      end if;
+   end register_event_pipe_via_socket;
+
+
+   --------------------------------------------------------------------
    --  close_eventpipe
    --------------------------------------------------------------------
    procedure close_eventpipe
@@ -95,6 +166,15 @@ package body Core.Context is
    begin
       Context.debug_level := level;
    end register_debug_level;
+
+
+   --------------------------------------------------------------------
+   --  register_dev_mode
+   --------------------------------------------------------------------
+   procedure register_dev_mode (mode_on : Boolean) is
+   begin
+      Context.developer_mode := mode_on;
+   end register_dev_mode;
 
 
 

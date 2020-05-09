@@ -7,6 +7,8 @@ with Core.Unix;
 package Core.Context is
 
    function reveal_db_directory_fd return Unix.File_Descriptor;
+   function reveal_root_fd return Unix.File_Descriptor;
+   function reveal_event_pipe (name : String) return Unix.File_Descriptor;
    function reveal_pkg_rootdir return String;
    function reveal_debug_level return ST_Debug_Level;
 
@@ -16,6 +18,9 @@ package Core.Context is
    procedure close_db_directory_fd;
 
    procedure register_debug_level (level : ST_Debug_Level);
+   procedure register_dev_mode (mode_on : Boolean);
+   function register_event_pipe_via_file (pipe_name : String) return Boolean;
+   function register_event_pipe_via_socket (pipe_name : String) return Unix.Unix_Socket_Result;
 
 private
 

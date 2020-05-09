@@ -12,10 +12,10 @@ package Core.Config is
      (dbdir, cachedir, ravenports, rc_scripts, always_yes, assume_yes, repos_dir,
       keywords_dir, syslog, abi, dev_mode, fetch_retry, fetch_timeout, debug_scripts,
       permissive, autoupdate, nameserver, user_agent, event_pipe, no_timestamp,
-      restrict_dir, ssh_args, env, debug_level, alias, cudf_solver, sat_solver,
+      restrict_dir, ssh_args, environ, debug_level, alias, cudf_solver, sat_solver,
       run_scripts, cs_match, lock_wait, lock_retries, sqlite_profile, workers_count,
       read_lock, ip_version, automerge, version_source, conservative, create_verbose,
-      autoclean, dot_file, valid_scheme, base_shlibs, size_limit, metalog
+      autoclean, dot_file, valid_scheme, base_shlibs, size_limit, metalog_file
      );
 
    --  Overloaded functions that return value of configuration given enum.

@@ -1,7 +1,6 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-
 package body Core.Config is
 
    --------------------------------------------------------------------
@@ -32,7 +31,7 @@ package body Core.Config is
          when no_timestamp   => return "UNSET_TIMESTAMP";
          when restrict_dir   => return "SSH_RESTRICT_DIR";
          when ssh_args       => return "RAVENSW_SSH_ARGS";
-         when env            => return "RAVENSW_ENV";
+         when environ        => return "RAVENSW_ENV";
          when debug_level    => return "DEBUG_LEVEL";
          when alias          => return "ALIAS";
          when cudf_solver    => return "CUDF_SOLVER";
@@ -54,7 +53,7 @@ package body Core.Config is
          when valid_scheme   => return "VALID_URL_SCHEME";
          when base_shlibs    => return "ALLOW_BASE_SHLIBS";
          when size_limit     => return "WARN_SIZE_LIMIT";
-         when metalog        => return "METALOG";
+         when metalog_file   => return "METALOG";
       end case;
    end get_ci_key;
 
@@ -122,8 +121,7 @@ package body Core.Config is
             | conservative
             | create_verbose
             | autoclean
-            | base_shlibs
-            =>
+            | base_shlibs =>
             return pkg_bool;
          when fetch_retry
             | fetch_timeout
@@ -132,8 +130,7 @@ package body Core.Config is
             | lock_retries
             | workers_count
             | ip_version
-            | size_limit
-            =>
+            | size_limit =>
             return pkg_int;
          when dbdir
             | cachedir
@@ -149,16 +146,13 @@ package body Core.Config is
             | sat_solver
             | version_source
             | dot_file
-            | metalog
-            =>
+            | metalog_file =>
             return pkg_string;
-         when env
-            | alias
-            =>
+         when environ
+            | alias =>
             return pkg_object;
          when repos_dir
-            | valid_scheme
-            =>
+            | valid_scheme =>
             return pkg_array;
       end case;
    end config_get_type;
@@ -192,7 +186,7 @@ package body Core.Config is
          when no_timestamp   => return "Do not include timestamps in the package";
          when restrict_dir   => return "Directory in which to restrict the ssh subsystem";
          when ssh_args       => return "Extras arguments to pass to ssh(1)";
-         when env            => return "Environment variables ravensw(8) will use";
+         when environ        => return "Environment variables ravensw(8) will use";
          when debug_level    => return "Level for debug messages";
          when alias          => return "Command aliases";
          when cudf_solver    => return "Experimental: tells pkg to use an external CUDF solver";
@@ -214,7 +208,7 @@ package body Core.Config is
          when valid_scheme   => return "List of valid URL protocols";
          when base_shlibs    => return "Enable base libraries analysis";
          when size_limit     => return "Ask user when performing changes for more than this limit";
-         when metalog        => return "Write out the METALOG to the specified file";
+         when metalog_file   => return "Write out the METALOG to the specified file";
       end case;
    end config_get_description;
 
@@ -247,7 +241,7 @@ package body Core.Config is
          when no_timestamp   => return "NO";
          when restrict_dir   => return "";
          when ssh_args       => return "";
-         when env            => return "";
+         when environ        => return "";
          when debug_level    => return "0";
          when alias          => return "";
          when cudf_solver    => return "";
@@ -270,8 +264,9 @@ package body Core.Config is
                                        "rsw+ssh,rsw+ftp,rsw+ftps";
          when base_shlibs    => return "NO";
          when size_limit     => return "1048576";  -- 1 megabyte
-         when metalog        => return "";
+         when metalog_file   => return "";
       end case;
    end config_get_default_value;
+
 
 end Core.Config;

@@ -14,7 +14,6 @@ package Core.Repo is
    type A_mirror is (SRV, HTTP, NOMIRROR);
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
    type A_repo_flag is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
-   type Init_protocol is (INIT_NONE, INIT_USE_IPV4, INIT_USE_IPV6);
    subtype A_priority is Integer;
 
    --  Return repo's url
