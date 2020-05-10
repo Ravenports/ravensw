@@ -45,14 +45,4 @@ package body Core.Database is
    end set_match_behavior;
 
 
-   --------------------------------------------------------------------
-   --  verbatim_command
-   --------------------------------------------------------------------
-   procedure verbatim_command (passthrough : String) is
-   begin
-      null;  --  TODO: Implement
-   end verbatim_command;
-
-
-
 end Core.Database;

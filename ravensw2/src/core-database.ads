@@ -16,8 +16,6 @@ package Core.Database is
    RDB_MODE_WRITE  : constant RDB_Mode_Flags := 2 ** 1;
    RDB_MODE_CREATE : constant RDB_Mode_Flags := 2 ** 2;
 
-   procedure verbatim_command (passthrough : String);
-
    --  By default, MATCH_EXACT and MATCH_REGEX are case sensitive.  This
    --  is modified in many actions according to the value of
    --  CASE_SENSITIVE_MATCH in ravensw.conf and then possibly reset again in
