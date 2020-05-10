@@ -20,8 +20,10 @@ package body Cmd.Help is
    is
       manprefix : constant String := install_prefix & "/share/man";
    begin
-      if comline.help_command = cv_unset and then
-        comline.help_command2 = cv2_unset
+      --  There's no man page ravensw-help.8.  Trying ravenadm help help will result
+      --  in a manpage not found error.
+      if comline.help_command = cv_unset or else
+        comline.help_command = cv_help
       then
          print_global_options;
          print_command_summary;
