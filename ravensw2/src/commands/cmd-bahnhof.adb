@@ -20,6 +20,7 @@ package body Cmd.Bahnhof is
    begin
       case comline.command is
          when cv_unset => null;
+         when cv_help  => null;
          when others =>
             if not C00.Initialize_ravensw (comline) then
                return False;

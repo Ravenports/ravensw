@@ -245,23 +245,23 @@ package body Cmd.Unset is
    --------------------------------------------------------------------
    function do_activation_test return Boolean
    is
-      result : Status.Pkg_Status_Output;
+      result : Status.Activation_Status_Output;
    begin
       result := Status.ravensw_status;
 
       case result.status is
-         when Status.PKG_STATUS_NODB =>
+         when Status.ACT_STATUS_NODB =>
             TIO.Put_Line (TIO.Standard_Error, progname & " database doesn't exist.");
-         when Status.PKG_STATUS_BAD_DB =>
+         when Status.ACT_STATUS_BAD_DB =>
             TIO.Put_Line (TIO.Standard_Error, progname & " database exists but doesn't work.");
-         when Status.PKG_STATUS_NOPACKAGES =>
+         when Status.ACT_STATUS_NOPACKAGES =>
             TIO.Put_Line (TIO.Standard_Error, "no packages registered.");
-         when Status.PKG_STATUS_ACTIVE =>
+         when Status.ACT_STATUS_ACTIVE =>
             TIO.Put_Line (int2str (result.count) & " packages installed.");
       end case;
 
       case result.status is
-         when Status.PKG_STATUS_ACTIVE =>
+         when Status.ACT_STATUS_ACTIVE =>
             return True;
          when others =>
             return False;
