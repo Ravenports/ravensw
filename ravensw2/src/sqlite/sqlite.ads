@@ -84,8 +84,8 @@ package SQLite is
 
    function get_last_error_code (db : sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types;
 
-   procedure pkgdb_syscall_overload;
-   pragma Import (C, pkgdb_syscall_overload);
+   procedure rdb_syscall_overload;
+   pragma Import (C, rdb_syscall_overload);
 
    function exec_sql
      (db  : sqlite_h.sqlite3_Access;

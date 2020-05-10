@@ -6,19 +6,22 @@
 #include <sys/stat.h>
 
 int
-vfs_dbdir_open(const char *path, int flags, int mode);
+dbdir_open(const char *path, int flags, int mode);
 
 int
-vfs_dbdir_access(const char *path, int mode);
+dbdir_access(const char *path, int mode);
 
 int
-vfs_dbdir_stat(const char * path, struct stat * sb);
+dbdir_stat(const char * path, struct stat * sb);
 
 int
-vfs_dbdir_lstat(const char * path, struct stat * sb);
+dbdir_lstat(const char * path, struct stat * sb);
 
 int
-vfs_dbdir_unlink(const char *path);
+dbdir_unlink(const char *path);
 
 int
-vfs_dbdir_mkdir(const char *path, mode_t mode);
+dbdir_mkdir(const char *path, mode_t mode);
+
+void
+rdb_syscall_overload(void);
