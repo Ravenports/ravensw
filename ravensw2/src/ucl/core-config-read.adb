@@ -691,7 +691,7 @@ package body Core.Config.Read is
                key     : String := Ucl.ucl_object_key (item);
                payload : String := Ucl.ucl_object_tostring_forced (item);
             begin
-               EV.emit_debug (2, "Setting env var: " & key);
+               EV.emit_debug (2, "Setting env var: " & key & "=" & payload);
                if not IsBlank (key) then
                   ENV.Set (key, payload);
                   if key = UA_key then
