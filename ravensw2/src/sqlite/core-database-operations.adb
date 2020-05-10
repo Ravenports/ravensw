@@ -2,12 +2,12 @@
 --  Reference: ../../License.txt
 
 with Ada.Characters.Latin_1;
-with Interfaces.C.Strings;
 
+with Core.Database.CustomCmds;
 with Core.Strings;
-
-with sqlite_h;
+with Core.Config;
 with SQLite;
+with sqlite_h;
 
 use Core.Strings;
 
@@ -15,7 +15,6 @@ package body Core.Database.Operations is
 
    package LAT renames Ada.Characters.Latin_1;
    package IC  renames Interfaces.C;
-   package ICS renames Interfaces.C.Strings;
 
    --------------------------------------------------------------------
    --  verbatim_command
@@ -48,6 +47,20 @@ package body Core.Database.Operations is
          end loop;
       end;
    end start_shell;
+
+
+   --------------------------------------------------------------------
+   --  pkgshell_open
+   --------------------------------------------------------------------
+   procedure pkgshell_open (reponame : access ICS.chars_ptr)
+   is
+      dbdir  : constant String := Config.configuration_value (Config.dbdir);
+      dbfile : constant String := dbdir & "/local.sqlite";
+      result : IC.int;
+   begin
+      reponame.all := ICS.New_String (dbfile);
+      result := sqlite_h.sqlite3_auto_extension (callback => CustomCmds.sqlcmd_init'Access);
+   end pkgshell_open;
 
 
 end Core.Database.Operations;
