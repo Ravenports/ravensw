@@ -649,6 +649,11 @@ package body Core.Config.Read is
          end;
       end if;
 
+      --  We've got to registerd debug level twice.  Once immediately from command line so
+      --  that debug statements work with '-d' options, and again at the end in case the
+      --  debug level is set again by environment or -o option.  (-d takes precedence)
+      context.register_debug_level (dlevel);
+
       override_configuration_with_environment;
       override_configuration_from_command_line (options);
       parsed := True;
@@ -686,7 +691,7 @@ package body Core.Config.Read is
                key     : String := Ucl.ucl_object_key (item);
                payload : String := Ucl.ucl_object_tostring_forced (item);
             begin
-               EV.emit_debug (1, "Setting env var: " & key);
+               EV.emit_debug (2, "Setting env var: " & key);
                if not IsBlank (key) then
                   ENV.Set (key, payload);
                   if key = UA_key then
