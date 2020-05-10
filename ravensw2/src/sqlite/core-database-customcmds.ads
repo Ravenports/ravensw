@@ -12,7 +12,7 @@ package Core.Database.CustomCmds is
    package ICS renames Interfaces.C.Strings;
 
    --  Note: When building the internal SQLite:
-   --  1) Remove internal check with sed: /verify_uninitialized/d from sqlite3.c
+   --  1) Remove internal check with sed: /verify_uninitialized/d from shell.c
    --  2) sed 's|SQLITE_CDECL main|SQLITE_CDECL sqlite3_shell|' on shell.c
 
    --  Defines custom sql functions for sqlite
