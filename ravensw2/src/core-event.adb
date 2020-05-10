@@ -120,7 +120,7 @@ package body Core.Event is
                          debug_msg   : String)
    is
    begin
-      if debug_level >= Context.reveal_debug_level then
+      if debug_level <= Context.reveal_debug_level then
          warnx ("DBG(" & int2str (debug_level) & ")[" &
                   int2str (Integer (Unix.getpid)) & "]> " & debug_msg);
       end if;

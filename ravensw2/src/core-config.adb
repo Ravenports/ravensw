@@ -224,7 +224,7 @@ package body Core.Config is
          when rc_scripts     => return "NO";
          when always_yes     => return "NO";
          when assume_yes     => return "NO";
-         when repos_dir      => return "/etc/ravensw/," & install_prefix & "/etc/ravensw/repos/";
+         when repos_dir      => return "/etc/ravensw," & install_prefix & "/etc/ravensw/repos";
          when keywords_dir   => return "";
          when syslog         => return "YES";
          when abi            => return "overwritten";
