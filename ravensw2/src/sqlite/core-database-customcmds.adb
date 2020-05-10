@@ -89,7 +89,6 @@ package body Core.Database.CustomCmds is
       use type IC.int;
 
       errmsg : ICS.chars_ptr;
-      re     : aliased regex_h.regex_t;
       argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
 
       for argv'Address use argsval.all'Address;
@@ -133,7 +132,7 @@ package body Core.Database.CustomCmds is
                   cflags := IC.int (regex_h.REG_EXTENDED + regex_h.REG_NOSUB + regex_h.REG_ICASE);
                end if;
 
-               re_Access := re'Unchecked_Access;
+               re_Access := re'Access;
                res := regex_h.regcomp (re_Access, regex, cflags);
                if res /= 0 then
                   errmsg := ICS.New_String ("Invalid regex");

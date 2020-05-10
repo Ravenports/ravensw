@@ -11,6 +11,10 @@ package Core.Database.CustomCmds is
    package IC  renames Interfaces.C;
    package ICS renames Interfaces.C.Strings;
 
+   --  Note: When building the internal SQLite:
+   --  1) Remove internal check with sed: /verify_uninitialized/d from sqlite3.c
+   --  2) sed 's|SQLITE_CDECL main|SQLITE_CDECL sqlite3_shell|' on shell.c
+
    --  Defines custom sql functions for sqlite
    function sqlcmd_init
      (db       : not null sqlite_h.sqlite3_Access;
@@ -20,6 +24,8 @@ package Core.Database.CustomCmds is
 
 private
 
+   --  regex object must be global because it will be referenced after rdb_regex ends
+   re : aliased regex_h.regex_t;
 
    --  select now();
    --  returns 1567046088
