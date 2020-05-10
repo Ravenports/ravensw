@@ -11,7 +11,7 @@ with sqlite_h;
 
 use Core.Strings;
 
-package body Core.Database.Operations is
+package body Core.Database.Shell is
 
    package LAT renames Ada.Characters.Latin_1;
    package IC  renames Interfaces.C;
@@ -63,4 +63,4 @@ package body Core.Database.Operations is
    end pkgshell_open;
 
 
-end Core.Database.Operations;
+end Core.Database.Shell;

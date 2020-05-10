@@ -3,7 +3,7 @@
 
 private with Interfaces.C.Strings;
 
-package Core.Database.Operations is
+package Core.Database.Shell is
 
    procedure start_shell (arguments : String);
 
@@ -14,5 +14,4 @@ private
    procedure pkgshell_open (reponame : access ICS.chars_ptr);
    pragma Export (C, pkgshell_open);
 
-
-end Core.Database.Operations;
+end Core.Database.Shell;

@@ -2,7 +2,7 @@
 --  Reference: ../License.txt
 
 with Core.Strings; use Core.Strings;
-with Core.Database.Operations;
+with Core.Database.Shell;
 
 package body Cmd.Shell is
 
@@ -11,7 +11,7 @@ package body Cmd.Shell is
    --------------------------------------------------------------------
    function execute_shell_command (comline : Cldata) return Boolean is
    begin
-      Database.Operations.start_shell (USS (comline.shell_pass_along));
+      Database.Shell.start_shell (USS (comline.shell_pass_along));
       return True;
    end execute_shell_command;
 
