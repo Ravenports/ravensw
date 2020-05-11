@@ -128,6 +128,15 @@ package body Core.Event is
 
 
    --------------------------------------------------------------------
+   --  emit_no_local_db
+   --------------------------------------------------------------------
+   procedure emit_no_local_db is
+   begin
+      warnx ("Local package database nonexistent!");
+   end emit_no_local_db;
+
+
+   --------------------------------------------------------------------
    --  emit_progress_tick
    --------------------------------------------------------------------
 --     procedure emit_progress_tick  (prog_current : T_progress_tick;

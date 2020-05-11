@@ -14,9 +14,10 @@ package Core.Event is
    procedure emit_developer_mode (message : String);
    procedure emit_progress_start (message : String);
    procedure emit_with_strerror  (message : String);
+   procedure emit_no_local_db;
 
    procedure emit_debug          (debug_level : ST_Debug_Level;
-                                   debug_msg   : String);
+                                  debug_msg   : String);
 
 --     procedure event_progress_tick  (prog_current : T_progress_tick;
 --                                     prog_total   : T_progress_tick);
