@@ -297,7 +297,7 @@ package body Core.Database.Operations is
 
       if not IsBlank (reponame) then
          if Repo.repository_is_active (reponame) then
-            ret := rdb_open_repository (db, reponame);
+            ret := ROP.open_repository (reponame);
             if ret /= RESULT_OK then
                Event.emit_error ("Failed to open repository " & reponame);
             end if;
@@ -317,7 +317,7 @@ package body Core.Database.Operations is
                   rname : String := specific_field (list, x, delim);
                begin
                   if Repo.repository_is_active (rname) then
-                     ret := rdb_open_repository (db, rname);
+                     ret := ROP.open_repository (rname);
                      if ret /= RESULT_OK then
                         Event.emit_error ("Failed to open repository " & rname);
                      end if;
@@ -370,22 +370,12 @@ package body Core.Database.Operations is
    procedure rdb_close   (db : in out RDB_Connection)
    is
       use type sqlite_h.sqlite3_Access;
-
-      procedure close (position : Text_Jar.Cursor);
-      procedure close (position : Text_Jar.Cursor)
-      is
-         reponame : String := USS (Text_Jar.Element (position));
-      begin
-         ROP.close_repository (reponame, False);
-      end close;
-
    begin
       if db.prstmt_initialized then
          Schema.prstmt_finalize (db);
       end if;
       if db.sqlite /= null then
-         db.open_repos.Iterate (close'Access);
-         db.open_repos.Clear;
+         ROP.close_all_open_repositories;
          SQLite.close_database (db.sqlite);
          db.sqlite := null;
       end if;

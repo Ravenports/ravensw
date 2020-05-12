@@ -2,6 +2,7 @@
 --  Reference: ../License.txt
 
 private with Core.Strings;
+private with Core.Checksum;
 private with Ada.Containers.Vectors;
 private with Ada.Containers.Hashed_Maps;
 private with sqlite_h;
@@ -11,6 +12,7 @@ package Core.Repo is
    invalid_repo_name : exception;
 
    type A_repo is private;
+   type Repo_Metadata is private;
    type A_mirror is (SRV, HTTP, NOMIRROR);
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
    type A_repo_flag is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
@@ -93,23 +95,12 @@ private
          hash      : Text;
       end record;
 
-   type A_checksum_type is
-      (PKG_HASH_TYPE_SHA256_BASE32,
-       PKG_HASH_TYPE_SHA256_HEX,
-       PKG_HASH_TYPE_BLAKE2_BASE32,
-       PKG_HASH_TYPE_SHA256_RAW,
-       PKG_HASH_TYPE_BLAKE2_RAW,
-       PKG_HASH_TYPE_BLAKE2S_BASE32,
-       PKG_HASH_TYPE_BLAKE2S_RAW,
-       PKG_HASH_TYPE_UNKNOWN);
-   pragma Convention (C, A_checksum_type);
-
    type Value_EOL is mod 2**64;
 
    --  version 0 is an error, version 1 is the only existing version.
-   type A_meta_version is new Natural range 0 .. 1;
+   type A_Meta_Version is new Natural range 0 .. 1;
 
-   type A_meta_cert is
+   type Meta_Certificate is
       record
          pubkey      : Text;
          pubkey_type : A_pubkey_type;
@@ -136,7 +127,7 @@ private
       end record;
 
    package A_cert_crate is new CON.Vectors
-     (Element_Type => A_meta_cert,
+     (Element_Type => Meta_Certificate,
       Index_Type   => Natural);
 
    package A_nvpair_crate is new CON.Hashed_Maps
@@ -154,7 +145,7 @@ private
      (Element_Type => A_http_mirror,
       Index_Type   => Natural);
 
-   type Repo_metadata is
+   type Repo_Metadata is
       record
          maintainer        : Text;
          source            : Text;
@@ -169,7 +160,7 @@ private
          conflicts_archive : Text;
          fulldb            : Text;
          fulldb_archive    : Text;
-         digest_format     : A_checksum_type;
+         digest_format     : Checksum.A_Checksum_Type;
          cert              : A_cert_crate.Vector;
          packing_format    : A_package_format := TZS;
          revision          : Integer;
@@ -226,5 +217,6 @@ private
 
    repositories       : Repository_Crate.Map;
    repositories_order : Repos_Priority_Crate.Vector;
+   repositories_open  : Repos_Priority_Crate.Vector;
 
 end Core.Repo;

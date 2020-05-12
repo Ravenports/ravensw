@@ -37,16 +37,10 @@ private
                         res     : out int64;
                         silence : Boolean) return Action_Result;
 
-   package Text_Jar is new CON.Vectors
-     (Element_Type => Text,
-      Index_Type   => Natural,
-      "="          => SU."=");
-
    type RDB_Connection is limited
       record
          sqlite             : aliased sqlite_h.sqlite3_Access;
          prstmt_initialized : Boolean;
-         open_repos         : Text_Jar.Vector;
       end record;
 
    procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
@@ -60,9 +54,6 @@ private
                              dbtype   : RDB_Source;
                              reponame : String)
                              return Action_Result;
-
-   function rdb_open_repository (db       : in out RDB_Connection;
-                                 reponame : String) return Action_Result;
 
    function rdb_profile_callback
      (trace_type : IC.unsigned;

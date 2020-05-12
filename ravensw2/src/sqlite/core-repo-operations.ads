@@ -4,7 +4,9 @@
 
 package Core.Repo.Operations is
 
-   procedure close_repository (reponame : String; commit : Boolean);
+   function open_repository (reponame : String) return Action_Result;
+
+   procedure close_all_open_repositories;
 
 private
 
@@ -40,5 +42,10 @@ private
    function transaction_begin    (handle : sqlite_h.sqlite3_Access) return Boolean;
    function transaction_commit   (handle : sqlite_h.sqlite3_Access) return Boolean;
    function transaction_rollback (handle : sqlite_h.sqlite3_Access) return Boolean;
+
+   procedure close_repository (reponame : Text; commit : Boolean);
+
+   function sqlite_filename (reponame : String) return String;
+   function meta_filename (reponame : String) return String;
 
 end Core.Repo.Operations;
