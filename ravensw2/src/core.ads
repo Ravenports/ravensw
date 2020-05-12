@@ -25,8 +25,9 @@ package Core is
    jail_supported : constant Boolean := (platform = freebsd);
 
    DB_SCHEMA_MAJOR : constant Natural := 0;
-   DB_SCHEMA_MINOR : constant Natural := 34;
-   DBVERSION       : constant String  := "34"; --  DB_SCHEMA_MAJOR * 1000 + DB_SCHEMA_MINOR
+   DB_SCHEMA_MINOR : constant Natural := 35;
+   DB_SCHEMA_ALL   : constant Natural := DB_SCHEMA_MAJOR * 1000 + DB_SCHEMA_MINOR;
+   DBVERSION       : constant String  := "35"; --  DB_SCHEMA_ALL
 
    --  Global Types
    subtype Text is SU.Unbounded_String;

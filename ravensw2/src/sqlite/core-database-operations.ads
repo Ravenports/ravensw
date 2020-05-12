@@ -23,14 +23,19 @@ package Core.Database.Operations is
                              return Action_Result;
    procedure rdb_close      (db       : in out RDB_Connection);
 
-   function transaction_begin    (db : RDB_Connection; savepoint : String) return Boolean;
-   function transaction_commit   (db : RDB_Connection; savepoint : String) return Boolean;
-   function transaction_rollback (db : RDB_Connection; savepoint : String) return Boolean;
-
 private
 
    package CON renames Ada.Containers;
    package IC  renames Interfaces.C;
+
+   function transaction_begin    (db : RDB_Connection; savepoint : String) return Boolean;
+   function transaction_commit   (db : RDB_Connection; savepoint : String) return Boolean;
+   function transaction_rollback (db : RDB_Connection; savepoint : String) return Boolean;
+
+   function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        sql     : String;
+                        res     : out int64;
+                        silence : Boolean) return Action_Result;
 
    package Text_Jar is new CON.Vectors
      (Element_Type => Text,
@@ -58,9 +63,6 @@ private
 
    function rdb_open_repository (db       : in out RDB_Connection;
                                  reponame : String) return Action_Result;
-
-   procedure prstmt_finalize (db : in out RDB_Connection);
-   function prstmt_initialize (db : in out RDB_Connection) return Action_Result;
 
    function rdb_profile_callback
      (trace_type : IC.unsigned;

@@ -6,6 +6,7 @@ with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 
 with Core.Database.CustomCmds;
+with Core.Database.Operations.Schema;
 with Core.Strings;
 with Core.Context;
 with Core.Config;
@@ -211,7 +212,7 @@ package body Core.Database.Operations is
 
          --  The database file is blank when create is set, so we have to initialize it
          if create and then
-           pkgdb_init (db.sqlite) /= RESULT_OK
+           Schema.import_schema_34 (db.sqlite) /= RESULT_OK
          then
             rdb_close (db);
             return RESULT_FATAL;
@@ -230,7 +231,7 @@ package body Core.Database.Operations is
             end if;
          end;
 
-         if rdb_upgrade (db) /= RESULT_OK then
+         if Schema.rdb_upgrade (db) /= RESULT_OK then
             --  rdb_upgrade() emits error events; we don't need to add more
             rdb_close (db);
             return RESULT_FATAL;
@@ -260,7 +261,7 @@ package body Core.Database.Operations is
          end if;
       end;
 
-      if prstmt_initialize (db) /= RESULT_OK then
+      if Schema.prstmt_initialize (db) /= RESULT_OK then
          Event.emit_error (func & ": Failed to initialize prepared statements");
          rdb_close (db);
          return RESULT_FATAL;
@@ -330,40 +331,6 @@ package body Core.Database.Operations is
       return RESULT_OK;
    end rdb_open_remote;
 
-   --------------------------------------------------------------------
-   --  prstmt_finalize
-   --------------------------------------------------------------------
-   procedure prstmt_finalize (db : in out RDB_Connection) is
-   begin
-      for S in sql_prstmt_index'Range loop
-         SQLite.finalize_statement (sql_prepared_statements (S));
-         sql_prepared_statements (S) := null;
-      end loop;
-      db.prstmt_initialized := False;
-   end prstmt_finalize;
-
-
-   --------------------------------------------------------------------
-   --  prstmt_initialize
-   --------------------------------------------------------------------
-   function prstmt_initialize (db : in out RDB_Connection) return Action_Result is
-   begin
-      if not db.prstmt_initialized then
-         for S in sql_prstmt_index'Range loop
-            Event.emit_debug (4, "Pkgdb: preparing statement '" & prstmt_text_sql (S) & "'");
-            if not SQLite.prepare_sql (pDB    => db.sqlite,
-                                       sql    => prstmt_text_sql (S),
-                                       ppStmt => sql_prepared_statements (S)'Access)
-            then
-               ERROR_SQLITE (db.sqlite, "prstmt_initialize", prstmt_text_sql (S));
-               return RESULT_FATAL;
-            end if;
-            db.prstmt_initialized := True;
-         end loop;
-      end if;
-      return RESULT_OK;
-   end prstmt_initialize;
-
 
    --------------------------------------------------------------------
    --  rdb_profile_callback
@@ -414,7 +381,7 @@ package body Core.Database.Operations is
 
    begin
       if db.prstmt_initialized then
-         prstmt_finalize (db);
+         Schema.prstmt_finalize (db);
       end if;
       if db.sqlite /= null then
          db.repos.Iterate (close'Access);
@@ -424,5 +391,41 @@ package body Core.Database.Operations is
       end if;
       SQLite.shutdown_sqlite;
    end rdb_close;
+
+
+   --------------------------------------------------------------------
+   --  get_pragma
+   --------------------------------------------------------------------
+   function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        sql     : String;
+                        res     : out int64;
+                        silence : Boolean) return Action_Result
+   is
+      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      func : constant String := "get_pragma";
+      nres : SQLite.sql_int64;
+   begin
+      nres := 0;
+      Event.emit_debug (4, "rdb: executing pragma command '" & sql & "'");
+      if not SQLite.prepare_sql (db, sql, stmt'Access) then
+         if not silence then
+            ERROR_SQLITE (db, func, sql);
+         end if;
+         return RESULT_FATAL;
+      end if;
+
+      if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
+         SQLite.finalize_statement (stmt);
+         Event.emit_error ("rdb: failed to step through get_pragma()");
+         return RESULT_FATAL;
+      end if;
+
+      nres := SQLite.retrieve_integer (stmt, 0);
+      SQLite.finalize_statement (stmt);
+      res := int64 (nres);
+
+      return RESULT_OK;
+   end get_pragma;
+
 
 end Core.Database.Operations;
