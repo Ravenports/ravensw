@@ -46,7 +46,7 @@ private
       record
          sqlite             : aliased sqlite_h.sqlite3_Access;
          prstmt_initialized : Boolean;
-         repos              : Text_Jar.Vector;
+         open_repos         : Text_Jar.Vector;
       end record;
 
    procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);

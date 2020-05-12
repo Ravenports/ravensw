@@ -7,6 +7,7 @@ with Interfaces.C.Strings;
 
 with Core.Database.CustomCmds;
 with Core.Database.Operations.Schema;
+with Core.Repo.Operations;
 with Core.Strings;
 with Core.Context;
 with Core.Config;
@@ -23,6 +24,7 @@ package body Core.Database.Operations is
    package LAT renames Ada.Characters.Latin_1;
    package ICS renames Interfaces.C.Strings;
    package CUS renames Core.Database.CustomCmds;
+   package ROP renames Core.Repo.Operations;
 
    --------------------------------------------------------------------
    --  ERROR_SQLITE
@@ -372,11 +374,9 @@ package body Core.Database.Operations is
       procedure close (position : Text_Jar.Cursor);
       procedure close (position : Text_Jar.Cursor)
       is
-         result   : Boolean;
-         reponame : Text renames Text_Jar.Element (position);
-         variant  : repo_ops_variant := Config.repositories.Element (reponame).ops_variant;
+         reponame : String := USS (Text_Jar.Element (position));
       begin
-         result := Repo_Operations.Ops (variant).all.repo_close (reponame, False);
+         ROP.close_repository (reponame, False);
       end close;
 
    begin
@@ -384,8 +384,8 @@ package body Core.Database.Operations is
          Schema.prstmt_finalize (db);
       end if;
       if db.sqlite /= null then
-         db.repos.Iterate (close'Access);
-         db.repos.Clear;
+         db.open_repos.Iterate (close'Access);
+         db.open_repos.Clear;
          SQLite.close_database (db.sqlite);
          db.sqlite := null;
       end if;
