@@ -131,4 +131,21 @@ package body Core.CommonSQL is
       return RESULT_OK;
    end get_pragma;
 
+
+   --------------------------------------------------------------------
+   --  exec
+   --------------------------------------------------------------------
+   function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result
+   is
+      msg : Text;
+   begin
+      Event.emit_debug (4, "executing '" & sql & "'");
+      if SQLite.exec_sql (db, sql, msg) then
+         return RESULT_OK;
+      else
+         Event.emit_error ("CommonSQL.exec() error: " & USS (msg));
+         return RESULT_FATAL;
+      end if;
+   end exec;
+
 end Core.CommonSQL;

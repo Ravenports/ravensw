@@ -68,8 +68,6 @@ private
 
    type Upgrade_Series is range 35 .. DB_SCHEMA_ALL;
 
-   function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result;
-
    --  Given a version that we want to upgrade to, return sql statements to get there
    function upgrade_sql_for_version (version : Upgrade_Series) return String;
 

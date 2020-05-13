@@ -165,22 +165,6 @@ package body Core.Database.Operations.Schema is
 
 
    --------------------------------------------------------------------
-   --  exec
-   --------------------------------------------------------------------
-   function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result
-   is
-      msg : Text;
-   begin
-      Event.emit_debug (4, "rdb: executing '" & sql & "'");
-      if SQLite.exec_sql (db, sql, msg) then
-         return RESULT_OK;
-      else
-         Event.emit_error ("Schema.exec() error: " & USS (msg));
-         return RESULT_FATAL;
-      end if;
-   end exec;
-
-      --------------------------------------------------------------------
    --  prstmt_finalize
    --------------------------------------------------------------------
    procedure prstmt_finalize (db : in out RDB_Connection) is
@@ -561,7 +545,7 @@ package body Core.Database.Operations.Schema is
         "COMMIT;";
 
    begin
-      return exec (db, sql);
+      return CommonSQL.exec (db, sql);
    end import_schema_34;
 
 

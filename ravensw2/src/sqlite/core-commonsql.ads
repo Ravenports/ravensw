@@ -16,6 +16,8 @@ package Core.CommonSQL is
                         res     : out int64;
                         silence : Boolean) return Action_Result;
 
+   function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result;
+
 private
 
    function run_transaction (db        : sqlite_h.sqlite3_Access;

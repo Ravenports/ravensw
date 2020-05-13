@@ -7,7 +7,7 @@ package Core.Repo.Operations.Schema is
 
    --  For empty database files, we import up to version 2013 immediately.
    --  Future versions are taken care of silently by the upgrade mechanism.
-   --  function import_schema_2013 (db : sqlite_h.sqlite3_Access) return Action_Result;
+   function import_schema_2013 (db : sqlite_h.sqlite3_Access) return Action_Result;
 
    --  Checks user version against compiled version and upgrades as necessary
    --  RESULT_UPTODATE   - 1) repo version already matches compiled version (did nothing)
