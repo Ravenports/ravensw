@@ -60,9 +60,7 @@ package Core.Database.Operations.Schema is
    --  Future versions are taken care of silently by the upgrade mechanism.
    function import_schema_34 (db : sqlite_h.sqlite3_Access) return Action_Result;
 
-   --  Check database for available upgrades, and implement if available.
-   --  For newly created databases, this always happens, so don't print out messages
-   --  in this case.
+   --  Check database for available upgrades, and implement if available..
    function rdb_upgrade (db : RDB_Connection) return Action_Result;
 
 

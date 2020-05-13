@@ -7,6 +7,7 @@ with Core.Event;
 with Core.Context;
 with Core.Unix;
 with Core.Repo.Meta;
+with Core.Repo.Operations.Schema;
 with SQLite;
 
 package body Core.Repo.Operations is
@@ -223,127 +224,6 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
-   --  user_version
-   --------------------------------------------------------------------
-   function user_version (db : sqlite_h.sqlite3_Access; reposcver : out Integer) return Boolean
-   is
-      sql    : constant String := "PRAGMA user_version";
-      stmt   : aliased sqlite_h.sqlite3_stmt_Access;
-      result : Boolean;
-      invalid : constant Integer := -1;
-   begin
-      if not SQLite.prepare_sql (db, sql, stmt'Access) then
-         ERROR_SQLITE (db, "user_version", sql);
-         reposcver := invalid;
-         return False;
-      end if;
-      if SQLite.step_through_statement (stmt) then
-         result := True;
-         reposcver := Integer (SQLite.retrieve_integer (stmt, 0));
-      else
-         reposcver := invalid;
-         result := False;
-      end if;
-
-      SQLite.finalize_statement (stmt);
-      return result;
-   end user_version;
-
-
-   --------------------------------------------------------------------
-   --  repo_upgrade
-   --------------------------------------------------------------------
-   function repo_upgrade
-     (db       : sqlite_h.sqlite3_Access;
-      reponame : String;
-      version  : Integer) return Action_Result
-   is
-      rc  : Action_Result := RESULT_OK;
-   begin
-      if version < Integer (grade_range'First) then
-         Event.emit_error
-           ("Repository " & reponame & " (version " & int2str (version) &
-              ") is too old to upgrade. The oldest supported version is " &
-              int2str (Integer (grade_range'First)));
-         return RESULT_FATAL;
-      end if;
-      for ver in grade_range (version) .. grade_range'Last - 1 loop
-         rc := repo_apply_upgrade (db       => db,
-                                   reponame => reponame,
-                                   version  => ver);
-         exit when rc /= RESULT_OK;
-      end loop;
-      return rc;
-   end repo_upgrade;
-
-
-   --------------------------------------------------------------------
-   --  check_version
-   --------------------------------------------------------------------
-   function check_version (db : sqlite_h.sqlite3_Access; reponame : String) return Action_Result
-   is
-      reposcver : Integer;
-      repomajor : Integer;
-      rc : Action_Result;
-   begin
-      if not user_version (db, reposcver) then
-         return RESULT_FATAL;
-      end if;
-
-      --  If the local pkgng uses a repo schema behind that used to
-      --  create the repo, we may still be able use it for reading
-      --  (ie pkg install), but pkg repo can't do an incremental
-      --  update unless the actual schema matches the compiled in
-      --  schema version.
-      --
-      --  Use a major - minor version schema: as the user_version
-      --  PRAGMA takes an integer version, encode this as MAJOR *
-      --  1000 + MINOR.
-      --
-      --  So long as the major versions are the same, the local pkgng
-      --  should be compatible with any repo created by a more recent
-      --  pkgng, although it may need some modification of the repo
-      --  schema
-
-      repomajor := reposcver / 1000;
-
-      if repomajor < REPO_SCHEMA_MAJOR then
-         Event.emit_error
-           ("Repo " & reponame & " (schema version " & int2str (reposcver) &
-              " is too old -- the minimum requirement is schema " &
-              int2str (REPO_SCHEMA_MAJOR * 1000));
-         return RESULT_REPOSCHEMA;
-      end if;
-
-      if repomajor > REPO_SCHEMA_MAJOR then
-         Event.emit_error
-           ("Repo " & reponame & " (schema version " & int2str (reposcver) &
-              " is too new -- the maximum requirement is schema " &
-              int2str (((REPO_SCHEMA_MAJOR + 1) * 1000) - 1));
-         return RESULT_REPOSCHEMA;
-      end if;
-
-      rc := RESULT_OK;
-
-      declare
-         RSV : constant Integer := Integer'Value (REPO_SCHEMA_VERSION);
-      begin
-         if reposcver < RSV then
-            if SQLite.database_was_opened_readonly (db, "main") then
-               Event.emit_error
-                 ("Repo " & reponame & " needs schema upgrade from " & int2str (reposcver) &
-                    " to " & REPO_SCHEMA_VERSION & "but it was opened as read-only");
-               rc := RESULT_FATAL;
-            else
-               rc := repo_upgrade (db, reponame, reposcver);
-            end if;
-         end if;
-      end;
-      return rc;
-   end check_version;
-
-
-   --------------------------------------------------------------------
    --  open_repository
    --------------------------------------------------------------------
    function open_repository (reponame : String; readonly : Boolean) return Action_Result
@@ -467,21 +347,32 @@ package body Core.Repo.Operations is
             end if;
          end;
 
-         --  Check version
-         if check_version (repository.sqlite_handle, reponame) /= RESULT_OK then
-            Event.emit_error ("Repository " & reponame & " has an unsupported schema");
-            Event.emit_error (" The database must be recreated.");
-            SQLite.close_database (repository.sqlite_handle);
-            if not readonly then
-               begin
-                  DIR.Delete_File (dbfile);
-               exception
-                  when others =>
-                     Event.emit_error ("Failed to unlink " & dbfile & "!");
-               end;
-            end if;
-            return;
-         end if;
+         --  Upgrade as necessary
+         declare
+            upres : Action_Result;
+         begin
+            upres := Schema.repo_upgrade (repository.sqlite_handle, reponame);
+            case upres is
+               when RESULT_UPTODATE => null;
+               when RESULT_OK       => null;
+               when RESULT_REPOSCHEMA
+                  | RESULT_FATAL =>
+                  Event.emit_error ("Repository " & reponame & " has an unsupported schema");
+                  Event.emit_error (" The database must be recreated.");
+                  SQLite.close_database (repository.sqlite_handle);
+                  if not readonly then
+                     begin
+                        DIR.Delete_File (dbfile);
+                     exception
+                        when others =>
+                           Event.emit_error ("Failed to unlink " & dbfile & "!");
+                     end;
+                  end if;
+                  return;
+               when others =>
+                  null;  --  shouldn't happen
+            end case;
+         end;
 
          --  Check digests format
 --           declare
@@ -527,104 +418,5 @@ package body Core.Repo.Operations is
    end open_repository;
 
 
-   --------------------------------------------------------------------
-   --  upgrade_info
-   --------------------------------------------------------------------
-   function upgrade_info (current_version : grade_range) return grade_info
-   is
-      info : grade_info;
-   begin
-      info.identifier := current_version;
-      case current_version is
-         when 2013 =>
-            info.summary := SUS ("Remove full text search feature");
-            info.query   := SUS ("DROP TABLE pkg_search;");
-         when 2014 =>
-            info.summary := SUS ("Fill in when 2015 comes");
-            info.query   := SUS ("2015 Query");
-      end case;
-      return info;
-   end upgrade_info;
-
-
-   --------------------------------------------------------------------
-   --  repo_set_version
-   --------------------------------------------------------------------
-   function repo_set_version
-     (db : sqlite_h.sqlite3_Access;
-      reposcver : grade_range) return Action_Result
-   is
-      ver : constant Integer := Integer (reposcver);
-      sql : constant String :=  "PRAGMA user_version = " & int2str (ver) & ";";
-      errmsg : Text;
-   begin
-      if SQLite.exec_sql (db, sql, errmsg) then
-         return RESULT_OK;
-      else
-         Event.emit_error ("repo_set_version(): " & USS (errmsg));
-         return RESULT_FATAL;
-      end if;
-   end repo_set_version;
-
-
-   --------------------------------------------------------------------
-   --  repo_apply_upgrade
-   --------------------------------------------------------------------
-   function repo_apply_upgrade
-     (db       : sqlite_h.sqlite3_Access;
-      reponame : String;
-      version  : grade_range) return Action_Result
-   is
-      info      : grade_info := upgrade_info (version);
-      in_trans  : Boolean := False;
-      nextver   : grade_range := version + 1;
-      rc        : Action_Result;
-      sql       : constant String := USS (info.query);
-      msg       : constant String := USS (info.summary);
-      savepoint : constant String := "SCHEMA";
-      errmsg    : Text;
-   begin
-      --  Begin Transaction
-      if trax_begin (db, savepoint) then
-         rc := RESULT_OK;
-         in_trans := True;
-
-         --  Apply change
-         Event.emit_debug (3, "Repo mod: " & msg);
-         Event.emit_debug (4, "Pkgdb: running '" & sql & "'");
-         if not SQLite.exec_sql (db, sql, errmsg) then
-            Event.emit_error ("sqlite: " & USS (errmsg));
-            rc := RESULT_FATAL;
-         end if;
-      else
-         rc := RESULT_FATAL;
-      end if;
-
-      --  update repo user_version
-      if rc = RESULT_OK then
-         rc := repo_set_version (db, nextver);
-      end if;
-
-      --  commit or rollback
-      if in_trans then
-         if rc = RESULT_OK then
-            if not trax_commit (db, savepoint) then
-               rc := RESULT_FATAL;
-            end if;
-         else
-            if trax_rollback (db, savepoint) then
-               null;
-            end if;
-         end if;
-      end if;
-
-      if rc = RESULT_OK then
-         Event.emit_notice
-           ("Repo '" & reponame & "' upgrade schema " &
-                 int2str (Integer (version)) & " to " &
-                 int2str (Integer (nextver)) & ": " & msg);
-      end if;
-      return rc;
-   end repo_apply_upgrade;
 
 end Core.Repo.Operations;
