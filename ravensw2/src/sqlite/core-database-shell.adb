@@ -55,7 +55,7 @@ package body Core.Database.Shell is
    procedure pkgshell_open (reponame : access ICS.chars_ptr)
    is
       dbdir  : constant String := Config.configuration_value (Config.dbdir);
-      dbfile : constant String := dbdir & "/local.sqlite";
+      dbfile : constant String := dbdir & "/" & local_ravensw_db;
       result : IC.int;
    begin
       reponame.all := ICS.New_String (dbfile);

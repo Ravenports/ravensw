@@ -47,12 +47,15 @@ package Core is
       RESULT_UNKNOWN,    --  unknown keyword
       RESULT_REPOSCHEMA, --  repo DB schema incompatible version
       RESULT_ENOACCESS,  --  Insufficient privilege for action
-      RESULT_INSECURE,   --  Insecure permissions on any component of local.sqlite database
+      RESULT_INSECURE,   --  Insecure permissions on any component of local database file
       RESULT_CONFLICT,   --  A conflict between packages found
       RESULT_AGAIN,      --  Need to repeat operation
       RESULT_NOTINST,    --  Not installed
       RESULT_VITAL       --  Can not delete the package because it is vital, i.e. a kernel
      );
    type Init_protocol is (INIT_NONE, INIT_USE_IPV4, INIT_USE_IPV6);
+
+   --  TODO: Change extension back to ".sqlite" before releasing into production
+   local_ravensw_db : String := "local.sqlite.dev";
 
 end Core;

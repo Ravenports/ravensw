@@ -19,11 +19,11 @@ package body Core.Status is
    is
       result : Activation_Status_Output;
       dbdir  : constant String := Config.configuration_value (Config.dbdir);
-      dbfile : constant String := dbdir & "/local.sqlite";
+      dbfile : constant String := dbdir & "/" & local_ravensw_db;
    begin
       result.count := 0;
 
-      --  Does the local.sqlite pkg database exist, and can we open it for reading?
+      --  Does the local database exist, and can we open it for reading?
 
       if not OSL.Is_Readable_File (dbfile) then
          result.status := ACT_STATUS_NODB;

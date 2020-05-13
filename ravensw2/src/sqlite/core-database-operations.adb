@@ -84,8 +84,8 @@ package body Core.Database.Operations is
             return RESULT_FATAL;
          end if;
 
-         if not Unix.relative_file_readable (dirfd, "local.sqlite") then
-            if DIR.Exists (dbdir & "/local.sqlite") then
+         if not Unix.relative_file_readable (dirfd, local_ravensw_db) then
+            if DIR.Exists (dbdir & "/" & local_ravensw_db) then
                --  db file exists but we can't write to it, fail
                Event.emit_no_local_db;
                rdb_close (db);
@@ -104,7 +104,8 @@ package body Core.Database.Operations is
          result := SQLite.initialize_sqlite;
          SQLite.rdb_syscall_overload;
 
-         if not SQLite.open_sqlite_database_readwrite ("/local.sqlite", db.sqlite'Access) then
+         if not SQLite.open_sqlite_database_readwrite ("/" & local_ravensw_db, db.sqlite'Access)
+         then
             CommonSQL.ERROR_SQLITE (db.sqlite, func, "sqlite open");
             if SQLite.get_last_error_code (db.sqlite) = sqlite_h.SQLITE_CORRUPT then
                Event.emit_error
