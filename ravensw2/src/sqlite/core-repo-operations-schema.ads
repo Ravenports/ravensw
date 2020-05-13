@@ -35,9 +35,6 @@ private
    --  Given a version that we want to upgrade to, return sql statements to get there
    function get_info (version : Upgrade_Series; info_type : field) return String;
 
-   --  Returns true when successful at retrieving Pragma user_version
-   function user_version (db : sqlite_h.sqlite3_Access; reposcver : out Integer) return Boolean;
-
    function repo_set_version
      (db      : sqlite_h.sqlite3_Access;
       nextver : Upgrade_Series) return Action_Result;

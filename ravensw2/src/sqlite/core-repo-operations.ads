@@ -34,14 +34,6 @@ private
 
    prepared_statements : array (repository_stmt_index) of sqlite_h.sqlite3_stmt_Access;
 
-   function run_transaction (db : sqlite_h.sqlite3_Access;
-                             query : String;
-                             savepoint : String) return Boolean;
-
-   function trax_begin    (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean;
-   function trax_commit   (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean;
-   function trax_rollback (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean;
-
    function get_pragma (db      : sqlite_h.sqlite3_Access;
                         sql     : String;
                         res     : out int64;
@@ -51,8 +43,6 @@ private
 
    function sqlite_filename (reponame : String) return String;
    function meta_filename (reponame : String) return String;
-
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
 
 
 end Core.Repo.Operations;

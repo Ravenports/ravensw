@@ -5,6 +5,7 @@ with Ada.Directories;
 with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 
+with Core.CommonSQL;
 with Core.Database.CustomCmds;
 with Core.Database.Operations.Schema;
 with Core.Repo.Operations;
@@ -25,93 +26,6 @@ package body Core.Database.Operations is
    package ICS renames Interfaces.C.Strings;
    package CUS renames Core.Database.CustomCmds;
    package ROP renames Core.Repo.Operations;
-
-   --------------------------------------------------------------------
-   --  ERROR_SQLITE
-   --------------------------------------------------------------------
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String)
-   is
-      msg : String := "sqlite error while executing " & query &
-        " in file core-database-operations.adb," & func & "(): " &
-        SQLite.get_last_error_message (db);
-   begin
-      Event.emit_error (msg);
-   end ERROR_SQLITE;
-
-
-   --------------------------------------------------------------------
-   --  run_transaction
-   --------------------------------------------------------------------
-   function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
-                             return Boolean
-   is
-      function joinsql return String;
-      function joinsql return String is
-      begin
-         if IsBlank (savepoint) then
-            return query;
-         else
-            return query & " " & savepoint;
-         end if;
-      end joinsql;
-
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      func : constant String := "run_transaction";
-   begin
-      Event.emit_debug (4, "RDB: running '" & joinsql & "'");
-      if SQLite.prepare_sql (db, joinsql, stmt'Access) then
-         if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
-            ERROR_SQLITE (db, func, joinsql);
-            SQLite.finalize_statement (stmt);
-            return False;
-         end if;
-         SQLite.finalize_statement (stmt);
-         return True;
-      else
-         ERROR_SQLITE (db, func, joinsql);
-         return False;
-      end if;
-   end run_transaction;
-
-
-   --------------------------------------------------------------------
-   --  transaction_begin
-   --------------------------------------------------------------------
-   function transaction_begin (db : RDB_Connection; savepoint : String) return Boolean is
-   begin
-      if IsBlank (savepoint) then
-         return run_transaction (db.sqlite, "BEGIN IMMEDIATE TRANSACTION", "");
-      else
-         return run_transaction (db.sqlite, "SAVEPOINT", savepoint);
-      end if;
-   end transaction_begin;
-
-
-   --------------------------------------------------------------------
-   --  transaction_commit
-   --------------------------------------------------------------------
-   function transaction_commit (db : RDB_Connection; savepoint : String) return Boolean is
-   begin
-      if IsBlank (savepoint) then
-         return run_transaction (db.sqlite, "COMMIT TRANSACTION", "");
-      else
-         return run_transaction (db.sqlite, "RELEASE SAVEPOINT", savepoint);
-      end if;
-   end transaction_commit;
-
-
-   --------------------------------------------------------------------
-   --  transaction_rollback
-   --------------------------------------------------------------------
-   function transaction_rollback (db : RDB_Connection; savepoint : String) return Boolean is
-   begin
-      if IsBlank (savepoint) then
-         return run_transaction (db.sqlite, "ROLLBACK TRANSACTION", "");
-      else
-         return run_transaction (db.sqlite, "ROLLBACK TO SAVEPOINT", savepoint);
-      end if;
-   end transaction_rollback;
-
 
    --------------------------------------------------------------------
    --  rdb_open_all
@@ -191,7 +105,7 @@ package body Core.Database.Operations is
          SQLite.rdb_syscall_overload;
 
          if not SQLite.open_sqlite_database_readwrite ("/local.sqlite", db.sqlite'Access) then
-            ERROR_SQLITE (db.sqlite, func, "sqlite open");
+            CommonSQL.ERROR_SQLITE (db.sqlite, func, "sqlite open");
             if SQLite.get_last_error_code (db.sqlite) = sqlite_h.SQLITE_CORRUPT then
                Event.emit_error
                  (func & ": Database corrupt.  Are you running on NFS?  " &
@@ -246,7 +160,7 @@ package body Core.Database.Operations is
             sql : constant String := "PRAGMA foreign_keys = ON";
          begin
             if not SQLite.exec_sql (db.sqlite, sql, msg) then
-               ERROR_SQLITE (db.sqlite, func, sql);
+               CommonSQL.ERROR_SQLITE (db.sqlite, func, sql);
                rdb_close (db);
                return RESULT_FATAL;
             end if;
@@ -381,41 +295,6 @@ package body Core.Database.Operations is
       end if;
       SQLite.shutdown_sqlite;
    end rdb_close;
-
-
-   --------------------------------------------------------------------
-   --  get_pragma
-   --------------------------------------------------------------------
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        sql     : String;
-                        res     : out int64;
-                        silence : Boolean) return Action_Result
-   is
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      func : constant String := "get_pragma";
-      nres : SQLite.sql_int64;
-   begin
-      nres := 0;
-      Event.emit_debug (4, "rdb: executing pragma command '" & sql & "'");
-      if not SQLite.prepare_sql (db, sql, stmt'Access) then
-         if not silence then
-            ERROR_SQLITE (db, func, sql);
-         end if;
-         return RESULT_FATAL;
-      end if;
-
-      if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
-         SQLite.finalize_statement (stmt);
-         Event.emit_error ("rdb: failed to step through get_pragma()");
-         return RESULT_FATAL;
-      end if;
-
-      nres := SQLite.retrieve_integer (stmt, 0);
-      SQLite.finalize_statement (stmt);
-      res := int64 (nres);
-
-      return RESULT_OK;
-   end get_pragma;
 
 
 end Core.Database.Operations;

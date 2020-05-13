@@ -28,27 +28,13 @@ private
    package CON renames Ada.Containers;
    package IC  renames Interfaces.C;
 
-   function transaction_begin    (db : RDB_Connection; savepoint : String) return Boolean;
-   function transaction_commit   (db : RDB_Connection; savepoint : String) return Boolean;
-   function transaction_rollback (db : RDB_Connection; savepoint : String) return Boolean;
 
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        sql     : String;
-                        res     : out int64;
-                        silence : Boolean) return Action_Result;
 
    type RDB_Connection is limited
       record
          sqlite             : aliased sqlite_h.sqlite3_Access;
          prstmt_initialized : Boolean;
       end record;
-
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
-
-   function run_transaction (db        : sqlite_h.sqlite3_Access;
-                             query     : String;
-                             savepoint : String)
-                             return Boolean;
 
    function rdb_open_remote (db       : in out RDB_Connection;
                              dbtype   : RDB_Source;

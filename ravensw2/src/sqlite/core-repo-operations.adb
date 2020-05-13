@@ -8,7 +8,10 @@ with Core.Context;
 with Core.Unix;
 with Core.Repo.Meta;
 with Core.Repo.Operations.Schema;
+with Core.VFS;
+with Core.CommonSQL;
 with SQLite;
+
 
 package body Core.Repo.Operations is
 
@@ -35,7 +38,9 @@ package body Core.Repo.Operations is
          end if;
 
          if commit then
-            if not trax_commit (repositories.Element (reponame).sqlite_handle, "") then
+            if not CommonSQL.transaction_commit
+              (repositories.Element (reponame).sqlite_handle, "")
+            then
                Event.emit_error ("close_repository(): Failed to commit transaction");
                return;
             end if;

@@ -2,6 +2,7 @@
 --  Reference: ../../License.txt
 
 with Core.Event;
+with Core.CommonSQL;
 with SQLite;
 
 package body Core.Repo.Operations.Schema is
@@ -22,42 +23,18 @@ package body Core.Repo.Operations.Schema is
 
 
    --------------------------------------------------------------------
-   --  user_version
-   --------------------------------------------------------------------
-   function user_version (db : sqlite_h.sqlite3_Access; reposcver : out Integer) return Boolean
-   is
-      sql     : constant String := "PRAGMA user_version";
-      stmt    : aliased sqlite_h.sqlite3_stmt_Access;
-      result  : Boolean;
-      invalid : constant Integer := -1;
-   begin
-      if not SQLite.prepare_sql (db, sql, stmt'Access) then
-         ERROR_SQLITE (db, "user_version", sql);
-         reposcver := invalid;
-         return False;
-      end if;
-      if SQLite.step_through_statement (stmt) then
-         result    := True;
-         reposcver := Integer (SQLite.retrieve_integer (stmt, 0));
-      else
-         reposcver := invalid;
-         result    := False;
-      end if;
-
-      SQLite.finalize_statement (stmt);
-      return result;
-   end user_version;
-
-
-   --------------------------------------------------------------------
    --  repo_upgrade
    --------------------------------------------------------------------
    function repo_upgrade (db : sqlite_h.sqlite3_Access; reponame : String) return Action_Result
    is
-      reposcver : Integer;
-      repomajor : Integer;
+      reposcver : int64;
+      repomajor : int64;
    begin
-      if not user_version (db, reposcver) then
+      if CommonSQL.get_pragma (db      => db,
+                               sql     => "PRAGMA user_version",
+                               res     => reposcver,
+                               silence => False) /= RESULT_OK
+      then
          return RESULT_FATAL;
       end if;
 
@@ -77,14 +54,14 @@ package body Core.Repo.Operations.Schema is
 
       repomajor := reposcver / 1000;
 
-      if reposcver = REPO_SCHEMA_ALL then
+      if reposcver = int64 (REPO_SCHEMA_ALL) then
          return RESULT_UPTODATE;
       end if;
 
-      if reposcver > REPO_SCHEMA_ALL then
-         if repomajor > REPO_SCHEMA_MAJOR then
+      if reposcver > int64 (REPO_SCHEMA_ALL) then
+         if repomajor > int64 (REPO_SCHEMA_MAJOR) then
             Event.emit_error
-              ("Repo " & reponame & " (schema version " & int2str (reposcver) &
+              ("Repo " & reponame & " (schema version " & int2str (Integer (reposcver)) &
                  " is too new -- the maximum requirement is schema " &
                  int2str (((REPO_SCHEMA_MAJOR + 1) * 1000) - 1));
             return RESULT_REPOSCHEMA;
@@ -94,9 +71,9 @@ package body Core.Repo.Operations.Schema is
 
       --  so reposcver < REPO_SCHEMA_ALL
 
-      if reposcver < Integer (Upgrade_Series'First) then
+      if reposcver < int64 (Upgrade_Series'First) then
          Event.emit_error
-           ("Repo " & reponame & " (schema version " & int2str (reposcver) &
+           ("Repo " & reponame & " (schema version " & int2str (Integer (reposcver)) &
               " is too old to upgrade -- the minimum requirement is schema " &
               int2str (Integer (Upgrade_Series'First)));
          return RESULT_REPOSCHEMA;
@@ -104,7 +81,7 @@ package body Core.Repo.Operations.Schema is
 
       if SQLite.database_was_opened_readonly (db, "main") then
          Event.emit_error
-           ("Repo " & reponame & " needs schema upgrade from " & int2str (reposcver) &
+           ("Repo " & reponame & " needs schema upgrade from " & int2str (Integer (reposcver)) &
               " to " & REPO_SCHEMA_VERSION & "but it was opened as read-only");
          return RESULT_FATAL;
       end if;
@@ -135,7 +112,7 @@ package body Core.Repo.Operations.Schema is
       errmsg    : Text;
    begin
       --  Begin Transaction
-      if trax_begin (db, savepoint) then
+      if CommonSQL.transaction_begin (db, savepoint) then
          rc := RESULT_OK;
          in_trans := True;
 
@@ -158,11 +135,11 @@ package body Core.Repo.Operations.Schema is
       --  commit or rollback
       if in_trans then
          if rc = RESULT_OK then
-            if not trax_commit (db, savepoint) then
+            if not CommonSQL.transaction_commit (db, savepoint) then
                rc := RESULT_FATAL;
             end if;
          else
-            if trax_rollback (db, savepoint) then
+            if CommonSQL.transaction_rollback (db, savepoint) then
                null;
             end if;
          end if;
