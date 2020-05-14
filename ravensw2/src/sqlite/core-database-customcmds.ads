@@ -22,6 +22,12 @@ package Core.Database.CustomCmds is
       pThunk   : sqlite_h.sqlite3_api_routines_Access) return IC.int;
    pragma Export (C, sqlcmd_init);
 
+   --  Defines custom function file_exists in database
+   procedure define_file_exists (db : not null sqlite_h.sqlite3_Access);
+
+   --  wrapper around sqlcmd_init()
+   procedure define_six_functions (db : not null sqlite_h.sqlite3_Access);
+
 private
 
    --  regex object must be global because it will be referenced after rdb_regex ends
@@ -110,5 +116,12 @@ private
    --  callback for pkgdb_regex
    procedure rdb_regex_delete (regex_ptr : not null regex_h.regex_t_Access);
    pragma Convention (C, rdb_regex_delete);
+
+   --  2 arguments: filename and checksum.  Returns true if file exists and checksum matches
+   procedure rdb_file_exists
+     (context : not null sqlite_h.sqlite3_context_Access;
+      numargs : IC.int;
+      argsval : not null access sqlite_h.sqlite3_value_Access);
+   pragma Convention (C, rdb_file_exists);
 
 end Core.Database.CustomCmds;

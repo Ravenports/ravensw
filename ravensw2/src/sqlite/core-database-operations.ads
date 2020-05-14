@@ -28,8 +28,6 @@ private
    package CON renames Ada.Containers;
    package IC  renames Interfaces.C;
 
-
-
    type RDB_Connection is limited
       record
          sqlite             : aliased sqlite_h.sqlite3_Access;

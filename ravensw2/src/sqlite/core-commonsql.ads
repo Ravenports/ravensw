@@ -18,6 +18,11 @@ package Core.CommonSQL is
 
    function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result;
 
+   procedure create_function (db    : sqlite_h.sqlite3_Access;
+                              name  : String;
+                              nargs : Natural;
+                              cb    : sqlite_h.cb_xFuncStep);
+
 private
 
    function run_transaction (db        : sqlite_h.sqlite3_Access;

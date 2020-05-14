@@ -2,17 +2,23 @@
 --  Reference: ../../License.txt
 
 with Ada.Calendar.Conversions;
+with Ada.Directories;
 with System;
 
 with Core.Strings;
 with Core.Config;
 with Core.Version;
 with Core.Depends;
+with Core.CommonSQL;
+with Core.Checksum;
+with Core.Unix;
 with SQLite;
 
 use Core.Strings;
 
 package body Core.Database.CustomCmds is
+
+   package DIR renames Ada.Directories;
 
    --------------------------------------------------------------------
    --  rdb_vercmp
@@ -364,39 +370,100 @@ package body Core.Database.CustomCmds is
 
 
    --------------------------------------------------------------------
+   --  sqlite_file_exists
+   --------------------------------------------------------------------
+   procedure rdb_file_exists
+     (context : not null sqlite_h.sqlite3_context_Access;
+      numargs : IC.int;
+      argsval : not null access sqlite_h.sqlite3_value_Access)
+   is
+      db : sqlite_h.sqlite3_Access := sqlite_h.sqlite3_context_db_handle (context);
+      db_filename : constant String := SQLite.get_db_filename (db, "main");
+      errmsg : IC.Strings.chars_ptr;
+      argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
+
+      for argv'Address use argsval.all'Address;
+      pragma Import (Ada, argv);
+
+      use type IC.int;
+   begin
+      if numargs /= 2 then
+         errmsg := IC.Strings.New_String ("Invalid usage of file_exists(): needs 2 arguments");
+         sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+         ICS.Free (errmsg);
+         return;
+      end if;
+
+      declare
+         path : String := DIR.Containing_Directory (db_filename);
+         arg1 : IC.Strings.chars_ptr := sqlite_h.sqlite3_value_text (argv (1));
+         fpath : constant String := path & "/" & ICS.Value (arg1);
+      begin
+         if Unix.valid_permissions (fpath, (flag_read => True, others => False)) then
+            declare
+               cksum : String := Checksum.checksum_file (fpath, Checksum.HASH_TYPE_SHA256_HEX);
+            begin
+               if cksum = ICS.Value (arg1) then
+                  sqlite_h.sqlite3_result_int (context, IC.int (1));
+               else
+                  sqlite_h.sqlite3_result_int (context, IC.int (0));
+               end if;
+            end;
+         else
+            sqlite_h.sqlite3_result_int (context, IC.int (0));
+         end if;
+      end;
+   exception
+      when DIR.Use_Error =>
+         errmsg := ICS.New_String ("file_exists: " & db_filename & " has no containing directory");
+         sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+         ICS.Free (errmsg);
+         return;
+      when DIR.Name_Error =>
+         errmsg := ICS.New_String ("file_exists: " & db_filename & " can't be identified");
+         sqlite_h.sqlite3_result_error (context, errmsg, IC.int (-1));
+         ICS.Free (errmsg);
+         return;
+   end rdb_file_exists;
+
+
+   --------------------------------------------------------------------
    --  sqlcmd_init
    --------------------------------------------------------------------
    function sqlcmd_init
      (db       : not null sqlite_h.sqlite3_Access;
       pzErrMsg : access ICS.chars_ptr;
-      pThunk   : sqlite_h.sqlite3_api_routines_Access) return IC.int
-   is
-      procedure fast (name : String; nargs : Natural; cb : sqlite_h.cb_xFuncStep);
-      procedure fast (name : String; nargs : Natural; cb : sqlite_h.cb_xFuncStep)
-      is
-         use type IC.int;
-         flags : constant IC.int := sqlite_h.SQLITE_ANY + sqlite_h.SQLITE_DETERMINISTIC;
-         result : IC.int;
-      begin
-         result := sqlite_h.sqlite3_create_function
-           (db            => db,
-            zFunctionName => ICS.New_String (name),
-            nArg          => IC.int (nargs),
-            eTextRep      => flags,
-            pApp          => System.Null_Address,
-            xFunc         => cb,
-            xStep         => null,
-            xFinal        => null);
-      end fast;
+      pThunk   : sqlite_h.sqlite3_api_routines_Access) return IC.int is
    begin
-      fast ("now",    0, rdb_now'Access);
-      fast ("myarch", 0, rdb_myarch'Access);
-      fast ("myarch", 1, rdb_myarch'Access);
-      fast ("regexp", 2, rdb_regex'Access);
-      fast ("vercmp", 3, rdb_vercmp'Access);
-      fast ("split_version", 2, rdb_split_version'Access);
-
+      CommonSQL.create_function (db, "now",    0, rdb_now'Access);
+      CommonSQL.create_function (db, "myarch", 0, rdb_myarch'Access);
+      CommonSQL.create_function (db, "myarch", 1, rdb_myarch'Access);
+      CommonSQL.create_function (db, "regexp", 2, rdb_regex'Access);
+      CommonSQL.create_function (db, "vercmp", 3, rdb_vercmp'Access);
+      CommonSQL.create_function (db, "split_version", 2, rdb_split_version'Access);
       return sqlite_h.SQLITE_OK;
    end sqlcmd_init;
+
+
+   --------------------------------------------------------------------
+   --  define_file_exists
+   --------------------------------------------------------------------
+   procedure define_file_exists (db : not null sqlite_h.sqlite3_Access) is
+   begin
+      CommonSQL.create_function (db, "file_exists", 2, rdb_file_exists'Access);
+   end define_file_exists;
+
+
+   --------------------------------------------------------------------
+   --  define_six_functions
+   --------------------------------------------------------------------
+   procedure define_six_functions (db : not null sqlite_h.sqlite3_Access)
+   is
+      res : IC.int;
+   begin
+      --  impossible to fail, no need to check result
+      res := sqlcmd_init (db, null, null);
+   end define_six_functions;
+
 
 end Core.Database.CustomCmds;

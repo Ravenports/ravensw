@@ -32,7 +32,7 @@ private
       REQUIRES
      );
 
-   prepared_statements : array (repository_stmt_index) of sqlite_h.sqlite3_stmt_Access;
+   prepared_statements : array (repository_stmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
 
    function get_pragma (db      : sqlite_h.sqlite3_Access;
                         sql     : String;
@@ -44,5 +44,6 @@ private
    function sqlite_filename (reponame : String) return String;
    function meta_filename (reponame : String) return String;
 
+   function initialize_repository (reponame : Text) return Action_Result;
 
 end Core.Repo.Operations;

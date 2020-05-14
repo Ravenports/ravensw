@@ -332,4 +332,150 @@ package body Core.Repo.Operations.Schema is
       return CommonSQL.exec (db, sql);
    end import_schema_2013;
 
+
+   --------------------------------------------------------------------
+   --  prstmt_text_argtypes
+   --------------------------------------------------------------------
+   function prstmt_text_argtypes (index : repository_stmt_index) return String is
+   begin
+      case index is
+         when PKG          => return "TTTTTTTTTIIITTTTI";
+         when DEPS         => return "TTTI";
+         when CAT1         => return "T";
+         when CAT2         => return "IT";
+         when LIC1         => return "T";
+         when LIC2         => return "IT";
+         when OPT1         => return "T";
+         when OPT2         => return "TTI";
+         when SHLIB1       => return "T";
+         when SHLIB_REQD   => return "IT";
+         when SHLIB_PROV   => return "IT";
+         when EXISTS       => return "T";
+         when ANNOTATE1    => return "T";
+         when ANNOTATE2    => return "ITT";
+         when REPO_VERSION => return "T";
+         when DELETE       => return "TT";
+         when PROVIDE      => return "T";
+         when PROVIDES     => return "IT";
+         when REQUIRE      => return "T";
+         when REQUIRES     => return "IT";
+      end case;
+   end prstmt_text_argtypes;
+
+
+   --------------------------------------------------------------------
+   --  prstmt_text_argtypes
+   --------------------------------------------------------------------
+   function prstmt_text_sql (index : repository_stmt_index) return String is
+   begin
+      case index is
+         when PKG =>
+            return
+              "INSERT OR REPLACE INTO packages (origin, name, version, comment, desc, " &
+              "arch, maintainer, www, prefix, pkgsize, flatsize, licenselogic, cksum, path, " &
+              "manifestdigest, olddigest, vital) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, " &
+              "?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)";
+         when DEPS =>
+            return
+              "INSERT OR REPLACE INTO deps (origin, name, version, package_id) " &
+              "VALUES (?1, ?2, ?3, ?4)";
+         when CAT1 =>
+            return
+              "INSERT OR IGNORE INTO categories(name) VALUES(?1)";
+         when CAT2 =>
+            return
+              "INSERT OR ROLLBACK INTO pkg_categories(package_id, category_id) " &
+              "VALUES (?1, (SELECT id FROM categories WHERE name = ?2))";
+         when LIC1 =>
+            return
+              "INSERT OR IGNORE INTO licenses(name) VALUES(?1)";
+         when LIC2 =>
+            return
+              "INSERT OR ROLLBACK INTO pkg_licenses(package_id, license_id) " &
+              "VALUES (?1, (SELECT id FROM licenses WHERE name = ?2))";
+         when OPT1 =>
+            return
+              "INSERT OR IGNORE INTO option(option) VALUES (?1)";
+         when OPT2 =>
+            return
+              "INSERT OR ROLLBACK INTO pkg_option (option_id, value, package_id) " &
+              "VALUES (( SELECT option_id FROM option WHERE option = ?1), ?2, ?3)";
+         when SHLIB1 =>
+            return
+              "INSERT OR IGNORE INTO shlibs(name) VALUES(?1)";
+         when SHLIB_REQD =>
+            return
+              "INSERT OR IGNORE INTO pkg_shlibs_required(package_id, shlib_id) " &
+              "VALUES (?1, (SELECT id FROM shlibs WHERE name = ?2))";
+         when SHLIB_PROV =>
+            return
+              "INSERT OR IGNORE INTO pkg_shlibs_provided(package_id, shlib_id) " &
+              "VALUES (?1, (SELECT id FROM shlibs WHERE name = ?2))";
+         when EXISTS =>
+            return
+              "SELECT count(*) FROM packages WHERE cksum=?1";
+         when ANNOTATE1 =>
+            return
+              "INSERT OR IGNORE INTO annotation(annotation) VALUES (?1)";
+         when ANNOTATE2 =>
+            return
+              "INSERT OR ROLLBACK INTO pkg_annotation(package_id, tag_id, value_id) " &
+              "VALUES (?1," &
+              " (SELECT annotation_id FROM annotation WHERE annotation=?2)," &
+              " (SELECT annotation_id FROM annotation WHERE annotation=?3))";
+         when REPO_VERSION =>
+            return
+              "SELECT version FROM packages WHERE origin=?1";
+         when DELETE =>
+            return
+              "DELETE FROM packages WHERE origin=?1;" &
+              "DELETE FROM pkg_search WHERE origin=?1";
+         when PROVIDE =>
+            return
+              "INSERT OR IGNORE INTO provides(provide) VALUES(?1)";
+         when PROVIDES =>
+            return
+              "INSERT OR IGNORE INTO pkg_provides(package_id, provide_id) " &
+              "VALUES (?1, (SELECT id FROM provides WHERE provide = ?2))";
+         when REQUIRE =>
+            return
+              "INSERT OR IGNORE INTO requires(require) VALUES(?1)";
+         when REQUIRES =>
+            return
+              "INSERT OR IGNORE INTO pkg_requires(package_id, require_id) " &
+              "VALUES (?1, (SELECT id FROM requires WHERE require = ?2))";
+      end case;
+   end prstmt_text_sql;
+
+
+   --------------------------------------------------------------------
+   --  prstmt_finalize
+   --------------------------------------------------------------------
+   procedure prstmt_finalize (db : in out sqlite_h.sqlite3_Access) is
+   begin
+      for S in repository_stmt_index'Range loop
+         SQLite.finalize_statement (prepared_statements (S));
+         prepared_statements (S) := null;
+      end loop;
+   end prstmt_finalize;
+
+
+   --------------------------------------------------------------------
+   --  prstmt_initialize
+   --------------------------------------------------------------------
+   function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result is
+   begin
+      for S in repository_stmt_index'Range loop
+         Event.emit_debug (4, "Pkgdb: preparing statement '" & prstmt_text_sql (S) & "'");
+         if not SQLite.prepare_sql (pDB    => db,
+                                    sql    => prstmt_text_sql (S),
+                                    ppStmt => prepared_statements (S)'Access)
+         then
+            CommonSQL.ERROR_SQLITE (db, "prstmt_initialize", prstmt_text_sql (S));
+            return RESULT_FATAL;
+         end if;
+      end loop;
+      return RESULT_OK;
+   end prstmt_initialize;
+
 end Core.Repo.Operations.Schema;

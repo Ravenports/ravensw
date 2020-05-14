@@ -136,17 +136,7 @@ package body Core.Database.Operations is
          end if;
 
          --  Create custom functions
-         declare
-            use type IC.int;
-            res : IC.int;
-         begin
-            res := CUS.sqlcmd_init (db.sqlite, null, null);
-            if res /= 0 then
-               Event.emit_error (func & ": Failed to add custom SQL functions");
-               rdb_close (db);
-               return RESULT_FATAL;
-            end if;
-         end;
+         CUS.define_six_functions (db.sqlite);
 
          if Schema.rdb_upgrade (db) /= RESULT_OK then
             --  rdb_upgrade() emits error events; we don't need to add more
@@ -212,7 +202,7 @@ package body Core.Database.Operations is
 
       if not IsBlank (reponame) then
          if Repo.repository_is_active (reponame) then
-            ret := ROP.open_repository (reponame);
+            ret := ROP.open_repository (reponame, True);
             if ret /= RESULT_OK then
                Event.emit_error ("Failed to open repository " & reponame);
             end if;
@@ -232,7 +222,7 @@ package body Core.Database.Operations is
                   rname : String := specific_field (list, x, delim);
                begin
                   if Repo.repository_is_active (rname) then
-                     ret := ROP.open_repository (rname);
+                     ret := ROP.open_repository (rname, True);
                      if ret /= RESULT_OK then
                         Event.emit_error ("Failed to open repository " & rname);
                      end if;

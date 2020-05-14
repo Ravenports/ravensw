@@ -9,6 +9,7 @@ with Core.Unix;
 with Core.Repo.Meta;
 with Core.Repo.Operations.Schema;
 with Core.VFS;
+with Core.Database.CustomCmds;
 with Core.CommonSQL;
 with SQLite;
 
@@ -27,6 +28,7 @@ package body Core.Repo.Operations is
       is
          repository : A_repo renames Element;
       begin
+         Schema.prstmt_finalize (repository.sqlite_handle);
          SQLite.close_database (repository.sqlite_handle);
          repository.sqlite_handle := null;
       end close_database;
@@ -45,10 +47,6 @@ package body Core.Repo.Operations is
                return;
             end if;
          end if;
-
-         for S in repository_stmt_index loop
-            SQLite.finalize_statement (prepared_statements (S));
-         end loop;
 
          repositories.Update_Element (Position => repositories.Find (reponame),
                                       Process  => close_database'Access);
@@ -422,6 +420,57 @@ package body Core.Repo.Operations is
       return result;
    end open_repository;
 
+
+
+   --------------------------------------------------------------------
+   --  initialize_repository
+   --------------------------------------------------------------------
+   function initialize_repository (reponame : Text) return Action_Result
+   is
+      procedure make_it_so (key : Text; Element : in out A_repo);
+
+      result : Action_Result;
+
+      procedure make_it_so (key : Text; Element : in out A_repo)
+      is
+--         repository : A_repo renames Element;
+         db : sqlite_h.sqlite3_Access renames Element.sqlite_handle;
+         onward : Boolean := True;
+      begin
+         --  Impossible to fail
+         Database.CustomCmds.define_file_exists (db);
+
+         if CommonSQL.exec (db, "PRAGMA synchronous=default") /= RESULT_OK then
+            onward := False;
+         end if;
+
+         if onward then
+            if CommonSQL.exec (db, "PRAGMA foreign_keys=on") /= RESULT_OK then
+               onward := False;
+            end if;
+         end if;
+
+         if onward then
+            Database.CustomCmds.define_six_functions (db);
+            if Schema.prstmt_initialize (db) /= RESULT_OK then
+               onward := False;
+            end if;
+         end if;
+
+         case onward is
+            when True  => result := RESULT_OK;
+            when False => result := RESULT_FATAL;
+         end case;
+      end make_it_so;
+
+   begin
+      if repositories.Contains (reponame) then
+         repositories.Update_Element (repositories.Find (reponame), make_it_so'Access);
+         return result;
+      else
+         raise invalid_repo_name;
+      end if;
+   end initialize_repository;
 
 
 end Core.Repo.Operations;

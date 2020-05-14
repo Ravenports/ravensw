@@ -2,6 +2,7 @@
 --  Reference: ../../License.txt
 
 with sqlite_h;
+private with Interfaces.C;
 
 package Core.Repo.Operations.Schema is
 
@@ -19,7 +20,13 @@ package Core.Repo.Operations.Schema is
    --  RESULT_OK         - repo is newer but still compatible (do nothing)
    function repo_upgrade (db : sqlite_h.sqlite3_Access; reponame : String) return Action_Result;
 
+   --  Initialize and finalize all prepared statements
+   procedure prstmt_finalize (db : in out sqlite_h.sqlite3_Access);
+   function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result;
+
 private
+
+   package IC renames Interfaces.C;
 
    REPO_SCHEMA_MAJOR : constant Natural := 2;
    REPO_SCHEMA_MINOR : constant Natural := 14;
@@ -43,5 +50,11 @@ private
      (db       : sqlite_h.sqlite3_Access;
       reponame : String;
       version  : Upgrade_Series) return Action_Result;
+
+   --  SQL associated with prstmt_index enumeration
+   function prstmt_text_sql (index : repository_stmt_index) return String;
+
+   --  Argument types associated with prstmt_index enumeration
+   function prstmt_text_argtypes (index : repository_stmt_index) return String;
 
 end Core.Repo.Operations.Schema;
