@@ -34,16 +34,16 @@ private
 
    prepared_statements : array (repository_stmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
 
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        sql     : String;
-                        res     : out int64;
-                        silence : Boolean) return Action_Result;
-
+   --  Close open repository database
    procedure close_repository (reponame : Text; commit : Boolean);
 
    function sqlite_filename (reponame : String) return String;
    function meta_filename (reponame : String) return String;
 
+   --  prepare repository database for use
    function initialize_repository (reponame : Text) return Action_Result;
+
+   --  create repo database file and populate it
+   function create_repository (reponame : String) return Action_Result;
 
 end Core.Repo.Operations;

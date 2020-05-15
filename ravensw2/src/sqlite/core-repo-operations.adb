@@ -57,93 +57,6 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
-   --  ERROR_SQLITE
-   --------------------------------------------------------------------
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String)
-   is
-      msg : String := "sqlite error while executing " & query &
-        " in file  core-repo-operations.adb," & func & "(): " &
-        SQLite.get_last_error_message (db);
-   begin
-      Event.emit_error (msg);
-   end ERROR_SQLITE;
-
-
-   --------------------------------------------------------------------
-   --  run_transaction
-   --------------------------------------------------------------------
-   function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
-                             return Boolean
-   is
-      function joinsql return String;
-      function joinsql return String is
-      begin
-         if IsBlank (savepoint) then
-            return query;
-         else
-            return query & " " & savepoint;
-         end if;
-      end joinsql;
-
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      func : constant String := "run_transaction";
-   begin
-      Event.emit_debug (4, "RDB: running '" & joinsql & "'");
-      if SQLite.prepare_sql (db, joinsql, stmt'Access) then
-         if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
-            ERROR_SQLITE (db, func, joinsql);
-            SQLite.finalize_statement (stmt);
-            return False;
-         end if;
-         SQLite.finalize_statement (stmt);
-         return True;
-      else
-         ERROR_SQLITE (db, func, joinsql);
-         return False;
-      end if;
-   end run_transaction;
-
-
-   --------------------------------------------------------------------
-   --  trax_begin
-   --------------------------------------------------------------------
-   function trax_begin (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean is
-   begin
-      if IsBlank (savepoint) then
-         return run_transaction (db, "BEGIN IMMEDIATE TRANSACTION", "");
-      else
-         return run_transaction (db, "SAVEPOINT", savepoint);
-      end if;
-   end trax_begin;
-
-
-   --------------------------------------------------------------------
-   --  trax_commit
-   --------------------------------------------------------------------
-   function trax_commit (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean is
-   begin
-      if IsBlank (savepoint) then
-         return run_transaction (db, "COMMIT TRANSACTION", "");
-      else
-         return run_transaction (db, "RELEASE SAVEPOINT", savepoint);
-      end if;
-   end trax_commit;
-
-
-   --------------------------------------------------------------------
-   --  trax_rollback
-   --------------------------------------------------------------------
-   function trax_rollback (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean is
-   begin
-      if IsBlank (savepoint) then
-         return run_transaction (db, "ROLLBACK TRANSACTION", "");
-      else
-         return run_transaction (db, "ROLLBACK TO SAVEPOINT", savepoint);
-      end if;
-   end trax_rollback;
-
-
-   --------------------------------------------------------------------
    --  close_all_open_repositories
    --------------------------------------------------------------------
    procedure close_all_open_repositories
@@ -176,54 +89,6 @@ package body Core.Repo.Operations is
    begin
       return reponame & ".meta";
    end meta_filename;
-
-
-   --------------------------------------------------------------------
-   --  mode_sets_write_flag
-   --------------------------------------------------------------------
---     function mode_sets_write_flag (mode : Pkgtypes.mode_t) return Boolean is
---     begin
---        case mode is
---           when 2#0010# | 2#0011# | 2#0110# | 2#0111# => return True;  -- 2,3,6,7
---           when 2#1010# | 2#1011# | 2#1110# | 2#1111# => return True;  -- 10,11,14,15
---           when others => return False;
---        end case;
---     end mode_sets_write_flag;
-
-
-   --------------------------------------------------------------------
-   --  get_pragma
-   --------------------------------------------------------------------
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        sql     : String;
-                        res     : out int64;
-                        silence : Boolean) return Action_Result
-   is
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      func : constant String := "get_pragma";
-      nres : SQLite.sql_int64;
-   begin
-      nres := 0;
-      Event.emit_debug (4, "repo-ops: executing pragma command '" & sql & "'");
-      if not SQLite.prepare_sql (db, sql, stmt'Access) then
-         if not silence then
-            ERROR_SQLITE (db, func, sql);
-         end if;
-         return RESULT_FATAL;
-      end if;
-
-      if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
-         SQLite.finalize_statement (stmt);
-         Event.emit_error ("repo-ops: failed to step through get_pragma()");
-         return RESULT_FATAL;
-      end if;
-
-      nres := SQLite.retrieve_integer (stmt, 0);
-      SQLite.finalize_statement (stmt);
-      res := int64 (nres);
-
-      return RESULT_OK;
-   end get_pragma;
 
 
    --------------------------------------------------------------------
@@ -312,7 +177,7 @@ package body Core.Repo.Operations is
             sql       : constant String := "SELECT count(name) FROM sqlite_master " &
                                            "WHERE type='table' AND name='repodata'";
          begin
-            if get_pragma (repository.sqlite_handle, sql, res_int64, False) /= RESULT_OK
+            if CommonSQL.get_pragma (repository.sqlite_handle, sql, res_int64, False) /= RESULT_OK
             then
                Event.emit_errno (errprefix & "pragma", sql, Unix.errno);
                SQLite.close_database (repository.sqlite_handle);
@@ -335,7 +200,7 @@ package body Core.Repo.Operations is
             sql       : constant String := "select count(key) from repodata " &
                         "WHERE key = " & DQ ("packagesite") & " and value = " & SQ (url);
          begin
-            if get_pragma (repository.sqlite_handle, sql, res_int64, False) /= RESULT_OK
+            if CommonSQL.get_pragma (repository.sqlite_handle, sql, res_int64, False) /= RESULT_OK
             then
                Event.emit_errno (errprefix & "pragma", sql, Unix.errno);
                SQLite.close_database (repository.sqlite_handle);
@@ -415,11 +280,14 @@ package body Core.Repo.Operations is
       end open_database;
 
    begin
-      dbdirfd := Context.reveal_db_directory_fd;
-      repositories.Update_Element (repositories.Find (SUS (reponame)), open_database'Access);
-      return result;
+      if repositories.Contains (SUS (reponame)) then
+         dbdirfd := Context.reveal_db_directory_fd;
+         repositories.Update_Element (repositories.Find (SUS (reponame)), open_database'Access);
+         return result;
+      else
+         raise invalid_repo_name;
+      end if;
    end open_repository;
-
 
 
    --------------------------------------------------------------------
@@ -433,7 +301,6 @@ package body Core.Repo.Operations is
 
       procedure make_it_so (key : Text; Element : in out A_repo)
       is
---         repository : A_repo renames Element;
          db : sqlite_h.sqlite3_Access renames Element.sqlite_handle;
          onward : Boolean := True;
       begin
@@ -472,5 +339,91 @@ package body Core.Repo.Operations is
       end if;
    end initialize_repository;
 
+
+   --------------------------------------------------------------------
+   --  initialize_repository
+   --------------------------------------------------------------------
+   function create_repository (reponame : String) return Action_Result
+   is
+      procedure make_it_so (key : Text; Element : in out A_repo);
+
+      dbfile : constant String := sqlite_filename (reponame);
+      dir_fd : Unix.File_Descriptor;
+      result : Action_Result := RESULT_FATAL;
+
+      procedure make_it_so (key : Text; Element : in out A_repo)
+      is
+         use type sqlite_h.enum_error_types;
+         db     : sqlite_h.sqlite3_Access renames Element.sqlite_handle;
+         opened : Boolean;
+      begin
+         opened := SQLite.open_sqlite_database_readwrite (path => dbfile, ppDB => db'Access);
+         if not opened then
+            if SQLite.get_last_error_code (db) = sqlite_h.SQLITE_CORRUPT
+            then
+               Event.emit_error
+                 ("Database corrupt.  Are you running on NFS?  " &
+                    "If so, ensure the locking mechanism is properly set up.");
+            end if;
+            Event.emit_errno ("sqlite3_open", dbfile, Unix.errno);
+            return;
+         end if;
+         if Schema.import_schema_2013 (db) /= RESULT_OK then
+            SQLite.close_database (db);
+            return;
+         end if;
+         if Schema.repo_upgrade (db, reponame) /= RESULT_OK then
+            SQLite.close_database (db);
+            return;
+         end if;
+         declare
+            stmt : aliased sqlite_h.sqlite3_stmt_Access;
+            sql1 : constant String :=
+              "CREATE TABLE IF NOT EXISTS repodata ("
+              & "  key TEXT UNIQUE NOT NULL,"
+              & "  value TEXT NOT NULL"
+              & ");";
+            sql2 : constant String :=
+              "INSERT OR REPLACE INTO repodata (key, value)"
+              & " VALUES (" & DQ ("packagesite") & ", ?1);";
+            problem   : Boolean;
+            row_found : Boolean;
+         begin
+            if CommonSQL.exec (db, sql1) /= RESULT_OK then
+               Event.emit_error ("Unable to register the packagesite in the database");
+               SQLite.close_database (db);
+               return;
+            end if;
+            if not SQLite.prepare_sql (db, sql2, stmt'Access) then
+               CommonSQL.ERROR_SQLITE (db, "create_repository", sql2);
+               SQLite.close_database (db);
+               return;
+            end if;
+            SQLite.bind_string (stmt, 1, USS (Element.url));
+            row_found := SQLite.step_through_statement (stmt, problem);
+            SQLite.finalize_statement (stmt);
+            if problem then
+               CommonSQL.ERROR_SQLITE (db, "create_repository", "step through " & sql2);
+               SQLite.close_database (db);
+               return;
+            end if;
+            SQLite.close_database (db);
+            result := RESULT_OK;
+         end;
+      end make_it_so;
+
+   begin
+      if repositories.Contains (SUS (reponame)) then
+         dir_fd := Context.reveal_db_directory_fd;
+         if not SQLite.initialize_sqlite then
+            return RESULT_ENODB;
+         end if;
+         SQLite.rdb_syscall_overload;
+         repositories.Update_Element (repositories.Find (SUS (reponame)), make_it_so'Access);
+         return result;
+      else
+         raise invalid_repo_name;
+      end if;
+   end create_repository;
 
 end Core.Repo.Operations;
