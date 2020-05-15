@@ -15,7 +15,6 @@ package Core.Pkgtypes is
    type Package_Timestamp  is mod 2**64;
    type Package_Open_Flags is mod 2**3;
    type Package_Dir_Flags  is mod 2**8;
-   type Package_Load_Flags is mod 2**18;
 
    type mode_t is new Natural range 0 .. 16#FFFF#;
    ACCESS_F_OK : constant mode_t := 0;
@@ -40,6 +39,14 @@ package Core.Pkgtypes is
       LICENSE_AND,     --  ASCII POS ('&')
       LICENSE_SINGLE   --  1
      );
+
+   type Load_Section is
+     (basic, deps, rdeps, files, scripts,
+      options, dirs, categories, licenses, users,
+      groups, shlibs_requires, shlibs_provided, annotations, conflicts,
+      provides, requires, config_files, dep_formula);
+
+   type Package_Load_Flags is array (Load_Section) of Boolean;
 
    type A_Message_Type is
      (PKG_MESSAGE_ALWAYS,
@@ -221,7 +228,7 @@ package Core.Pkgtypes is
          flatsize     : Package_Size;
          old_flatsize : Package_Size;
          timestamp    : Package_Timestamp;
-         flags        : Package_Load_Flags;
+         sections     : Package_Load_Flags;
          depends      : Dependency_Crate.Map;
          rdepends     : Reverse_Dependency_Crate.Vector;
          categories   : Text_Crate.Vector;
