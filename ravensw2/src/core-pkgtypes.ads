@@ -25,7 +25,7 @@ package Core.Pkgtypes is
    subtype gid_t is Integer;
    subtype uid_t is Integer;
 
-   type A_Package_Type is
+   type Package_Location is
      (PKG_NONE,        --  type cannot be determined
       PKG_FILE,        --  local file archive
       PKG_STREAM,      --  data read from a non-regular file (device, pipeline, unix socket etc.)
@@ -248,7 +248,7 @@ package Core.Pkgtypes is
          --  ...
          rootpath     : Text;
          rootfd       : Unix.File_Descriptor := Unix.not_connected;
-         package_type : A_Package_Type       := PKG_FILE;
+         package_type : Package_Location     := PKG_FILE;
       end record;
    type A_Package_Access is access all A_Package;
 

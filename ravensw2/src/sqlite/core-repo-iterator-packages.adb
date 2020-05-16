@@ -163,8 +163,8 @@ package body Core.Repo.Iterator.Packages is
       sql : constant String := this.get_sql;
    begin
       this.typeset := True;
+      this.cycles  := once;
       Event.emit_debug (4, "rdb: running" & SQ (sql));
---
       if SQLite.prepare_sql (pDB    => repositories.Element (this.xrepo).sqlite_handle,
                              sql    => sql,
                              ppStmt => this.stmt'Access)
@@ -353,14 +353,15 @@ package body Core.Repo.Iterator.Packages is
    --------------------------------------------------------------------
    function Next (this       : in out SQLite_Iterator;
                   pkg_access : Pkgtypes.A_Package_Access;
-                  behavior   : Iterator_Bahavior) return Action_Result is
+                  sections   : Pkgtypes.Package_Load_Flags := (others => True))
+                  return Action_Result is
    begin
       if not this.typeset then
          Event.emit_error (NOT_INITIALIZED);
          return RESULT_FATAL;
       end if;
 
-      if this.done and then (behavior = once) then
+      if this.done and then (this.cycles = once) then
          return RESULT_END;
       end if;
 
@@ -379,11 +380,12 @@ package body Core.Repo.Iterator.Packages is
             return
               Populate.ensure_sections_loaded
                 (db         => repositories.Element (this.xrepo).sqlite_handle,
-                 pkg_access => pkg_access);
+                 pkg_access => pkg_access,
+                 sections   => sections);
 
          when sqlite_h.SQLITE_DONE =>
             this.done := True;
-            case behavior is
+            case this.cycles is
                when cycled =>
                   if not SQLite.reset_statement (this.stmt) then
                      Event.emit_notice ("Repo.Iterator.Packages.Next.reset_statement failed");

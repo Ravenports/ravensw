@@ -8,9 +8,11 @@ with Core.Context;
 with Core.Unix;
 with Core.Repo.Meta;
 with Core.Repo.Operations.Schema;
+with Core.Repo.Iterator.Packages;
 with Core.VFS;
 with Core.Database.CustomCmds;
 with Core.CommonSQL;
+with Core.Pkgtypes;
 with SQLite;
 
 
@@ -226,7 +228,7 @@ package body Core.Repo.Operations is
                when RESULT_REPOSCHEMA
                   | RESULT_FATAL =>
                   Event.emit_error ("Repository " & reponame & " has an unsupported schema");
-                  Event.emit_error (" The database must be recreated.");
+                  Event.emit_error ("The database must be recreated.");
                   SQLite.close_database (repository.sqlite_handle);
                   if not readonly then
                      begin
@@ -243,39 +245,41 @@ package body Core.Repo.Operations is
          end;
 
          --  Check digests format
---           declare
---              my_pkg : T_pkg_Access;
---              it     : Binary_sqlite.Iterator_Binary_Sqlite :=
---                pkg_repo_binary_query (db       => repository.sqlite_handle,
---                                       reponame => S_reponame,
---                                       pattern  => "",
---                                       match    => PkgDB.MATCH_ALL,
---                                       flags    => PKGDB_IT_FLAG_ONCE);
---           begin
---              if invalid_iterator (Base_Iterators (it)) then
---                 result := True;
---                 return;
---              end if;
---
---              if it.Next (my_pkg, PKG_LOAD_FLAG_BASIC) /= EPKG_OK then
---                 delete_pkg (my_pkg);
---                 result := True;
---                 return;
---              end if;
---
---              if IsBlank (my_pkg.digest) or else
---                not Checksum.pkg_checksum_is_valid (my_pkg.digest)
---              then
---                 Event.emit_error
---                   ("Repository " & reponame &
---                      " has an incompatible checksum format, database must be recreated");
---                 SQLite.close_database (repository.sqlite_handle);
---              else
---                 result := True;
---              end if;
---
---              delete_pkg (my_pkg);
---         end;
+         declare
+            my_pkg : aliased Pkgtypes.A_Package;
+            it     : Repo.Iterator.Packages.SQLite_Iterator;
+         begin
+            if it.initialize_as_standard_query (reponame => reponame,
+                                                pattern  => "",
+                                                match    => Database.MATCH_ALL) /= RESULT_OK
+            then
+               Event.emit_error ("Failed to initialize SQLite pkg iterator");
+               SQLite.close_database (repository.sqlite_handle);
+               return;
+            end if;
+
+            --  Next can be OK/END/FATAL
+            case it.Next (pkg_access => my_pkg'Unchecked_Access,
+                          sections   => (Pkgtypes.basic => True, others => False))
+            is
+               when RESULT_END =>
+                  null;
+               when RESULT_OK =>
+                  if IsBlank (my_pkg.digest) or else
+                    not Checksum.checksum_is_valid (my_pkg.digest)
+                  then
+                     Event.emit_error ("The " & reponame &
+                                         " repository has an incompatible checksum format");
+                     Event.emit_error ("The database must be recreated.");
+                     SQLite.close_database (repository.sqlite_handle);
+                     return;
+                  end if;
+               when others =>
+                  Event.emit_error ("Failed to retrieve package in open_repository()");
+                  SQLite.close_database (repository.sqlite_handle);
+                  return;
+            end case;
+         end;
          result := RESULT_OK;
       end open_database;
 

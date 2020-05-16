@@ -11,7 +11,7 @@ package Core.Repo.Iterator.Packages is
 
    illegal_match_style : exception;
 
-   type SQLite_Iterator is limited private;
+   type SQLite_Iterator is tagged limited private;
    type Match_Field is (none, origin, name, namever, comment, desc);
 
    procedure Reset (this : in out SQLite_Iterator);
@@ -20,7 +20,8 @@ package Core.Repo.Iterator.Packages is
 
    function Next   (this       : in out SQLite_Iterator;
                     pkg_access : Pkgtypes.A_Package_Access;
-                    behavior   : Iterator_Bahavior) return Action_Result;
+                    sections   : Pkgtypes.Package_Load_Flags := (others => True))
+                    return Action_Result;
 
    function initialize_as_provide
      (this     : in out SQLite_Iterator;
@@ -67,6 +68,7 @@ private
          counter : Natural;
          variant : A_Variant;
          mstyle  : Database.Match_Behavior;
+         cycles  : Iterator_Bahavior;
          field   : Match_Field;
          fsort   : Match_Field;
          xrepo   : Text;
