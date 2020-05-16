@@ -44,7 +44,7 @@ package Core.Pkgtypes is
      (basic, deps, rdeps, files, scripts,
       options, dirs, categories, licenses, users,
       groups, shlibs_requires, shlibs_provided, annotations, conflicts,
-      provides, requires, config_files, dep_formula);
+      provides, requires, config_files);
 
    type Package_Load_Flags is array (Load_Section) of Boolean;
 
@@ -222,7 +222,6 @@ package Core.Pkgtypes is
          reponame     : Text;
          repourl      : Text;
          reason       : Text;
-         dep_formula  : Text;
          licenselogic : License_Logic;
          pkgsize      : Package_Size;
          flatsize     : Package_Size;

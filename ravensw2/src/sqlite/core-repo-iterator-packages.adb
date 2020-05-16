@@ -376,10 +376,10 @@ package body Core.Repo.Iterator.Packages is
                   pkg_access.digest := blank;
                end if;
             end if;
-            --  TODO: implement array of callbacks here
---              for section in Load_Section'Range loop
---              end loop;
-            return RESULT_OK;
+            return
+              Populate.ensure_sections_loaded
+                (db         => repositories.Element (this.xrepo).sqlite_handle,
+                 pkg_access => pkg_access);
 
          when sqlite_h.SQLITE_DONE =>
             this.done := True;

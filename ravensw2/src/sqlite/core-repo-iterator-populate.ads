@@ -9,6 +9,13 @@ package Core.Repo.Iterator.Populate is
    procedure populate_pkg (stmt : sqlite_h.sqlite3_stmt_Access;
                            pkg_access : Pkgtypes.A_Package_Access);
 
+   --  Iterate section type, load all sections by default.
+   --  If "sections" argument is passed, selectively load sections
+   function ensure_sections_loaded
+     (db         : sqlite_h.sqlite3_Access;
+      pkg_access : Pkgtypes.A_Package_Access;
+      sections   : Pkgtypes.Package_Load_Flags := (others => True)) return Action_Result;
+
 private
 
    type pkg_attr is
@@ -43,7 +50,6 @@ private
       PKG_ANNOTATIONS,
       PKG_UNIQUEID,
       PKG_OLD_DIGEST,
-      PKG_DEP_FORMULA,
       PKG_VITAL,
       PKG_NUM_FIELDS);
 
@@ -117,6 +123,10 @@ private
      (stmt : sqlite_h.sqlite3_stmt_Access;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
+   function no_operation
+     (stmt : sqlite_h.sqlite3_stmt_Access;
+      pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
+
    function pkg_adddir_attr
      (pkg_access : Pkgtypes.A_Package_Access;
       path   : Text;
@@ -159,5 +169,43 @@ private
      (pkg_access : Pkgtypes.A_Package_Access;
       key        : Text;
       value      : Text) return Action_Result;
+
+   type val_load_callback is access function
+     (stmt       : sqlite_h.sqlite3_stmt_Access;
+      pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
+
+   load_val_operation : constant array (Pkgtypes.Load_Section'Range) of val_load_callback :=
+     (Pkgtypes.basic           => no_operation'Access,
+      Pkgtypes.deps            => add_deps'Access,
+      Pkgtypes.rdeps           => add_rdeps'Access,
+      Pkgtypes.files           => add_files'Access,
+      Pkgtypes.scripts         => add_scripts'Access,
+      Pkgtypes.options         => add_options'Access,
+      Pkgtypes.dirs            => add_directory'Access,
+      Pkgtypes.categories      => add_category'Access,
+      Pkgtypes.licenses        => add_license'Access,
+      Pkgtypes.users           => add_user'Access,
+      Pkgtypes.groups          => add_group'Access,
+      Pkgtypes.shlibs_requires => add_shlib_reqd'Access,
+      Pkgtypes.shlibs_provided => add_shlib_prov'Access,
+      Pkgtypes.annotations     => add_annotation'Access,
+      Pkgtypes.conflicts       => add_conflict'Access,
+      Pkgtypes.provides        => add_provides'Access,
+      Pkgtypes.requires        => add_requires'Access,
+      Pkgtypes.config_files    => add_config_files'Access);
+
+   procedure clear_section (pkg_access : Pkgtypes.A_Package_Access;
+                            section    : Pkgtypes.Load_Section);
+
+   --  Called by each individual section to load query results into package
+   function load_val
+     (db         : sqlite_h.sqlite3_Access;
+      pkg_access : Pkgtypes.A_Package_Access;
+      section    : Pkgtypes.Load_Section;
+      sql        : String) return Action_Result;
+
+   function get_section_sql (section : Pkgtypes.Load_Section) return String;
+
+
 
 end Core.Repo.Iterator.Populate;

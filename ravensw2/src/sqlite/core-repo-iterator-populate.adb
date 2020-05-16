@@ -5,6 +5,7 @@ with Core.Strings;
 with Core.Event;
 with Core.Utilities;
 with Core.Context;
+with Core.CommonSQL;
 with SQLite;
 
 use Core.Strings;
@@ -105,7 +106,6 @@ package body Core.Repo.Iterator.Populate is
                when PKG_UNIQUEID      => P.uid := get_text (icol);
                when PKG_VERSION       => P.version := get_text (icol);
                when PKG_WWW           => P.www := get_text (icol);
-               when PKG_DEP_FORMULA   => P.dep_formula := get_text (icol);
                when PKG_MESSAGE       => P.messages.Append (get_message (icol));
 
                when PKG_AUTOMATIC     => P.automatic := get_boolean (icol);
@@ -163,7 +163,6 @@ package body Core.Repo.Iterator.Populate is
          ("cksum         ", PKG_CKSUM),
          ("comment       ", PKG_COMMENT),
          ("dbname        ", PKG_REPONAME),
-         ("dep_formula   ", PKG_DEP_FORMULA),
          ("desc          ", PKG_DESC),
          ("flatsize      ", PKG_FLATSIZE),
          ("id            ", PKG_ROWID),
@@ -503,6 +502,17 @@ package body Core.Repo.Iterator.Populate is
 
 
    --------------------------------------------------------------------
+   --  no_operation
+   --------------------------------------------------------------------
+   function no_operation
+     (stmt : sqlite_h.sqlite3_stmt_Access;
+      pkg_access : Pkgtypes.A_Package_Access) return Action_Result is
+   begin
+      return RESULT_OK;
+   end no_operation;
+
+
+   --------------------------------------------------------------------
    --  pkg_adddir_attr
    --------------------------------------------------------------------
    function pkg_adddir_attr
@@ -717,6 +727,252 @@ package body Core.Repo.Iterator.Populate is
       pkg_access.config_files.Insert (fullpath, CF);
       return RESULT_OK;
    end pkg_addconfig_file;
+
+
+   --------------------------------------------------------------------
+   --  clear_section
+   --------------------------------------------------------------------
+   procedure clear_section (pkg_access : Pkgtypes.A_Package_Access;
+                            section    : Pkgtypes.Load_Section)
+   is
+   begin
+      case section is
+         when Pkgtypes.basic           => null;
+         when Pkgtypes.deps            => pkg_access.depends.Clear;
+         when Pkgtypes.rdeps           => pkg_access.rdepends.Clear;
+         when Pkgtypes.files           => pkg_access.files.Clear;
+         when Pkgtypes.scripts         => pkg_access.scripts := (others => blank);
+         when Pkgtypes.options         => pkg_access.options.Clear;
+         when Pkgtypes.dirs            => pkg_access.dirs.Clear;
+         when Pkgtypes.categories      => pkg_access.categories.Clear;
+         when Pkgtypes.licenses        => pkg_access.licenses.Clear;
+         when Pkgtypes.users           => pkg_access.users.Clear;
+         when Pkgtypes.groups          => pkg_access.groups.Clear;
+         when Pkgtypes.shlibs_requires => pkg_access.shlibs_reqd.Clear;
+         when Pkgtypes.shlibs_provided => pkg_access.shlibs_prov.Clear;
+         when Pkgtypes.annotations     => pkg_access.annotations.Clear;
+         when Pkgtypes.conflicts       => pkg_access.conflicts.Clear;
+         when Pkgtypes.provides        => pkg_access.provides.Clear;
+         when Pkgtypes.requires        => pkg_access.requires.Clear;
+         when Pkgtypes.config_files    => pkg_access.config_files.Clear;
+      end case;
+   end clear_section;
+
+
+   --------------------------------------------------------------------
+   --  load_val
+   --------------------------------------------------------------------
+   function load_val
+     (db         : sqlite_h.sqlite3_Access;
+      pkg_access : Pkgtypes.A_Package_Access;
+      section    : Pkgtypes.Load_Section;
+      sql        : String) return Action_Result
+   is
+      stmt    : aliased sqlite_h.sqlite3_stmt_Access;
+      problem : Boolean;
+   begin
+      if pkg_access.sections (section) then
+         --  already loaded
+         return RESULT_OK;
+      end if;
+
+      case section is
+         when Pkgtypes.basic =>
+            null;
+
+         when others =>
+            Event.emit_debug (4, "pop: running " & SQ (sql));
+            if not SQLite.prepare_sql (db, sql, stmt'Access) then
+               CommonSQL.ERROR_SQLITE (db, "load_val", sql);
+               return RESULT_FATAL;
+            end if;
+
+            SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pkg_access.id));
+
+            loop
+               exit when not SQLite.step_through_statement (stmt, problem);
+               if problem or else
+                 load_val_operation (section) (stmt, pkg_access) /= RESULT_OK
+               then
+                  clear_section (pkg_access, section);
+                  CommonSQL.ERROR_SQLITE (db, "load_val (step)", sql);
+                  return RESULT_FATAL;
+               end if;
+            end loop;
+            SQLite.finalize_statement (stmt);
+      end case;
+      pkg_access.sections (section) := True;
+
+      return RESULT_OK;
+   end load_val;
+
+   --------------------------------------------------------------------
+   --  get_section_sql
+   --------------------------------------------------------------------
+   function get_section_sql (section : Pkgtypes.Load_Section) return String is
+   begin
+      case section is
+         when Pkgtypes.basic =>
+            return "";
+
+         when Pkgtypes.deps =>
+            return
+              "SELECT d.name, d.origin, d.version"
+              & "  FROM deps AS d"
+              & "    LEFT JOIN packages AS p ON (p.origin = d.origin AND p.name = d.name)"
+              & "  WHERE d.package_id = ?1"
+              & "  ORDER BY d.origin DESC";
+
+         when Pkgtypes.rdeps =>
+            return
+              "SELECT p.name, p.origin, p.version"
+              & "  FROM packages AS p"
+              & "    INNER JOIN deps AS d ON (p.id = d.package_id)"
+              & "  WHERE d.name = ?1";
+
+         when Pkgtypes.files =>
+            return
+              "SELECT path, sha256"
+              & "  FROM files"
+              & "  WHERE package_id = ?1"
+              & "  ORDER BY PATH ASC";
+
+         when Pkgtypes.scripts =>
+            return
+              "SELECT script, type"
+              & "  FROM pkg_script"
+              & "    JOIN script USING(script_id)"
+              & "  WHERE package_id = ?1";
+
+         when Pkgtypes.options =>
+            return
+              "SELECT option, value"
+              & "  FROM option"
+              & "    JOIN pkg_option USING(option_id)"
+              & "  WHERE package_id = ?1"
+              & "  ORDER BY option";
+
+         when Pkgtypes.dirs =>
+            return
+              "SELECT path, try"
+              & "  FROM pkg_directories, directories"
+              & "  WHERE package_id = ?1"
+              & "    AND directory_id = directories.id"
+              & "  ORDER by path DESC";
+
+         when Pkgtypes.categories =>
+            return
+              "SELECT name"
+              & "  FROM pkg_categories, categories AS c"
+              & "  WHERE package_id = ?1"
+              & "    AND category_id = c.id"
+              & "  ORDER by name DESC";
+
+         when Pkgtypes.licenses =>
+            return
+              "SELECT ifnull(group_concat(name, ', '), '') AS name"
+              & "  FROM pkg_licenses, licenses AS l"
+              & "  WHERE package_id = ?1"
+              & "    AND license_id = l.id"
+              & "  ORDER by name DESC";
+
+         when Pkgtypes.users =>
+            return
+              "SELECT users.name"
+              & "  FROM pkg_users, users"
+              & "  WHERE package_id = ?1"
+              & "    AND user_id = users.id"
+              & "  ORDER by name DESC";
+
+         when Pkgtypes.groups =>
+            return
+              "SELECT groups.name"
+              & "  FROM pkg_groups, groups"
+              & "  WHERE package_id = ?1"
+              & "    AND group_id = groups.id"
+              & "  ORDER by name DESC";
+
+         when Pkgtypes.shlibs_requires =>
+            return
+              "SELECT name"
+              & "  FROM pkg_shlibs_required, shlibs AS s"
+              & "  WHERE package_id = ?1"
+              & "    AND shlib_id = s.id"
+              & "  ORDER by name DESC";
+
+         when Pkgtypes.shlibs_provided =>
+            return
+              "SELECT name"
+              & "  FROM pkg_shlibs_provided, shlibs AS s"
+              & "  WHERE package_id = ?1"
+              & "    AND shlib_id = s.id"
+              & "  ORDER by name DESC";
+
+         when Pkgtypes.annotations =>
+            return
+              "SELECT k.annotation AS tag, v.annotation AS value"
+              & "  FROM pkg_annotation p"
+              &  "    JOIN annotation k ON (p.tag_id = k.annotation_id)"
+              &  "    JOIN annotation v ON (p.value_id = v.annotation_id)"
+              & "  WHERE p.package_id = ?1"
+              & "  ORDER BY tag, value";
+
+         when Pkgtypes.conflicts =>
+            return
+              "SELECT packages.name"
+              & "  FROM pkg_conflicts"
+              & "    LEFT JOIN packages ON"
+              & "    (packages.id = pkg_conflicts.conflict_id)"
+              & "  WHERE package_id = ?1";
+
+         when Pkgtypes.provides =>
+            return
+              "SELECT provide"
+              & "  FROM pkg_provides, provides AS s"
+              & "  WHERE package_id = ?1"
+              & "    AND provide_id = s.id"
+              & "  ORDER by provide DESC";
+
+         when Pkgtypes.requires =>
+            return
+              "SELECT require"
+              & "  FROM pkg_requires, requires AS s"
+              & "  WHERE package_id = ?1"
+              &  "    AND require_id = s.id"
+              & "  ORDER by require DESC";
+
+         when Pkgtypes.config_files =>
+            return
+              "SELECT path, content"
+              & "  FROM config_files"
+              & "  WHERE package_id = ?1"
+              & "  ORDER BY PATH ASC";
+
+      end case;
+   end get_section_sql;
+
+
+   --------------------------------------------------------------------
+   --  ensure_sections_loaded
+   --------------------------------------------------------------------
+   function ensure_sections_loaded
+     (db         : sqlite_h.sqlite3_Access;
+      pkg_access : Pkgtypes.A_Package_Access;
+      sections   : Pkgtypes.Package_Load_Flags := (others => True)) return Action_Result is
+   begin
+      for sec in Pkgtypes.Load_Section'Range loop
+         if sections (sec) then
+            if load_val (db         => db,
+                         pkg_access => pkg_access,
+                         section    => sec,
+                         sql        => get_section_sql (sec)) /= RESULT_OK
+            then
+               return RESULT_FATAL;
+            end if;
+         end if;
+      end loop;
+      return RESULT_OK;
+   end ensure_sections_loaded;
 
 
 end Core.Repo.Iterator.Populate;
