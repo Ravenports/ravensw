@@ -17,6 +17,11 @@ package body Core.Repo.Iterator.Packages is
    is
       result : Natural := 0;
    begin
+      if not this.typeset then
+         Event.emit_error (NOT_INITIALIZED);
+         return 0;
+      end if;
+
       loop
          exit when not SQLite.step_through_statement (this.stmt);
          result := result + 1;
@@ -31,9 +36,15 @@ package body Core.Repo.Iterator.Packages is
    --------------------------------------------------------------------
    procedure Reset (this : in out SQLite_Iterator) is
    begin
+      if not this.typeset then
+         Event.emit_error (NOT_INITIALIZED);
+         return;
+      end if;
+
       this.counter := 0;
+      this.done    := False;
       if not SQLite.reset_statement (this.stmt) then
-         Event.emit_notice ("Core.Database.Iterator.Packages.reset_statement failed");
+         Event.emit_notice ("Repo.Iterator.Packages.reset_statement failed");
       end if;
    end Reset;
 
@@ -335,5 +346,62 @@ package body Core.Repo.Iterator.Packages is
       return RESULT_OK;
    end initialize_as_standard_query;
 
+
+   --------------------------------------------------------------------
+   --  Next
+   --------------------------------------------------------------------
+   function Next (this       : in out SQLite_Iterator;
+                  pkg_access : in out Pkgtypes.A_Package_Access;
+                  behavior   : Iterator_Bahavior) return Action_Result is
+   begin
+      if not this.typeset then
+         Event.emit_error (NOT_INITIALIZED);
+         return RESULT_FATAL;
+      end if;
+
+      if this.done and then (behavior = once) then
+         return RESULT_END;
+      end if;
+
+      case sqlite_h.sqlite3_step (this.stmt) is
+
+         when sqlite_h.SQLITE_ROW =>
+            --  We do not expect pkg_access to be null.  The caller has to allocate
+            --  space as necessary
+            --  TODO: populate pkg HERE
+
+            if not IsBlank (pkg_access.digest) then
+               if not Checksum.checksum_is_valid (pkg_access.digest) then
+                  pkg_access.digest := blank;
+               end if;
+            end if;
+            --  TODO: implement array of callbacks here
+--              for section in Load_Section'Range loop
+--              end loop;
+            return RESULT_OK;
+
+         when sqlite_h.SQLITE_DONE =>
+            this.done := True;
+            case behavior is
+               when cycled =>
+                  if not SQLite.reset_statement (this.stmt) then
+                     Event.emit_notice ("Repo.Iterator.Packages.Next.reset_statement failed");
+                  end if;
+                  return RESULT_OK;
+               when once =>
+                  return RESULT_END;
+               when auto =>
+                  --  In freebsd pkg, this is supposed to free itself.
+                  --  That's no necessary here, so auto and once are equivalent.
+                  return RESULT_END;
+            end case;
+
+         when others =>
+            CommonSQL.ERROR_SQLITE (db    => repositories.Element (this.xrepo).sqlite_handle,
+                                    func  => "Repo.Iterator.Packages.Next",
+                                    query => "iterator");
+            return RESULT_FATAL;
+      end case;
+   end Next;
 
 end Core.Repo.Iterator.Packages;

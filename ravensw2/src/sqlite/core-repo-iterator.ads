@@ -4,6 +4,6 @@
 
 package Core.Repo.Iterator is
 
-   type Iterator_Bahavior is (once, cyled, auto);
+   type Iterator_Bahavior is (once, cycled, auto);
 
 end Core.Repo.Iterator;

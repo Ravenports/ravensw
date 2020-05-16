@@ -72,6 +72,7 @@ private
          xrepo   : Text;
          pattern : Text;
          typeset : Boolean := False;
+         done    : Boolean := False;
       end record;
 
    overriding procedure Finalize (this : in out SQLite_Iterator);
@@ -83,5 +84,7 @@ private
    function search_condition (this : SQLite_Iterator) return String;
 
    function initialize_stmt (this : in out SQLite_Iterator) return Action_Result;
+
+   NOT_INITIALIZED : constant String := "Iterator has not been initialized";
 
 end Core.Repo.Iterator.Packages;
