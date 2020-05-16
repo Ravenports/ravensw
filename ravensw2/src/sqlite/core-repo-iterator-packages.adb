@@ -117,7 +117,9 @@ package body Core.Repo.Iterator.Packages is
    begin
       case this.variant is
          when standard_query =>
-            return selection & from;
+            return selection & from &
+              Database.get_pattern_query (USS (this.pattern), this.mstyle)
+              & " ORDER BY name;";
          when search =>
             return selection & url_field & from & this.search_condition;
          when provide =>
@@ -318,10 +320,20 @@ package body Core.Repo.Iterator.Packages is
 
       this.variant := standard_query;
       this.xrepo   := SUS (reponame);
+      this.pattern := SUS (pattern);
+      this.mstyle  := match;
+      if this.initialize_stmt /= RESULT_OK then
+         return RESULT_FATAL;
+      end if;
 
-
+      case this.mstyle is
+         when Database.MATCH_ALL
+            | Database.MATCH_CONDITION => null;
+         when others =>
+            SQLite.bind_string (this.stmt, 1, pattern);
+      end case;
+      return RESULT_OK;
    end initialize_as_standard_query;
-
 
 
 end Core.Repo.Iterator.Packages;

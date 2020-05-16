@@ -33,6 +33,9 @@ package Core.Database is
       request_regex : Boolean := False;
       request_condition : Boolean := False) return Match_Behavior;
 
+   --  Common query filter
+   function get_pattern_query (pattern : String; match_style : Match_Behavior) return String;
+
 private
 
    case_sensitivity_setting : Boolean := False;

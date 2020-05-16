@@ -70,6 +70,7 @@ private
          field   : Match_Field;
          fsort   : Match_Field;
          xrepo   : Text;
+         pattern : Text;
          typeset : Boolean := False;
       end record;
 
