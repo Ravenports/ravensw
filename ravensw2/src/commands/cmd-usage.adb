@@ -84,15 +84,17 @@ package body Cmd.Usage is
    --------------------------------------------------------------------
    procedure display_help_suggestion (command : Command_verb)
    is
-      main_msg : constant String := "For more information on available commands and " &
-        "options see '" & progname & " help'.";
+      main_msg : constant String :=
+        "For more information on available commands and options see "
+        & SQ (progname & " help") & ".";
    begin
       insert_carriage_return;
       case command is
          when cv_unset => TIO.Put_Line (TIO.Standard_Error, main_msg);
-         when others   => TIO.Put_Line (TIO.Standard_Error,
-                                        "For more information see '" & progname & " help " &
-                                          convert_command_enum_to_label (command) & "'.");
+         when others   => TIO.Put_Line
+              (TIO.Standard_Error,
+               "For more information see " &
+                 SQ (progname & " help " & convert_command_enum_to_label (command)) & ".");
       end case;
    end display_help_suggestion;
 

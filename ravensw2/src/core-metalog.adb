@@ -33,7 +33,7 @@ package body Core.Metalog is
       return RESULT_OK;
    exception
       when others =>
-         EV.emit_error ("Unable to open metalog '" & filename & "'");
+         EV.emit_error ("Unable to open metalog " & SQ (filename));
          return RESULT_FATAL;
    end metalog_open;
 

@@ -4,6 +4,7 @@
 with Core.Event;
 with core.Strings;
 with core.CommonSQL;
+with Core.Repo.Iterator.Populate;
 with SQLite;
 
 use Core.Strings;
@@ -351,7 +352,7 @@ package body Core.Repo.Iterator.Packages is
    --  Next
    --------------------------------------------------------------------
    function Next (this       : in out SQLite_Iterator;
-                  pkg_access : in out Pkgtypes.A_Package_Access;
+                  pkg_access : Pkgtypes.A_Package_Access;
                   behavior   : Iterator_Bahavior) return Action_Result is
    begin
       if not this.typeset then
@@ -368,7 +369,7 @@ package body Core.Repo.Iterator.Packages is
          when sqlite_h.SQLITE_ROW =>
             --  We do not expect pkg_access to be null.  The caller has to allocate
             --  space as necessary
-            --  TODO: populate pkg HERE
+            Populate.populate_pkg (this.stmt, pkg_access);
 
             if not IsBlank (pkg_access.digest) then
                if not Checksum.checksum_is_valid (pkg_access.digest) then

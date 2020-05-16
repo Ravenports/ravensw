@@ -34,7 +34,7 @@ package body Core.CommonSQL is
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
       func : constant String := "run_transaction";
    begin
-      Event.emit_debug (4, "RDB: running '" & joinsql & "'");
+      Event.emit_debug (4, "RDB: running " & SQ (joinsql));
       if SQLite.prepare_sql (db, joinsql, stmt'Access) then
          if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
             ERROR_SQLITE (db, func, joinsql);
@@ -116,7 +116,7 @@ package body Core.CommonSQL is
       nres : SQLite.sql_int64;
    begin
       nres := 0;
-      Event.emit_debug (4, "executing pragma command '" & sql & "'");
+      Event.emit_debug (4, "executing pragma command " & SQ (sql));
       if not SQLite.prepare_sql (db, sql, stmt'Access) then
          if not silence then
             ERROR_SQLITE (db, func, sql);
@@ -145,7 +145,7 @@ package body Core.CommonSQL is
    is
       msg : Text;
    begin
-      Event.emit_debug (4, "executing '" & sql & "'");
+      Event.emit_debug (4, "executing " & SQ (sql));
       if SQLite.exec_sql (db, sql, msg) then
          return RESULT_OK;
       else

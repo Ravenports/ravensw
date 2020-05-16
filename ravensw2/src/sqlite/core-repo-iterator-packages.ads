@@ -19,7 +19,7 @@ package Core.Repo.Iterator.Packages is
    function count  (this : in out SQLite_Iterator) return Natural;
 
    function Next   (this       : in out SQLite_Iterator;
-                    pkg_access : in out Pkgtypes.A_Package_Access;
+                    pkg_access : Pkgtypes.A_Package_Access;
                     behavior   : Iterator_Bahavior) return Action_Result;
 
    function initialize_as_provide

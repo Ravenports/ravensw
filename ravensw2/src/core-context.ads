@@ -11,6 +11,7 @@ package Core.Context is
    function reveal_event_pipe (name : String) return Unix.File_Descriptor;
    function reveal_pkg_rootdir return String;
    function reveal_debug_level return ST_Debug_Level;
+   function reveal_developer_mode return Boolean;
 
    procedure close_eventpipe;
    procedure close_root_fd;

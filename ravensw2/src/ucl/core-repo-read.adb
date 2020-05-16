@@ -34,7 +34,7 @@ package body Core.Repo.Read is
             key    : String := Ucl.ucl_object_key (item);
             keystr : Text := SUS (key);
          begin
-            EV.emit_debug (1, "RepoRead: parsing key '" & key & "'");
+            EV.emit_debug (1, "RepoRead: parsing key " & SQ (key));
             if repositories.Contains (keystr) then
                EV.emit_debug (1, "RepoRead: overwriting repository " & key);
             end if;
@@ -67,11 +67,11 @@ package body Core.Repo.Read is
    begin
       parser := Ucl.ucl_parser_new_basic;
       Ucl.ucl_parser_register_variable (parser, key_ABI, myarch);
-      EV.emit_debug (1, "RepoRead: loading " & repodir & "/" & repofile);
+      EV.emit_debug (1, "RepoRead: loading " & SQ (repodir & "/" & repofile));
       fd := Unix.open_file (dfd, repofile, (RDONLY => True, others => False));
 
       if not Unix.file_connected (fd) then
-         EV.emit_with_strerror ("Unable to open '" & repodir & "/" & repofile & "'");
+         EV.emit_with_strerror ("Unable to open " & SQ (repodir & "/" & repofile));
          return;
       end if;
 
@@ -79,7 +79,7 @@ package body Core.Repo.Read is
       res := Unix.close_file (fd);
 
       if not success then
-         EV.emit_with_strerror ("Error parsing: '" & repodir & "/" & repofile & "'");
+         EV.emit_with_strerror ("Error parsing: " & SQ (repodir & "/" & repofile));
          libucl.ucl_parser_free (parser);
          return;
       end if;
@@ -241,8 +241,8 @@ package body Core.Repo.Read is
 
                procedure generic_error_emission (flavor : String) is
                begin
-                  EV.emit_error ("Expecting " & flavor & " for the '" & key &
-                                   "' key of the '" & reponame & "' repo");
+                  EV.emit_error ("Expecting " & flavor & " for the " & SQ (key) &
+                                   " key of the " & SQ (reponame) & " repository");
                end generic_error_emission;
 
                function content_is_string_type return Boolean is

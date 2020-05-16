@@ -185,7 +185,7 @@ package body Core.Database.Operations.Schema is
       if not db.prstmt_initialized then
          for S in prstmt_index'Range loop
             Event.emit_debug
-              (4, "Pkgdb: preparing statement '" & prstmt_text_sql (S) & "'");
+              (4, "Pkgdb: preparing statement " & SQ (prstmt_text_sql (S)));
             if not SQLite.prepare_sql (pDB    => db.sqlite,
                                        sql    => prstmt_text_sql (S),
                                        ppStmt => prepared_statements (S)'Access)

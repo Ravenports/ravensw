@@ -172,7 +172,7 @@ package body Cmd.Line is
                set_error ("Unknown search option: " & datum);
             end if;
          else
-            set_error ("Attempt to redefine search field to '" & datum & "'");
+            set_error ("Attempt to redefine search field to " & SQ (datum));
          end if;
       end handle_search_field;
 
@@ -196,7 +196,7 @@ package body Cmd.Line is
                set_error ("Unknown label option: " & datum);
             end if;
          else
-            set_error ("Attempt to redefine label to '" & datum & "'");
+            set_error ("Attempt to redefine label to " & SQ (datum));
          end if;
       end handle_label_field;
 
@@ -215,7 +215,7 @@ package body Cmd.Line is
          elsif datum = "ucl" then
             result.verb_raw_format := ucl;
          else
-            set_error ("Invalid format '" & datum & "' for the raw output " &
+            set_error ("Invalid format " & SQ (datum) & " for the raw output " &
                          "(expecting json, json-compact, yaml or ucl)");
          end if;
       end handle_raw_format;
@@ -305,8 +305,8 @@ package body Cmd.Line is
             if result.verb_all_packages then
                set_error ("Unexpected file pattern with --all option: " & datum);
             elsif not IsBlank (result.verb_name_pattern) then
-               set_error ("Attempt to redefine file name pattern from '" &
-                 USS (result.verb_name_pattern) & "' to '" & datum & "'");
+               set_error ("Attempt to redefine file name pattern from "
+                          & SQ (USS (result.verb_name_pattern)) & " to " & DQ (datum));
             else
                result.verb_name_pattern := datumtxt;
             end if;
@@ -1280,7 +1280,7 @@ package body Cmd.Line is
                      elsif datum = "repository" then
                         result.help_command2 := cv2_repository;
                      else
-                        set_error ("'" & datum & "' is not a recognized command");
+                        set_error (SQ (datum) & " is not a recognized command");
                      end if;
                   end if;
             end case;

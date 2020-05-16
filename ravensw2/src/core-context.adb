@@ -56,6 +56,15 @@ package body Core.Context is
 
 
    --------------------------------------------------------------------
+   --  reveal_developer_mode
+   --------------------------------------------------------------------
+   function reveal_developer_mode return Boolean is
+   begin
+      return context.developer_mode;
+   end reveal_developer_mode;
+
+
+   --------------------------------------------------------------------
    --  register_event_pipe_via_file
    --------------------------------------------------------------------
    function register_event_pipe_via_file (pipe_name : String) return Boolean
@@ -175,7 +184,6 @@ package body Core.Context is
    begin
       Context.developer_mode := mode_on;
    end register_dev_mode;
-
 
 
 end Core.Context;

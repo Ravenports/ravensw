@@ -28,8 +28,8 @@ package body Cmd.Help is
          print_global_options;
          print_command_summary;
          TIO.Put_Line ("");
-         TIO.Put_Line ("For more information on the different commands see '" & progname &
-                         " help <command>'.");
+         TIO.Put_Line ("For more information on the different commands see "
+                       & SQ (progname & " help <command>") & ".");
          return True;
       else
          case comline.help_command2 is
