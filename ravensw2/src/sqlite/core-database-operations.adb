@@ -14,7 +14,6 @@ with Core.Context;
 with Core.Config;
 with Core.Event;
 with Core.Repo;
-with Core.Unix;
 with SQLite;
 
 use Core.Strings;
@@ -286,6 +285,372 @@ package body Core.Database.Operations is
       end if;
       SQLite.shutdown_sqlite;
    end rdb_close;
+
+
+   --------------------------------------------------------------------
+   --  rdb_obtain_lock
+   --------------------------------------------------------------------
+   function rdb_obtain_lock
+     (db       : in out RDB_Connection;
+      locktype : RDB_Lock_Type) return Boolean
+   is
+   begin
+      case locktype is
+         when RDB_LOCK_READONLY  =>
+            if not Config.configuration_value (config.read_lock) then
+               return True;
+            end if;
+            Event.emit_debug (1, "want to get a read only lock on a database");
+            return
+              rdb_try_lock
+                (db        => db,
+                 lock_sql  => "UPDATE pkg_lock SET read=read+1 WHERE exclusive=0;",
+                 lock_type => locktype,
+                 upgrade   => False);
+
+         when RDB_LOCK_ADVISORY  =>
+            Event.emit_debug (1, "want to get an advisory lock on a database");
+            return
+              rdb_try_lock
+                (db        => db,
+                 lock_sql  => "UPDATE pkg_lock SET advisory=1 WHERE exclusive=0 AND advisory=0;",
+                 lock_type => locktype,
+                 upgrade   => False);
+
+         when RDB_LOCK_EXCLUSIVE =>
+            Event.emit_debug (1, "want to get an exclusive lock on a database");
+            return
+              rdb_try_lock
+                (db        => db,
+                 lock_sql  => "UPDATE pkg_lock SET exclusive=1 " &
+                              "WHERE exclusive=0 AND advisory=0 AND read=0;",
+                 lock_type => locktype,
+                 upgrade   => False);
+
+      end case;
+   end rdb_obtain_lock;
+
+
+   --------------------------------------------------------------------
+   --  rdb_release_lock
+   --------------------------------------------------------------------
+   function rdb_release_lock
+     (db       : in out RDB_Connection;
+      locktype : RDB_Lock_Type) return Boolean
+   is
+      result : Action_Result;
+   begin
+      case locktype is
+         when RDB_LOCK_READONLY  =>
+            if not Config.configuration_value (config.read_lock) then
+               return True;
+            end if;
+            Event.emit_debug (1, "release a read only lock on a database");
+            result := CommonSQL.exec
+              (db.sqlite, "UPDATE pkg_lock SET read=read-1 WHERE read>0;");
+
+         when RDB_LOCK_ADVISORY  =>
+            Event.emit_debug (1, "release an advisory lock on a database");
+            result := CommonSQL.exec
+              (db.sqlite, "UPDATE pkg_lock SET advisory=0 WHERE advisory=1;");
+
+         when RDB_LOCK_EXCLUSIVE =>
+            Event.emit_debug (1, "release an exclusive lock on a database");
+            result := CommonSQL.exec
+              (db.sqlite, "UPDATE pkg_lock SET exclusive=0 WHERE exclusive=1;");
+      end case;
+      if result /= RESULT_OK then
+         return False;
+      end if;
+
+      if SQLite.get_number_of_changes (db.sqlite) = 0 then
+         return True;
+      end if;
+      return rdb_remove_lock_pid (db, Unix.getpid);
+   end rdb_release_lock;
+
+
+   --------------------------------------------------------------------
+   --  rdb_reset_lock
+   --------------------------------------------------------------------
+   function rdb_reset_lock (db : in out RDB_Connection) return Boolean
+   is
+      res : Action_Result;
+   begin
+      res := CommonSQL.exec (db.sqlite, "UPDATE pkg_lock SET exclusive=0, advisory=0, read=0;");
+      return (res = RESULT_OK);
+   end rdb_reset_lock;
+
+
+   --------------------------------------------------------------------
+   --  rdb_write_lock_pid
+   --------------------------------------------------------------------
+   function rdb_write_lock_pid (db : in out RDB_Connection) return Action_Result
+   is
+      lock_pid_sql : constant String := "INSERT INTO pkg_lock_pid VALUES (?1);";
+      stmt         : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      if SQLite.prepare_sql (pDB    => db.sqlite,
+                             sql    => lock_pid_sql,
+                             ppStmt => stmt'Access)
+      then
+         SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (Unix.getpid));
+         if not SQLite.step_through_statement (stmt) then
+            CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_write_lock_pid (step)", lock_pid_sql);
+            SQLite.finalize_statement (stmt);
+            return RESULT_FATAL;
+         end if;
+         SQLite.finalize_statement (stmt);
+         return RESULT_OK;
+      else
+         CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_write_lock_pid (prep)", lock_pid_sql);
+         return RESULT_FATAL;
+      end if;
+   end rdb_write_lock_pid;
+
+
+   --------------------------------------------------------------------
+   --  rdb_check_lock_pid
+   --------------------------------------------------------------------
+   function rdb_check_lock_pid (db : in out RDB_Connection) return Action_Result
+   is
+      use type Unix.Process_ID;
+
+      query : constant String := "SELECT pid FROM pkg_lock_pid;";
+      stmt  : aliased sqlite_h.sqlite3_stmt_Access;
+      lpid  : Unix.Process_ID;
+      pid   : Unix.Process_ID;
+      found : Integer := 0;
+   begin
+      if SQLite.prepare_sql (pDB    => db.sqlite,
+                             sql    => query,
+                             ppStmt => stmt'Access)
+      then
+         lpid := Unix.getpid;
+
+         loop
+            exit when not SQLite.step_through_statement (stmt);
+
+            pid := Unix.Process_ID (SQLite.retrieve_integer (stmt, 0));
+            if pid /= lpid then
+               if Unix.kill (pid) then
+                  Event.emit_notice ("process with pid" & pid'Img & " still holds the lock");
+                  found := found + 1;
+               else
+                  Event.emit_debug
+                    (1, "found stale pid" & pid'Img & " in lock database, my pid is:" & lpid'Img);
+                  if not rdb_remove_lock_pid (db, pid) then
+                     SQLite.finalize_statement (stmt);
+                     return RESULT_FATAL;
+                  end if;
+               end if;
+            end if;
+         end loop;
+      else
+         CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_check_lock_pid (prep)", query);
+         return RESULT_FATAL;
+      end if;
+      SQLite.finalize_statement (stmt);
+
+      if found = 0 then
+         return RESULT_END;
+      else
+         return RESULT_OK;
+      end if;
+   end rdb_check_lock_pid;
+
+
+   --------------------------------------------------------------------
+   --  rdb_remove_lock_pid
+   --------------------------------------------------------------------
+   function rdb_remove_lock_pid
+     (db  : in out RDB_Connection;
+      pid : Unix.Process_ID) return Boolean
+   is
+      lock_pid_sql : constant String := "DELETE FROM pkg_lock_pid WHERE pid = ?1;";
+      stmt         : aliased sqlite_h.sqlite3_stmt_Access;
+   begin
+      if SQLite.prepare_sql (pDB    => db.sqlite,
+                             sql    => lock_pid_sql,
+                             ppStmt => stmt'Access)
+      then
+         SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pid));
+         if not SQLite.step_through_statement (stmt) then
+            CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_remove_lock_pid (step)", lock_pid_sql);
+            SQLite.finalize_statement (stmt);
+            return False;
+         end if;
+         SQLite.finalize_statement (stmt);
+         return True;
+      else
+         CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_remove_lock_pid (prep)", lock_pid_sql);
+         return False;
+      end if;
+   end rdb_remove_lock_pid;
+
+
+   --------------------------------------------------------------------
+   --  rdb_try_lock
+   --------------------------------------------------------------------
+   function rdb_try_lock
+     (db        : in out RDB_Connection;
+      lock_sql  : String;
+      lock_type : RDB_Lock_Type;
+      upgrade   : Boolean) return Boolean
+   is
+      reset_lock_sql : constant String :=
+        "DELETE FROM pkg_lock; INSERT INTO pkg_lock VALUES (0,0,0);";
+
+      max_retries  : int64;
+      timeout_secs : int64;
+      retrys       : int64 := 0;
+      retcode      : Action_Result := RESULT_END;
+      msg          : Text;
+   begin
+      max_retries  := Config.configuration_value (Config.lock_retries);
+      timeout_secs := Config.configuration_value (Config.lock_wait);
+      loop
+         exit when retrys > max_retries;
+         if CommonSQL.exec (db.sqlite, lock_sql) /= RESULT_OK then
+            retcode := RESULT_FATAL;
+            exit;
+         end if;
+
+         retcode := RESULT_END;
+         if SQLite.get_number_of_changes (db.sqlite) = 0 then
+            if rdb_check_lock_pid (db) = RESULT_END then
+               --  No live processes found, so we can safely reset lock
+               Event.emit_debug (1, "no concurrent processes found, cleanup the lock");
+               if not rdb_reset_lock (db) then
+                  retcode := RESULT_FATAL;
+                  exit;
+               end if;
+
+               if upgrade then
+                  --  In case of upgrade we should obtain a lock from the beginning
+                  --  hence switch upgrade to retain
+                  if rdb_remove_lock_pid (db, Unix.getpid) then
+                     if rdb_obtain_lock (db, lock_type) then
+                        retcode := RESULT_OK;
+                     else
+                        retcode := RESULT_FATAL;
+                     end if;
+                  else
+                     retcode := RESULT_FATAL;
+                  end if;
+               else
+                  --  We might have inconsistent db, or some strange issue, so
+                  --  just insert new record and go forward
+                  if rdb_remove_lock_pid (db, Unix.getpid) then
+                     retcode := CommonSQL.exec (db.sqlite, lock_sql);
+                  else
+                     retcode := RESULT_FATAL;
+                  end if;
+               end if;
+               exit;
+            elsif max_retries > 0 then
+               Event.emit_debug
+                 (1, "waiting for database lock for a maximum of" & max_retries'Img &
+                    " retries, next try in" & timeout_secs'Img & " seconds");
+               delay Duration (timeout_secs);
+            else
+               exit;
+            end if;
+         elsif not upgrade then
+            retcode := rdb_write_lock_pid (db);
+            exit;
+         else
+            retcode := RESULT_OK;
+            exit;
+         end if;
+
+         retrys := retrys + 1;
+      end loop;
+      return (retcode = RESULT_OK);
+   end rdb_try_lock;
+
+
+   --------------------------------------------------------------------
+   --  database_access
+   --------------------------------------------------------------------
+   function database_access (mode  : RDB_Mode_Flags; dtype : RDB_Type) return Action_Result
+   is
+      --  This will return one of:
+      --
+      --  RESULT_ENODB:
+      --    A database doesn't exist and we don't want to create
+      --    it, or dbdir doesn't exist
+      --
+      --  RESULT_INSECURE:
+      --    The dbfile or one of the directories in the
+      --    path to it are writable by other than root or
+      --    (if $INSTALL_AS_USER is set) the current euid and egid
+      --
+      --  RESULT_ENOACCESS:
+      --    we don't have privileges to read or write
+      --
+      --  RESULT_FATAL:
+      --    Couldn't determine the answer for other reason,
+      --    like configuration screwed up, invalid argument values,
+      --    read-only filesystem, etc.
+      --
+      --  RESULT_OK:
+      --    We can go ahead
+
+      db_dir : String := Config.configuration_value (Config.dbdir);
+      retval : Action_Result := RESULT_OK;
+      RW     : constant RDB_Mode_Flags := (RDB_MODE_READ or RDB_MODE_WRITE);
+   begin
+      if mode = RDB_Mode_Flags (0) then
+         return RESULT_FATAL;
+      end if;
+
+      --  Test the enclosing directory: if we're going to create the
+      --  DB, then we need read and write permissions on the dir.
+      --  Otherwise, just test for read access
+
+      if (mode and RDB_MODE_CREATE) > 0 then
+         retval := check_access (RW, db_dir, "");
+      else
+         retval := check_access (RDB_MODE_READ, db_dir, "");
+      end if;
+      if retval /= RESULT_OK then
+         return retval;
+      end if;
+
+      case dtype is
+         when RDB_DB_LOCAL =>
+            --  Test local.sqlite, if required
+            return check_access (mode, db_dir, local_ravensw_db);
+         when RDB_DB_REPO =>
+            if Repo.count_of_active_repositories > 0 then
+               declare
+                  list  : String := Repo.joined_priority_order;
+                  num   : Natural := count_char (list, LAT.LF) + 1;
+                  delim : String (1 .. 1) := (others => LAT.LF);
+               begin
+                  for x in 1 .. num loop
+                     declare
+                        rname : String := specific_field (list, x, delim);
+                     begin
+                        retval := Repo.Operations.check_repository_access (rname, mode);
+                        if retval = RESULT_ENODB and then
+                          (mode and RDB_MODE_READ) > 0
+                        then
+                           Event.emit_error
+                             ("Repository " & rname & " missing, " &
+                                SQ (progname & " update") & " command required");
+                        end if;
+                        if retval /= RESULT_OK then
+                           exit;
+                        end if;
+                     end;
+                  end loop;
+               end;
+            end if;
+            return retval;
+      end case;
+   end database_access;
 
 
 end Core.Database.Operations;

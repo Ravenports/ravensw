@@ -1,11 +1,17 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Core.Pkgtypes;
+
 package Core.Repo.Operations is
 
    function open_repository (reponame : String; readonly : Boolean) return Action_Result;
 
    procedure close_all_open_repositories;
+
+   function check_repository_access
+     (reponame : String;
+      mode     : Database.RDB_Mode_Flags) return Action_Result;
 
 private
 

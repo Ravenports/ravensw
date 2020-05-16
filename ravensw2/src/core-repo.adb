@@ -187,6 +187,15 @@ package body Core.Repo is
 
 
    --------------------------------------------------------------------
+   --  total_repositories
+   --------------------------------------------------------------------
+   function total_repositories return Natural is
+   begin
+      return Natural (repositories.Length);
+   end total_repositories;
+
+
+   --------------------------------------------------------------------
    --  repository_is_active
    --------------------------------------------------------------------
    function repository_is_active (reponame : String) return Boolean

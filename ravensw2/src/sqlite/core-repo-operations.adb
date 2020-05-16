@@ -12,7 +12,7 @@ with Core.Repo.Iterator.Packages;
 with Core.VFS;
 with Core.Database.CustomCmds;
 with Core.CommonSQL;
-with Core.Pkgtypes;
+with Core.Config;
 with SQLite;
 
 
@@ -429,5 +429,21 @@ package body Core.Repo.Operations is
          raise invalid_repo_name;
       end if;
    end create_repository;
+
+
+   --------------------------------------------------------------------
+   --  check_repository_access
+   --------------------------------------------------------------------
+   function check_repository_access
+     (reponame : String;
+      mode     : Database.RDB_Mode_Flags) return Action_Result
+   is
+      db_dir : String := Config.configuration_value (Config.dbdir);
+   begin
+      return Database.check_access (mode   => mode,
+                                    dbdir  => db_dir,
+                                    dbname => sqlite_filename (reponame));
+   end check_repository_access;
+
 
 end Core.Repo.Operations;

@@ -16,6 +16,9 @@ package Core.Database is
    RDB_MODE_WRITE  : constant RDB_Mode_Flags := 2 ** 1;
    RDB_MODE_CREATE : constant RDB_Mode_Flags := 2 ** 2;
 
+   RDB_MODE_READWRITE : constant RDB_Mode_Flags := RDB_MODE_READ or RDB_MODE_WRITE;
+   RDB_MODE_ALL       : constant RDB_Mode_Flags := RDB_MODE_READWRITE or RDB_MODE_CREATE;
+
    --  By default, MATCH_EXACT and MATCH_REGEX are case sensitive.  This
    --  is modified in many actions according to the value of
    --  CASE_SENSITIVE_MATCH in ravensw.conf and then possibly reset again in
@@ -36,8 +39,18 @@ package Core.Database is
    --  Common query filter
    function get_pattern_query (pattern : String; match_style : Match_Behavior) return String;
 
+   function check_access
+     (mode   : RDB_Mode_Flags;
+      dbdir  : String;
+      dbname : String)
+      return Action_Result;
+
 private
 
    case_sensitivity_setting : Boolean := False;
+
+   function rdb_security_status
+     (path : String;
+      install_as_user : Boolean) return Action_Result;
 
 end Core.Database;

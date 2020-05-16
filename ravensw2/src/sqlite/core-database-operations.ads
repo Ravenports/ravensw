@@ -3,6 +3,8 @@
 
 private with Ada.Containers.Vectors;
 private with Interfaces.C;
+
+private with Core.Unix;
 private with sqlite_h;
 
 package Core.Database.Operations is
@@ -14,14 +16,32 @@ package Core.Database.Operations is
    --  rdb_open_all is equivalent to above
    --  rdb_open with non-blank reponame open identified repository, if active
 
-   function rdb_open        (db       : in out RDB_Connection;
-                             dbtype   : RDB_Source;
-                             reponame : String)
-                             return Action_Result;
-   function rdb_open_all    (db       : in out RDB_Connection;
-                             dbtype   : RDB_Source)
-                             return Action_Result;
-   procedure rdb_close      (db       : in out RDB_Connection);
+   function rdb_open
+     (db       : in out RDB_Connection;
+      dbtype   : RDB_Source;
+      reponame : String)
+      return Action_Result;
+
+   function rdb_open_all
+     (db       : in out RDB_Connection;
+      dbtype   : RDB_Source)
+      return Action_Result;
+
+   procedure rdb_close
+     (db       : in out RDB_Connection);
+
+   function rdb_obtain_lock
+     (db       : in out RDB_Connection;
+      locktype : RDB_Lock_Type) return Boolean;
+
+   function rdb_release_lock
+     (db       : in out RDB_Connection;
+      locktype : RDB_Lock_Type) return Boolean;
+
+   function database_access
+     (mode  : RDB_Mode_Flags;
+      dtype : RDB_Type)
+      return Action_Result;
 
 private
 
@@ -45,5 +65,21 @@ private
       stmt : sqlite_h.Void_Ptr;
       x    : sqlite_h.Void_Ptr) return IC.int;
    pragma Export (C, rdb_profile_callback);
+
+   function rdb_try_lock
+     (db        : in out RDB_Connection;
+      lock_sql  : String;
+      lock_type : RDB_Lock_Type;
+      upgrade   : Boolean) return Boolean;
+
+   function rdb_write_lock_pid (db : in out RDB_Connection) return Action_Result;
+
+   function rdb_check_lock_pid (db : in out RDB_Connection) return Action_Result;
+
+   function rdb_reset_lock (db : in out RDB_Connection) return Boolean;
+
+   function rdb_remove_lock_pid
+     (db  : in out RDB_Connection;
+      pid : Unix.Process_ID) return Boolean;
 
 end Core.Database.Operations;

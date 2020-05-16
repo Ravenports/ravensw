@@ -63,6 +63,9 @@ package Core.Repo is
    --  Return number of configured repositories that are active.
    function count_of_active_repositories return Natural;
 
+   --  Return number of known repositories (active or not)
+   function total_repositories return Natural;
+
    --  Return True if repo identified by reponame is active
    --  Returns False if reponame doesn't refer to any repo at all.
    function repository_is_active (reponame : String) return Boolean;
