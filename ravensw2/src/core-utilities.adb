@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Numerics.Discrete_Random;
 with Interfaces;
 
 with Core.Strings; use Core.Strings;
@@ -267,5 +268,26 @@ package body Core.Utilities is
          return pad_left (display_one_point (adj_bytes), 5) & suffixes (PiB);
       end if;
    end format_bytes_IEC;
+
+
+   --------------------------------------------------------------------
+   --  random_characters
+   --------------------------------------------------------------------
+   function random_characters (number : Positive := 6) return String
+   is
+      type Random_Range is new Integer range 33 .. 96;
+      package Rand_Int is new ada.numerics.discrete_random (Random_Range);
+      gen : Rand_Int.Generator;
+      num : Random_Range;
+
+      result : String (1 .. number);
+   begin
+      Rand_Int.Reset (gen);
+      for x in result'Range loop
+         num := Rand_Int.Random (gen);
+         result (x) := Character'Val (num);
+      end loop;
+      return result;
+   end random_characters;
 
 end Core.Utilities;

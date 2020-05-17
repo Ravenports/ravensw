@@ -641,4 +641,20 @@ package body Core.Unix is
       return CSM.isatty (handle => CSM.fileno (CSM.stdin)) = 1;
    end screen_attached;
 
+
+   --------------------------------------------------------------------
+   --  unlink
+   --------------------------------------------------------------------
+   function unlink (path : String) return Boolean
+   is
+      use type IC.int;
+      c_path : IC.Strings.chars_ptr;
+      res : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      res := C_unlink (c_path);
+      IC.Strings.Free (c_path);
+      return (res = IC.int (0));
+   end unlink;
+
 end Core.Unix;

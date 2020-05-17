@@ -186,6 +186,9 @@ package Core.Unix is
    --  Returns True if a TTY device is detected
    function screen_attached return Boolean;
 
+   --  Returns True in unlink operation success
+   function unlink (path : String) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -344,5 +347,8 @@ private
 
    function C_kill (pid : Process_ID; sig : IC.int) return IC.int;
    pragma Import (C, C_kill, "kill");
+
+   function C_unlink (path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_unlink, "unlink");
 
 end Core.Unix;

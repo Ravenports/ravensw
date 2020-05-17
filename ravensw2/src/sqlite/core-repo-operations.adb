@@ -495,12 +495,18 @@ package body Core.Repo.Operations is
       mtime    : in out Unix.T_epochtime;
       force    : Boolean) return Action_Result
    is
-      repo_key : Text := SUS (reponame);
+      repo_key   : Text := SUS (reponame);
+      local_time : Unix.T_epochtime;
    begin
       Event.emit_debug (1, "Proceed: begin update of " & SQ (reponame));
       if force then
          mtime := 0;
       end if;
+
+      --
+      --  fetch meta
+      --
+      local_time := mtime;
 
 --        /* Fetch meta */
 --  	local_t = *mtime;

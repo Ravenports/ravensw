@@ -383,6 +383,7 @@ package body Core.Event is
                our_progress.last_update := now;
             end;
          end if;
+         TIO.Flush;
       end if;
 
       if current >= total then
@@ -418,6 +419,7 @@ package body Core.Event is
                   if our_progress.last_progress_percent / 10 < percent / 10 then
                      our_progress.last_progress_percent := percent;
                      TIO.Put (".");
+                     TIO.Flush;
                   end if;
                end if;
                if prog_current >= prog_total then
