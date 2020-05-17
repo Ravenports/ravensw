@@ -18,4 +18,10 @@ package Core.Utilities is
    --  hexchar must contain 0-9,A-F,a-f on both characters.  If not, return NUL character
    function hex2char (hex : hexrep) return Character;
 
+   --  Given a value, format with "kB", "MB", "GB", "TB", prefixes as necessary (power 10)
+   function format_bytes_SI (bytes : int64) return String;
+
+   --  Given a value, format with "KiB", "MiB", "GiB", "TiB", prefixes as necessary (power 2)
+   function format_bytes_IEC (bytes : int64) return String;
+
 end Core.Utilities;

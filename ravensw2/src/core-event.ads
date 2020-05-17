@@ -4,6 +4,7 @@
 private with Ada.Calendar;
 
 package Core.Event is
+
    procedure mute_event;
 
    procedure emit_errno          (err_function : String;
@@ -21,8 +22,8 @@ package Core.Event is
    procedure emit_debug          (debug_level : ST_Debug_Level;
                                   debug_msg   : String);
 
---     procedure event_progress_tick  (prog_current : T_progress_tick;
---                                     prog_total   : T_progress_tick);
+   procedure emit_progress_tick  (prog_current : int64;
+                                  prog_total   : int64);
 
 private
 
@@ -33,7 +34,7 @@ private
    procedure warn  (message : String; error : Integer);
    procedure warnx (verbatim_message : String);
 
-   Type Progress_Info is
+   type Progress_Info is
       record
          last_progress_percent : Integer;
          progress_started      : Boolean;
@@ -51,5 +52,9 @@ private
 
    muted        : Boolean := False;
    our_progress : Progress_Info;
+
+   procedure progressbar_stop;
+   procedure check_progress;
+   procedure draw_progressbar (current, total : int64);
 
 end Core.Event;

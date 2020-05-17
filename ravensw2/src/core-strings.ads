@@ -80,8 +80,12 @@ package Core.Strings is
    function map_hash (key : Text) return CON.Hash_Type;
 
    --  Create a string with {places} length and put S at the first index.
-   --  Truncate if S greater than places.
+   --  Truncate from back if S is longer than places.
    function pad_right (S : String; places : Positive) return String;
+
+   --  Create a string with {places} length and put S at the index that lines up S'Last with
+   --  the last character of the result.  Truncate from front if S is longer than places.
+   function pad_left (S : String; places : Positive) return String;
 
    --  Head (keep all but last delimiter and field)
    function head (US : Text;   delimiter : Text)   return Text;
@@ -96,5 +100,11 @@ package Core.Strings is
 
    --  Return input surrounded by single quotation marks
    function SQ (txt : String) return String;
+
+   --  Trim both sides
+   function trim (S : String) return String;
+
+      --  Numeric image with left-padded zeros
+   function zeropad (N : Natural; places : Positive) return String;
 
 end Core.Strings;

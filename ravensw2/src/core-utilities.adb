@@ -158,4 +158,114 @@ package body Core.Utilities is
       return Character'Val (value);
    end hex2char;
 
+
+   --------------------------------------------------------------------
+   --  format_bytes_SI
+   --------------------------------------------------------------------
+   function format_bytes_SI (bytes : int64) return String
+   is
+      subtype suffix is String (1 .. 2);
+      type Prefix_Group is (B, kB, MB, GB, TB, PB);
+      type SI_Set is array (Prefix_Group) of suffix;
+      subtype Display_Range is int64 range 0 .. 9_999;
+
+      function display_one_point (value : Display_Range) return String;
+
+      abs_bytes : constant int64 := abs (bytes);
+      roundup   : int64;
+      adj_bytes : Display_Range;
+      suffixes  : constant SI_Set := ("B ", "kB", "MB", "GB", "TB", "PB");
+
+      function display_one_point (value : Display_Range) return String
+      is
+         L_side    : constant Natural := Natural (value) / 10;
+         R_side    : constant Natural := Natural (value) - (L_side * 10);
+      begin
+         return int2str (L_side) & "." & int2str (R_side);
+      end display_one_point;
+
+   begin
+      --  less than      10_000: display as "____XB "
+      --  less than     999_950: display as "___.XkB" (10.0 .. 999.9)kB
+      --  less than 999_950_000: display as "___.XMB" ( 1.0 .. 999.9)MB
+      if abs_bytes < 10_000 then
+         return pad_left (int2str (Integer (abs_bytes)), 5) & suffixes (B);
+      elsif abs_bytes < 999_950 then
+         roundup   := 50;
+         adj_bytes := (abs_bytes + roundup / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (kB);
+      elsif abs_bytes < 999_950_000 then
+         roundup   := 50_000;
+         adj_bytes := (abs_bytes + roundup / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (MB);
+      elsif abs_bytes < 999_950_000_000 then
+         roundup   := 50_000_000;
+         adj_bytes := (abs_bytes + roundup / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (GB);
+      elsif abs_bytes < 999_950_000_000_000 then
+         roundup   := 50_000_000_000;
+         adj_bytes := (abs_bytes + roundup / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (TB);
+      else
+         roundup   := 50_000_000_000_000;
+         adj_bytes := (abs_bytes + roundup / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (PB);
+      end if;
+   end format_bytes_SI;
+
+
+   --------------------------------------------------------------------
+   --  format_bytes_IEC
+   --------------------------------------------------------------------
+   function format_bytes_IEC (bytes : int64) return String
+   is
+      subtype suffix is String (1 .. 3);
+      type Prefix_Group is (B, KiB, MiB, GiB, TiB, PiB);
+      type IEC_Set is array (Prefix_Group) of suffix;
+      subtype Display_Range is int64 range 0 .. 9_999;
+
+      function display_one_point (value : Display_Range) return String;
+
+      abs_bytes : constant int64 := abs (bytes);
+      roundup   : int64;
+      adj_bytes : Display_Range;
+      suffixes  : constant IEC_Set := ("B  ", "KiB", "MiB", "GiB", "TiB", "PiB");
+
+      function display_one_point (value : Display_Range) return String
+      is
+         L_side    : constant Natural := Natural (value) / 10;
+         R_side    : constant Natural := Natural (value) - (L_side * 10);
+      begin
+         return int2str (L_side) & "." & int2str (R_side);
+      end display_one_point;
+
+   begin
+      --  less than        10_240    : display as "____XB "
+      --  less than     1_024_000 - r: display as "___.XKiB"  (10.0 .. 999.9) KiB
+      --  less than 1,048,576,000 - r: display as "___.XMiB"  ( 1.0 .. 999.9) MiB
+      if abs_bytes < 10_240 then
+         return pad_left (int2str (Integer (abs_bytes)), 5) & suffixes (B);
+      elsif abs_bytes < 1_023_949 then
+         roundup   := 512;
+         adj_bytes := Display_Range ((abs_bytes * 10 + roundup) / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (KiB);
+      elsif abs_bytes < 1_048_523_572 then
+         roundup   := 524_288;
+         adj_bytes := Display_Range ((abs_bytes * 10 + roundup) / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (MiB);
+      elsif abs_bytes < 1_073_688_136_909 then
+         roundup   := 536_870_912;
+         adj_bytes := Display_Range ((abs_bytes * 10 + roundup) / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (GiB);
+      elsif abs_bytes < 1_099_456_652_194_611 then
+         roundup   := 549_755_813_888;
+         adj_bytes := Display_Range ((abs_bytes * 10 + roundup) / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (TiB);
+      else
+         roundup   := 562_949_953_421_312;
+         adj_bytes := Display_Range ((abs_bytes * 10 + roundup) / (roundup * 2));
+         return pad_left (display_one_point (adj_bytes), 5) & suffixes (PiB);
+      end if;
+   end format_bytes_IEC;
+
 end Core.Utilities;

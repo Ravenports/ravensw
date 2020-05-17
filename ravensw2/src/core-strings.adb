@@ -399,12 +399,28 @@ package body Core.Strings is
       result : String (1 .. places) := (others => ' ');
    begin
       if S'Length > places then
-         result (1 .. places) := S (S'First .. S'First + places - 1);
+         result := S (S'First .. S'First + places - 1);
       else
          result (1 .. S'Length) := S;
       end if;
       return result;
    end pad_right;
+
+
+   --------------------------------------------------------------------------------------------
+   --  pad_left
+   --------------------------------------------------------------------------------------------
+   function pad_left (S : String; places : Positive) return String
+   is
+      result : String (1 .. places) := (others => ' ');
+   begin
+      if S'Length > places then
+         result := S (S'Last - places + 1 .. S'Last);
+      else
+         result (result'Last - S'Length + 1 .. result'Last) := S;
+      end if;
+      return result;
+   end pad_left;
 
 
    --------------------------------------------------------------------------------------------
@@ -490,5 +506,28 @@ package body Core.Strings is
    begin
       return LAT.Apostrophe & txt & LAT.Apostrophe;
    end SQ;
+
+
+   --------------------------------------------------------------------------------------------
+   --  trim
+   --------------------------------------------------------------------------------------------
+   function trim (S : String) return String is
+   begin
+      return AS.Fixed.Trim (S, AS.Both);
+   end trim;
+
+
+   --------------------------------------------------------------------------------------------
+   --  zeropad
+   --------------------------------------------------------------------------------------------
+   function zeropad (N : Natural; places : Positive) return String
+   is
+      template : String (1 .. places) := (others => '0');
+      myimage  : constant String := trim (N'Img);
+      startpos : constant Natural := 1 + places - myimage'Length;
+   begin
+      template (startpos .. places) := myimage;
+      return template;
+   end zeropad;
 
 end Core.Strings;
