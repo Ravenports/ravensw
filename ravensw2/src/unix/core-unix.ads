@@ -183,6 +183,9 @@ package Core.Unix is
    --  Returns True if kill operation was successful
    function kill (pid : Process_ID) return Boolean;
 
+   --  Returns True if a TTY device is detected
+   function screen_attached return Boolean;
+
 private
 
    last_errno : Integer;

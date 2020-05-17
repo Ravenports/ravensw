@@ -1,6 +1,8 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+private with Ada.Calendar;
+
 package Core.Event is
    procedure mute_event;
 
@@ -24,11 +26,30 @@ package Core.Event is
 
 private
 
-   muted         : Boolean := False;
+   package CAL renames Ada.Calendar;
 
    --  warn appends ": <strerror>" to message.
    --  warnx just prints the message to stdout verbatim
    procedure warn  (message : String; error : Integer);
    procedure warnx (verbatim_message : String);
+
+   Type Progress_Info is
+      record
+         last_progress_percent : Integer;
+         progress_started      : Boolean;
+         progress_interrupted  : Boolean;
+         progress_debit        : Boolean;
+         progress_message      : Text;
+         message_buffer        : Text;
+         last_tick             : int64;
+         stalled               : int64;
+         bytes_per_second      : int64;
+         last_update           : CAL.Time;
+         timer_begin           : CAL.Time;
+         have_terminal         : Boolean;
+      end record;
+
+   muted        : Boolean := False;
+   our_progress : Progress_Info;
 
 end Core.Event;

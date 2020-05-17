@@ -24,7 +24,6 @@ package body Cmd.Update is
                            reponame : String) return Action_Result
    is
       function success_update (reponame : String) return Boolean;
---        procedure update (position : pkg_repos_priority_crate.Cursor);
 
       update_count : Natural := 0;
       total_count  : Natural := 0;
@@ -36,6 +35,7 @@ package body Cmd.Update is
       begin
          Event.emit_message ("Updating " & reponame & " repository catalog...");
 
+         --  rc := Repo.Operations.update_repository (reponame);
          --  TODO:  Implement repo update operation
          --  rc := Repo_Operations.Ops (repo.ops_variant).repo_update (repokey, force);
          rc := RESULT_UPTODATE;

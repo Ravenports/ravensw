@@ -2,6 +2,8 @@
 --  Reference: ../../License.txt
 
 with Core.Pkgtypes;
+with Core.Database;
+private with Core.Unix;
 
 package Core.Repo.Operations is
 
@@ -51,5 +53,14 @@ private
 
    --  create repo database file and populate it
    function create_repository (reponame : String) return Action_Result;
+
+   --  subroutine of repository_update
+   function update_init (reponame : String) return Action_Result;
+
+   --  subroutine of repository_update
+   function update_proceed
+     (reponame : String;
+      mtime    : in out Unix.T_epochtime;
+      force    : Boolean) return Action_Result;
 
 end Core.Repo.Operations;

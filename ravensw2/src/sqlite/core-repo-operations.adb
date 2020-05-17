@@ -5,7 +5,6 @@ with Ada.Directories;
 
 with Core.Event;
 with Core.Context;
-with Core.Unix;
 with Core.Repo.Meta;
 with Core.Repo.Operations.Schema;
 with Core.Repo.Iterator.Packages;
@@ -444,6 +443,125 @@ package body Core.Repo.Operations is
                                     dbdir  => db_dir,
                                     dbname => sqlite_filename (reponame));
    end check_repository_access;
+
+
+   --------------------------------------------------------------------
+   --  update_init
+   --------------------------------------------------------------------
+   function update_init (reponame : String) return Action_Result
+   is
+      check_sql : constant String := "INSERT INTO repo_update VALUES(1);";
+      start_sql : constant String := "CREATE TABLE IF NOT EXISTS repo_update (n INT);";
+      repo_key  : Text := SUS (reponame);
+   begin
+      if not repositories.Contains (SUS (reponame)) then
+         raise invalid_repo_name;
+      end if;
+
+      --  [Re]create repo
+      if create_repository (reponame) /= RESULT_OK then
+         Event.emit_notice ("Unable to create repository " & reponame);
+         return RESULT_FATAL;
+      end if;
+
+      if open_repository (reponame, False) /= RESULT_OK then
+         Event.emit_notice ("Unable to open created repository " & reponame);
+         return RESULT_FATAL;
+      end if;
+
+      if initialize_repository (repo_key) /= RESULT_OK then
+         Event.emit_notice ("Unable to initialize repository " & reponame);
+         return RESULT_FATAL;
+      end if;
+
+      declare
+         db : sqlite_h.sqlite3_Access renames repositories.Element (repo_key).sqlite_handle;
+      begin
+         if CommonSQL.exec (db, check_sql) = RESULT_OK then
+            Event.emit_notice ("Previous update has not been finished, restart it");
+            return RESULT_END;
+         else
+            return CommonSQL.exec (db, start_sql);
+         end if;
+      end;
+   end update_init;
+
+
+   --------------------------------------------------------------------
+   --  update_proceed
+   --------------------------------------------------------------------
+   function update_proceed
+     (reponame : String;
+      mtime    : in out Unix.T_epochtime;
+      force    : Boolean) return Action_Result
+   is
+      repo_key : Text := SUS (reponame);
+   begin
+      Event.emit_debug (1, "Proceed: begin update of " & SQ (reponame));
+      if force then
+         mtime := 0;
+      end if;
+
+--        /* Fetch meta */
+--  	local_t = *mtime;
+--  	if (pkg_repo_fetch_meta(repo, &local_t) == EPKG_FATAL)
+--  		pkg_emit_notice("repository %s has no meta file, using "
+--  		    "default settings", repo->name);
+--
+--  	/* Fetch packagesite */
+--  	local_t = *mtime;
+--  	fd = pkg_repo_fetch_remote_extract_fd(repo,
+--  		repo->meta->manifests, &local_t, &rc, &len);
+--  	if (fd == -1)
+--  		goto cleanup;
+--  	f = fdopen(fd, "r");
+--  	rewind(f);
+--
+--  	*mtime = local_t;
+--  	/*fconflicts = repo_fetch_remote_extract_tmp(repo,
+--  			repo_conflicts_archive, "txz", &local_t,
+--  			&rc, repo_conflicts_file);*/
+--
+--  	/* Load local repository data */
+--  	xasprintf(&path, "%s-pkgtemp", name);
+--  	rename(name, path);
+--  	pkg_register_cleanup_callback(rollback_repo, (void *)name);
+--  	rc = pkg_repo_binary_init_update(repo);
+--  	if (rc != EPKG_OK) {
+--  		rc = EPKG_FATAL;
+--  		goto cleanup;
+--  	}
+
+
+      Event.emit_debug (1, "Proceed: reading new packagesite.yaml for " & SQ (reponame));
+      Event.emit_progress_start ("Processing entries");
+
+      --  200MB should be enough
+      declare
+         db  : sqlite_h.sqlite3_Access renames repositories.Element (repo_key).sqlite_handle;
+         res : Action_Result;
+         onward : Boolean := True;
+         intrax : Boolean := False;
+      begin
+         --  FreeBSD set PRAGMA page_size = getpagesize().
+         --  It's unclear what the benefit is over the default 4Kb page size.
+         --  Omit this PRAGMA for now
+         res := CommonSQL.exec (db, "PRAGMA mmap_size = 209715200;");
+         res := CommonSQL.exec (db, "PRAGMA foreign_keys = OFF;");
+         res := CommonSQL.exec (db, "PRAGMA synchronous = OFF;");
+
+         if not CommonSQL.transaction_begin (db, "REPO") then
+            onward := False;
+         end if;
+
+         if onward then
+            intrax := True;
+
+         end if;
+      end;
+
+      return RESULT_FATAL;
+   end update_proceed;
 
 
 end Core.Repo.Operations;

@@ -108,8 +108,31 @@ package body Core.Event is
    --------------------------------------------------------------------
    procedure emit_progress_start (message : String) is
    begin
-      --  TODO: progressbar_start(ev->e_progress_start.msg);
-      null;
+      if muted then
+         return;
+      end if;
+
+      our_progress.progress_started      := True;
+      our_progress.progress_interrupted  := False;
+      our_progress.progress_debit        := False;
+      our_progress.last_progress_percent := -1;
+      our_progress.last_tick             := 0;
+      our_progress.stalled               := 0;
+      our_progress.bytes_per_second      := 0;
+      our_progress.last_update           := CAL.Clock;
+      our_progress.have_terminal         := Unix.screen_attached;
+
+      if IsBlank (message) then
+         our_progress.progress_message := our_progress.message_buffer;
+      else
+         our_progress.progress_message := SUS (message);
+      end if;
+
+      if our_progress.have_terminal then
+         TIO.Put (USS (our_progress.progress_message) & ":   0%");
+      else
+         TIO.Put (USS (our_progress.progress_message) & ": ");
+      end if;
    end emit_progress_start;
 
 

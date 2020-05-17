@@ -1,7 +1,11 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Interfaces.C_Streams;
+
 package body Core.Unix is
+
+   package CSM renames Interfaces.C_Streams;
 
    --------------------------------------------------------------------
    --  strerror
@@ -627,5 +631,14 @@ package body Core.Unix is
       res := C_kill (pid, sig);
       return (res = IC.int (0));
    end kill;
+
+
+   --------------------------------------------------------------------
+   --  screen_attached
+   --------------------------------------------------------------------
+   function screen_attached return Boolean is
+   begin
+      return CSM.isatty (handle => CSM.fileno (CSM.stdin)) = 1;
+   end screen_attached;
 
 end Core.Unix;
