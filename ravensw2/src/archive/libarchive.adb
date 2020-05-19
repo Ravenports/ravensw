@@ -171,8 +171,22 @@ package body libarchive is
    begin
       result := archive_read_next_header2 (arc, arcent);
       final  := (result = ARCHIVE_EOF);
-      error  := (result /= ARCHIVE_OK) and (result /= ARCHIVE_EOF);
+      error  := (result /= ARCHIVE_OK) and then (result /= ARCHIVE_EOF);
       return (result = ARCHIVE_OK);
    end read_next_header;
+
+
+   --------------------------------------------------------------------
+   --  read_data_into_file_descriptor
+   --------------------------------------------------------------------
+   function read_data_into_file_descriptor
+     (arc : archive_Access;
+      fd  : Unix.File_Descriptor) return Boolean
+   is
+      result : archive_result;
+   begin
+      result := archive_read_data_into_fd (arc, IC.int (fd));
+      return (result = ARCHIVE_OK);
+   end read_data_into_file_descriptor;
 
 end libarchive;

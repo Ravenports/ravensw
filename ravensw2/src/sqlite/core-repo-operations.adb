@@ -84,15 +84,6 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
-   --  meta_filename
-   --------------------------------------------------------------------
-   function meta_filename (reponame : String) return String is
-   begin
-      return reponame & ".meta";
-   end meta_filename;
-
-
-   --------------------------------------------------------------------
    --  open_repository
    --------------------------------------------------------------------
    function open_repository (reponame : String; readonly : Boolean) return Action_Result

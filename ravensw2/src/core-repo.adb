@@ -278,4 +278,14 @@ package body Core.Repo is
       return USS (result);
    end joined_priority_order;
 
+
+   --------------------------------------------------------------------
+   --  meta_filename
+   --------------------------------------------------------------------
+   function meta_filename (reponame : String) return String is
+   begin
+      return reponame & ".meta";
+   end meta_filename;
+
+
 end Core.Repo;

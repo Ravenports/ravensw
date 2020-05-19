@@ -85,6 +85,11 @@ package libarchive_h is
       size       : IC.size_t) return IC.long;
    pragma Import (C, archive_read_data);
 
+   function archive_read_data_into_fd
+     (arc_handle : archive_Access;
+      fd         : IC.int) return archive_result;
+   pragma Import (C, archive_read_data_into_fd);
+
    function archive_read_close (arc_handle : archive_Access) return archive_result;
    pragma Import (C, archive_read_close);
 

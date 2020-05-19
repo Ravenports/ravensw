@@ -46,7 +46,6 @@ private
    procedure close_repository (reponame : Text; commit : Boolean);
 
    function sqlite_filename (reponame : String) return String;
-   function meta_filename (reponame : String) return String;
 
    --  prepare repository database for use
    function initialize_repository (reponame : Text) return Action_Result;

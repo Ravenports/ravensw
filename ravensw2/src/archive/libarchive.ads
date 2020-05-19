@@ -53,4 +53,9 @@ package libarchive is
       error  : out Boolean;
       final  : out Boolean) return Boolean;
 
+   --  thick archive_read_into_fd
+   function read_data_into_file_descriptor
+     (arc : archive_Access;
+      fd  : Core.Unix.File_Descriptor) return Boolean;
+
 end libarchive;

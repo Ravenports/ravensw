@@ -222,4 +222,6 @@ private
    repositories_order : Repos_Priority_Crate.Vector;
    repositories_open  : Repos_Priority_Crate.Vector;
 
+   function meta_filename (reponame : String) return String;
+
 end Core.Repo;
