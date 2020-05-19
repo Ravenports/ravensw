@@ -180,23 +180,58 @@ package body Core.Strings is
    --------------------------------------------------------------------------------------------
    function json_escape (S : String) return String
    is
-      num_quotes : Natural := count_char (S, ASCII.Quotation);
-      num_slash  : Natural := count_char (S, '\');
+      --  The following characters must be escaped:
+      --    Backspace
+      --    Form Feed
+      --    Line Feed
+      --    Carriage Return
+      --    Tab
+      --    Double Quote
+      --    Backslash
+      new_length : Natural := 0;
    begin
-      if num_quotes + num_slash = 0 then
+      for x in S'Range loop
+         case S (x) is
+            when LAT.BS | LAT.FF | LAT.LF | LAT.CR | LAT.HT
+               | LAT.Quotation
+               | LAT.Reverse_Solidus =>
+               new_length := new_length + 2;
+            when others =>
+               new_length := new_length + 1;
+         end case;
+      end loop;
+      if new_length = S'Length then
+         --  No special characters found, return original string
          return S;
       end if;
       declare
-         result : String (1 .. S'Length + num_quotes + num_slash);
+         result : String (1 .. new_length);
          index  : Natural := result'First;
       begin
          for x in S'Range loop
-            if S (x) = ASCII.Quotation or else S (x) = '\' then
-               result (index) := '\';
+            case S (x) is
+               when LAT.BS =>
+                  result (index .. index + 1) := "\b";
+                  index := index + 2;
+               when LAT.FF =>
+                  result (index .. index + 1) := "\f";
+                  index := index + 2;
+               when LAT.LF =>
+                  result (index .. index + 1) := "\n";
+                  index := index + 2;
+               when LAT.HT =>
+                  result (index .. index + 1) := "\t";
+                  index := index + 2;
+               when LAT.Quotation =>
+                  result (index .. index + 1) := LAT.Reverse_Solidus & LAT.Quotation;
+                  index := index + 2;
+               when LAT.Reverse_Solidus =>
+                  result (index .. index + 1) := "\\";
+                  index := index + 2;
+            when others =>
+               result (index) := S (x);
                index := index + 1;
-            end if;
-            result (index) := S (x);
-            index := index + 1;
+            end case;
          end loop;
          return result;
       end;
@@ -508,6 +543,15 @@ package body Core.Strings is
    end SQ;
 
 
+   --------------------------------------------------------------------
+   --  CC
+   --------------------------------------------------------------------
+   function CC (item1, item2 : String) return String is
+   begin
+      return item1 & ", " & item2;
+   end CC;
+
+
    --------------------------------------------------------------------------------------------
    --  trim
    --------------------------------------------------------------------------------------------
@@ -529,5 +573,53 @@ package body Core.Strings is
       template (startpos .. places) := myimage;
       return template;
    end zeropad;
+
+
+   --------------------------------------------------------------------------------------------
+   --  json_pair
+   --------------------------------------------------------------------------------------------
+   function json_pair (name, value : String) return String is
+   begin
+      return DQ (name) & " : " & DQ (json_escape (value));
+   end json_pair;
+
+
+   --------------------------------------------------------------------------------------------
+   --  json_objectpair
+   --------------------------------------------------------------------------------------------
+   function json_objectpair (name, content : String) return String is
+   begin
+      if IsBlank (name) then
+         return "{ " & content & " }";
+      else
+         if IsBlank (content) then
+            return DQ (name) & " {}";
+         else
+            return DQ (name) & " { " & content & " }";
+         end if;
+      end if;
+   end json_objectpair;
+
+
+   --------------------------------------------------------------------------------------------
+   --  json_arraypair
+   --------------------------------------------------------------------------------------------
+   function json_arraypair (name, content : String) return String is
+   begin
+      if IsBlank (content) then
+         return DQ (name) & " []";
+      else
+         return DQ (name) & " [ " & content & " ]";
+      end if;
+   end json_arraypair;
+
+
+   --------------------------------------------------------------------------------------------
+   --  json_object
+   --------------------------------------------------------------------------------------------
+   function json_object (content : String) return String is
+   begin
+      return "{ " & content & " }";
+   end json_object;
 
 end Core.Strings;

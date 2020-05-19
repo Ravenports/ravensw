@@ -28,17 +28,6 @@ package body Core.Event is
 
 
    --------------------------------------------------------------------
-   --  warn
-   --------------------------------------------------------------------
-   procedure warn  (message : String; error : Integer)
-   is
-      suffix : String := ": " & Unix.strerror (error);
-   begin
-      TIO.Put_Line (TIO.Standard_Error, message & suffix);
-   end warn;
-
-
-   --------------------------------------------------------------------
    --  warnx
    --------------------------------------------------------------------
    procedure warnx (verbatim_message : String) is
@@ -52,19 +41,35 @@ package body Core.Event is
    --------------------------------------------------------------------
    procedure emit_errno (err_function : String;
                          err_argument : String;
-                         err_number   : Integer) is
+                         err_number   : Integer)
+   is
+      info : constant String := err_function & '(' & err_argument & "): " &
+                                Unix.strerror (err_number);
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "ERROR"),
+            json_objectpair ("data",
+              CC (json_pair ("msg", info),
+                  json_pair ("errno", int2str (err_number))))));
    begin
       check_progress;
-      warn (err_function & '(' & err_argument & ')', err_number);
+      pipe_event (jmsg);
+      warnx (info);
    end emit_errno;
 
 
    --------------------------------------------------------------------
    --  emit_error
    --------------------------------------------------------------------
-   procedure emit_error (message : String) is
+   procedure emit_error (message : String)
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "ERROR"),
+            json_objectpair ("data", json_pair ("msg", message))));
    begin
       check_progress;
+      pipe_event (jmsg);
       warnx (message);
    end emit_error;
 
@@ -76,17 +81,22 @@ package body Core.Event is
    is
       err_number : constant Integer := Unix.errno;
    begin
-      check_progress;
-      warn (message, err_number);
+      emit_error (message & ": " & Unix.strerror (err_number));
    end emit_with_strerror;
 
 
    --------------------------------------------------------------------
    --  emit_notice
    --------------------------------------------------------------------
-   procedure emit_notice (message : String) is
+   procedure emit_notice (message : String)
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "NOTICE"),
+            json_objectpair ("data", json_pair ("msg", message))));
    begin
       check_progress;
+      pipe_event (jmsg);
       if not muted then
          TIO.Put_Line (message);
       end if;
@@ -96,7 +106,9 @@ package body Core.Event is
    --------------------------------------------------------------------
    --  emit_message
    --------------------------------------------------------------------
-   procedure emit_message (message : String) is
+   procedure emit_message (message : String)
+   is
+      --  Do not send messages to event pipe
    begin
       check_progress;
       TIO.Put_Line (message);
@@ -106,9 +118,15 @@ package body Core.Event is
    --------------------------------------------------------------------
    --  emit_developer_mode
    --------------------------------------------------------------------
-   procedure emit_developer_mode (message : String) is
+   procedure emit_developer_mode (message : String)
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "ERROR"),
+            json_objectpair ("data", json_pair ("msg", "DEVELOPER_MODE: " & message))));
    begin
       check_progress;
+      pipe_event (jmsg);
       warnx ("DEVELOPER_MODE: " & message);
    end emit_developer_mode;
 
@@ -117,7 +135,9 @@ package body Core.Event is
    --  emit_debug
    --------------------------------------------------------------------
    procedure emit_debug (debug_level : ST_Debug_Level;
-                         debug_msg   : String) is
+                         debug_msg   : String)
+   is
+      --  Do not send debug events to event pipe
    begin
       check_progress;
       if debug_level <= Context.reveal_debug_level then
@@ -130,17 +150,30 @@ package body Core.Event is
    --------------------------------------------------------------------
    --  emit_no_local_db
    --------------------------------------------------------------------
-   procedure emit_no_local_db is
+   procedure emit_no_local_db
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "ERROR_NOLOCALDB"),
+            json_objectpair ("data", "")));
    begin
       check_progress;
+      pipe_event (jmsg);
       warnx ("Local package database nonexistent!");
    end emit_no_local_db;
+
 
    --------------------------------------------------------------------
    --  emit_progress_start
    --------------------------------------------------------------------
-   procedure emit_progress_start (message : String) is
+   procedure emit_progress_start (message : String)
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_PROGRESS_START"),
+            json_objectpair ("data", "")));
    begin
+      pipe_event (jmsg);
       check_progress;
       if muted then
          return;
@@ -402,33 +435,53 @@ package body Core.Event is
       subtype Percentage_Point is Natural range 0 .. 100;
       percent : Percentage_Point;
       NO_TICK : constant String := "NO_TICK";
+      jmsg    : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_PROGRESS_TICK"),
+            json_objectpair ("data",
+              CC (json_pair ("current", int2str (Integer (prog_current))),
+                  json_pair ("total", int2str (Integer (prog_total)))))));
    begin
-      if not muted and then our_progress.progress_started then
-         if Unix.screen_attached then
-            draw_progressbar (prog_current, prog_total);
-         else
-            if our_progress.progress_interrupted then
-               TIO.Put (USS (our_progress.progress_message) & "...");
+      if our_progress.progress_started then
+         pipe_event (jmsg);
+         if not muted then
+            if Unix.screen_attached then
+               draw_progressbar (prog_current, prog_total);
             else
-               if not ENV.Exists (NO_TICK) then
-                  if prog_total = 0 then
-                     percent := 100;
-                  else
-                     percent := Percentage_Point (prog_current * 100 / prog_total);
+               if our_progress.progress_interrupted then
+                  TIO.Put (USS (our_progress.progress_message) & "...");
+               else
+                  if not ENV.Exists (NO_TICK) then
+                     if prog_total = 0 then
+                        percent := 100;
+                     else
+                        percent := Percentage_Point (prog_current * 100 / prog_total);
+                     end if;
+                     if our_progress.last_progress_percent / 10 < percent / 10 then
+                        our_progress.last_progress_percent := percent;
+                        TIO.Put (".");
+                        TIO.Flush;
+                     end if;
                   end if;
-                  if our_progress.last_progress_percent / 10 < percent / 10 then
-                     our_progress.last_progress_percent := percent;
-                     TIO.Put (".");
-                     TIO.Flush;
+                  if prog_current >= prog_total then
+                     progressbar_stop;
                   end if;
-               end if;
-               if prog_current >= prog_total then
-                  progressbar_stop;
                end if;
             end if;
          end if;
       end if;
       our_progress.progress_interrupted := False;
    end emit_progress_tick;
+
+
+   --------------------------------------------------------------------
+   --  pipe_event
+   --------------------------------------------------------------------
+   procedure pipe_event (json_message : String) is
+   begin
+      if Unix.file_connected (Context.reveal_event_pipe) then
+         Unix.push_to_event_pipe (Context.reveal_event_pipe, json_message);
+      end if;
+   end pipe_event;
 
 end Core.Event;

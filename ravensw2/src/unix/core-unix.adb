@@ -1,10 +1,12 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Ada.Characters.Latin_1;
 with Interfaces.C_Streams;
 
 package body Core.Unix is
 
+   package LAT renames Ada.Characters.Latin_1;
    package CSM renames Interfaces.C_Streams;
 
    --------------------------------------------------------------------
@@ -247,7 +249,7 @@ package body Core.Unix is
       msg    : IC.Strings.chars_ptr;
       result : IC.int;
    begin
-      msg := IC.Strings.New_String (message);
+      msg := IC.Strings.New_String (message & LAT.LF);
       result := C_dprint (IC.int (fd), msg);  -- returns #chars printed
       IC.Strings.Free (msg);
    end push_to_event_pipe;

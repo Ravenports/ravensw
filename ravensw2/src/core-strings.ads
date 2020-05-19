@@ -101,10 +101,25 @@ package Core.Strings is
    --  Return input surrounded by single quotation marks
    function SQ (txt : String) return String;
 
+   --  return 'arg1, arg2'  (concatenates with comma)
+   function CC (item1, item2 : String) return String;
+
    --  Trim both sides
    function trim (S : String) return String;
 
-      --  Numeric image with left-padded zeros
+   --  Numeric image with left-padded zeros
    function zeropad (N : Natural; places : Positive) return String;
+
+   --  Returns '{ arg1 }'
+   function json_object (content : String) return String;
+
+   --  Returns '"arg1" : "json_escape(arg2)"'
+   function json_pair (name, value : String) return String;
+
+   --  Returns '"arg1" { arg2 }'
+   function json_objectpair (name, content : String) return String;
+
+   --  Returns '"arg1" [ arg2 ]'
+   function json_arraypair (name, content : String) return String;
 
 end Core.Strings;

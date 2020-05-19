@@ -49,7 +49,7 @@ package body Core.Context is
    --------------------------------------------------------------------
    --  reveal_event_pipe
    --------------------------------------------------------------------
-   function reveal_event_pipe (name : String) return Unix.File_Descriptor is
+   function reveal_event_pipe return Unix.File_Descriptor is
    begin
       return context.eventpipe;
    end reveal_event_pipe;

@@ -29,9 +29,7 @@ private
 
    package CAL renames Ada.Calendar;
 
-   --  warn appends ": <strerror>" to message.
-   --  warnx just prints the message to stdout verbatim
-   procedure warn  (message : String; error : Integer);
+   --  warnx prints the message to stdout verbatim
    procedure warnx (verbatim_message : String);
 
    type Progress_Info is
@@ -56,5 +54,7 @@ private
    procedure progressbar_stop;
    procedure check_progress;
    procedure draw_progressbar (current, total : int64);
+
+   procedure pipe_event (json_message : String);
 
 end Core.Event;
