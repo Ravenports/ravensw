@@ -103,20 +103,91 @@ package body Core.Repo.Fetch is
 
 
    --------------------------------------------------------------------
+   --  meta_extract_to_file_descriptor
+   --------------------------------------------------------------------
+   function meta_extract_to_file_descriptor
+     (arc_fd    : Unix.File_Descriptor;
+      target_fd : Unix.File_Descriptor;
+      filename  : String) return Action_Result
+   is
+      arc        : libarchive_h.archive_Access;
+      arcent     : libarchive_h.archive_entry_Access;
+      data_final : Boolean;
+      data_error : Boolean;
+      acquired   : Boolean := False;
+      block_size : constant := 4096;
+      funcname   : constant String := "meta_extract_to_file_descriptor";
+   begin
+      if not Unix.file_connected (arc_fd) then
+         Event.emit_error (funcname & ": archive fd is not open");
+         return RESULT_FATAL;
+      end if;
+
+      arcent := null;
+      arc    := libarchive_h.archive_read_new;
+      libarchive.read_support_filter_all (arc);
+      libarchive.read_support_format_tar (arc);
+
+      Event.emit_debug (1, "Repo: extracting " & filename & " from archive");
+
+      begin
+         libarchive.read_open_fd (arc, arc_fd, block_size);
+      exception
+         when libarchive.archive_error =>
+            Event.emit_error (funcname & ": failed to read archive fd");
+            libarchive.read_close (arc);
+            libarchive.read_free (arc);
+            return RESULT_FATAL;
+      end;
+
+      loop
+         exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
+
+         begin
+            if libarchive.entry_pathname (arcent) = filename then
+               if libarchive.read_data_into_file_descriptor (arc, target_fd) then
+                  acquired := True;
+               else
+                  Event.emit_error (funcname & ": read into target fd");
+                  exit;
+               end if;
+            end if;
+         exception
+            when libarchive.archive_error =>
+               Event.emit_error (funcname & ": read_data() " & libarchive.error_string (arc));
+               exit;
+         end;
+      end loop;
+
+      if data_error then
+         Event.emit_error (funcname & ": " & libarchive.error_string (arc));
+      end if;
+
+      if not Unix.close_file (target_fd) then
+         Event.emit_error (funcname & ": failed to close archive fd");
+      end if;
+      libarchive.read_close (arc);
+      libarchive.read_free (arc);
+
+      if acquired then
+         return RESULT_OK;
+      else
+         return RESULT_FATAL;
+      end if;
+   end meta_extract_to_file_descriptor;
+
+
+   --------------------------------------------------------------------
    --  meta_extract_signature_pubkey
    --------------------------------------------------------------------
    function meta_extract_signature_pubkey
      (arc_fd    : Unix.File_Descriptor;
-      temp_fd   : Unix.File_Descriptor;
-      filename  : String;
-      need_sig  : Boolean;
       retcode   : out Action_Result) return String
    is
       arc        : libarchive_h.archive_Access;
       arcent     : libarchive_h.archive_entry_Access;
       data_final : Boolean;
       data_error : Boolean;
-      problem    : Boolean;
       result     : Text;
       block_size : constant := 4096;
       funcname   : constant String := "meta_extract_signature_pubkey";
@@ -133,7 +204,7 @@ package body Core.Repo.Fetch is
       libarchive.read_support_filter_all (arc);
       libarchive.read_support_format_tar (arc);
 
-      Event.emit_debug (1, "Repo: extracting signature repo");
+      Event.emit_debug (1, "Repo: extracting signature of repository");
 
       begin
          libarchive.read_open_fd (arc, arc_fd, block_size);
@@ -145,7 +216,73 @@ package body Core.Repo.Fetch is
             return "";
       end;
 
-      problem := False;
+      loop
+         exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
+
+         declare
+            len   : libarchive.arc64;
+         begin
+            if libarchive.entry_pathname (arcent) = "signature" then
+               len := libarchive.entry_size (arcent);
+               result := SUS (libarchive.read_data (arc, len));
+               retcode := RESULT_OK;
+               exit;
+            end if;
+         exception
+            when libarchive.archive_error =>
+               Event.emit_error (funcname & ": read_data() " & libarchive.error_string (arc));
+               exit;
+         end;
+      end loop;
+      if data_error then
+         Event.emit_error (funcname & ": " & libarchive.error_string (arc));
+      end if;
+      libarchive.read_close (arc);
+      libarchive.read_free (arc);
+
+      return USS (result);
+   end meta_extract_signature_pubkey;
+
+
+   --------------------------------------------------------------------
+   --  meta_extract_signature_fingerprints
+   --------------------------------------------------------------------
+   function meta_extract_signature_fingerprints
+     (arc_fd    : Unix.File_Descriptor;
+      retcode   : out Action_Result) return String
+   is
+      arc        : libarchive_h.archive_Access;
+      arcent     : libarchive_h.archive_entry_Access;
+      data_final : Boolean;
+      data_error : Boolean;
+      result     : Text;
+      block_size : constant := 4096;
+      funcname   : constant String := "meta_extract_signature_fingerprints";
+   begin
+      retcode := RESULT_FATAL;
+
+      if not Unix.file_connected (arc_fd) then
+         Event.emit_error (funcname & ": archive fd is not open");
+         return "";
+      end if;
+
+      arcent := null;
+      arc    := libarchive_h.archive_read_new;
+      libarchive.read_support_filter_all (arc);
+      libarchive.read_support_format_tar (arc);
+
+      Event.emit_debug (1, "Repo: extracting fingerprints of repository");
+
+      begin
+         libarchive.read_open_fd (arc, arc_fd, block_size);
+      exception
+         when libarchive.archive_error =>
+            Event.emit_error (funcname & ": failed to read archive fd");
+            libarchive.read_close (arc);
+            libarchive.read_free (arc);
+            return "";
+      end;
+
       loop
          exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
 
@@ -153,39 +290,37 @@ package body Core.Repo.Fetch is
             fpath : constant String := libarchive.entry_pathname (arcent);
             len   : libarchive.arc64;
          begin
-            if need_sig and then fpath = "signature" then
+            if file_extension_matches (fpath, ".sig") or else
+              file_extension_matches (fpath, ".pub")
+            then
                len := libarchive.entry_size (arcent);
                result := SUS (libarchive.read_data (arc, len));
-            elsif fpath = filename then
-               if not libarchive.read_data_into_file_descriptor (arc, temp_fd) then
-                  Event.emit_error (funcname & ": read into temp fd");
-                  problem := True;
-                  exit;
-               end if;
+               retcode := RESULT_OK;
+               exit;
             end if;
          exception
             when libarchive.archive_error =>
                Event.emit_error (funcname & ": read_data() " & libarchive.error_string (arc));
-               problem := True;
                exit;
          end;
       end loop;
       if data_error then
          Event.emit_error (funcname & ": " & libarchive.error_string (arc));
-         problem := True;
-      end if;
-
-      if not Unix.close_file (arc_fd) then
-         Event.emit_error (funcname & ": failed to close archive fd");
       end if;
       libarchive.read_close (arc);
       libarchive.read_free (arc);
 
-      if not problem then
-         retcode := RESULT_OK;
-      end if;
       return USS (result);
-   end meta_extract_signature_pubkey;
+   end meta_extract_signature_fingerprints;
+
+
+   --------------------------------------------------------------------
+   --  file_extension_matches
+   --------------------------------------------------------------------
+   function file_extension_matches (filename, extension : String) return Boolean is
+   begin
+      return trails (filename, extension);
+   end file_extension_matches;
 
 
    --------------------------------------------------------------------

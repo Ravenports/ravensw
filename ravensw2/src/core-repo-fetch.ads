@@ -16,10 +16,18 @@ private
 
    function meta_extract_signature_pubkey
      (arc_fd    : Unix.File_Descriptor;
-      temp_fd   : Unix.File_Descriptor;
-      filename  : String;
-      need_sig  : Boolean;
       retcode   : out Action_Result) return String;
+
+   function meta_extract_signature_fingerprints
+     (arc_fd    : Unix.File_Descriptor;
+      retcode   : out Action_Result) return String;
+
+   function file_extension_matches (filename, extension : String) return Boolean;
+
+   function meta_extract_to_file_descriptor
+     (arc_fd    : Unix.File_Descriptor;
+      target_fd : Unix.File_Descriptor;
+      filename  : String) return Action_Result;
 
    type Signature_Certificate is
       record
