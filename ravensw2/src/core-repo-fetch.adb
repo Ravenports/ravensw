@@ -248,22 +248,22 @@ package body Core.Repo.Fetch is
    --  meta_extract_signature_fingerprints
    --------------------------------------------------------------------
    function meta_extract_signature_fingerprints
-     (arc_fd    : Unix.File_Descriptor;
-      retcode   : out Action_Result) return String
+     (arc_fd : Unix.File_Descriptor;
+      fingerprints : out Set_File_Contents.Vector) return Action_Result
    is
       arc        : libarchive_h.archive_Access;
       arcent     : libarchive_h.archive_entry_Access;
       data_final : Boolean;
       data_error : Boolean;
-      result     : Text;
+      problem    : Boolean := False;
       block_size : constant := 4096;
       funcname   : constant String := "meta_extract_signature_fingerprints";
    begin
-      retcode := RESULT_FATAL;
+      fingerprints.Clear;
 
       if not Unix.file_connected (arc_fd) then
          Event.emit_error (funcname & ": archive fd is not open");
-         return "";
+         return RESULT_FATAL;
       end if;
 
       arcent := null;
@@ -280,7 +280,7 @@ package body Core.Repo.Fetch is
             Event.emit_error (funcname & ": failed to read archive fd");
             libarchive.read_close (arc);
             libarchive.read_free (arc);
-            return "";
+            return RESULT_FATAL;
       end;
 
       loop
@@ -294,13 +294,12 @@ package body Core.Repo.Fetch is
               file_extension_matches (fpath, ".pub")
             then
                len := libarchive.entry_size (arcent);
-               result := SUS (libarchive.read_data (arc, len));
-               retcode := RESULT_OK;
-               exit;
+               fingerprints.Append (SUS (libarchive.read_data (arc, len)));
             end if;
          exception
             when libarchive.archive_error =>
                Event.emit_error (funcname & ": read_data() " & libarchive.error_string (arc));
+               problem := True;
                exit;
          end;
       end loop;
@@ -310,7 +309,11 @@ package body Core.Repo.Fetch is
       libarchive.read_close (arc);
       libarchive.read_free (arc);
 
-      return USS (result);
+      if problem then
+         return RESULT_FATAL;
+      else
+         return RESULT_OK;
+      end if;
    end meta_extract_signature_fingerprints;
 
 
@@ -326,25 +329,74 @@ package body Core.Repo.Fetch is
    --------------------------------------------------------------------
    --  archive_extract_archive
    --------------------------------------------------------------------
---     function archive_extract_archive
---       (my_repo   : A_repo;
---        fd        : Unix.File_Descriptor;
---        filename  : String;
---        dest_fd   : Unix.File_Descriptor;
---        signature : out Signature_Certificate) return Action_Result
---     is
---     begin
---        Event.emit_debug
---          (1, "Repo: extracting " & filename & " of " & Repo.repo_name (my_repo) & " repository");
---
---        case Repo.repo_signature_type (my_repo) is
---           when SIG_PUBKEY => null;
---           when SIG_FINGERPRINT => null;
---           when SIG_NONE =>
---        end case;
---     end archive_extract_archive;
---
---
+   function archive_extract_archive
+     (my_repo  : A_repo;
+      fd       : Unix.File_Descriptor;
+      filename : String;
+      dest_fd  : Unix.File_Descriptor;
+      cert_set : out Set_Signature_Certificates.Vector) return Action_Result
+   is
+      seek_err : constant String := "archive_extract_archive: failed to reset fd for reading.";
+   begin
+      Event.emit_debug
+        (1, "Repo: extracting " & filename & " of " & Repo.repo_name (my_repo) & " repository");
+
+      if not Unix.reset_file_for_reading (fd) then
+         Event.emit_error (seek_err);
+         return RESULT_FATAL;
+      end if;
+
+      cert_set.Clear;
+      case Repo.repo_signature_type (my_repo) is
+         when SIG_PUBKEY =>
+            declare
+               rc     : Action_Result;
+               pubkey : String := meta_extract_signature_pubkey (fd, rc);
+               cert   : Signature_Certificate;
+            begin
+               if rc = RESULT_OK then
+                  cert.name  := SUS ("signature");
+                  cert.sig   := SUS (pubkey);
+                  cert_set.Append (cert);
+               end if;
+            end;
+         when SIG_NONE =>
+            declare
+               rc : Action_Result;
+            begin
+               rc := meta_extract_to_file_descriptor (fd, dest_fd, filename);
+               if rc /= RESULT_OK then
+                  Event.emit_error ("Repo extract failed: " & filename);
+                  return RESULT_FATAL;
+               end if;
+            end;
+         when SIG_FINGERPRINT =>
+            declare
+               rc : Action_Result;
+               fingerprints : Set_File_Contents.Vector;
+            begin
+               rc := meta_extract_signature_fingerprints (fd, fingerprints);
+
+            --  TODO: parse fingerprints
+
+            end;
+      end case;
+
+      if not Unix.reset_file_for_reading (fd) then
+         Event.emit_error (seek_err);
+         return RESULT_FATAL;
+      end if;
+      if not Unix.file_connected (dest_fd) then
+         if not Unix.reset_file_for_reading (dest_fd) then
+            Event.emit_error (seek_err);
+            return RESULT_FATAL;
+         end if;
+      end if;
+
+      return RESULT_OK;
+   end archive_extract_archive;
+
+
 --     --------------------------------------------------------------------
 --     --  archive_extract_check_archive
 --     --------------------------------------------------------------------

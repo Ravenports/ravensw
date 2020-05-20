@@ -659,4 +659,18 @@ package body Core.Unix is
       return (res = IC.int (0));
    end unlink;
 
+
+   --------------------------------------------------------------------
+   --  reset_file_for_reading
+   --------------------------------------------------------------------
+   function reset_file_for_reading (fd : Unix.File_Descriptor) return Boolean
+   is
+      res      : IC.Extensions.long_long;
+      SEEK_SET : constant IC.int := 0;
+   begin
+      res := C_lseek (fd, 0, SEEK_SET);
+      return (res = IC.Extensions.long_long (0));
+   end reset_file_for_reading;
+
+
 end Core.Unix;

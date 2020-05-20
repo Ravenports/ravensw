@@ -189,6 +189,9 @@ package Core.Unix is
    --  Returns True in unlink operation success
    function unlink (path : String) return Boolean;
 
+   --  Returns True if lseek operation successful
+   function reset_file_for_reading (fd : Unix.File_Descriptor) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -350,5 +353,10 @@ private
 
    function C_unlink (path : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_unlink, "unlink");
+
+   function C_lseek (fildes : File_Descriptor;
+                     offset : IC.Extensions.long_long;
+                     whence : IC.int) return IC.Extensions.long_long;
+   pragma Import (C, C_lseek, "lseek");
 
 end Core.Unix;

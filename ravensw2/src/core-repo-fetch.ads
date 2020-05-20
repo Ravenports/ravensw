@@ -1,12 +1,16 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+private with Ada.Containers.Vectors;
+
 with Core.Unix;
 
 package Core.Repo.Fetch is
 
 
 private
+
+   package CON renames Ada.Containers;
 
    function fetch_remote_tmp
      (my_repo   : A_repo;
@@ -18,9 +22,14 @@ private
      (arc_fd    : Unix.File_Descriptor;
       retcode   : out Action_Result) return String;
 
+   package Set_File_Contents is new CON.Vectors
+     (Element_Type => Text,
+      Index_Type   => Natural,
+      "="          => SU."=");
+
    function meta_extract_signature_fingerprints
-     (arc_fd    : Unix.File_Descriptor;
-      retcode   : out Action_Result) return String;
+     (arc_fd : Unix.File_Descriptor;
+      fingerprints : out Set_File_Contents.Vector) return Action_Result;
 
    function file_extension_matches (filename, extension : String) return Boolean;
 
@@ -37,13 +46,17 @@ private
          trusted : Boolean;
       end record;
 
---     function archive_extract_archive
---       (my_repo   : A_repo;
---        fd        : Unix.File_Descriptor;
---        filename  : String;
---        dest_fd   : Unix.File_Descriptor;
---        signature : out Signature_Certificate) return Action_Result;
---
+   package Set_Signature_Certificates is new CON.Vectors
+     (Element_Type => Signature_Certificate,
+      Index_Type   => Natural);
+
+   function archive_extract_archive
+     (my_repo  : A_repo;
+      fd       : Unix.File_Descriptor;
+      filename : String;
+      dest_fd  : Unix.File_Descriptor;
+      cert_set : out Set_Signature_Certificates.Vector) return Action_Result;
+
 --     function archive_extract_check_archive
 --       (my_repo   : A_repo;
 --        fd        : Unix.File_Descriptor;
