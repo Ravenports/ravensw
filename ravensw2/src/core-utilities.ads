@@ -4,6 +4,9 @@
 package Core.Utilities is
 
    subtype hexrep is String (1 .. 2);
+   subtype bytes8 is String (1 .. 8);
+   subtype bytes4 is String (1 .. 4);
+   type uint32 is mod 2 ** 32;
 
    --  unlike realpath(3), this routine does not expand symbolic links
    function pkg_absolutepath (input_path : String; fromroot : Boolean) return String;
@@ -27,5 +30,11 @@ package Core.Utilities is
    --  Returns *number* of characters as a strings ranging from ASCII 33 to 96.
    --  Suitable for random names for temporary files
    function random_characters (number : Positive := 6) return String;
+
+   --  Convert binary string of 8 characters to 64-bit integer considering endianness
+   function conv2int (str : bytes8) return int64;
+
+   --  Convert binary string of 4 characters to 32-bit integer considering endianness
+   function conv2int (str : bytes4) return uint32;
 
 end Core.Utilities;

@@ -57,6 +57,9 @@ private
       dest_fd  : Unix.File_Descriptor;
       cert_set : out Set_Signature_Certificates.Vector) return Action_Result;
 
+   function parse_sigkey (encoded_sigkey : String;
+                          signature      : out Signature_Certificate) return Action_Result;
+
 --     function archive_extract_check_archive
 --       (my_repo   : A_repo;
 --        fd        : Unix.File_Descriptor;

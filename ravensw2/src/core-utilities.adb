@@ -3,11 +3,14 @@
 
 with Ada.Numerics.Discrete_Random;
 with Interfaces;
+with System;
 
 with Core.Strings; use Core.Strings;
 with Core.Unix;
 
 package body Core.Utilities is
+
+   package INT renames Interfaces;
 
    --------------------------------------------------------------------
    --  pkg_absolutepath
@@ -87,7 +90,7 @@ package body Core.Utilities is
       type fullbyte is mod 2 ** 8;
       function halfbyte_to_hex (value : halfbyte) return Character;
 
-      std_byte  : Interfaces.Unsigned_8;
+      std_byte  : INT.Unsigned_8;
       work_4bit : halfbyte;
       result    : hexrep;
 
@@ -103,8 +106,8 @@ package body Core.Utilities is
       end halfbyte_to_hex;
 
    begin
-      std_byte   := Interfaces.Unsigned_8 (Character'Pos (quattro));
-      work_4bit  := halfbyte (Interfaces.Shift_Right (std_byte, 4));
+      std_byte   := INT.Unsigned_8 (Character'Pos (quattro));
+      work_4bit  := halfbyte (INT.Shift_Right (std_byte, 4));
       result (1) := halfbyte_to_hex (work_4bit);
 
       work_4bit  := halfbyte (fullbyte (Character'Pos (quattro)) and 2#1111#);
@@ -289,5 +292,98 @@ package body Core.Utilities is
       end loop;
       return result;
    end random_characters;
+
+
+   --------------------------------------------------------------------
+   --  conv2int (64-bit version signed)
+   --------------------------------------------------------------------
+   function conv2int (str : bytes8) return int64
+   is
+      --  input: [A][B][C][D][E][F][G][H]
+      --  Little endian : H<<56 + G<<48 + F<<40 + E<<32 + D<<24 + C<<16 + B<<8 + A
+      --  Big endian    : A<<56 + B<<48 + C<<40 + D<<32 + E<<24 + F<<16 + G<<8 + H
+
+      A : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First)));
+      B : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 1)));
+      C : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 2)));
+      D : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 3)));
+      E : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 4)));
+      F : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 5)));
+      G : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 6)));
+      H : INT.Unsigned_64 := INT.Unsigned_64 (Character'Pos (str (str'First + 7)));
+
+      use type INT.Unsigned_64;
+      use type System.Bit_Order;
+
+      Little_Endian : constant Boolean := System.Default_Bit_Order = System.Low_Order_First;
+      result : INT.Unsigned_64;
+
+   begin
+      if Little_Endian then
+         result :=   (INT.Shift_Left (H, 56) +
+                      INT.Shift_Left (G, 48) +
+                      INT.Shift_Left (F, 40) +
+                      INT.Shift_Left (E, 32) +
+                      INT.Shift_Left (D, 24) +
+                      INT.Shift_Left (C, 16) +
+                      INT.Shift_Left (B, 8) +
+                      A);
+      else
+         result :=   (INT.Shift_Left (A, 56) +
+                      INT.Shift_Left (B, 48) +
+                      INT.Shift_Left (C, 40) +
+                      INT.Shift_Left (D, 32) +
+                      INT.Shift_Left (E, 24) +
+                      INT.Shift_Left (F, 16) +
+                      INT.Shift_Left (G, 8) +
+                      H);
+      end if;
+      if result < INT.Unsigned_64 (int64'Last) then
+         return int64 (result);
+      else
+         declare
+            ones : constant INT.Unsigned_64 := 16#FFFF_FFFF#;
+            com2 : INT.Unsigned_64;
+         begin
+            com2 := (result xor ones) + 1;
+            return -1 * int64 (com2);
+         end;
+      end if;
+   end conv2int;
+
+
+   --------------------------------------------------------------------
+   --  conv2int (32-bit version unsigned)
+   --------------------------------------------------------------------
+   function conv2int (str : bytes4) return uint32
+   is
+      --  input: [A][B][C][D]
+      --  Little endian : D<<24 + C<<16 + B<<8 + A
+      --  Big endian    : A<<24 + B<<16 + C<<8 + D
+
+      A : INT.Unsigned_32 := INT.Unsigned_32 (Character'Pos (str (str'First)));
+      B : INT.Unsigned_32 := INT.Unsigned_32 (Character'Pos (str (str'First + 1)));
+      C : INT.Unsigned_32 := INT.Unsigned_32 (Character'Pos (str (str'First + 2)));
+      D : INT.Unsigned_32 := INT.Unsigned_32 (Character'Pos (str (str'First + 3)));
+
+      use type INT.Unsigned_32;
+      use type System.Bit_Order;
+
+      Little_Endian : constant Boolean := System.Default_Bit_Order = System.Low_Order_First;
+   begin
+      if Little_Endian then
+         return uint32 (INT.Shift_Left (D, 24) +
+                        INT.Shift_Left (C, 16) +
+                        INT.Shift_Left (B, 8) +
+                        A);
+      else
+         return uint32 (INT.Shift_Left (A, 24) +
+                        INT.Shift_Left (B, 16) +
+                        INT.Shift_Left (C, 8) +
+                        D);
+      end if;
+   end conv2int;
+
+
 
 end Core.Utilities;

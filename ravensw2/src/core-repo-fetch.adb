@@ -336,7 +336,22 @@ package body Core.Repo.Fetch is
       dest_fd  : Unix.File_Descriptor;
       cert_set : out Set_Signature_Certificates.Vector) return Action_Result
    is
-      seek_err : constant String := "archive_extract_archive: failed to reset fd for reading.";
+      procedure insert_print (position : Set_File_Contents.Cursor);
+
+      seek_err  : constant String := "archive_extract_archive: failed to reset fd for reading.";
+      insertion : Action_Result := RESULT_OK;
+
+      procedure insert_print (position : Set_File_Contents.Cursor)
+      is
+         binary_print : Text renames Set_File_Contents.Element (position);
+         certificate  : Signature_Certificate;
+      begin
+         if parse_sigkey (binary_print, certificate) = RESULT_OK then
+            cert_set.Append (certificate);
+         else
+            insertion := RESULT_FATAL;
+         end if;
+      end insert_print;
    begin
       Event.emit_debug
         (1, "Repo: extracting " & filename & " of " & Repo.repo_name (my_repo) & " repository");
@@ -366,7 +381,7 @@ package body Core.Repo.Fetch is
             begin
                rc := meta_extract_to_file_descriptor (fd, dest_fd, filename);
                if rc /= RESULT_OK then
-                  Event.emit_error ("Repo extract failed: " & filename);
+                  Event.emit_error ("Repo SIG_NONE extract failed: " & filename);
                   return RESULT_FATAL;
                end if;
             end;
@@ -376,8 +391,16 @@ package body Core.Repo.Fetch is
                fingerprints : Set_File_Contents.Vector;
             begin
                rc := meta_extract_signature_fingerprints (fd, fingerprints);
-
-            --  TODO: parse fingerprints
+               if rc /= RESULT_OK then
+                  Event.emit_error ("Repo SIG_FINGERPRINT extract failed");
+                  return RESULT_FATAL;
+               end if;
+               fingerprints.Iterate (insert_print'Access);
+               if insertion /= RESULT_OK then
+                  Event.emit_error ("Repo SIG_FINGERPRINT insertion failed");
+                  return RESULT_FATAL;
+               end if;
+            --  TODO: check fingerprints
 
             end;
       end case;
@@ -395,6 +418,75 @@ package body Core.Repo.Fetch is
 
       return RESULT_OK;
    end archive_extract_archive;
+
+
+   --------------------------------------------------------------------
+   --  parse_sigkey
+   --------------------------------------------------------------------
+   function parse_sigkey  (encoded_sigkey : String;
+                           signature      : out Signature_Certificate) return Action_Result
+   is
+      --  Format: [A][B][C][D][E]
+      --  [A] is one byte, contains 0 or 1, and represents signature type
+      --  [B] is 4 bytes, represents length of following filename
+      --  [C] is eval(B) bytes, contains filename
+      --  [D] is 4 bytes, represents length of following signature
+      --  [E] is eval(D) bytes, contains signature
+
+      too_short : constant String := "parse_sigkey(): key is too short ("
+                  & int2str (encoded_sigkey'Length) & " bytes)";
+      type Key_Format is range 0 .. 1;
+      format    : Key_Format;
+      file_size : Utilities.uint32;
+      sig_size  : Utilities.uint32;
+      ndx       : Integer;
+      minimum   : Integer;
+   begin
+      if encoded_sigkey'Length < 26 then
+         --  Less than 1 byte filename and 16 byte key.  This is way too short
+         Event.emit_error (too_short);
+         return RESULT_FATAL;
+      end if;
+
+      declare
+         B : Integer;
+      begin
+         B := Character'Pos (encoded_sigkey (encoded_sigkey'First));
+         if B < 0 or else B > 1 then
+            Event.emit_error (int2str (B) &  "is not a valid type for fingerprint format");
+            return RESULT_FATAL;
+         end if;
+         format := Key_Format (B);
+      end;
+
+      ndx := encoded_sigkey'First + 1;
+      file_size := Utilities.conv2int (encoded_sigkey (ndx .. ndx + 3));
+
+      minimum := Integer (file_size) + 9;
+      if encoded_sigkey'Length < minimum then
+         Event.emit_error (too_short & " (needs at least " & int2str (minimum) & ")");
+         return RESULT_FATAL;
+      end if;
+      signature.name := SUS (encoded_sigkey (ndx + 4 .. ndx + 4 + Integer (file_size)));
+
+      ndx := encoded_sigkey'First + Integer (file_size) + 5;
+      sig_size := Utilities.conv2int (encoded_sigkey (ndx .. ndx + 3));
+
+      minimum := Integer (file_size) + Integer (sig_size) + 9;
+      if encoded_sigkey'Length < minimum then
+         Event.emit_error (too_short & " (requires " & int2str (minimum) & ")");
+         return RESULT_FATAL;
+      end if;
+
+      case format is
+         when 0 =>
+            signature.sig := SUS (encoded_sigkey (ndx + 4 .. minimum));
+         when 1 =>
+            signature.cert := SUS (encoded_sigkey (ndx + 4 .. minimum));
+      end case;
+      return RESULT_OK;
+
+   end parse_sigkey;
 
 
 --     --------------------------------------------------------------------
