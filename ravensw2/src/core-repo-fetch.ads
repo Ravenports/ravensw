@@ -38,11 +38,13 @@ private
       target_fd : Unix.File_Descriptor;
       filename  : String) return Action_Result;
 
+   type SC_type is (sc_unset, sc_signature, sc_certificate);
+
    type Signature_Certificate is
       record
          name    : Text;
-         sig     : Text;
-         cert    : Text;
+         method  : SC_type;
+         data    : Text;
          trusted : Boolean;
       end record;
 

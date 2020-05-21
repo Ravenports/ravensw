@@ -346,7 +346,7 @@ package body Core.Repo.Fetch is
          binary_print : Text renames Set_File_Contents.Element (position);
          certificate  : Signature_Certificate;
       begin
-         if parse_sigkey (binary_print, certificate) = RESULT_OK then
+         if parse_sigkey (USS (binary_print), certificate) = RESULT_OK then
             cert_set.Append (certificate);
          else
             insertion := RESULT_FATAL;
@@ -370,8 +370,9 @@ package body Core.Repo.Fetch is
                cert   : Signature_Certificate;
             begin
                if rc = RESULT_OK then
-                  cert.name  := SUS ("signature");
-                  cert.sig   := SUS (pubkey);
+                  cert.name   := SUS ("signature");
+                  cert.method := sc_signature;
+                  cert.data   := SUS (pubkey);
                   cert_set.Append (cert);
                end if;
             end;
@@ -480,10 +481,11 @@ package body Core.Repo.Fetch is
 
       case format is
          when 0 =>
-            signature.sig := SUS (encoded_sigkey (ndx + 4 .. minimum));
+            signature.method := sc_signature;
          when 1 =>
-            signature.cert := SUS (encoded_sigkey (ndx + 4 .. minimum));
+            signature.method := sc_certificate;
       end case;
+      signature.data := SUS (encoded_sigkey (ndx + 4 .. minimum));
       return RESULT_OK;
 
    end parse_sigkey;
