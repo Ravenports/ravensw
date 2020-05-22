@@ -1,5 +1,5 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
---  Reference: ../License.txt
+--  Reference: ../../License.txt
 
 with Ada.Directories;
 with Ada.Characters.Latin_1;
@@ -129,7 +129,7 @@ package body Core.Repo.Read is
       procedure populate_priority (position : Repository_Crate.Cursor)
       is
          item    : A_repo renames Repository_Crate.Element (position);
-         priorec : Repo_Priority;
+         priorec : Priority_Identity;
       begin
          priorec.reponame := item.name;
          priorec.priority := item.priority;

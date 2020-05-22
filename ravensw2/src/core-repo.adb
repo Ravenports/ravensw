@@ -109,21 +109,21 @@ package body Core.Repo is
 
 
    --------------------------------------------------------------------
-   --  repo_priority_type #1
+   --  repo_priority #1
    --------------------------------------------------------------------
-   function repo_priority_type (repo : A_repo) return String is
+   function repo_priority (repo : A_repo) return String is
    begin
       return int2str (Integer (repo.priority));
-   end repo_priority_type;
+   end repo_priority;
 
 
    --------------------------------------------------------------------
-   --  repo_priority_type #2
+   --  repo_priority #2
    --------------------------------------------------------------------
-   function repo_priority_type (repo : A_repo) return A_priority is
+   function repo_priority (repo : A_repo) return A_priority is
    begin
       return repo.priority;
-   end repo_priority_type;
+   end repo_priority;
 
 
    --------------------------------------------------------------------
@@ -151,7 +151,7 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_priority_less_than
    --------------------------------------------------------------------
-   function repo_priority_less_than (A, B : Repo_Priority) return Boolean
+   function repo_priority_less_than (A, B : Priority_Identity) return Boolean
    is
       --  Display 100 before 90, so it's reverse order (use greater than for "<")
    begin
@@ -286,6 +286,16 @@ package body Core.Repo is
    begin
       return reponame & ".meta";
    end meta_filename;
+
+
+   --------------------------------------------------------------------
+   --  count_of_trusted_fingerprints
+   --------------------------------------------------------------------
+   function count_of_trusted_fingerprints (repo : A_repo) return Natural is
+   begin
+      return Natural (repo.trusted_fprint.Length);
+   end count_of_trusted_fingerprints;
+
 
 
 end Core.Repo;

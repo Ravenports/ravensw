@@ -30,6 +30,9 @@ package Core.Repo is
    --  Return repo's fingerprints
    function repo_fingerprints (repo : A_repo) return String;
 
+   --  Return number of trusted fingerprints
+   function count_of_trusted_fingerprints (repo : A_repo) return Natural;
+
    --  Return repo's enabled as string (yes/no)
    function repo_enabled (repo : A_repo) return String;
 
@@ -48,11 +51,11 @@ package Core.Repo is
    --  Return repo's signature type natively
    function repo_signature_type (repo : A_repo) return A_signature;
 
-   --  Return repo's priority type is string
-   function repo_priority_type (repo : A_repo) return String;
+   --  Return repo's priority as string
+   function repo_priority (repo : A_repo) return String;
 
-   --  Return repo's priority type natively
-   function repo_priority_type (repo : A_repo) return A_priority;
+   --  Return repo's priority natively
+   function repo_priority (repo : A_repo) return A_priority;
 
    --  Return repo's IP protocol type is string
    function repo_ipv_type (repo : A_repo) return String;
@@ -90,6 +93,7 @@ private
 
    --  Obsolete, but maintained for compatability
    type A_package_format is (TAR, TGZ, TBZ, TXZ, TZS);
+
    type A_hash_type is (HASH_UNKNOWN, HASH_SHA256, HASH_BLAKE2);
    type A_pubkey_type is (rsa);
    type A_fingerprint is
@@ -148,6 +152,10 @@ private
      (Element_Type => A_http_mirror,
       Index_Type   => Natural);
 
+   package A_Fingerprint_crate is new CON.Vectors
+     (Element_Type => A_fingerprint,
+      Index_Type   => Natural);
+
    type Repo_Metadata is
       record
          maintainer        : Text;
@@ -179,8 +187,8 @@ private
          mirror_type    : A_mirror;
          signature_type : A_signature;
          fingerprints   : Text;
-         trusted_fprint : A_fingerprint;
-         revoked_fprint : A_fingerprint;
+         trusted_fprint : A_Fingerprint_crate.Vector;
+         revoked_fprint : A_Fingerprint_crate.Vector;
          meta           : Repo_metadata;
          enable         : Boolean;
          priority       : A_priority;
@@ -202,17 +210,17 @@ private
       Hash            => Strings.map_hash,
       Equivalent_Keys => Strings.equivalent);
 
-   type Repo_Priority is
+   type Priority_Identity is
       record
          reponame : Text;
          priority : A_priority;
       end record;
 
    --  Order to sort A_repo
-   function repo_priority_less_than (A, B : Repo_Priority) return Boolean;
+   function repo_priority_less_than (A, B : Priority_Identity) return Boolean;
 
    package Repos_Priority_Crate is new CON.Vectors
-     (Element_Type => Repo_Priority,
+     (Element_Type => Priority_Identity,
       Index_Type   => Natural);
 
    package Priority_Sorter is new Repos_Priority_Crate.Generic_Sorting

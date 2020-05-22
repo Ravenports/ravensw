@@ -1,5 +1,5 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
---  Reference: ../License.txt
+--  Reference: ../../License.txt
 
 private with Core.Unix;
 private with libucl;
