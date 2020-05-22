@@ -38,13 +38,11 @@ private
       target_fd : Unix.File_Descriptor;
       filename  : String) return Action_Result;
 
-   type SC_type is (sc_unset, sc_signature, sc_certificate);
-
    type Signature_Certificate is
       record
          name    : Text;
-         method  : SC_type;
-         data    : Text;
+         sc_sign : Text;
+         sc_cert : Text;
          trusted : Boolean;
       end record;
 
@@ -64,15 +62,14 @@ private
 
    function check_fingerprints
      (my_repo  : A_repo;
-      cert_set : in out Set_Signature_Certificates.Vector;
-      fatal    : Boolean) return Boolean;
+      cert_set : in out Set_Signature_Certificates.Vector) return Boolean;
 
---     function archive_extract_check_archive
---       (my_repo   : A_repo;
---        fd        : Unix.File_Descriptor;
---        filename  : String;
---        dest_fd   : Unix.File_Descriptor) return Action_Result;
---
+   function archive_extract_check_archive
+     (my_repo   : A_repo;
+      fd        : Unix.File_Descriptor;
+      filename  : String;
+      dest_fd   : Unix.File_Descriptor) return Action_Result;
+
 --     function fetch_meta
 --       (my_repo   : A_repo;
 --        timestamp : Unix.T_epochtime) return Action_Result;

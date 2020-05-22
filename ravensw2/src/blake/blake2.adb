@@ -74,6 +74,15 @@ package body blake2 is
 
 
    --------------------------------------------------------------------
+   --  blake2b_size
+   --------------------------------------------------------------------
+   function blake2b_size return Natural is
+   begin
+      return blake2b_hash'Length;
+   end blake2b_size;
+
+
+   --------------------------------------------------------------------
    --  blake2s_final
    --------------------------------------------------------------------
    function blake2s_final (b2b : blake2s_state_Access) return blake2s_hash
@@ -88,5 +97,15 @@ package body blake2 is
       end loop;
       return result;
    end blake2s_final;
+
+
+   --------------------------------------------------------------------
+   --  blake2s_size
+   --------------------------------------------------------------------
+   function blake2s_size return Natural is
+   begin
+      return blake2s_hash'Length;
+   end blake2s_size;
+
 
 end blake2;

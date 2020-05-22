@@ -232,7 +232,7 @@ package body Cmd.Unset is
                   when Repo.REPO_FLAGS_LIMIT_IPV4 | Repo.REPO_FLAGS_LIMIT_IPV6 =>
                      print_extconfig ("ip_version", Repo.repo_ipv_type (R), False);
                end case;
-               print_extconfig ("priority", Repo.repo_priority_type (R), False, True);
+               print_extconfig ("priority", Repo.repo_priority (R), False, True);
                TIO.Put_Line ("  }");
             end;
          end loop;

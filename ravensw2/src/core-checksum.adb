@@ -2,7 +2,7 @@
 --  Reference: ../License.txt
 
 with Interfaces;
-with ssl;
+with SSL;
 with blake2;
 
 with Core.Event;
@@ -138,19 +138,19 @@ package body Core.Checksum is
    is
       procedure add (position : checksum_entry_crate.Cursor);
 
-      sign_ctx : aliased ssl.SHA256_CTX;
+      sign_ctx : aliased SSL.SHA256_CTX;
 
       procedure add (position : checksum_entry_crate.Cursor)
       is
          item : checksum_entry renames checksum_entry_crate.Element (position);
       begin
-         ssl.sha256_update (sign_ctx'Unchecked_Access, USS (item.field));
-         ssl.sha256_update (sign_ctx'Unchecked_Access, USS (item.value));
+         SSL.sha256_update (sign_ctx'Unchecked_Access, USS (item.field));
+         SSL.sha256_update (sign_ctx'Unchecked_Access, USS (item.value));
       end add;
    begin
-      ssl.sha256_init (sign_ctx'Unchecked_Access);
+      SSL.sha256_init (sign_ctx'Unchecked_Access);
       entries.Iterate (add'Access);
-      return ssl.sha256_final (sign_ctx'Unchecked_Access);
+      return SSL.sha256_final (sign_ctx'Unchecked_Access);
    end checksum_hash_sha256;
 
 
@@ -159,11 +159,11 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function checksum_hash_sha256_bulk (plain : String) return String
    is
-      sign_ctx : aliased ssl.SHA256_CTX;
+      sign_ctx : aliased SSL.SHA256_CTX;
    begin
-      ssl.sha256_init (sign_ctx'Unchecked_Access);
-      ssl.sha256_update (sign_ctx'Unchecked_Access, plain);
-      return ssl.sha256_final (sign_ctx'Unchecked_Access);
+      SSL.sha256_init (sign_ctx'Unchecked_Access);
+      SSL.sha256_update (sign_ctx'Unchecked_Access, plain);
+      return SSL.sha256_final (sign_ctx'Unchecked_Access);
    end checksum_hash_sha256_bulk;
 
 
@@ -172,19 +172,19 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String
    is
-      sign_ctx   : aliased ssl.SHA256_CTX;
+      sign_ctx   : aliased SSL.SHA256_CTX;
       chunk_size : constant Natural := 16 * 1024;
    begin
-      ssl.sha256_init (sign_ctx'Unchecked_Access);
+      SSL.sha256_init (sign_ctx'Unchecked_Access);
       loop
          declare
             chunk : constant String := Unix.read_fd (fd, chunk_size);
          begin
             exit when chunk'Length = 0;
-            ssl.sha256_update (sign_ctx'Unchecked_Access, chunk);
+            SSL.sha256_update (sign_ctx'Unchecked_Access, chunk);
          end;
       end loop;
-      return ssl.sha256_final (sign_ctx'Unchecked_Access);
+      return SSL.sha256_final (sign_ctx'Unchecked_Access);
    end checksum_hash_sha256_file;
 
 
@@ -307,7 +307,7 @@ package body Core.Checksum is
    --  checksum_hash_file
    --------------------------------------------------------------------
    function checksum_hash_file (fd : Unix.File_Descriptor;
-                                    checksum_type : A_Checksum_Type) return String is
+                                checksum_type : A_Checksum_Type) return String is
    begin
       case checksum_type is
          when HASH_TYPE_SHA256_BASE32  |
@@ -460,7 +460,7 @@ package body Core.Checksum is
    --  checksum_hash_bulk
    --------------------------------------------------------------------
    function checksum_hash_bulk (plain : String;  checksum_type : A_Checksum_Type)
-                                    return String is
+                                return String is
    begin
       case checksum_type is
          when HASH_TYPE_SHA256_BASE32  |
@@ -650,7 +650,7 @@ package body Core.Checksum is
    --  checksum_generate_file
    --------------------------------------------------------------------
    function checksum_generate_file (path : String; checksum_type : A_Checksum_Type)
-                                        return String
+                                    return String
    is
       sb      : aliased Unix.struct_stat;
       sum_txt : Text;
@@ -671,5 +671,27 @@ package body Core.Checksum is
 
       return int2str (A_Checksum_Type'Pos (checksum_type)) & CHECKSUM_SEPARATOR & USS (sum_txt);
    end checksum_generate_file;
+
+
+   --------------------------------------------------------------------
+   --  checksum_size
+   --------------------------------------------------------------------
+   function checksum_size (checksum_type : A_Checksum_Type) return Natural is
+   begin
+      case checksum_type is
+         when HASH_TYPE_UNKNOWN =>
+            return 0;
+         when HASH_TYPE_BLAKE2S_BASE32
+            | HASH_TYPE_BLAKE2S_RAW =>
+            return blake2.blake2s_size;
+         when HASH_TYPE_BLAKE2_BASE32
+            | HASH_TYPE_BLAKE2_RAW =>
+            return blake2.blake2b_size;
+         when HASH_TYPE_SHA256_BASE32
+            | HASH_TYPE_SHA256_HEX
+            | HASH_TYPE_SHA256_RAW =>
+            return SSL.sha256_size;
+      end case;
+   end checksum_size;
 
 end Core.Checksum;

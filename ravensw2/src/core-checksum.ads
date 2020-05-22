@@ -37,6 +37,8 @@ package Core.Checksum is
 
    function checksum_file (path : String; checksum_type : A_Checksum_Type) return String;
 
+   function checksum_size (checksum_type : A_Checksum_Type) return Natural;
+
    function checksum_fd
      (fd : Unix.File_Descriptor;
       checksum_type : A_Checksum_Type)
@@ -81,18 +83,18 @@ private
    function checksum_hash_blake2s (entries : checksum_entry_crate.Vector) return String;
 
    function checksum_hash_file         (fd : Unix.File_Descriptor;
-                                            checksum_type : A_Checksum_Type) return String;
+                                        checksum_type : A_Checksum_Type) return String;
    function checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String;
    function checksum_hash_blake2b_file  (fd : Unix.File_Descriptor) return String;
    function checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String;
 
    function checksum_encode        (plain : String;
-                                        checksum_type : A_Checksum_Type) return String;
+                                    checksum_type : A_Checksum_Type) return String;
    function checksum_encode_base32 (plain : String) return String;
    function checksum_encode_hex    (plain : String) return String;
 
    function checksum_hash_bulk         (plain : String;
-                                            checksum_type : A_Checksum_Type) return String;
+                                        checksum_type : A_Checksum_Type) return String;
    function checksum_hash_sha256_bulk  (plain : String) return String;
    function checksum_hash_blake2b_bulk (plain : String) return String;
    function checksum_hash_blake2s_bulk (plain : String) return String;

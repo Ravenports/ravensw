@@ -25,6 +25,9 @@ package blake2 is
    function blake2b_final (b2b : blake2b_state_Access) return blake2b_hash;
    function blake2s_final (b2b : blake2s_state_Access) return blake2s_hash;
 
+   function blake2b_size return Natural;
+   function blake2s_size return Natural;
+
 private
 
    package IC renames Interfaces.C;

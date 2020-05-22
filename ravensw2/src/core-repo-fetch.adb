@@ -11,6 +11,7 @@ with Core.Utilities;
 with Core.Fetching;
 with Core.Repo.Keys;
 with Core.Checksum;
+with Core.RSA;
 
 with libarchive;
 with libarchive_h;
@@ -372,9 +373,8 @@ package body Core.Repo.Fetch is
                cert   : Signature_Certificate;
             begin
                if rc = RESULT_OK then
-                  cert.name   := SUS ("signature");
-                  cert.method := sc_signature;
-                  cert.data   := SUS (pubkey);
+                  cert.name    := SUS ("signature");
+                  cert.sc_sign := SUS (pubkey);
                   cert_set.Append (cert);
                end if;
             end;
@@ -403,7 +403,7 @@ package body Core.Repo.Fetch is
                   Event.emit_error ("Repo SIG_FINGERPRINT insertion failed");
                   return RESULT_FATAL;
                end if;
-               if not check_fingerprints (my_repo, cert_set, True) then
+               if not check_fingerprints (my_repo, cert_set) then
                   return RESULT_FATAL;
                end if;
             end;
@@ -483,10 +483,9 @@ package body Core.Repo.Fetch is
       end if;
 
       case format is
-         when 0 => signature.method := sc_signature;
-         when 1 => signature.method := sc_certificate;
+         when 0 => signature.sc_sign := SUS (encoded_sigkey (ndx + 4 .. minimum));
+         when 1 => signature.sc_cert := SUS (encoded_sigkey (ndx + 4 .. minimum));
       end case;
-      signature.data := SUS (encoded_sigkey (ndx + 4 .. minimum));
       return RESULT_OK;
    end parse_sigkey;
 
@@ -496,8 +495,7 @@ package body Core.Repo.Fetch is
    --------------------------------------------------------------------
    function check_fingerprints
      (my_repo  : A_repo;
-      cert_set : in out Set_Signature_Certificates.Vector;
-      fatal    : Boolean) return Boolean
+      cert_set : in out Set_Signature_Certificates.Vector) return Boolean
    is
       procedure scan_certificate (position : Set_Signature_Certificates.Cursor);
       procedure update_trust (Element : in out Signature_Certificate);
@@ -514,6 +512,7 @@ package body Core.Repo.Fetch is
       procedure scan_certificate (position : Set_Signature_Certificates.Cursor)
       is
          procedure scan_meta_key (mk_position : A_cert_crate.Cursor);
+         procedure update_cert (Element : in out Signature_Certificate);
 
          cert : Signature_Certificate renames Set_Signature_Certificates.Element (position);
          mk_found : Boolean := False;
@@ -528,29 +527,35 @@ package body Core.Repo.Fetch is
                mk_found := True;
             end if;
          end scan_meta_key;
+
+         procedure update_cert  (Element : in out Signature_Certificate) is
+         begin
+           Element.sc_cert := cert_data;
+         end update_cert;
       begin
          if not aborted then
-            case cert.method is
-               when sc_unset =>
+            if IsBlank (cert.sc_cert) then
+               if IsBlank (cert.sc_sign) then
                   Event.emit_error ("check_fingerprints(): undefined signature method");
                   aborted := True;
-               when sc_certificate =>
-                  cert_data := cert.data;
-               when sc_signature =>
+               else
                   --  Check meta keys
                   my_repo.meta.cert_set.Iterate (scan_meta_key'Access);
-                  if not mk_found and then fatal then
+                  if mk_found then
+                     cert_set.Update_Element (position, update_cert'Access);
+                  else
                      Event.emit_error ("No key with name " & USS (cert.name) & " has been found");
                      aborted := True;
                   end if;
-            end case;
+               end if;
+            end if;
             if not aborted then
                declare
                   procedure scan_revoked (fp_position : A_Fingerprint_crate.Cursor);
                   procedure scan_trusted (fp_position : A_Fingerprint_crate.Cursor);
 
                   hash : constant String :=
-                    checksum.checksum_data (USS (cert_data), Checksum.HASH_TYPE_SHA256_HEX);
+                    checksum.checksum_data (USS (cert.sc_cert), Checksum.HASH_TYPE_SHA256_HEX);
                   revoked : Boolean := False;
 
                   procedure scan_revoked (fp_position : A_Fingerprint_crate.Cursor)
@@ -572,7 +577,7 @@ package body Core.Repo.Fetch is
                   end scan_trusted;
                begin
                   my_repo.revoked_fprint.Iterate (scan_revoked'Access);
-                  if revoked and then fatal then
+                  if revoked then
                      Event.emit_error ("At least one of the certificates has been revoked");
                      aborted := True;
                   end if;
@@ -597,9 +602,7 @@ package body Core.Repo.Fetch is
 
       cert_set.Iterate (scan_certificate'Access);
       if nbgood = 0 then
-         if fatal then
-            Event.emit_error ("No trusted public keys found");
-         end if;
+         Event.emit_error ("No trusted public keys found");
          return False;
       end if;
       return True;
@@ -607,80 +610,89 @@ package body Core.Repo.Fetch is
    end check_fingerprints;
 
 
---     --------------------------------------------------------------------
---     --  archive_extract_check_archive
---     --------------------------------------------------------------------
---     function archive_extract_check_archive
---       (my_repo   : A_repo;
---        fd        : Unix.File_Descriptor;
---        filename  : String;
---        dest_fd   : Unix.File_Descriptor) return Action_Result
---     is
---        rc  : Action_Result := RESULT_OK;
---        ret : Action_Result := RESULT_OK;
---     begin
---
---
---        	struct sig_cert *sc = NULL, *s, *stmp;
---  	int ret, rc;
---
---  	ret = rc = EPKG_OK;
---
---  	if (pkg_repo_archive_extract_archive(fd, file, repo, dest_fd, &sc)
---  			!= EPKG_OK)
---  		return (EPKG_FATAL);
---
---  	if (pkg_repo_signature_type(repo) == SIG_PUBKEY) {
---  		if (pkg_repo_key(repo) == NULL) {
---  			pkg_emit_error("No PUBKEY defined. Removing "
---  			    "repository.");
---  			rc = EPKG_FATAL;
---  			goto out;
---  		}
---  		if (sc == NULL) {
---  			pkg_emit_error("No signature found in the repository.  "
---  					"Can not validate against %s key.", pkg_repo_key(repo));
---  			rc = EPKG_FATAL;
---  			goto out;
---  		}
---  		/*
---  		 * Here are dragons:
---  		 * 1) rsa_verify is NOT rsa_verify_cert
---  		 * 2) siglen must be reduced by one to support this legacy method
---  		 *
---  		 * by @bdrewery
---  		 */
---  		ret = rsa_verify(pkg_repo_key(repo), sc->sig, sc->siglen - 1,
---  		    dest_fd);
---  		if (ret != EPKG_OK) {
---  			pkg_emit_error("Invalid signature, "
---  					"removing repository.");
---  			rc = EPKG_FATAL;
---  			goto out;
---  		}
---  	}
---  	else if (pkg_repo_signature_type(repo) == SIG_FINGERPRINT) {
---  		HASH_ITER(hh, sc, s, stmp) {
---  			ret = rsa_verify_cert(s->cert, s->certlen, s->sig, s->siglen,
---  				dest_fd);
---  			if (ret == EPKG_OK && s->trusted) {
---  				break;
---  			}
---  			ret = EPKG_FATAL;
---  		}
---  		if (ret != EPKG_OK) {
---  			pkg_emit_error("No trusted certificate has been used "
---  			    "to sign the repository");
---  			rc = EPKG_FATAL;
---  			goto out;
---  		}
---  	}
---
---  out:
---  	return rc;
---     end archive_extract_check_archive;
---
---
+   --------------------------------------------------------------------
+   --  archive_extract_check_archive
+   --------------------------------------------------------------------
+   function archive_extract_check_archive
+     (my_repo   : A_repo;
+      fd        : Unix.File_Descriptor;
+      filename  : String;
+      dest_fd   : Unix.File_Descriptor) return Action_Result
+   is
+      rc  : Action_Result := RESULT_OK;
+      ret : Action_Result := RESULT_OK;
+      sc  : Set_Signature_Certificates.Vector;
+   begin
+      if archive_extract_archive (my_repo  => my_repo,
+                                  fd       => fd,
+                                  filename => filename,
+                                  dest_fd  => dest_fd,
+                                  cert_set => sc) /= RESULT_OK
+      then
+         return RESULT_FATAL;
+      end if;
+
+      case repo_signature_type (my_repo) is
+         when SIG_PUBKEY =>
+            if IsBlank (my_repo.pubkey) then
+               Event.emit_error ("No PUBKEY defined. Removing repository.");
+               return RESULT_FATAL;
+            end if;
+            if sc.Is_Empty then
+               Event.emit_error
+                 ("No signature found in the repository. Can not validate against "
+                  & USS (my_repo.pubkey) & " key.");
+               return RESULT_FATAL;
+            end if;
+            --  There has to be only one certificate in the vector;
+            if Core.RSA.deprecated_rsa_verify (key       => USS (my_repo.pubkey),
+                                               signature => USS (sc.First_Element.sc_sign),
+                                               fd        => dest_fd) = RESULT_OK
+            then
+               return RESULT_OK;
+            else
+               Event.emit_error ("Invalid signature, removing repository.");
+               return RESULT_FATAL;
+            end if;
+         when SIG_FINGERPRINT =>
+            declare
+               procedure scan (position : Set_Signature_Certificates.Cursor);
+
+               trusted_found : Boolean := False;
+               fatal         : Boolean := False;
+
+               procedure scan (position : Set_Signature_Certificates.Cursor)
+               is
+                  x : Signature_Certificate renames Set_Signature_Certificates.Element (position);
+               begin
+                  if not trusted_found and not fatal then
+                     if Core.RSA.rsa_verify_cert (key       => USS (x.sc_cert),
+                                                  signature => USS (x.sc_sign),
+                                                  fd        => dest_fd) = RESULT_OK
+                     then
+                        if x.trusted then
+                           trusted_found := True;
+                        end if;
+                     else
+                        fatal := True;
+                     end if;
+                  end if;
+               end scan;
+            begin
+               sc.Iterate (scan'Access);
+               if trusted_found then
+                  return RESULT_OK;
+               else
+                  Event.emit_error ("No trusted certificate has been used to sign the repository");
+                  return RESULT_FATAL;
+               end if;
+            end;
+         when SIG_NONE =>
+            return RESULT_OK;
+      end case;
+   end archive_extract_check_archive;
+
+
 --     --------------------------------------------------------------------
 --     --  fetch_meta
 --     --------------------------------------------------------------------
