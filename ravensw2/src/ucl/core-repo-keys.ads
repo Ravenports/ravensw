@@ -5,7 +5,7 @@ with libucl;
 
 package Core.Repo.Keys is
 
-   function load_fingerprints (reponame : String) return Action_Result;
+   function load_fingerprints (my_repo : A_repo) return Action_Result;
 
 private
 

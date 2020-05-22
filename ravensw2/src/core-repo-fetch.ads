@@ -62,6 +62,11 @@ private
    function parse_sigkey (encoded_sigkey : String;
                           signature      : out Signature_Certificate) return Action_Result;
 
+   function check_fingerprints
+     (my_repo  : A_repo;
+      cert_set : in out Set_Signature_Certificates.Vector;
+      fatal    : Boolean) return Boolean;
+
 --     function archive_extract_check_archive
 --       (my_repo   : A_repo;
 --        fd        : Unix.File_Descriptor;

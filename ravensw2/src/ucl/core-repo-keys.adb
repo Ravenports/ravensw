@@ -101,12 +101,8 @@ package body Core.Repo.Keys is
    --------------------------------------------------------------------
    --  load_fingerprints
    --------------------------------------------------------------------
-   function load_fingerprints (reponame : String) return Action_Result
-   is
-      my_repo : A_repo;
+   function load_fingerprints (my_repo : A_repo) return Action_Result is
    begin
-      my_repo := get_repository (reponame);
-
       if load_fingerprints_by_type (my_repo, trusted) /= RESULT_OK then
          Event.emit_error ("Error loading trusted certificates");
          return RESULT_FATAL;

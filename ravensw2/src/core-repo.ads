@@ -172,7 +172,7 @@ private
          fulldb            : Text;
          fulldb_archive    : Text;
          digest_format     : Checksum.A_Checksum_Type;
-         cert              : A_cert_crate.Vector;
+         cert_set          : A_cert_crate.Vector;
          packing_format    : A_package_format := TZS;
          revision          : Integer;
          end_of_life       : Value_EOL;

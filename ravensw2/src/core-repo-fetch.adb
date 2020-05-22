@@ -9,6 +9,8 @@ with Core.Context;
 with Core.Event;
 with Core.Utilities;
 with Core.Fetching;
+with Core.Repo.Keys;
+with Core.Checksum;
 
 with libarchive;
 with libarchive_h;
@@ -401,8 +403,9 @@ package body Core.Repo.Fetch is
                   Event.emit_error ("Repo SIG_FINGERPRINT insertion failed");
                   return RESULT_FATAL;
                end if;
-            --  TODO: check fingerprints
-
+               if not check_fingerprints (my_repo, cert_set, True) then
+                  return RESULT_FATAL;
+               end if;
             end;
       end case;
 
@@ -480,15 +483,128 @@ package body Core.Repo.Fetch is
       end if;
 
       case format is
-         when 0 =>
-            signature.method := sc_signature;
-         when 1 =>
-            signature.method := sc_certificate;
+         when 0 => signature.method := sc_signature;
+         when 1 => signature.method := sc_certificate;
       end case;
       signature.data := SUS (encoded_sigkey (ndx + 4 .. minimum));
       return RESULT_OK;
-
    end parse_sigkey;
+
+
+   --------------------------------------------------------------------
+   --  check_fingerprints
+   --------------------------------------------------------------------
+   function check_fingerprints
+     (my_repo  : A_repo;
+      cert_set : in out Set_Signature_Certificates.Vector;
+      fatal    : Boolean) return Boolean
+   is
+      procedure scan_certificate (position : Set_Signature_Certificates.Cursor);
+      procedure update_trust (Element : in out Signature_Certificate);
+
+      nbgood  : Natural := 0;
+      aborted : Boolean := False;
+
+      procedure update_trust (Element : in out Signature_Certificate) is
+      begin
+         Element.trusted := True;
+         nbgood := nbgood + 1;
+      end update_trust;
+
+      procedure scan_certificate (position : Set_Signature_Certificates.Cursor)
+      is
+         procedure scan_meta_key (mk_position : A_cert_crate.Cursor);
+
+         cert : Signature_Certificate renames Set_Signature_Certificates.Element (position);
+         mk_found : Boolean := False;
+         cert_data : Text;
+
+         procedure scan_meta_key (mk_position : A_cert_crate.Cursor)
+         is
+            meta_key : Meta_Certificate renames A_cert_crate.Element (mk_position);
+         begin
+            if not mk_found and then equivalent (meta_key.name, cert.name) then
+               cert_data := meta_key.pubkey;
+               mk_found := True;
+            end if;
+         end scan_meta_key;
+      begin
+         if not aborted then
+            case cert.method is
+               when sc_unset =>
+                  Event.emit_error ("check_fingerprints(): undefined signature method");
+                  aborted := True;
+               when sc_certificate =>
+                  cert_data := cert.data;
+               when sc_signature =>
+                  --  Check meta keys
+                  my_repo.meta.cert_set.Iterate (scan_meta_key'Access);
+                  if not mk_found and then fatal then
+                     Event.emit_error ("No key with name " & USS (cert.name) & " has been found");
+                     aborted := True;
+                  end if;
+            end case;
+            if not aborted then
+               declare
+                  procedure scan_revoked (fp_position : A_Fingerprint_crate.Cursor);
+                  procedure scan_trusted (fp_position : A_Fingerprint_crate.Cursor);
+
+                  hash : constant String :=
+                    checksum.checksum_data (USS (cert_data), Checksum.HASH_TYPE_SHA256_HEX);
+                  revoked : Boolean := False;
+
+                  procedure scan_revoked (fp_position : A_Fingerprint_crate.Cursor)
+                  is
+                     cert : A_fingerprint renames A_Fingerprint_crate.Element (fp_position);
+                  begin
+                     if equivalent (cert.hash, hash) then
+                        revoked := True;
+                     end if;
+                  end scan_revoked;
+
+                  procedure scan_trusted (fp_position : A_Fingerprint_crate.Cursor)
+                  is
+                     cert : A_fingerprint renames A_Fingerprint_crate.Element (fp_position);
+                  begin
+                     if equivalent (cert.hash, hash) then
+                        cert_set.Update_Element (position, update_trust'Access);
+                     end if;
+                  end scan_trusted;
+               begin
+                  my_repo.revoked_fprint.Iterate (scan_revoked'Access);
+                  if revoked and then fatal then
+                     Event.emit_error ("At least one of the certificates has been revoked");
+                     aborted := True;
+                  end if;
+                  if not aborted then
+                     my_repo.trusted_fprint.Iterate (scan_trusted'Access);
+                  end if;
+               end;
+            end if;
+         end if;
+      end scan_certificate;
+   begin
+      if cert_set.Is_Empty then
+         Event.emit_error ("No signature found");
+      end if;
+
+      --  load fingerprints
+      if my_repo.trusted_fprint.Is_Empty then
+         if Repo.Keys.load_fingerprints (my_repo) /= RESULT_OK then
+            return False;
+         end if;
+      end if;
+
+      cert_set.Iterate (scan_certificate'Access);
+      if nbgood = 0 then
+         if fatal then
+            Event.emit_error ("No trusted public keys found");
+         end if;
+         return False;
+      end if;
+      return True;
+
+   end check_fingerprints;
 
 
 --     --------------------------------------------------------------------

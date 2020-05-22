@@ -59,6 +59,8 @@ package Core.Checksum is
    function checksum_generate_file (path : String; checksum_type : A_Checksum_Type)
                                         return String;
 
+   function checksum_data (instr : String;  checksum_type : A_Checksum_Type) return String;
+
 private
 
    CHECKSUM_SEPARATOR   : constant String (1 .. 1) := "$";
@@ -98,8 +100,6 @@ private
    function checksum_symlink_readlink
      (link_path     : String;
       checksum_type : A_Checksum_Type) return String;
-
-   function checksum_data (instr : String;  checksum_type : A_Checksum_Type) return String;
 
    function checksum_get_type_helper (frag : String) return A_Checksum_Type;
    function checksum_get_type        (cksum : String) return A_Checksum_Type;
