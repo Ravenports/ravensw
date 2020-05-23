@@ -10,7 +10,7 @@ project Ravensw is
    end Compiler;
 
    package Linker is
-      for Switches ("ada") use ("-L/raven/lib", "-lucl_pic", "-lm", "-lelf_pic", "-L../external/sqlite", "-lsqlite_pic", "-llinenoise");
+      for Switches ("ada") use ("-L/raven/lib", "-lucl_pic", "-lm", "-lelf_pic", "-L../external/sqlite", "-lsqlite_pic", "-llinenoise", "-lb2_pic", "-L/raven/libressl/lib", "-lssl_pic", "-lcrypto_pic");
    end Linker;
 
 end Ravensw;
