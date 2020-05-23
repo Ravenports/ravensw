@@ -1,11 +1,16 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Core.Unix;
 with libucl;
 
 package Core.Repo.Keys is
 
-   function load_fingerprints (my_repo : A_repo) return Action_Result;
+   function load_fingerprints (my_repo : in out A_repo) return Action_Result;
+
+   function extract_public_key (metafd : Unix.File_Descriptor;
+                                name   : String;
+                                rc     : out Action_Result) return Text;
 
 private
 

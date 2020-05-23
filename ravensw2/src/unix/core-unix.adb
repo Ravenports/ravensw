@@ -645,7 +645,7 @@ package body Core.Unix is
 
 
    --------------------------------------------------------------------
-   --  unlink
+   --  unlink #1
    --------------------------------------------------------------------
    function unlink (path : String) return Boolean
    is
@@ -656,6 +656,27 @@ package body Core.Unix is
       c_path := IC.Strings.New_String (path);
       res := C_unlink (c_path);
       IC.Strings.Free (c_path);
+      return (res = IC.int (0));
+   end unlink;
+
+
+   --------------------------------------------------------------------
+   --  unlink #2
+   --------------------------------------------------------------------
+   function unlink (fd            : File_Descriptor;
+                    relative_path : String;
+                    is_directory  : Boolean := False) return Boolean
+   is
+      use type IC.int;
+      c_path : IC.Strings.chars_ptr;
+      res : IC.int;
+   begin
+      c_path := IC.Strings.New_String (relative_path);
+      if is_directory then
+         res := C_unlinkat (fd, c_path, 1);
+      else
+         res := C_unlinkat (fd, c_path, 0);
+      end if;
       return (res = IC.int (0));
    end unlink;
 

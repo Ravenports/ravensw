@@ -4,7 +4,6 @@
 with Ada.Directories;
 with System;
 
-with Core.Unix;
 with Core.Event;
 with Ucl;
 
@@ -101,7 +100,7 @@ package body Core.Repo.Keys is
    --------------------------------------------------------------------
    --  load_fingerprints
    --------------------------------------------------------------------
-   function load_fingerprints (my_repo : A_repo) return Action_Result is
+   function load_fingerprints (my_repo : in out A_repo) return Action_Result is
    begin
       if load_fingerprints_by_type (my_repo, trusted) /= RESULT_OK then
          Event.emit_error ("Error loading trusted certificates");
@@ -186,5 +185,73 @@ package body Core.Repo.Keys is
       return RESULT_OK;
 
    end load_fingerprints_by_type;
+
+
+   --------------------------------------------------------------------
+   --  extract_public_key
+   --------------------------------------------------------------------
+   function extract_public_key (metafd : Unix.File_Descriptor;
+                                name   : String;
+                                rc     : out Action_Result) return Text
+   is
+      parser : Ucl.T_parser;
+      top    : access libucl.ucl_object_t;
+      pubkey : Text;
+   begin
+      parser := Ucl.ucl_parser_new_nofilevars;
+      if not Ucl.ucl_parser_add_fd (parser, metafd) then
+         Event.emit_error ("cannot parse fingerprints: " & Ucl.ucl_parser_get_error (parser));
+         libucl.ucl_parser_free (parser);
+         rc := RESULT_FATAL;
+         return blank;
+      end if;
+
+      top := Ucl.ucl_parser_get_object (parser);
+      libucl.ucl_parser_free (parser);
+
+      --  Now search for the required key
+      declare
+         obj  : access constant libucl.ucl_object_t;
+         item : access constant libucl.ucl_object_t;
+         iter : aliased libucl.ucl_object_iter_t;
+      begin
+         obj := Ucl.ucl_object_find_key (top, "cert");
+         if not Ucl.type_is_object (obj) then
+            Event.emit_error ("cannot find key for signature " & name & " in meta");
+            libucl.ucl_object_unref (top);
+            rc := RESULT_FATAL;
+            return blank;
+         end if;
+
+         iter := libucl.ucl_object_iter_t (System.Null_Address);
+         loop
+            item := Ucl.ucl_object_iterate (obj, iter'Access, True);
+            exit when item = null;
+
+            declare
+               elt : access constant libucl.ucl_object_t;
+               dat : access constant libucl.ucl_object_t;
+            begin
+               elt := Ucl.ucl_object_find_key (item, "name");
+               if Ucl.type_is_string (elt) then
+                  if Ucl.ucl_object_tostring (elt) = name then
+                     dat := Ucl.ucl_object_find_key (item, "data");
+                     if Ucl.type_is_string (dat) then
+                        pubkey := SUS (Ucl.ucl_object_tostring (dat));
+                        exit;
+                     end if;
+                  end if;
+               end if;
+            end;
+         end loop;
+      end;
+
+      libucl.ucl_object_unref (top);
+
+      --  don't close metafd
+      rc := RESULT_OK;
+      return pubkey;
+
+   end extract_public_key;
 
 end Core.Repo.Keys;

@@ -10,6 +10,7 @@ with Core.Event;
 with Core.Utilities;
 with Core.Fetching;
 with Core.Repo.Keys;
+with Core.Repo.Meta;
 with Core.Checksum;
 with Core.RSA;
 
@@ -333,7 +334,7 @@ package body Core.Repo.Fetch is
    --  archive_extract_archive
    --------------------------------------------------------------------
    function archive_extract_archive
-     (my_repo  : A_repo;
+     (my_repo  : in out A_repo;
       fd       : Unix.File_Descriptor;
       filename : String;
       dest_fd  : Unix.File_Descriptor;
@@ -494,7 +495,7 @@ package body Core.Repo.Fetch is
    --  check_fingerprints
    --------------------------------------------------------------------
    function check_fingerprints
-     (my_repo  : A_repo;
+     (my_repo  : in out A_repo;
       cert_set : in out Set_Signature_Certificates.Vector) return Boolean
    is
       procedure scan_certificate (position : Set_Signature_Certificates.Cursor);
@@ -528,7 +529,7 @@ package body Core.Repo.Fetch is
             end if;
          end scan_meta_key;
 
-         procedure update_cert  (Element : in out Signature_Certificate) is
+         procedure update_cert (Element : in out Signature_Certificate) is
          begin
            Element.sc_cert := cert_data;
          end update_cert;
@@ -611,10 +612,50 @@ package body Core.Repo.Fetch is
 
 
    --------------------------------------------------------------------
+   --  fingerprint_certs_verified
+   --------------------------------------------------------------------
+   function fingerprint_certs_verified
+     (metafd   : Unix.File_Descriptor;
+      cert_set : Set_Signature_Certificates.Vector) return Action_Result
+   is
+      procedure scan (position : Set_Signature_Certificates.Cursor);
+
+      trusted_found : Boolean := False;
+      fatal         : Boolean := False;
+
+      procedure scan (position : Set_Signature_Certificates.Cursor)
+      is
+         x : Signature_Certificate renames Set_Signature_Certificates.Element (position);
+      begin
+         if not trusted_found and not fatal then
+            if Core.RSA.rsa_verify_cert (key       => USS (x.sc_cert),
+                                         signature => USS (x.sc_sign),
+                                         fd        => metafd) = RESULT_OK
+            then
+               if x.trusted then
+                  trusted_found := True;
+               end if;
+            else
+               fatal := True;
+            end if;
+         end if;
+      end scan;
+   begin
+      cert_set.Iterate (scan'Access);
+      if trusted_found then
+         return RESULT_OK;
+      else
+         Event.emit_error ("No trusted certificate has been used to sign the repository");
+         return RESULT_FATAL;
+      end if;
+   end fingerprint_certs_verified;
+
+
+   --------------------------------------------------------------------
    --  archive_extract_check_archive
    --------------------------------------------------------------------
    function archive_extract_check_archive
-     (my_repo   : A_repo;
+     (my_repo   : in out A_repo;
       fd        : Unix.File_Descriptor;
       filename  : String;
       dest_fd   : Unix.File_Descriptor) return Action_Result
@@ -655,98 +696,165 @@ package body Core.Repo.Fetch is
                return RESULT_FATAL;
             end if;
          when SIG_FINGERPRINT =>
-            declare
-               procedure scan (position : Set_Signature_Certificates.Cursor);
-
-               trusted_found : Boolean := False;
-               fatal         : Boolean := False;
-
-               procedure scan (position : Set_Signature_Certificates.Cursor)
-               is
-                  x : Signature_Certificate renames Set_Signature_Certificates.Element (position);
-               begin
-                  if not trusted_found and not fatal then
-                     if Core.RSA.rsa_verify_cert (key       => USS (x.sc_cert),
-                                                  signature => USS (x.sc_sign),
-                                                  fd        => dest_fd) = RESULT_OK
-                     then
-                        if x.trusted then
-                           trusted_found := True;
-                        end if;
-                     else
-                        fatal := True;
-                     end if;
-                  end if;
-               end scan;
-            begin
-               sc.Iterate (scan'Access);
-               if trusted_found then
-                  return RESULT_OK;
-               else
-                  Event.emit_error ("No trusted certificate has been used to sign the repository");
-                  return RESULT_FATAL;
-               end if;
-            end;
+            return fingerprint_certs_verified (dest_fd, sc);
          when SIG_NONE =>
             return RESULT_OK;
       end case;
    end archive_extract_check_archive;
 
 
---     --------------------------------------------------------------------
---     --  fetch_meta
---     --------------------------------------------------------------------
---     function fetch_meta
---       (my_repo   : A_repo;
---        timestamp : Unix.T_epochtime) return Action_Result
---     is
---        procedure load_meta;
---        procedure cleanup;
---
---        dbdirfd : Unix.File_Descriptor;
---        fd      : Unix.File_Descriptor;
---        metafd  : Unix.File_Descriptor;
---        rc      : Action_Result;
---     begin
---        dbdirfd := Context.reveal_db_directory_fd;
---        fd := fetch_remote_tmp (my_repo, "meta", timestamp, rc);
---        if not Unix.file_connected (fd) then
---           return rc;
---        end if;
---
---        declare
---           filepath : String := Repo.meta_filename (repo_name (my_repo));
---           flags    : Unix.T_Open_Flags := (RDONLY => True,
---                                            WRONLY => True,
---                                            CREAT  => True,
---                                            TRUNC  => True,
---                                            others => False);
---        begin
---           metafd := Unix.open_file (dbdirfd, filepath, flags);
---           if not Unix.file_connected (metafd) then
---              if Unix.close_file (fd) then
---                 null;
---              end if;
---              return rc;
---           end if;
---        end;
---
---        if Repo.repo_signature_type (my_repo) = SIG_PUBKEY then
---
---
---        if repo.signature_type = SIG_PUBKEY then
---           --  if ((rc = pkg_repo_archive_extract_check_archive(fd, "meta", repo, metafd))
---  != EPKG_OK) {
---           --  TODO:
---           if False then
---              close (metafd);
---              close (fd);
---              return rc;
---           end if;
---           load_meta;
---           cleanup;
---           return rc;
---        end if;
---     end fetch_meta;
+   --------------------------------------------------------------------
+   --  fetch_meta
+   --------------------------------------------------------------------
+   function fetch_meta
+     (my_repo   : in out A_repo;
+      timestamp : Unix.T_epochtime) return Action_Result
+   is
+      procedure silent_close (this_fd : Unix.File_Descriptor);
+      procedure erase_metafile;
+
+      dbdirfd : Unix.File_Descriptor;
+      fd      : Unix.File_Descriptor;
+      metafd  : Unix.File_Descriptor;
+      rc      : Action_Result;
+      sc      : Set_Signature_Certificates.Vector;
+
+      procedure silent_close (this_fd : Unix.File_Descriptor)
+      is
+         res : Boolean;
+      begin
+         res := Unix.close_file (this_fd);
+      end silent_close;
+
+      procedure erase_metafile
+      is
+         rel_filename : String := Repo.meta_filename (repo_name (my_repo));
+         res : Boolean;
+      begin
+         res := Unix.unlink (dbdirfd, rel_filename, False);
+      end erase_metafile;
+
+   begin
+      dbdirfd := Context.reveal_db_directory_fd;
+      fd := fetch_remote_tmp (my_repo, "meta", timestamp, rc);
+      if not Unix.file_connected (fd) then
+         return rc;
+      end if;
+
+      declare
+         filepath : String := Repo.meta_filename (repo_name (my_repo));
+         flags    : Unix.T_Open_Flags := (RDONLY => True,
+                                          WRONLY => True,
+                                          CREAT  => True,
+                                          TRUNC  => True,
+                                          others => False);
+      begin
+         metafd := Unix.open_file (dbdirfd, filepath, flags);
+         if not Unix.file_connected (metafd) then
+            silent_close (fd);
+            Event.emit_error ("failed to open " & filepath & " from db directory fd");
+            return RESULT_FATAL;
+         end if;
+      end;
+
+      case Repo.repo_signature_type (my_repo) is
+         when SIG_PUBKEY =>
+            if archive_extract_check_archive (my_repo  => my_repo,
+                                              fd       => fd,
+                                              filename => "meta",
+                                              dest_fd  => metafd) /= RESULT_OK
+            then
+               rc := RESULT_FATAL;
+            end if;
+
+            silent_close (fd);
+            if rc = RESULT_OK then
+               my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+            end if;
+            if rc /= RESULT_OK then
+               erase_metafile;
+            end if;
+            silent_close (metafd);
+            return rc;
+
+         when SIG_FINGERPRINT =>
+
+            --
+            --  For fingerprints we cannot just load pubkeys as they could be in metafile itself
+            --  To do it, we parse meta and for each unloaded pubkey we try to return
+            --  a corresponding key from meta file.
+            --
+            if archive_extract_archive (my_repo  => my_repo,
+                                        fd       => fd,
+                                        filename => "meta",
+                                        dest_fd  => metafd,
+                                        cert_set => sc) /= RESULT_OK
+            then
+               silent_close (metafd);
+               erase_metafile;
+               silent_close (fd);
+               return RESULT_FATAL;
+            end if;
+
+            silent_close (fd);
+
+            --  load fingerprints
+            if my_repo.trusted_fprint.Is_Empty then
+               if Repo.Keys.load_fingerprints (my_repo) /= RESULT_OK then
+                  silent_close (metafd);
+                  erase_metafile;
+                  return RESULT_FATAL;
+               end if;
+            end if;
+
+            declare
+               procedure update_cert (Element : in out Signature_Certificate);
+
+               new_cert : Text;
+
+               procedure update_cert (Element : in out Signature_Certificate) is
+               begin
+                  Element.sc_cert := new_cert;
+               end update_cert;
+
+               procedure scan (position : Set_Signature_Certificates.Cursor)
+               is
+                  x : Signature_Certificate renames Set_Signature_Certificates.Element (position);
+                  tmp : Text;
+                  rc  : Action_Result;
+               begin
+                  tmp := Repo.Keys.extract_public_key (metafd, USS (x.name), rc);
+                  if rc = RESULT_OK then
+                     new_cert := tmp;
+                     sc.Update_Element (Position, update_cert'Access);
+                  end if;
+               end scan;
+            begin
+               sc.Iterate (scan'Access);
+            end;
+
+            if not check_fingerprints (my_repo, sc) then
+               silent_close (metafd);
+               erase_metafile;
+               return RESULT_FATAL;
+            end if;
+
+            if fingerprint_certs_verified (metafd, sc) /= RESULT_OK then
+               silent_close (metafd);
+               erase_metafile;
+               return RESULT_FATAL;
+            else
+               silent_close (metafd);
+               return RESULT_OK;
+            end if;
+
+         when SIG_NONE =>
+
+            silent_close (fd);
+            silent_close (metafd);
+            return RESULT_OK;
+      end case;
+
+   end fetch_meta;
 
 end Core.Repo.Fetch;

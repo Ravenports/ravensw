@@ -123,14 +123,14 @@ port_faccessat_writable (int fd, const char *path)
 }
 
 int
-port_unlinkat(int fd, const char *path, int flag)
+port_unlinkat(int fd, const char *path, int remove_dir)
 {
 	int ret;
 
 	if ((ret = file_chdir_lock(fd) != 0))
 		return(ret);
 
-	if (flag & AT_REMOVEDIR) {
+	if (remove_dir) {
 		ret = rmdir(path);
 	} else {
 		ret = unlink(path);

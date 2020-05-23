@@ -98,9 +98,9 @@ package Core.Unix is
    pragma Import (C, C_faccessat, "port_faccessat");
 
    function C_unlinkat
-     (dfd  : IC.int;
+     (dfd  : unix.File_Descriptor;
       path : IC.Strings.chars_ptr;
-      flag : IC.int) return IC.int;
+      remove_dir : IC.int) return IC.int;
    pragma Import (C, C_unlinkat, "port_unlinkat");
 
    type struct_stat is limited private;
@@ -188,6 +188,9 @@ package Core.Unix is
 
    --  Returns True in unlink operation success
    function unlink (path : String) return Boolean;
+   function unlink (fd            : File_Descriptor;
+                    relative_path : String;
+                    is_directory  : Boolean := False) return Boolean;
 
    --  Returns True if lseek operation successful
    function reset_file_for_reading (fd : Unix.File_Descriptor) return Boolean;
