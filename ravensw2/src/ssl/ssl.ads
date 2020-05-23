@@ -123,12 +123,12 @@ private
       x  : access RSA_Access;
       cb : cb_pem_password;
       u  : Void_Ptr) return RSA_Access;
-   pragma Import (C, PEM_read_bio_RSA_PUBKEY);
+   pragma Import (C, PEM_read_bio_RSA_PUBKEY, "PEM_read_bio_RSA_PUBKEY");
 
    function ERR_error_string (e : IC.unsigned_long; buf : access IC.char) return ICS.chars_ptr;
-   pragma Import (C, ERR_error_string);
+   pragma Import (C, ERR_error_string, "ERR_error_string");
 
    function ERR_get_error return IC.unsigned_long;
-   pragma Import (C, ERR_get_error);
+   pragma Import (C, ERR_get_error, "ERR_get_error");
 
 end SSL;
