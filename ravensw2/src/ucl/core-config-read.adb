@@ -245,14 +245,16 @@ package body Core.Config.Read is
             EV.emit_error (event_pipe & " is not a fifo or socket");
 
          when Unix.named_pipe =>
-            if not Context.register_event_pipe_via_file (event_pipe) then
+            if Context.register_event_pipe_via_file (event_pipe) then
+               EV.emit_debug (1, "FIFO Event pipe " & SQ (event_pipe) & " opened.");
+            else
                EV.emit_errno ("open event pipe (FIFO)", event_pipe, Unix.errno);
             end if;
 
          when Unix.unix_socket =>
             case Context.register_event_pipe_via_socket (event_pipe) is
                when Unix.connected =>
-                  null;
+                  EV.emit_debug (1, "Event pipe " & SQ (event_pipe) & " socket opened.");
                when Unix.failed_creation
                   | Unix.failed_connection =>
                   EV.emit_errno (sock_error, event_pipe, Unix.errno);
