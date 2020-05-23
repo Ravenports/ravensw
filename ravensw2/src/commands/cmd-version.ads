@@ -15,6 +15,35 @@ private
    --  ravensw version -T <pkgname> <pattern>
    function do_testpattern (pkgname, pattern : String) return Boolean;
 
+   option_verbose  : Boolean;
+   option_origin   : Boolean;
+   option_name     : Boolean;
+   option_status   : Boolean;
+   option_nostatus : Boolean;
+
+   --  output
+   procedure print_version
+     (pkg_version  : String;
+      pkg_name     : String;
+      pkg_origin   : String;
+      source       : String;
+      ver          : String;
+      limchar      : Character);
+
+   --  ravensw -R [-l limchar | -L limchar] [-O origin | -n pkgname] [-r reponame]
+   --  [-U] [-e|-g|-x] pattern
+   function do_remote_index
+     (match_char  : Character;
+      not_char    : Character;
+      match       : Database.Match_Behavior;
+      pattern     : String;
+      matchorigin : String;
+      matchname   : String;
+      auto_update : Boolean;
+      quiet       : Boolean;
+      reponame    : String) return Boolean;
+
+
    --  ravensw -I [-l limchar | -L limchar] [-O origin | -n pkgname] [-e|-g|-x] pattern
 --     function do_conspiracy_index
 --       (match_char  : Character;
@@ -24,16 +53,5 @@ private
 --        matchorigin : String;
 --        matchname   : String) return Boolean;
 --
---     --  ravensw -R [-l limchar | -L limchar] [-O origin | -n pkgname] [-r reponame]
---     --  [-U] [-e|-g|-x] pattern
---     function do_remote_index
---       (match_char  : Character;
---        not_char    : Character;
---        match       : PkgDB.T_match;
---        pattern     : String;
---        matchorigin : String;
---        matchname   : String;
---        auto_update : Boolean;
---        quiet       : Boolean;
---        reponame    : String) return Boolean;
+
 end Cmd.Version;

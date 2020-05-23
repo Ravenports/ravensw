@@ -206,7 +206,7 @@ package body SSL is
       ICS.Free (m);
       ICS.Free (sigbuf);
       return (res /= IC.int (0));
-   end
+   end RSA_cert_verified;
 
 
    --------------------------------------------------------------------

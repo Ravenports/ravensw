@@ -58,9 +58,9 @@ package body Core.VFS is
       res      : IC.int;
    begin
       newpath := ICS.New_String (basename);
-      res     := Unix.C_unlinkat (dfd  => IC.int (dfd),
+      res     := Unix.C_unlinkat (dfd  => dfd,
                                   path => newpath,
-                                  flag => 0);
+                                  remove_dir => 0);
       ICS.Free (newpath);
       return res;
    end dbdir_unlink;

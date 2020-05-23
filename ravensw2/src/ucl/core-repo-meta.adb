@@ -228,7 +228,7 @@ package body Core.Repo.Meta is
             item := Ucl.ucl_object_iterate (obj, iter'Access, True);
             exit when item = null;
 
-            result.cert.Append (meta_parse_cert (item));
+            result.cert_set.Append (meta_parse_cert (item));
          end loop;
       end;
 

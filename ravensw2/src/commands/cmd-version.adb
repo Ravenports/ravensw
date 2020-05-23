@@ -6,14 +6,16 @@ with Core.Unix;
 with Core.Config;
 with Core.Event;
 with Core.Version;
---  with Core.PkgDB_Query;
---  with Core.Printf;
---  with Cmd.Update;
+with Core.Database.Operations;
+with Core.Repo.Iterator.Packages;
+with Core.Printf;
+with Core.Pkgtypes;
+with Cmd.Update;
 
 package body Cmd.Version is
 
-   package EV  renames Core.Event;
    package VER renames Core.Version;
+   package DBO renames Core.Database.Operations;
 
    --------------------------------------------------------------------
    --  execute_version_command
@@ -40,7 +42,8 @@ package body Cmd.Version is
                         autodetect := False;
                         use_catalog := True;
                      when others =>
-                        EV.emit_notice ("Invalid VERSION_SOURCE in configuration: " & versionsrc);
+                        Event.emit_notice
+                          ("Invalid VERSION_SOURCE in configuration: " & versionsrc);
                   end case;
                end if;
 
@@ -68,6 +71,13 @@ package body Cmd.Version is
          Database.set_case_sensitivity (sensitive => False);
       end if;
 
+      option_verbose  := comline.verb_verbose;
+      option_origin   := comline.version_disp_origin;
+      option_name     := not IsBlank (comline.version_pkg_name);
+      option_status   := (comline.version_not_char /= Character'First);
+      option_nostatus := (comline.version_match_char /= Character'First);
+
+
 --        if use_conspiracy then
 --           return do_conspiracy_index
 --             (match_char  => comline.version_match_char,
@@ -77,19 +87,19 @@ package body Cmd.Version is
 --              matchorigin => USS (comline.version_origin),
 --              matchname   => USS (comline.version_pkg_name));
 --        end if;
---
---        if use_catalog then
---           return do_remote_index
---             (match_char  => comline.version_match_char,
---              not_char    => comline.version_not_char,
---              match       => match,
---              pattern     => USS (comline.verb_name_pattern),
---              matchorigin => USS (comline.version_origin),
---              matchname   => USS (comline.version_pkg_name),
---              auto_update => not comline.verb_skip_catalog,
---              quiet       => comline.verb_quiet,
---              reponame    => USS (comline.verb_repo_name));
---        end if;
+
+      if use_catalog then
+         return do_remote_index
+           (match_char  => comline.version_match_char,
+            not_char    => comline.version_not_char,
+            match       => match,
+            pattern     => USS (comline.verb_name_pattern),
+            matchorigin => USS (comline.version_origin),
+            matchname   => USS (comline.version_pkg_name),
+            auto_update => not comline.verb_skip_catalog,
+            quiet       => comline.verb_quiet,
+            reponame    => USS (comline.verb_repo_name));
+      end if;
 
       return False;  --  Can't happen
    end execute_version_command;
@@ -118,6 +128,61 @@ package body Cmd.Version is
    end do_testpattern;
 
 
+   --------------------------------------------------------------------
+   --  print_version
+   --------------------------------------------------------------------
+   procedure print_version
+     (pkg_version  : String;
+      pkg_name     : String;
+      pkg_origin   : String;
+      source       : String;
+      ver          : String;
+      limchar      : Character)
+   is
+      key : Character;
+   begin
+      if IsBlank (ver) then
+         if IsBlank (source) then
+            key := '!';
+         else
+            key := '?';
+         end if;
+      else
+         case Core.Version.pkg_version_cmp (pkg_version, ver) is
+            when -1 => key := '<';
+            when  0 => key := '=';
+            when  1 => key := '>';
+         end case;
+      end if;
+
+      if option_status and then limchar /= key then
+         return;
+      end if;
+
+      if option_nostatus and then limchar = key then
+         return;
+      end if;
+
+      if option_origin then
+         TIO.Put (pad_right (pkg_origin, 34) & " " & key);
+      else
+         TIO.Put (pad_right (pkg_name & "-" & pkg_version, 34) & " " & key);
+      end if;
+
+      if option_verbose then
+         case key is
+            when '<' => TIO.Put ("   needs updating (" & source & " has " & ver & ")");
+            when '=' => TIO.Put ("   up-to-date with " & source);
+            when '>' => TIO.Put ("   succeeds " & source & " (" & source & " has " & ver & ")");
+            when '?' => TIO.Put ("   orphaned: " & pkg_origin);
+            when '!' => TIO.Put ("   Comparison failed");
+            when others => TIO.Put_Line ("?????");
+         end case;
+      end if;
+      TIO.Put_Line ("");
+   end print_version;
+
+
 --     --------------------------------------------------------------------
 --     --  do_conspiracy_index
 --     --------------------------------------------------------------------
@@ -135,111 +200,160 @@ package body Cmd.Version is
 --     end do_conspiracy_index;
 --
 --
---     --------------------------------------------------------------------
---     --  do_remote_index
---     --------------------------------------------------------------------
---     function do_remote_index
---       (match_char  : Character;
---        not_char    : Character;
---        match       : PkgDB.T_match;
---        pattern     : String;
---        matchorigin : String;
---        matchname   : String;
---        auto_update : Boolean;
---        quiet       : Boolean;
---        reponame    : String) return Boolean
---     is
---        procedure cleanup;
---
---        retcode : Pkg_Error_Type;
---        db      : PkgDB.struct_pkgdb;
---
---        procedure cleanup is
---        begin
---           if PkgDB.pkgdb_release_lock (db, PkgDB.PKGDB_LOCK_READONLY) then
---              null;
---           end if;
---           PkgDB.pkgdb_close (db);
---        end cleanup;
---     begin
---        if auto_update then
---           retcode := Cmd.Update.pkgcli_update (force    => False,
---                                                strict   => False,
---                                                quiet    => quiet,
---                                                reponame => reponame);
---           if retcode /= EPKG_OK then
---              return False;
---           end if;
---        end if;
---
---        if PkgDB.pkgdb_open_all (db       => db,
---                                 dbtype   => PkgDB.PKGDB_REMOTE,
---                                 reponame => reponame) /= EPKG_OK
---        then
---           return False;
---        end if;
---
---        if not PkgDB.pkgdb_obtain_lock (db, PkgDB.PKGDB_LOCK_READONLY) then
---           PkgDB.pkgdb_close (db);
---           TIO.Put_Line
---             (TIO.Standard_Error,
---              "Cannot get a read lock on a database. It is locked by another process");
---           return False;
---        end if;
---
---        declare
---           iter : IBS.Iterator_Binary_Sqlite;
---           pkg  : T_pkg_Access;
---           check_origin : Boolean := not IsBlank (matchorigin);
---           check_name   : Boolean := not IsBlank (matchname);
---           good_result  : Boolean := True;
---        begin
---           iter := PkgDB_Query.pkgdb_query (db, pattern, match);
---           if iter.invalid_iterator then
---              cleanup;
---              return False;
---           end if;
---
---           loop
---              exit when iter.Next (pkg, Iterators.PKG_LOAD_FLAG_BASIC) /= EPKG_OK;
---              declare
---                 name   : constant String := Printf.format_attribute (pkg.all, Printf.PKG_NAME);
---                 origin : constant String := Printf.format_attribute (pkg.all, Printf.PKG_ORIGIN);
---                 skip   : Boolean := False;
---
---                 iter_remote : IBS.Iterator_Binary_Sqlite;
---              begin
---                 if check_origin then
---                    if origin /= matchorigin then
---                       skip := True;
---                    end if;
---                 elsif check_name then
---                    if name /= matchname then
---                       skip := True;
---                    end if;
---                 end if;
---
---                 if not skip then
---                    --  TODO: it_remote = pkgdb_repo_query
---                    --     (db, is_origin ? origin : name, MATCH_EXACT, reponame);
---                    if iter_remote.invalid_iterator then
---                       good_result := False;
---                       exit;
---                    end if;
---
---                    --  loop
---                    --  end loop
---                    IBS.Free (iter_remote);
---                 end if;
---              end;
---              delete_pkg (pkg);
---           end loop;
---
---           IBS.Free (iter);
---           cleanup;
---           return good_result;
---        end;
---
---     end do_remote_index;
+   --------------------------------------------------------------------
+   --  do_remote_index
+   --------------------------------------------------------------------
+   function do_remote_index
+     (match_char  : Character;
+      not_char    : Character;
+      match       : Database.Match_Behavior;
+      pattern     : String;
+      matchorigin : String;
+      matchname   : String;
+      auto_update : Boolean;
+      quiet       : Boolean;
+      reponame    : String) return Boolean
+   is
+      procedure release_db;
+      function compare_remote (local_pkg : Pkgtypes.A_Package; is_origin : in out Boolean)
+                               return Boolean;
+
+      retcode : Action_Result;
+      db      : DBO.RDB_Connection;
+
+      procedure release_db is
+      begin
+         if not DBO.rdb_release_lock (db, Database.RDB_LOCK_READONLY) then
+            Event.emit_error ("Cannot release read lock on database.");
+         end if;
+         DBO.rdb_close (db);
+      end release_db;
+
+      function compare_remote (local_pkg : Pkgtypes.A_Package;
+                               is_origin : in out Boolean) return Boolean
+      is
+         loc_name    : String := Printf.format_attribute (local_pkg, Printf.PKG_NAME);
+         loc_origin  : String := Printf.format_attribute (local_pkg, Printf.PKG_ORIGIN);
+         loc_version : String := Printf.format_attribute (local_pkg, Printf.PKG_VERSION);
+         skip        : Boolean := False;
+         it_remote   : Repo.Iterator.Packages.SQLite_Iterator;
+         remote_pkg  : aliased Pkgtypes.A_Package;
+         rem_pattern : Text;
+      begin
+         if option_origin then
+            if loc_origin /= matchorigin then
+               skip := True;
+               is_origin := True;
+            end if;
+         elsif option_name then
+            if loc_name /= matchname then
+               skip := True;
+               is_origin := False;
+            end if;
+         end if;
+         if not skip then
+            if is_origin then
+               rem_pattern := SUS (loc_origin);
+            else
+               rem_pattern := SUS (loc_name);
+            end if;
+            if it_remote.initialize_as_standard_query
+              (reponame => reponame,
+               pattern  => USS (rem_pattern),
+               match    => Database.MATCH_EXACT) /= RESULT_OK
+            then
+               case it_remote.Next (pkg_access => remote_pkg'Unchecked_Access,
+                                    sections   => (Pkgtypes.basic => True, others => False))
+               is
+                  when RESULT_OK =>
+                     print_version
+                       (pkg_version => loc_version,
+                        pkg_name    => loc_name,
+                        pkg_origin  => loc_origin,
+                        source      => "remote",
+                        ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION),
+                        limchar     => match_char);
+
+                  when others =>
+                     print_version
+                       (pkg_version => loc_version,
+                        pkg_name    => loc_name,
+                        pkg_origin  => loc_origin,
+                        source      => "remote",
+                        ver         => "",
+                        limchar     => not_char);
+               end case;
+            else
+               return False;
+            end if;
+         end if;
+         return True;
+      end compare_remote;
+
+   begin
+      if auto_update then
+         retcode := Cmd.Update.pkgcli_update (force    => False,
+                                              strict   => False,
+                                              quiet    => quiet,
+                                              reponame => reponame);
+         if retcode /= RESULT_OK then
+            return False;
+         end if;
+      end if;
+
+      if DBO.rdb_open_all (db, Database.RDB_REMOTE) /= RESULT_OK then
+         return False;
+      end if;
+
+      if not DBO.rdb_obtain_lock (db, Database.RDB_LOCK_READONLY) then
+         DBO.rdb_close (db);
+         Event.emit_error ("Cannot get a read lock on database. It is locked by another process.");
+         return False;
+      end if;
+
+      declare
+         it : Repo.Iterator.Packages.SQLite_Iterator;
+         check_origin : Boolean := not IsBlank (matchorigin);
+         check_name   : Boolean := not IsBlank (matchname);
+         is_origin    : Boolean := False;
+      begin
+         if it.initialize_as_standard_query (reponame => reponame,
+                                             pattern  => pattern,
+                                             match    => match) /= RESULT_OK
+         then
+            Event.emit_error ("Failed to initialize SQLite pkg iterator");
+            release_db;
+            return False;
+         end if;
+
+         declare
+            my_pkg : aliased Pkgtypes.A_Package;
+         begin
+            loop
+               --  Next can be OK/END/FATAL
+               case it.Next (pkg_access => my_pkg'Unchecked_Access,
+                             sections   => (Pkgtypes.basic => True, others => False))
+               is
+                  when RESULT_END =>
+                     exit;
+
+                  when RESULT_OK =>
+                     if not compare_remote (my_pkg, is_origin) then
+                        Event.emit_error ("Failed to initialize remote pkg iterator");
+                        release_db;
+                        return False;
+                     end if;
+
+                  when others =>
+                     Event.emit_error ("Failed to retrieve package in version cmd");
+                     release_db;
+                     return False;
+               end case;
+            end loop;
+         end;
+      end;
+      return True;
+
+   end do_remote_index;
 
 end Cmd.Version;
