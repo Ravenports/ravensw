@@ -87,22 +87,13 @@ package body Core.Context is
    --------------------------------------------------------------------
    function register_event_pipe_via_socket (pipe_name : String) return Unix.Unix_Socket_Result
    is
-      fd     : Unix.File_Descriptor;
-      result : Unix.Unix_Socket_Result;
    begin
       if Unix.file_connected (context.eventpipe) then
          return Unix.connected;
-      else
-         result := Unix.connect_unix_socket (pipe_name, fd);
-         case result is
-            when Unix.connected =>
-               context.eventpipe := fd;
-            when others =>
-               --  Caller has to handle failure
-               null;
-         end case;
-         return result;
       end if;
+
+      --  Caller has to handle failure
+      return Unix.connect_unix_socket (pipe_name, context.eventpipe);
    end register_event_pipe_via_socket;
 
 

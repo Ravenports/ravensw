@@ -15,7 +15,7 @@ dprint(int fd, const char *msg)
 	if ((e = dup(fd)) == -1)
 		return (-1);
 
-	if ((fp = fdopen(e, "r+")) == NULL) {
+	if ((fp = fdopen(e, "w")) == NULL) {
 		(void)close(e);
 		return (-1);
 	}
