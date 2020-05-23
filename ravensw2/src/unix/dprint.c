@@ -20,7 +20,7 @@ dprint(int fd, const char *msg)
 		return (-1);
 	}
 
-	e = fprintf(fp, msg);
+	e = fprintf(fp, "%s", msg);
 
 	fclose(fp);
 	return (e);

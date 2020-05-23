@@ -190,7 +190,8 @@ package body Core.Database.Operations.Schema is
                                        sql    => prstmt_text_sql (S),
                                        ppStmt => prepared_statements (S)'Access)
             then
-               CommonSQL.ERROR_SQLITE (db.sqlite, "prstmt_initialize", prstmt_text_sql (S));
+               CommonSQL.ERROR_SQLITE
+                 (db.sqlite, internal_srcfile, "prstmt_initialize", prstmt_text_sql (S));
                return RESULT_FATAL;
             end if;
             db.prstmt_initialized := True;
@@ -556,8 +557,11 @@ package body Core.Database.Operations.Schema is
    is
       cur_dbver : int64;
       exp_dbver : constant int64 := int64 (DB_SCHEMA_ALL);
+      func      : constant String := "rdb_upgrade";
    begin
       if CommonSQL.get_pragma (db      => db.sqlite,
+                               srcfile => internal_srcfile,
+                               func    => func,
                                sql     => "PRAGMA user_version;",
                                res     => cur_dbver,
                                silence => False) /= RESULT_OK
@@ -602,7 +606,7 @@ package body Core.Database.Operations.Schema is
 
       --  Start the update
       for step in Upgrade_Series (cur_dbver + 1) .. Upgrade_Series'Last loop
-         if not CommonSQL.transaction_begin (db.sqlite, "") then
+         if not CommonSQL.transaction_begin (db.sqlite, internal_srcfile, func, "") then
             Event.emit_error ("schema update transaction begin failed");
             return RESULT_FATAL;
          end if;
@@ -614,7 +618,7 @@ package body Core.Database.Operations.Schema is
          begin
             if not SQLite.exec_sql (db.sqlite, sql, msg) then
                Event.emit_error ("schema update failed, sql: " & sql);
-               if not CommonSQL.transaction_rollback (db.sqlite, "") then
+               if not CommonSQL.transaction_rollback (db.sqlite, internal_srcfile, func, "") then
                   null;
                end if;
                return RESULT_FATAL;
@@ -622,14 +626,14 @@ package body Core.Database.Operations.Schema is
 
             if not SQLite.exec_sql (db.sqlite, pragsql, msg) then
                Event.emit_error ("schema update failed, sql: " & pragsql);
-               if not CommonSQL.transaction_rollback (db.sqlite, "") then
+               if not CommonSQL.transaction_rollback (db.sqlite, internal_srcfile, func, "") then
                   null;
                end if;
                return RESULT_FATAL;
             end if;
          end;
 
-         if not CommonSQL.transaction_commit (db.sqlite, "") then
+         if not CommonSQL.transaction_commit (db.sqlite, internal_srcfile, func, "") then
             Event.emit_error ("schema update transaction commit failed");
             return RESULT_FATAL;
          end if;

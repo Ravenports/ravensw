@@ -18,7 +18,11 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  run_transaction
    --------------------------------------------------------------------
-   function run_transaction (db : sqlite_h.sqlite3_Access; query : String; savepoint : String)
+   function run_transaction (db        : sqlite_h.sqlite3_Access;
+                             query     : String;
+                             srcfile   : String;
+                             func      : String;
+                             savepoint : String)
                              return Boolean
    is
       function joinsql return String;
@@ -32,19 +36,18 @@ package body Core.CommonSQL is
       end joinsql;
 
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      func : constant String := "run_transaction";
    begin
       Event.emit_debug (4, "RDB: running " & SQ (joinsql));
       if SQLite.prepare_sql (db, joinsql, stmt'Access) then
          if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
-            ERROR_SQLITE (db, func, joinsql);
+            ERROR_SQLITE (db, srcfile, func, joinsql);
             SQLite.finalize_statement (stmt);
             return False;
          end if;
          SQLite.finalize_statement (stmt);
          return True;
       else
-         ERROR_SQLITE (db, func, joinsql);
+         ERROR_SQLITE (db, srcfile, func, joinsql);
          return False;
       end if;
    end run_transaction;
@@ -53,12 +56,15 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  transaction_begin
    --------------------------------------------------------------------
-   function transaction_begin (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean is
+   function transaction_begin (db        : sqlite_h.sqlite3_Access;
+                               srcfile   : String;
+                               func      : String;
+                               savepoint : String) return Boolean is
    begin
       if IsBlank (savepoint) then
-         return run_transaction (db, "BEGIN IMMEDIATE TRANSACTION", "");
+         return run_transaction (db, srcfile, func, "BEGIN IMMEDIATE TRANSACTION", "");
       else
-         return run_transaction (db, "SAVEPOINT", savepoint);
+         return run_transaction (db, srcfile, func, "SAVEPOINT", savepoint);
       end if;
    end transaction_begin;
 
@@ -66,12 +72,15 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  transaction_commit
    --------------------------------------------------------------------
-   function transaction_commit (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean is
+   function transaction_commit (db        : sqlite_h.sqlite3_Access;
+                                srcfile   : String;
+                                func      : String;
+                                savepoint : String) return Boolean is
    begin
       if IsBlank (savepoint) then
-         return run_transaction (db, "COMMIT TRANSACTION", "");
+         return run_transaction (db, srcfile, func, "COMMIT TRANSACTION", "");
       else
-         return run_transaction (db, "RELEASE SAVEPOINT", savepoint);
+         return run_transaction (db, srcfile, func, "RELEASE SAVEPOINT", savepoint);
       end if;
    end transaction_commit;
 
@@ -79,13 +88,16 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  transaction_rollback
    --------------------------------------------------------------------
-   function transaction_rollback (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean
+   function transaction_rollback (db        : sqlite_h.sqlite3_Access;
+                                  srcfile   : String;
+                                  func      : String;
+                                  savepoint : String) return Boolean
    is
    begin
       if IsBlank (savepoint) then
-         return run_transaction (db, "ROLLBACK TRANSACTION", "");
+         return run_transaction (db, srcfile, func, "ROLLBACK TRANSACTION", "");
       else
-         return run_transaction (db, "ROLLBACK TO SAVEPOINT", savepoint);
+         return run_transaction (db, srcfile, func, "ROLLBACK TO SAVEPOINT", savepoint);
       end if;
    end transaction_rollback;
 
@@ -93,10 +105,13 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  ERROR_SQLITE
    --------------------------------------------------------------------
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String)
+   procedure ERROR_SQLITE (db      : sqlite_h.sqlite3_Access;
+                           srcfile : String;
+                           func    : String;
+                           query   : String)
    is
       msg : String := "sqlite error while executing " & query &
-        " in file core-database-operations.adb," & func & "(): " &
+        " in file " & srcfile & ", " & func & ": " &
         SQLite.get_last_error_message (db);
    begin
       Event.emit_error (msg);
@@ -107,19 +122,20 @@ package body Core.CommonSQL is
    --  get_pragma
    --------------------------------------------------------------------
    function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        srcfile : String;
+                        func    : String;
                         sql     : String;
                         res     : out int64;
                         silence : Boolean) return Action_Result
    is
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
-      func : constant String := "get_pragma";
       nres : SQLite.sql_int64;
    begin
       nres := 0;
       Event.emit_debug (4, "executing pragma command " & SQ (sql));
       if not SQLite.prepare_sql (db, sql, stmt'Access) then
          if not silence then
-            ERROR_SQLITE (db, func, sql);
+            ERROR_SQLITE (db, srcfile, func, sql);
          end if;
          return RESULT_FATAL;
       end if;

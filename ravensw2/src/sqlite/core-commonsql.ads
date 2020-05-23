@@ -5,13 +5,27 @@ with sqlite_h;
 
 package Core.CommonSQL is
 
-   procedure ERROR_SQLITE (db : sqlite_h.sqlite3_Access; func : String; query : String);
+   procedure ERROR_SQLITE (db      : sqlite_h.sqlite3_Access;
+                           srcfile : String;
+                           func    : String;
+                           query   : String);
 
-   function transaction_begin    (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean;
-   function transaction_commit   (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean;
-   function transaction_rollback (db : sqlite_h.sqlite3_Access; savepoint : String) return Boolean;
+   function transaction_begin    (db        : sqlite_h.sqlite3_Access;
+                                  srcfile   : String;
+                                  func      : String;
+                                  savepoint : String) return Boolean;
+   function transaction_commit   (db        : sqlite_h.sqlite3_Access;
+                                  srcfile   : String;
+                                  func      : String;
+                                  savepoint : String) return Boolean;
+   function transaction_rollback (db        : sqlite_h.sqlite3_Access;
+                                  srcfile   : String;
+                                  func      : String;
+                                  savepoint : String) return Boolean;
 
    function get_pragma (db      : sqlite_h.sqlite3_Access;
+                        srcfile : String;
+                        func    : String;
                         sql     : String;
                         res     : out int64;
                         silence : Boolean) return Action_Result;
@@ -27,6 +41,8 @@ private
 
    function run_transaction (db        : sqlite_h.sqlite3_Access;
                              query     : String;
+                             srcfile   : String;
+                             func      : String;
                              savepoint : String)
                              return Boolean;
 end Core.CommonSQL;

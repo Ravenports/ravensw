@@ -47,7 +47,7 @@ package body Core.Database.Operations is
                       return Action_Result
    is
       use type sqlite_h.enum_error_types;
-      func   : constant String := "rdb_open_all()";
+      func   : constant String := "rdb_open()";
       dbdir  : constant String := Config.configuration_value (Config.dbdir);
       key    : constant String := config.get_ci_key (Config.dbdir);
       dirfd  : Unix.File_Descriptor;
@@ -105,7 +105,10 @@ package body Core.Database.Operations is
 
          if not SQLite.open_sqlite_database_readwrite ("/" & local_ravensw_db, db.sqlite'Access)
          then
-            CommonSQL.ERROR_SQLITE (db.sqlite, func, "sqlite open");
+            CommonSQL.ERROR_SQLITE (db      => db.sqlite,
+                                    srcfile => internal_srcfile,
+                                    func    => func,
+                                    query   => "sqlite open");
             if SQLite.get_last_error_code (db.sqlite) = sqlite_h.SQLITE_CORRUPT then
                Event.emit_error
                  (func & ": Database corrupt.  Are you running on NFS?  " &
@@ -150,7 +153,7 @@ package body Core.Database.Operations is
             sql : constant String := "PRAGMA foreign_keys = ON";
          begin
             if not SQLite.exec_sql (db.sqlite, sql, msg) then
-               CommonSQL.ERROR_SQLITE (db.sqlite, func, sql);
+               CommonSQL.ERROR_SQLITE (db.sqlite, internal_srcfile, func, sql);
                rdb_close (db);
                return RESULT_FATAL;
             end if;
@@ -396,14 +399,16 @@ package body Core.Database.Operations is
       then
          SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (Unix.getpid));
          if not SQLite.step_through_statement (stmt) then
-            CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_write_lock_pid (step)", lock_pid_sql);
+            CommonSQL.ERROR_SQLITE
+              (db.sqlite, internal_srcfile, "rdb_write_lock_pid (step)", lock_pid_sql);
             SQLite.finalize_statement (stmt);
             return RESULT_FATAL;
          end if;
          SQLite.finalize_statement (stmt);
          return RESULT_OK;
       else
-         CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_write_lock_pid (prep)", lock_pid_sql);
+         CommonSQL.ERROR_SQLITE
+           (db.sqlite, internal_srcfile, "rdb_write_lock_pid (prep)", lock_pid_sql);
          return RESULT_FATAL;
       end if;
    end rdb_write_lock_pid;
@@ -447,7 +452,7 @@ package body Core.Database.Operations is
             end if;
          end loop;
       else
-         CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_check_lock_pid (prep)", query);
+         CommonSQL.ERROR_SQLITE (db.sqlite, internal_srcfile, "rdb_check_lock_pid (prep)", query);
          return RESULT_FATAL;
       end if;
       SQLite.finalize_statement (stmt);
@@ -476,14 +481,16 @@ package body Core.Database.Operations is
       then
          SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pid));
          if not SQLite.step_through_statement (stmt) then
-            CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_remove_lock_pid (step)", lock_pid_sql);
+            CommonSQL.ERROR_SQLITE
+              (db.sqlite, internal_srcfile, "rdb_remove_lock_pid (step)", lock_pid_sql);
             SQLite.finalize_statement (stmt);
             return False;
          end if;
          SQLite.finalize_statement (stmt);
          return True;
       else
-         CommonSQL.ERROR_SQLITE (db.sqlite, "rdb_remove_lock_pid (prep)", lock_pid_sql);
+         CommonSQL.ERROR_SQLITE
+           (db.sqlite, internal_srcfile, "rdb_remove_lock_pid (prep)", lock_pid_sql);
          return False;
       end if;
    end rdb_remove_lock_pid;

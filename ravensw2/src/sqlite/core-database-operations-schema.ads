@@ -66,6 +66,8 @@ package Core.Database.Operations.Schema is
 
 private
 
+   internal_srcfile : constant String := "core-database-operations-schema.ads";
+
    type Upgrade_Series is range 35 .. DB_SCHEMA_ALL;
 
    --  Given a version that we want to upgrade to, return sql statements to get there

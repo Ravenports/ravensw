@@ -31,6 +31,8 @@ package body Core.Repo.Operations.Schema is
       repomajor : int64;
    begin
       if CommonSQL.get_pragma (db      => db,
+                               srcfile => internal_srcfile,
+                               func    => "repo_upgrade",
                                sql     => "PRAGMA user_version",
                                res     => reposcver,
                                silence => False) /= RESULT_OK
@@ -107,12 +109,13 @@ package body Core.Repo.Operations.Schema is
       sql       : constant String := get_info (version, SQL_string);
       msg       : constant String := get_info (version, summary);
       savepoint : constant String := "SCHEMA";
+      func      : constant String := "repo_apply_upgrade";
       in_trans  : Boolean := False;
       rc        : Action_Result;
       errmsg    : Text;
    begin
       --  Begin Transaction
-      if CommonSQL.transaction_begin (db, savepoint) then
+      if CommonSQL.transaction_begin (db, internal_srcfile, func, savepoint) then
          rc := RESULT_OK;
          in_trans := True;
 
@@ -135,11 +138,11 @@ package body Core.Repo.Operations.Schema is
       --  commit or rollback
       if in_trans then
          if rc = RESULT_OK then
-            if not CommonSQL.transaction_commit (db, savepoint) then
+            if not CommonSQL.transaction_commit (db, internal_srcfile, func, savepoint) then
                rc := RESULT_FATAL;
             end if;
          else
-            if CommonSQL.transaction_rollback (db, savepoint) then
+            if CommonSQL.transaction_rollback (db, internal_srcfile, func, savepoint) then
                null;
             end if;
          end if;
@@ -471,7 +474,8 @@ package body Core.Repo.Operations.Schema is
                                     sql    => prstmt_text_sql (S),
                                     ppStmt => prepared_statements (S)'Access)
          then
-            CommonSQL.ERROR_SQLITE (db, "prstmt_initialize", prstmt_text_sql (S));
+            CommonSQL.ERROR_SQLITE
+              (db, internal_srcfile, "prstmt_initialize", prstmt_text_sql (S));
             return RESULT_FATAL;
          end if;
       end loop;

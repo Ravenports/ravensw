@@ -783,7 +783,7 @@ package body Core.Repo.Iterator.Populate is
          when others =>
             Event.emit_debug (4, "pop: running " & SQ (sql));
             if not SQLite.prepare_sql (db, sql, stmt'Access) then
-               CommonSQL.ERROR_SQLITE (db, "load_val", sql);
+               CommonSQL.ERROR_SQLITE (db, internal_srcfile, "load_val", sql);
                return RESULT_FATAL;
             end if;
 
@@ -795,7 +795,7 @@ package body Core.Repo.Iterator.Populate is
                  load_val_operation (section) (stmt, pkg_access) /= RESULT_OK
                then
                   clear_section (pkg_access, section);
-                  CommonSQL.ERROR_SQLITE (db, "load_val (step)", sql);
+                  CommonSQL.ERROR_SQLITE (db, internal_srcfile, "load_val (step)", sql);
                   return RESULT_FATAL;
                end if;
             end loop;

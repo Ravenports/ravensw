@@ -18,6 +18,8 @@ package Core.Repo.Iterator.Populate is
 
 private
 
+   internal_srcfile : constant String := "core-repo-iterator-populate.adb";
+
    type pkg_attr is
      (NOTFOUND,
       PKG_ORIGIN,

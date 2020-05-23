@@ -48,6 +48,8 @@ private
    package CON renames Ada.Containers;
    package IC  renames Interfaces.C;
 
+   internal_srcfile : constant String := "core-database-operations.adb";
+
    type RDB_Connection is limited
       record
          sqlite             : aliased sqlite_h.sqlite3_Access;

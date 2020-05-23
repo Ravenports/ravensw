@@ -172,9 +172,10 @@ package body Core.Repo.Iterator.Packages is
          return RESULT_OK;
       end if;
 
-      CommonSQL.ERROR_SQLITE (db    => repositories.Element (this.xrepo).sqlite_handle,
-                              func  => "Repo.Iterator.Packages.initialize_stmt",
-                              query => sql);
+      CommonSQL.ERROR_SQLITE (db      => repositories.Element (this.xrepo).sqlite_handle,
+                              srcfile => internal_srcfile,
+                              func    => "Repo.Iterator.Packages.initialize_stmt",
+                              query   => sql);
       return RESULT_FATAL;
    end initialize_stmt;
 
@@ -400,9 +401,10 @@ package body Core.Repo.Iterator.Packages is
             end case;
 
          when others =>
-            CommonSQL.ERROR_SQLITE (db    => repositories.Element (this.xrepo).sqlite_handle,
-                                    func  => "Repo.Iterator.Packages.Next",
-                                    query => "iterator");
+            CommonSQL.ERROR_SQLITE (db      => repositories.Element (this.xrepo).sqlite_handle,
+                                    srcfile => internal_srcfile,
+                                    func    => "Repo.Iterator.Packages.Next",
+                                    query   => "iterator");
             return RESULT_FATAL;
       end case;
    end Next;

@@ -42,7 +42,10 @@ package body Core.Repo.Operations is
 
          if commit then
             if not CommonSQL.transaction_commit
-              (repositories.Element (reponame).sqlite_handle, "")
+              (db        => repositories.Element (reponame).sqlite_handle,
+               srcfile   => internal_srcfile,
+               func      => "close_repository",
+               savepoint => "")
             then
                Event.emit_error ("close_repository(): Failed to commit transaction");
                return;
@@ -92,6 +95,7 @@ package body Core.Repo.Operations is
 
       procedure open_database (key : Text; Element : in out A_repo);
 
+      func    : constant String := "open_repository";
       dbdirfd : Unix.File_Descriptor;
       result  : Action_Result;
 
@@ -169,7 +173,12 @@ package body Core.Repo.Operations is
             sql       : constant String := "SELECT count(name) FROM sqlite_master " &
                                            "WHERE type='table' AND name='repodata'";
          begin
-            if CommonSQL.get_pragma (repository.sqlite_handle, sql, res_int64, False) /= RESULT_OK
+            if CommonSQL.get_pragma (db      => repository.sqlite_handle,
+                                     srcfile => internal_srcfile,
+                                     func    => func,
+                                     sql     => sql,
+                                     res     => res_int64,
+                                     silence => False) /= RESULT_OK
             then
                Event.emit_errno (errprefix & "pragma", sql, Unix.errno);
                SQLite.close_database (repository.sqlite_handle);
@@ -192,7 +201,12 @@ package body Core.Repo.Operations is
             sql       : constant String := "select count(key) from repodata " &
                         "WHERE key = " & DQ ("packagesite") & " and value = " & SQ (url);
          begin
-            if CommonSQL.get_pragma (repository.sqlite_handle, sql, res_int64, False) /= RESULT_OK
+            if CommonSQL.get_pragma (db      => repository.sqlite_handle,
+                                     srcfile => internal_srcfile,
+                                     func    => func,
+                                     sql     => sql,
+                                     res     => res_int64,
+                                     silence => False) /= RESULT_OK
             then
                Event.emit_errno (errprefix & "pragma", sql, Unix.errno);
                SQLite.close_database (repository.sqlite_handle);
@@ -389,7 +403,7 @@ package body Core.Repo.Operations is
                return;
             end if;
             if not SQLite.prepare_sql (db, sql2, stmt'Access) then
-               CommonSQL.ERROR_SQLITE (db, "create_repository", sql2);
+               CommonSQL.ERROR_SQLITE (db, internal_srcfile, "create_repository", sql2);
                SQLite.close_database (db);
                return;
             end if;
@@ -397,7 +411,8 @@ package body Core.Repo.Operations is
             row_found := SQLite.step_through_statement (stmt, problem);
             SQLite.finalize_statement (stmt);
             if problem then
-               CommonSQL.ERROR_SQLITE (db, "create_repository", "step through " & sql2);
+               CommonSQL.ERROR_SQLITE
+                 (db, internal_srcfile, "create_repository", "step through " & sql2);
                SQLite.close_database (db);
                return;
             end if;
@@ -547,7 +562,7 @@ package body Core.Repo.Operations is
          res := CommonSQL.exec (db, "PRAGMA foreign_keys = OFF;");
          res := CommonSQL.exec (db, "PRAGMA synchronous = OFF;");
 
-         if not CommonSQL.transaction_begin (db, "REPO") then
+         if not CommonSQL.transaction_begin (db, internal_srcfile, "update_proceed", "REPO") then
             onward := False;
          end if;
 

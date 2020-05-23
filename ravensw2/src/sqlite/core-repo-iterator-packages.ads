@@ -59,6 +59,8 @@ package Core.Repo.Iterator.Packages is
 
 private
 
+   internal_srcfile : constant String := "core-repo-iterator-packages.adb";
+
    type A_Variant is (standard_query, search, provide, require, shlib_provide, shlib_require);
 
    type SQLite_Iterator is
