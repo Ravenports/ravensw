@@ -66,7 +66,7 @@ package Core.Database.Operations.Schema is
 
 private
 
-   internal_srcfile : constant String := "core-database-operations-schema.ads";
+   internal_srcfile : constant String := "core-database-operations-schema.adb";
 
    type Upgrade_Series is range 35 .. DB_SCHEMA_ALL;
 

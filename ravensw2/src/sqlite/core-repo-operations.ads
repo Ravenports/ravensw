@@ -17,7 +17,7 @@ package Core.Repo.Operations is
 
 private
 
-   internal_srcfile : constant String := "core-repo-operations.ads";
+   internal_srcfile : constant String := "core-repo-operations.adb";
 
    type repository_stmt_index is
      (PKG,

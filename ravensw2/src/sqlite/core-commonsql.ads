@@ -40,9 +40,9 @@ package Core.CommonSQL is
 private
 
    function run_transaction (db        : sqlite_h.sqlite3_Access;
-                             query     : String;
                              srcfile   : String;
                              func      : String;
+                             query     : String;
                              savepoint : String)
                              return Boolean;
 end Core.CommonSQL;
