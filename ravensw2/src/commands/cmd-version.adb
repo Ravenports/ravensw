@@ -330,7 +330,7 @@ package body Cmd.Version is
             my_pkg : aliased Pkgtypes.A_Package;
          begin
             if all_ok then
-               if it.initialize_as_standard_query (reponame => reponame,
+               if it.initialize_as_standard_query (reponame => USS (rname),
                                                    pattern  => pattern,
                                                    match    => match,
                                                    just_one => False) /= RESULT_OK
