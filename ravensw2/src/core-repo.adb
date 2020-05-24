@@ -220,19 +220,14 @@ package body Core.Repo is
       key   : Text;
       found : Boolean := False;
 
-      procedure list (position : Repos_Priority_Crate.Cursor)
-      is
-         use type Repository_Crate.Cursor;
-
-         next_cursor : Repository_Crate.Cursor;
+      procedure list (position : Repos_Priority_Crate.Cursor) is
       begin
          if not found then
             key := Repos_Priority_Crate.Element (position).reponame;
             --  It's possible repositories are present in priority listing, but not
             --  the repositories crate.  This happens upon loading failure.
-            next_cursor := repositories.Find (key);
-            if next_cursor /= Repository_Crate.No_Element then
-               if Repository_Crate.Element (next_cursor).enable then
+            if repositories.Contains (key) then
+               if repositories.Element (key).enable then
                   found := True;
                end if;
             end if;
