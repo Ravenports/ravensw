@@ -23,13 +23,13 @@ package body Cmd.Update is
                            quiet    : Boolean;
                            reponame : String) return Action_Result
    is
-      function success_update (reponame : String) return Boolean;
+      function update_successful (reponame : String) return Boolean;
 
       update_count : Natural := 0;
       total_count  : Natural := 0;
       retcode      : Action_Result := RESULT_OK;
 
-      function success_update (reponame : String) return Boolean
+      function update_successful (reponame : String) return Boolean
       is
          rc : Action_Result;
       begin
@@ -54,12 +54,14 @@ package body Cmd.Update is
                  ("Encountered an error updating the " & reponame & " repository!");
             end if;
             --  Save the first encountered error (in case mode is not strict)
-            if retcode /= RESULT_OK then
+            if retcode = RESULT_OK then
+               return True;
+            else
                retcode := rc;
+               return False;
             end if;
-            return False;
          end if;
-      end success_update;
+      end update_successful;
 
    begin
       --  Only auto update if the user has write access.
@@ -84,18 +86,19 @@ package body Cmd.Update is
 
       if IsBlank (reponame) then
          declare
-            list  : String := Repo.joined_priority_order;
-            num   : Natural := count_char (list, LAT.LF) + 1;
-            delim : String (1 .. 1) := (others => LAT.LF);
+            procedure update (Position : Repo.Active_Repository_Name_Set.Cursor);
+
+            active : Repo.Active_Repository_Name_Set.Vector := Repo.ordered_active_repositories;
+
+            procedure update (Position : Repo.Active_Repository_Name_Set.Cursor)
+            is
+               rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
+               succ  : Boolean;
+            begin
+               succ := update_successful (USS (rname));
+            end update;
          begin
-            for x in 1 .. num loop
-               declare
-                  rname : String := specific_field (list, x, delim);
-                  succ  : Boolean;
-               begin
-                  succ := success_update (rname);
-               end;
-            end loop;
+            active.Iterate (update'Access);
          end;
          if update_count = total_count then
             if not quiet then
@@ -113,7 +116,7 @@ package body Cmd.Update is
             end if;
          end if;
       else
-         if success_update (reponame) then
+         if update_successful (reponame) then
             return RESULT_OK;
          else
             if strict then

@@ -293,6 +293,7 @@ package body Cmd.Version is
 
    begin
       if auto_update then
+         --  reponame might be blank.  This means use ALL databases
          retcode := Cmd.Update.pkgcli_update (force    => False,
                                               strict   => False,
                                               quiet    => quiet,

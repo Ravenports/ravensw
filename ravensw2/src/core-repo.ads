@@ -1,13 +1,18 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-private with Core.Strings;
+with Ada.Containers.Vectors;
+with Core.Strings;
+
 private with Core.Checksum;
-private with Ada.Containers.Vectors;
 private with Ada.Containers.Hashed_Maps;
 private with sqlite_h;
 
+use Core.Strings;
+
 package Core.Repo is
+
+   package CON renames Ada.Containers;
 
    invalid_repo_name : exception;
 
@@ -17,6 +22,11 @@ package Core.Repo is
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
    type A_repo_flag is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
    subtype A_priority is Integer;
+
+   package Active_Repository_Name_Set is new CON.Vectors
+     (Element_Type => Text,
+      Index_Type   => Natural,
+      "="          => SU."=");
 
    --  Return repo's url
    function repo_url (repo : A_repo) return String;
@@ -85,11 +95,10 @@ package Core.Repo is
    --  as a single string.  This are in order of priority
    function joined_priority_order return String;
 
+   --  Returns vector of active repositories in order of priority
+   function ordered_active_repositories return Active_Repository_Name_Set.Vector;
+
 private
-
-   use Core.Strings;
-
-   package CON renames Ada.Containers;
 
    --  Obsolete, but maintained for compatability
    type A_package_format is (TAR, TGZ, TBZ, TXZ, TZS);

@@ -33,30 +33,29 @@ package body Core.Database.Operations is
                           dbtype   : RDB_Source)
                           return Action_Result
    is
+      procedure open_active_db (Position : Repo.Active_Repository_Name_Set.Cursor);
+
+      active : Repo.Active_Repository_Name_Set.Vector := Repo.ordered_active_repositories;
+      all_ok : Action_Result := RESULT_OK;
+
+      procedure open_active_db (Position : Repo.Active_Repository_Name_Set.Cursor)
+      is
+         rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
+      begin
+         if all_ok = RESULT_OK then
+            if rdb_open (db, dbtype, USS (rname)) /= RESULT_OK then
+               all_ok := RESULT_FATAL;
+            end if;
+         end if;
+      end open_active_db;
    begin
-      if Repo.count_of_active_repositories = 0 then
+      if active.Is_Empty then
          Event.emit_error ("No active remote repositories configured");
          return RESULT_FATAL;
       end if;
 
-      declare
-         list  : String := Repo.joined_priority_order;
-         num   : Natural := count_char (list, LAT.LF) + 1;
-         delim : String (1 .. 1) := (others => LAT.LF);
-      begin
-         for x in 1 .. num loop
-            declare
-               rname : String := specific_field (list, x, delim);
-            begin
-               if Repo.repository_is_active (rname) then
-                  if rdb_open (db, dbtype, rname) /= RESULT_OK then
-                     return RESULT_FATAL;
-                  end if;
-               end if;
-            end;
-         end loop;
-      end;
-      return RESULT_OK;
+      active.Iterate (open_active_db'Access);
+      return all_ok;
    end rdb_open_all;
 
 
@@ -513,31 +512,33 @@ package body Core.Database.Operations is
             --  Test local.sqlite, if required
             return check_access (mode, db_dir, local_ravensw_db);
          when RDB_DB_REPO =>
-            if Repo.count_of_active_repositories > 0 then
-               declare
-                  list  : String := Repo.joined_priority_order;
-                  num   : Natural := count_char (list, LAT.LF) + 1;
-                  delim : String (1 .. 1) := (others => LAT.LF);
+            declare
+               procedure check (Position : Repo.Active_Repository_Name_Set.Cursor);
+
+               active : Repo.Active_Repository_Name_Set.Vector := Repo.ordered_active_repositories;
+               quit   : Boolean := False;
+
+               procedure check (Position : Repo.Active_Repository_Name_Set.Cursor)
+               is
+                  rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
                begin
-                  for x in 1 .. num loop
-                     declare
-                        rname : String := specific_field (list, x, delim);
-                     begin
-                        retval := Repo.Operations.check_repository_access (rname, mode);
-                        if retval = RESULT_ENODB and then
-                          (mode and RDB_MODE_READ) > 0
-                        then
-                           Event.emit_error
-                             ("Repository " & rname & " missing, " &
-                                SQ (progname & " update") & " command required");
-                        end if;
-                        if retval /= RESULT_OK then
-                           exit;
-                        end if;
-                     end;
-                  end loop;
-               end;
-            end if;
+                  if not quit then
+                     retval := Repo.Operations.check_repository_access (USS (rname), mode);
+                     if retval = RESULT_ENODB and then
+                       (mode and RDB_MODE_READ) > 0
+                     then
+                        Event.emit_error
+                          ("Repository " & USS (rname) & " missing, " &
+                             SQ (progname & " update") & " command required");
+                     end if;
+                     if retval /= RESULT_OK then
+                        quit := True;
+                     end if;
+                  end if;
+               end check;
+            begin
+               active.Iterate (check'Access);
+            end;
             return retval;
       end case;
    end database_access;

@@ -270,7 +270,7 @@ package body Core.Repo is
 
       procedure list (position : Repos_Priority_Crate.Cursor)
       is
-         key : Text := Repos_Priority_Crate.Element (position).reponame;
+         key : Text renames Repos_Priority_Crate.Element (position).reponame;
       begin
          if not IsBlank (result) then
             SU.Append (result, LAT.LF);
@@ -281,6 +281,30 @@ package body Core.Repo is
       repositories_order.Iterate (list'Access);
       return USS (result);
    end joined_priority_order;
+
+
+   --------------------------------------------------------------------
+   --  ordered_active_repositories
+   --------------------------------------------------------------------
+   function ordered_active_repositories return Active_Repository_Name_Set.Vector
+   is
+      procedure list (position : Repos_Priority_Crate.Cursor);
+
+      result : Active_Repository_Name_Set.Vector;
+
+      procedure list (position : Repos_Priority_Crate.Cursor)
+      is
+         key : Text renames Repos_Priority_Crate.Element (position).reponame;
+      begin
+         if repositories.Contains (key) then
+            if repositories.Element (key).enable then
+               result.Append (key);
+            end if;
+         end if;
+      end list;
+   begin
+      return result;
+   end ordered_active_repositories;
 
 
    --------------------------------------------------------------------

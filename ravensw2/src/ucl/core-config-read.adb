@@ -465,6 +465,7 @@ package body Core.Config.Read is
    --------------------------------------------------------------------
    function check_repository_scheme_validity return Action_Result
    is
+      --  We check all schemes -- active and inactive alike
       list_of_loaded_repos : constant String := Repo.joined_priority_order;
       delim     : constant String := ":/";
       num_repos : Natural;
