@@ -58,7 +58,7 @@ package body Core.Database.Operations is
          --  database is already open, just load another repository and exit
          --  return rdb_open_remote (db, dbtype, reponame);
 
-         Event.emit_debug (3, "rdb_open: " & reponame & ", establish connection");
+         Event.emit_debug (3, "rdb_open: establish connection");
 
          --  Create db directory if it doesn't already exist
          if DIR.Exists (dbdir) then
@@ -132,11 +132,12 @@ package body Core.Database.Operations is
          end;
 
          --  The database file is blank when create is set, so we have to initialize it
-         if create and then
-           Schema.import_schema_34 (db.sqlite) /= RESULT_OK
-         then
-            rdb_close (db);
-            return RESULT_FATAL;
+         if create then
+            Event.emit_debug (3, "rdb_open: import initial schema to blank local ravensw db");
+            if Schema.import_schema_34 (db.sqlite) /= RESULT_OK then
+               rdb_close (db);
+               return RESULT_FATAL;
+            end if;
          end if;
 
          --  Create custom functions
@@ -183,8 +184,6 @@ package body Core.Database.Operations is
          SQLite.set_sqlite_profile (db.sqlite, rdb_profile_callback'Access);
       end if;
 
-      Event.emit_debug (3, "rdb_open: " & reponame & ", successful");
-
       return RESULT_OK;
    end rdb_open;
 
@@ -207,6 +206,7 @@ package body Core.Database.Operations is
       end case;
 
       if not IsBlank (reponame) then
+         Event.emit_debug (3, "rdb_open_remote: open " & reponame);
          if Repo.repository_is_active (reponame) then
             ret := ROP.open_repository (reponame, True);
             if ret /= RESULT_OK then
@@ -218,6 +218,8 @@ package body Core.Database.Operations is
             return RESULT_FATAL;
          end if;
       elsif Repo.count_of_active_repositories > 0 then
+         Event.emit_debug (3, "rdb_open_remote: open all " &
+                             int2str (Repo.count_of_active_repositories) & "active repositories");
          declare
             list  : String := Repo.joined_priority_order;
             num   : Natural := count_char (list, LAT.LF) + 1;
