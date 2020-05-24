@@ -288,11 +288,13 @@ package body Core.Repo.Operations is
       end open_database;
 
    begin
+      Event.emit_debug (3, "open_repository " & SQ (reponame));
       if repositories.Contains (SUS (reponame)) then
          dbdirfd := Context.reveal_db_directory_fd;
          repositories.Update_Element (repositories.Find (SUS (reponame)), open_database'Access);
          return result;
       else
+         Event.emit_debug (3, "open_repository invalid! " & SQ (reponame));
          raise invalid_repo_name;
       end if;
    end open_repository;

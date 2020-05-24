@@ -219,7 +219,7 @@ package body Core.Database.Operations is
          end if;
       elsif Repo.count_of_active_repositories > 0 then
          Event.emit_debug (3, "rdb_open_remote: open all " &
-                             int2str (Repo.count_of_active_repositories) & "active repositories");
+                             int2str (Repo.count_of_active_repositories) & " active repositories");
          declare
             list  : String := Repo.joined_priority_order;
             num   : Natural := count_char (list, LAT.LF) + 1;
