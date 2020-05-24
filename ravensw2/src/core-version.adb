@@ -6,8 +6,6 @@ with Core.Event;
 
 package body Core.Version is
 
-   package EV renames Core.Event;
-
    --------------------------------------------------------------------
    --  split_version
    --------------------------------------------------------------------
@@ -77,7 +75,7 @@ package body Core.Version is
       versionstr : String := get_versionstr;
    begin
       if IsBlank (pkgname) then
-         EV.emit_error ("split_version: passed empty string for pkgname");
+         Event.emit_error ("split_version: passed empty string for pkgname");
          return result;
       end if;
 
@@ -367,7 +365,7 @@ package body Core.Version is
          return vc_int64 (Integer'Value (fragment));
       exception
          when others =>
-            EV.emit_error ("exception hit in pull_leading_number(): " & fragment);
+            Event.emit_error ("exception hit in pull_leading_number(): " & fragment);
             return 0;
       end;
    end pull_leading_number;
@@ -376,36 +374,36 @@ package body Core.Version is
    --------------------------------------------------------------------
    --  pkg_version_change
    --------------------------------------------------------------------
---     function pkg_version_change (pkg : access T_pkg) return T_pkg_change is
---     begin
---        if IsBlank (pkg.old_version) then
---           return PKG_REINSTALL;
---        end if;
---
---        case pkg_version_cmp (USS (pkg.old_version), USS (pkg.version)) is
---           when -1 => return PKG_UPGRADE;
---           when  0 => return PKG_REINSTALL;
---           when  1 => return PKG_DOWNGRADE;
---        end case;
---     end pkg_version_change;
+   function pkg_version_change (pkg : access Pkgtypes.A_Package) return Change_Action is
+   begin
+      if IsBlank (pkg.old_version) then
+         return PKG_REINSTALL;
+      end if;
+
+      case pkg_version_cmp (USS (pkg.old_version), USS (pkg.version)) is
+         when -1 => return PKG_UPGRADE;
+         when  0 => return PKG_REINSTALL;
+         when  1 => return PKG_DOWNGRADE;
+      end case;
+   end pkg_version_change;
 
 
    --------------------------------------------------------------------
    --  pkg_version_change_between
    --------------------------------------------------------------------
---     function pkg_version_change_between (pkg1, pkg2 : access T_pkg) return T_pkg_change
---     is
---     begin
---        if pkg2 = null then
---           return PKG_REINSTALL;
---        end if;
---
---        case pkg_version_cmp (USS (pkg2.version), USS (pkg1.version)) is
---           when -1 => return PKG_UPGRADE;
---           when  0 => return PKG_REINSTALL;
---           when  1 => return PKG_DOWNGRADE;
---        end case;
---     end pkg_version_change_between;
+   function pkg_version_change_between
+     (pkg1, pkg2 : access Pkgtypes.A_Package) return Change_Action is
+   begin
+      if pkg2 = null then
+         return PKG_REINSTALL;
+      end if;
+
+      case pkg_version_cmp (USS (pkg2.version), USS (pkg1.version)) is
+         when -1 => return PKG_UPGRADE;
+         when  0 => return PKG_REINSTALL;
+         when  1 => return PKG_DOWNGRADE;
+      end case;
+   end pkg_version_change_between;
 
 
 end Core.Version;

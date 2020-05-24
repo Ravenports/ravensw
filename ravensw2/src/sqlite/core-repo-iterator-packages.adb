@@ -173,31 +173,32 @@ package body Core.Repo.Iterator.Packages is
    --------------------------------------------------------------------
    --  initialize_stmt
    --------------------------------------------------------------------
-   function initialize_stmt (this : in out SQLite_Iterator) return Action_Result
-   is
-      sql : constant String := this.get_sql;
+   function initialize_stmt (this : in out SQLite_Iterator) return Action_Result is
    begin
       this.typeset := True;
       this.cycles  := once;
-      Event.emit_debug (4, "rdb: running " & DQ (sql));
       if not repositories.Contains (this.xrepo) then
          Event.emit_error (internal_srcfile & " initialize_stmt(): invalid repository name: "
                              & USS (this.xrepo));
          return RESULT_FATAL;
       end if;
 
-      if SQLite.prepare_sql (pDB    => repositories.Element (this.xrepo).sqlite_handle,
-                             sql    => sql,
-                             ppStmt => this.stmt'Access)
-      then
-         return RESULT_OK;
-      end if;
-
-      CommonSQL.ERROR_SQLITE (db      => repositories.Element (this.xrepo).sqlite_handle,
-                              srcfile => internal_srcfile,
-                              func    => "Repo.Iterator.Packages.initialize_stmt",
-                              query   => sql);
-      return RESULT_FATAL;
+      declare
+         sql : constant String := this.get_sql;
+      begin
+         Event.emit_debug (4, "rdb: running " & DQ (sql));
+         if SQLite.prepare_sql (pDB    => repositories.Element (this.xrepo).sqlite_handle,
+                                sql    => sql,
+                                ppStmt => this.stmt'Access)
+         then
+            return RESULT_OK;
+         end if;
+         CommonSQL.ERROR_SQLITE (db      => repositories.Element (this.xrepo).sqlite_handle,
+                                 srcfile => internal_srcfile,
+                                 func    => "Repo.Iterator.Packages.initialize_stmt",
+                                 query   => sql);
+         return RESULT_FATAL;
+      end;
    end initialize_stmt;
 
 

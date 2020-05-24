@@ -1,7 +1,10 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
-with Core.Strings;  use Core.Strings;
+with Core.Pkgtypes;
+with Core.Strings;
+
+use Core.Strings;
 
 package Core.Version is
 
@@ -11,7 +14,6 @@ package Core.Version is
      (PKG_DOWNGRADE,
       PKG_REINSTALL,
       PKG_UPGRADE);
-
 
    type Version_Breakdown is
       record
@@ -55,9 +57,10 @@ package Core.Version is
    --
    function pkg_version_cmp (pkg1, pkg2 : String) return Cmp_Result;
 
---     function pkg_version_change (pkg : access T_pkg) return Change_Action;
---
---     function pkg_version_change_between (pkg1, pkg2 : access T_pkg) return Change_Action;
+   function pkg_version_change (pkg : access Pkgtypes.A_Package) return Change_Action;
+
+   function pkg_version_change_between
+     (pkg1, pkg2 : access Pkgtypes.A_Package) return Change_Action;
 
 private
 
