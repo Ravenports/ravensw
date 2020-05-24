@@ -142,7 +142,6 @@ package body Core.Repo.Operations is
 
          --  main open routine
          declare
-            use type sqlite_h.enum_error_types;
             opened : Boolean;
          begin
             if readonly then
@@ -155,9 +154,7 @@ package body Core.Repo.Operations is
                   ppDB => repository.sqlite_handle'Access);
             end if;
             if not opened then
-               if SQLite.get_last_error_code (repository.sqlite_handle) =
-                 sqlite_h.SQLITE_CORRUPT
-               then
+               if SQLite.database_corrupt (repository.sqlite_handle) then
                   Event.emit_error
                     ("Database corrupt.  Are you running on NFS?  " &
                        "If so, ensure the locking mechanism is properly set up.");
@@ -364,14 +361,12 @@ package body Core.Repo.Operations is
 
       procedure make_it_so (key : Text; Element : in out A_repo)
       is
-         use type sqlite_h.enum_error_types;
          db     : sqlite_h.sqlite3_Access renames Element.sqlite_handle;
          opened : Boolean;
       begin
          opened := SQLite.open_sqlite_database_readwrite (path => dbfile, ppDB => db'Access);
          if not opened then
-            if SQLite.get_last_error_code (db) = sqlite_h.SQLITE_CORRUPT
-            then
+            if SQLite.database_corrupt (db) then
                Event.emit_error
                  ("Database corrupt.  Are you running on NFS?  " &
                     "If so, ensure the locking mechanism is properly set up.");

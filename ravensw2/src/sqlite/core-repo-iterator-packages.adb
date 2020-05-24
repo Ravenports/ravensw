@@ -179,7 +179,7 @@ package body Core.Repo.Iterator.Packages is
       this.cycles  := once;
       if not repositories.Contains (this.xrepo) then
          Event.emit_error (internal_srcfile & " initialize_stmt(): invalid repository name: "
-                             & USS (this.xrepo));
+                             & SQ (USS (this.xrepo)));
          return RESULT_FATAL;
       end if;
 

@@ -501,4 +501,15 @@ package body SQLite is
       return (Integer (res));
    end get_number_of_changes;
 
+
+   --------------------------------------------------------------------
+   --  database_corrupt
+   --------------------------------------------------------------------
+   function database_corrupt (db : sqlite_h.sqlite3_Access) return Boolean
+   is
+      use type sqlite_h.enum_error_types;
+   begin
+      return (SQLite.get_last_error_code (db) = sqlite_h.SQLITE_CORRUPT);
+   end database_corrupt;
+
 end SQLite;

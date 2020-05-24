@@ -34,7 +34,29 @@ package body Core.Database.Operations is
                           return Action_Result
    is
    begin
-      return rdb_open (db, dbtype, "");
+      if Repo.count_of_active_repositories = 0 then
+         Event.emit_error ("No active remote repositories configured");
+         return RESULT_FATAL;
+      end if;
+
+      declare
+         list  : String := Repo.joined_priority_order;
+         num   : Natural := count_char (list, LAT.LF) + 1;
+         delim : String (1 .. 1) := (others => LAT.LF);
+      begin
+         for x in 1 .. num loop
+            declare
+               rname : String := specific_field (list, x, delim);
+            begin
+               if Repo.repository_is_active (rname) then
+                  if rdb_open (db, dbtype, rname) /= RESULT_OK then
+                     return RESULT_FATAL;
+                  end if;
+               end if;
+            end;
+         end loop;
+      end;
+      return RESULT_OK;
    end rdb_open_all;
 
 
@@ -46,142 +68,27 @@ package body Core.Database.Operations is
                       reponame : String)
                       return Action_Result
    is
-      use type sqlite_h.enum_error_types;
       func   : constant String := "rdb_open()";
-      dbdir  : constant String := Config.configuration_value (Config.dbdir);
-      key    : constant String := config.get_ci_key (Config.dbdir);
-      dirfd  : Unix.File_Descriptor;
-      create : Boolean := False;
-      result : Boolean;
+      result : Action_Result;
    begin
-      if not SQLite.db_connected (db.sqlite) then
-         --  database is already open, just load another repository and exit
-         --  return rdb_open_remote (db, dbtype, reponame);
-
-         Event.emit_debug (3, "rdb_open: establish connection");
-
-         --  Create db directory if it doesn't already exist
-         if DIR.Exists (dbdir) then
-            case DIR.Kind (dbdir) is
-               when DIR.Directory => null;
-               when others =>
-                  Event.emit_error (func & ": " & key & " exists but is not a directory");
-                  return RESULT_FATAL;
-            end case;
-         else
-            begin
-               DIR.Create_Path (dbdir);
-            exception
-               when others =>
-                  Event.emit_error (func & ": Failed to create " & key & " directory");
-                  return RESULT_FATAL;
-            end;
-         end if;
-
-         dirfd := Context.reveal_db_directory_fd;
-         if not Unix.file_connected (dirfd) then
-            Event.emit_error
-              (func & ": Failed to open " & key & " directory as a file descriptor");
-            return RESULT_FATAL;
-         end if;
-
-         if not Unix.relative_file_readable (dirfd, local_ravensw_db) then
-            if DIR.Exists (dbdir & "/" & local_ravensw_db) then
-               --  db file exists but we can't write to it, fail
-               Event.emit_no_local_db;
-               rdb_close (db);
-               return RESULT_ENODB;
-            elsif not Unix.relative_file_writable (dirfd, ".") then
-               --  We need to create db file but we can't even write to the containing
-               --  directory, so fail
-               Event.emit_no_local_db;
-               rdb_close (db);
-               return RESULT_ENODB;
-            else
-               create := True;
-            end if;
-         end if;
-
-         result := SQLite.initialize_sqlite;
-         SQLite.rdb_syscall_overload;
-
-         if not SQLite.open_sqlite_database_readwrite ("/" & local_ravensw_db, db.sqlite'Access)
-         then
-            CommonSQL.ERROR_SQLITE (db      => db.sqlite,
-                                    srcfile => internal_srcfile,
-                                    func    => func,
-                                    query   => "sqlite open");
-            if SQLite.get_last_error_code (db.sqlite) = sqlite_h.SQLITE_CORRUPT then
-               Event.emit_error
-                 (func & ": Database corrupt.  Are you running on NFS?  " &
-                    "If so, ensure the locking mechanism is properly set up.");
-            end if;
+      if establish_connection (db) = RESULT_OK then
+         if Schema.prstmt_initialize (db) /= RESULT_OK then
+            Event.emit_error (func & ": Failed to initialize prepared statements");
             rdb_close (db);
             return RESULT_FATAL;
          end if;
-
-         --  Wait up to 5 seconds if database is busy
-         declare
-            use type IC.int;
-            res : IC.int;
-         begin
-            res := sqlite_h.sqlite3_busy_timeout (db.sqlite, IC.int (5000));
-            if res /= 0 then
-               Event.emit_error (func & ": Failed to set busy timeout");
-            end if;
-         end;
-
-         --  The database file is blank when create is set, so we have to initialize it
-         if create then
-            Event.emit_debug (3, "rdb_open: import initial schema to blank local ravensw db");
-            if Schema.import_schema_34 (db.sqlite) /= RESULT_OK then
-               rdb_close (db);
-               return RESULT_FATAL;
-            end if;
+         if Config.configuration_value (Config.sqlite_profile) then
+            Event.emit_debug (1, "raven database profiling is enabled");
+            SQLite.set_sqlite_profile (db.sqlite, rdb_profile_callback'Access);
          end if;
-
-         --  Create custom functions
-         CUS.define_six_functions (db.sqlite);
-
-         if Schema.rdb_upgrade (db) /= RESULT_OK then
-            --  rdb_upgrade() emits error events; we don't need to add more
-            rdb_close (db);
-            return RESULT_FATAL;
-         end if;
-
-         --  allow foreign key option which will allow to have
-         --  clean support for reinstalling
-         declare
-            msg : Text;
-            sql : constant String := "PRAGMA foreign_keys = ON";
-         begin
-            if not SQLite.exec_sql (db.sqlite, sql, msg) then
-               CommonSQL.ERROR_SQLITE (db.sqlite, internal_srcfile, func, sql);
-               rdb_close (db);
-               return RESULT_FATAL;
-            end if;
-         end;
-      end if;   --  END CONNECTION BLOCK
-
-      declare
-         result : Action_Result;
-      begin
-         result := rdb_open_remote (db, dbtype, reponame);
-         if result /= RESULT_OK then
-            rdb_close (db);
-            return result;
-         end if;
-      end;
-
-      if Schema.prstmt_initialize (db) /= RESULT_OK then
-         Event.emit_error (func & ": Failed to initialize prepared statements");
-         rdb_close (db);
+      else
          return RESULT_FATAL;
       end if;
 
-      if Config.configuration_value (Config.sqlite_profile) then
-         Event.emit_debug (1, "raven database profiling is enabled");
-         SQLite.set_sqlite_profile (db.sqlite, rdb_profile_callback'Access);
+      result := rdb_open_remote (db, dbtype, reponame);
+      if result /= RESULT_OK then
+         rdb_close (db);
+         return result;
       end if;
 
       return RESULT_OK;
@@ -196,8 +103,6 @@ package body Core.Database.Operations is
                              reponame : String)
                              return Action_Result
    is
-      --  The calling procedure will close db upon error
-      ret : Action_Result;
    begin
       case dbtype is
          when RDB_REMOTE       => null;
@@ -205,45 +110,17 @@ package body Core.Database.Operations is
          when RDB_DEFAULT      => return RESULT_OK;
       end case;
 
-      if not IsBlank (reponame) then
-         Event.emit_debug (3, "rdb_open_remote: open " & reponame);
-         if Repo.repository_is_active (reponame) then
-            ret := ROP.open_repository (reponame, True);
-            if ret /= RESULT_OK then
-               Event.emit_error ("Failed to open repository " & reponame);
-            end if;
-            return ret;
-         else
-            Event.emit_error ("Repository " & reponame & " is not active or does not exist");
-            return RESULT_FATAL;
+      --  The calling procedure will close db upon error
+      Event.emit_debug (3, "rdb_open_remote: open " & reponame);
+      if Repo.repository_is_active (reponame) then
+         if ROP.open_repository (reponame, True) /= RESULT_OK then
+            Event.emit_error ("Failed to open repository " & reponame);
          end if;
-      elsif Repo.count_of_active_repositories > 0 then
-         Event.emit_debug (3, "rdb_open_remote: open all " &
-                             int2str (Repo.count_of_active_repositories) & " active repositories");
-         declare
-            list  : String := Repo.joined_priority_order;
-            num   : Natural := count_char (list, LAT.LF) + 1;
-            delim : String (1 .. 1) := (others => LAT.LF);
-         begin
-            for x in 1 .. num loop
-               declare
-                  rname : String := specific_field (list, x, delim);
-               begin
-                  if Repo.repository_is_active (rname) then
-                     ret := ROP.open_repository (rname, True);
-                     if ret /= RESULT_OK then
-                        Event.emit_error ("Failed to open repository " & rname);
-                     end if;
-                     return ret;
-                  end if;
-               end;
-            end loop;
-         end;
+         return RESULT_OK;
       else
-         Event.emit_error ("No active remote repositories configured");
+         Event.emit_error ("Repository " & reponame & " is not active or does not exist");
          return RESULT_FATAL;
       end if;
-      return RESULT_OK;
    end rdb_open_remote;
 
 
@@ -664,6 +541,128 @@ package body Core.Database.Operations is
             return retval;
       end case;
    end database_access;
+
+
+   --------------------------------------------------------------------
+   --  establish_connection
+   --------------------------------------------------------------------
+   function establish_connection (db : in out RDB_Connection) return Action_Result
+   is
+      func   : constant String := "establish_connection";
+      dbdir  : constant String := Config.configuration_value (Config.dbdir);
+      key    : constant String := config.get_ci_key (Config.dbdir);
+      dirfd  : Unix.File_Descriptor;
+      okay   : Boolean;
+      create : Boolean := False;
+   begin
+      if SQLite.db_connected (db.sqlite) then
+         return RESULT_OK;
+      end if;
+
+      Event.emit_debug (3, internal_srcfile & ": " & func);
+
+      --  Create db directory if it doesn't already exist
+      if DIR.Exists (dbdir) then
+         case DIR.Kind (dbdir) is
+            when DIR.Directory => null;
+            when others =>
+               Event.emit_error (func & ": " & key & " exists but is not a directory");
+               return RESULT_FATAL;
+         end case;
+      else
+         begin
+            DIR.Create_Path (dbdir);
+         exception
+            when others =>
+               Event.emit_error (func & ": Failed to create " & key & " directory");
+               return RESULT_FATAL;
+         end;
+      end if;
+
+      dirfd := Context.reveal_db_directory_fd;
+      if not Unix.file_connected (dirfd) then
+         Event.emit_error (func & ": Failed to open " & key & " directory as a file descriptor");
+         return RESULT_FATAL;
+      end if;
+
+      if not Unix.relative_file_readable (dirfd, local_ravensw_db) then
+         if DIR.Exists (dbdir & "/" & local_ravensw_db) then
+            --  db file exists but we can't write to it, fail
+            Event.emit_no_local_db;
+            rdb_close (db);
+            return RESULT_ENODB;
+         elsif not Unix.relative_file_writable (dirfd, ".") then
+            --  We need to create db file but we can't even write to the containing
+            --  directory, so fail
+            Event.emit_no_local_db;
+            rdb_close (db);
+            return RESULT_ENODB;
+         else
+            create := True;
+         end if;
+      end if;
+
+      okay := SQLite.initialize_sqlite;
+      SQLite.rdb_syscall_overload;
+
+      if not SQLite.open_sqlite_database_readwrite ("/" & local_ravensw_db, db.sqlite'Access) then
+         CommonSQL.ERROR_SQLITE (db      => db.sqlite,
+                                 srcfile => internal_srcfile,
+                                 func    => func,
+                                 query   => "sqlite open");
+         if SQLite.database_corrupt (db.sqlite) then
+            Event.emit_error
+              (func & ": Database corrupt.  Are you running on NFS?  " &
+                 "If so, ensure the locking mechanism is properly set up.");
+         end if;
+         rdb_close (db);
+         return RESULT_FATAL;
+      end if;
+
+      --  Wait up to 5 seconds if database is busy
+      declare
+         use type IC.int;
+         res : IC.int;
+      begin
+         res := sqlite_h.sqlite3_busy_timeout (db.sqlite, IC.int (5000));
+         if res /= 0 then
+            Event.emit_error (func & ": Failed to set busy timeout");
+         end if;
+      end;
+
+      --  The database file is blank when create is set, so we have to initialize it
+      if create then
+         Event.emit_debug (3, func & ": import initial schema to blank local ravensw db");
+         if Schema.import_schema_34 (db.sqlite) /= RESULT_OK then
+            rdb_close (db);
+            return RESULT_FATAL;
+         end if;
+      end if;
+
+      --  Create custom functions
+      CUS.define_six_functions (db.sqlite);
+
+      if Schema.rdb_upgrade (db) /= RESULT_OK then
+         --  rdb_upgrade() emits error events; we don't need to add more
+         rdb_close (db);
+         return RESULT_FATAL;
+      end if;
+
+      --  allow foreign key option which will allow to have
+      --  clean support for reinstalling
+      declare
+         msg : Text;
+         sql : constant String := "PRAGMA foreign_keys = ON";
+      begin
+         if not SQLite.exec_sql (db.sqlite, sql, msg) then
+            CommonSQL.ERROR_SQLITE (db.sqlite, internal_srcfile, func, sql);
+            rdb_close (db);
+            return RESULT_FATAL;
+         end if;
+      end;
+
+      return RESULT_OK;
+   end establish_connection;
 
 
 end Core.Database.Operations;

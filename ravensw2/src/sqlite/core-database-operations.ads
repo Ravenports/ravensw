@@ -84,4 +84,6 @@ private
      (db  : in out RDB_Connection;
       pid : Unix.Process_ID) return Boolean;
 
+   function establish_connection (db : in out RDB_Connection) return Action_Result;
+
 end Core.Database.Operations;

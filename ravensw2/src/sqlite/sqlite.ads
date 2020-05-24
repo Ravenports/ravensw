@@ -125,4 +125,6 @@ package SQLite is
 
    function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer;
 
+   function database_corrupt (db : sqlite_h.sqlite3_Access) return Boolean;
+
 end SQLite;
