@@ -394,8 +394,6 @@ package body Core.Repo.Operations is
             sql2 : constant String :=
               "INSERT OR REPLACE INTO repodata (key, value)"
               & " VALUES (" & DQ ("packagesite") & ", ?1);";
-            problem   : Boolean;
-            row_found : Boolean;
          begin
             if CommonSQL.exec (db, sql1) /= RESULT_OK then
                Event.emit_error ("Unable to register the packagesite in the database");
@@ -408,11 +406,12 @@ package body Core.Repo.Operations is
                return;
             end if;
             SQLite.bind_string (stmt, 1, USS (Element.url));
-            row_found := SQLite.step_through_statement (stmt, problem);
-            SQLite.finalize_statement (stmt);
-            if problem then
+            if SQLite.step_to_completion (stmt) then
+               SQLite.finalize_statement (stmt);
+            else
                CommonSQL.ERROR_SQLITE
                  (db, internal_srcfile, "create_repository", "step through " & sql2);
+               SQLite.finalize_statement (stmt);
                SQLite.close_database (db);
                return;
             end if;

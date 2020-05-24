@@ -398,7 +398,7 @@ package body Core.Database.Operations is
                              ppStmt => stmt'Access)
       then
          SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (Unix.getpid));
-         if not SQLite.step_through_statement (stmt) then
+         if not SQLite.step_to_completion (stmt) then
             CommonSQL.ERROR_SQLITE
               (db.sqlite, internal_srcfile, "rdb_write_lock_pid (step)", lock_pid_sql);
             SQLite.finalize_statement (stmt);
@@ -434,7 +434,7 @@ package body Core.Database.Operations is
          lpid := Unix.getpid;
 
          loop
-            exit when not SQLite.step_through_statement (stmt);
+            exit when not SQLite.step_to_another_row (stmt);
 
             pid := Unix.Process_ID (SQLite.retrieve_integer (stmt, 0));
             if pid /= lpid then
@@ -480,7 +480,7 @@ package body Core.Database.Operations is
                              ppStmt => stmt'Access)
       then
          SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pid));
-         if not SQLite.step_through_statement (stmt) then
+         if not SQLite.step_to_completion (stmt) then
             CommonSQL.ERROR_SQLITE
               (db.sqlite, internal_srcfile, "rdb_remove_lock_pid (step)", lock_pid_sql);
             SQLite.finalize_statement (stmt);

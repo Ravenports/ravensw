@@ -39,7 +39,7 @@ package body Core.CommonSQL is
    begin
       Event.emit_debug (4, "RDB: running " & SQ (joinsql));
       if SQLite.prepare_sql (db, joinsql, stmt'Access) then
-         if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
+         if not SQLite.step_to_completion (stmt => stmt, num_retries => 6) then
             ERROR_SQLITE (db, srcfile, func, joinsql);
             SQLite.finalize_statement (stmt);
             return False;
@@ -140,7 +140,7 @@ package body Core.CommonSQL is
          return RESULT_FATAL;
       end if;
 
-      if not SQLite.step_through_statement (stmt => stmt, num_retries => 6) then
+      if not SQLite.step_to_completion (stmt => stmt, num_retries => 6) then
          SQLite.finalize_statement (stmt);
          Event.emit_error ("failed to step through get_pragma()");
          return RESULT_FATAL;

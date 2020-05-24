@@ -40,7 +40,7 @@ package body Core.Status is
          if SQLite.initialize_sqlite then
             if SQLite.open_sqlite_database_readonly (dbfile, db'Access) then
                if SQLite.prepare_sql (db, sql, stmt'Access) then
-                  if SQLite.step_through_statement (stmt) then
+                  if SQLite.step_to_another_row (stmt) then
                      result.count := Integer (SQLite.retrieve_integer (stmt, 0));
                      dbsuccess := True;
                   end if;

@@ -562,7 +562,7 @@ package body Core.Database.Operations.Schema is
       if CommonSQL.get_pragma (db      => db.sqlite,
                                srcfile => internal_srcfile,
                                func    => func,
-                               sql     => "PRAGMA user_version;",
+                               sql     => "PRAGMA user_version",
                                res     => cur_dbver,
                                silence => False) /= RESULT_OK
       then

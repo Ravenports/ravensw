@@ -24,7 +24,7 @@ package body Core.Repo.Iterator.Packages is
       end if;
 
       loop
-         exit when not SQLite.step_through_statement (this.stmt);
+         exit when not SQLite.step_to_another_row (this.stmt);
          result := result + 1;
       end loop;
       this.Reset;

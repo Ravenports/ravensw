@@ -31,17 +31,19 @@ package SQLite is
       sql    : String;
       ppStmt : not null access sqlite_h.sqlite3_stmt_Access) return Boolean;
 
-   --  return True if row found after the step
-   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
+   --  Return True if row found after the step
+   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
 
-   --  return True if row found after the step, attempt num_retries when SQLITE_BUSY encountered
-   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
-                                    return Boolean;
+   --  Return True if query done after the step (no data returned)
+   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
 
-   --  return True if row found after the step.  Set problem to True if result is not
-   --  SQLITE_DONE or SQLITE_ROW
-   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access;
-                                    problem : out Boolean) return Boolean;
+   --  Return True if row found after the step, attempt num_retries when SQLITE_BUSY encountered
+   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
+                                 return Boolean;
+
+   --  Return True if query done after the step, attempt num_retries when SQLITE_BUSY encountered
+   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
+                                return Boolean;
 
    --  After stepping, return 64-bit integer from given column
    function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;

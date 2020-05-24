@@ -768,8 +768,7 @@ package body Core.Repo.Iterator.Populate is
       section    : Pkgtypes.Load_Section;
       sql        : String) return Action_Result
    is
-      stmt    : aliased sqlite_h.sqlite3_stmt_Access;
-      problem : Boolean;
+      stmt : aliased sqlite_h.sqlite3_stmt_Access;
    begin
       if pkg_access.sections (section) then
          --  already loaded
@@ -790,10 +789,8 @@ package body Core.Repo.Iterator.Populate is
             SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pkg_access.id));
 
             loop
-               exit when not SQLite.step_through_statement (stmt, problem);
-               if problem or else
-                 load_val_operation (section) (stmt, pkg_access) /= RESULT_OK
-               then
+               exit when not SQLite.step_to_another_row (stmt);
+               if load_val_operation (section) (stmt, pkg_access) /= RESULT_OK then
                   clear_section (pkg_access, section);
                   CommonSQL.ERROR_SQLITE (db, internal_srcfile, "load_val (step)", sql);
                   return RESULT_FATAL;

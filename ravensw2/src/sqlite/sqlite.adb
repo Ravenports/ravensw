@@ -95,9 +95,9 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
-   --  step_through_statement
+   --  step_to_another_row #1
    --------------------------------------------------------------------
-   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean
+   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean
    is
       use type IC.int;
 
@@ -105,14 +105,28 @@ package body SQLite is
    begin
       result := sqlite_h.sqlite3_step (stmt);
       return (result = sqlite_h.SQLITE_ROW);
-   end step_through_statement;
+   end step_to_another_row;
 
 
    --------------------------------------------------------------------
-   --  step_through_statement
+   --  step_to_completion #1
    --------------------------------------------------------------------
-   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
-                                    return Boolean
+   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean
+   is
+      use type IC.int;
+
+      result : IC.int;
+   begin
+      result := sqlite_h.sqlite3_step (stmt);
+      return (result = sqlite_h.SQLITE_DONE);
+   end step_to_completion;
+
+
+   --------------------------------------------------------------------
+   --  step_to_another_row #2
+   --------------------------------------------------------------------
+   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
+                                 return Boolean
    is
       use type IC.int;
 
@@ -122,29 +136,36 @@ package body SQLite is
    begin
       loop
          result := sqlite_h.sqlite3_step (stmt);
-         exit when result = sqlite_h.SQLITE_ROW;
+         exit when Integer (result) /= sqlite_h.enum_error_types'Pos (sqlite_h.SQLITE_BUSY);
          exit when counter > num_retries;
          counter := counter + 1;
          slpres := sqlite_h.sqlite3_sleep (IC.int (200));
       end loop;
       return (result = sqlite_h.SQLITE_ROW);
-   end step_through_statement;
+   end step_to_another_row;
 
 
    --------------------------------------------------------------------
-   --  step_through_statement
+   --  step_to_completion #2
    --------------------------------------------------------------------
-   function step_through_statement (stmt : sqlite_h.sqlite3_stmt_Access;
-                                    problem : out Boolean) return Boolean
+   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
+                                return Boolean
    is
       use type IC.int;
 
       result : IC.int;
+      slpres : IC.int;
+      counter : Natural := 0;
    begin
-      result := sqlite_h.sqlite3_step (stmt);
-      problem := (result /= sqlite_h.SQLITE_ROW and then result /= sqlite_h.SQLITE_DONE);
-      return (result = sqlite_h.SQLITE_ROW);
-   end step_through_statement;
+      loop
+         result := sqlite_h.sqlite3_step (stmt);
+         exit when Integer (result) /= sqlite_h.enum_error_types'Pos (sqlite_h.SQLITE_BUSY);
+         exit when counter > num_retries;
+         counter := counter + 1;
+         slpres := sqlite_h.sqlite3_sleep (IC.int (200));
+      end loop;
+      return (result = sqlite_h.SQLITE_DONE);
+   end step_to_completion;
 
 
    --------------------------------------------------------------------
