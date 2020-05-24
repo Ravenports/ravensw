@@ -220,6 +220,7 @@ package body Cmd.Version is
 
       retcode : Action_Result;
       db      : DBO.RDB_Connection;
+      all_ok  : Boolean := True;
 
       procedure release_db is
       begin
@@ -308,55 +309,65 @@ package body Cmd.Version is
       end if;
 
       if not DBO.rdb_obtain_lock (db, Database.RDB_LOCK_READONLY) then
-         DBO.rdb_close (db);
          Event.emit_error ("Cannot get a read lock on database. It is locked by another process.");
+         DBO.rdb_close (db);
          return False;
       end if;
 
       declare
-         it : Repo.Iterator.Packages.SQLite_Iterator;
+         procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor);
+
+         active : Repo.Active_Repository_Name_Set.Vector := Repo.ordered_active_repositories;
+
          check_origin : Boolean := not IsBlank (matchorigin);
          check_name   : Boolean := not IsBlank (matchname);
          is_origin    : Boolean := False;
-      begin
-         if it.initialize_as_standard_query (reponame => reponame,
-                                             pattern  => pattern,
-                                             match    => match,
-                                             just_one => False) /= RESULT_OK
-         then
-            Event.emit_error ("Failed to initialize SQLite pkg iterator");
-            release_db;
-            return False;
-         end if;
 
-         declare
+         procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor)
+         is
+            rname  : Text renames Repo.Active_Repository_Name_Set.Element (Position);
+            it     : Repo.Iterator.Packages.SQLite_Iterator;
             my_pkg : aliased Pkgtypes.A_Package;
          begin
-            loop
-               --  Next can be OK/END/FATAL
-               case it.Next (pkg_access => my_pkg'Unchecked_Access,
-                             sections   => (Pkgtypes.basic => True, others => False))
-               is
-                  when RESULT_END =>
-                     exit;
+            if all_ok then
+               if it.initialize_as_standard_query (reponame => reponame,
+                                                   pattern  => pattern,
+                                                   match    => match,
+                                                   just_one => False) /= RESULT_OK
+               then
+                  Event.emit_error
+                    ("Failed to initialize SQLite basic iterator (" & USS (rname) & ")");
+                  all_ok := False;
+               end if;
+            end if;
+            if all_ok then
+               loop
+                  --  Next can be OK/END/FATAL
+                  case it.Next (pkg_access => my_pkg'Unchecked_Access,
+                                sections   => (Pkgtypes.basic => True, others => False))
+                  is
+                     when RESULT_END =>
+                        exit;
 
-                  when RESULT_OK =>
-                     if not compare_remote (my_pkg, is_origin) then
-                        Event.emit_error ("Failed to initialize remote pkg iterator");
-                        release_db;
-                        return False;
-                     end if;
+                     when RESULT_OK =>
+                        if not compare_remote (my_pkg, is_origin) then
+                           Event.emit_error ("Failed to initialize remote pkg iterator");
+                           all_ok := False;
+                        end if;
 
-                  when others =>
-                     Event.emit_error ("Failed to retrieve package in version cmd");
-                     release_db;
-                     return False;
-               end case;
-            end loop;
-         end;
+                     when others =>
+                        Event.emit_error ("Failed to retrieve package in version cmd");
+                        all_ok := False;
+                  end case;
+               end loop;
+            end if;
+         end scan;
+
+      begin
+         active.Iterate (scan'Access);
+         release_db;
+         return all_ok;
       end;
-      return True;
-
    end do_remote_index;
 
 end Cmd.Version;
