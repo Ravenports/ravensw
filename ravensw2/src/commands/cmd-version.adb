@@ -215,7 +215,9 @@ package body Cmd.Version is
       reponame    : String) return Boolean
    is
       procedure release_db;
-      function compare_remote (local_pkg : Pkgtypes.A_Package; is_origin : in out Boolean)
+      function compare_remote (this_repo : String;
+                               local_pkg : Pkgtypes.A_Package;
+                               is_origin : in out Boolean)
                                return Boolean;
 
       retcode : Action_Result;
@@ -230,7 +232,8 @@ package body Cmd.Version is
          DBO.rdb_close (db);
       end release_db;
 
-      function compare_remote (local_pkg : Pkgtypes.A_Package;
+      function compare_remote (this_repo : String;
+                               local_pkg : Pkgtypes.A_Package;
                                is_origin : in out Boolean) return Boolean
       is
          loc_name    : String := Printf.format_attribute (local_pkg, Printf.PKG_NAME);
@@ -258,11 +261,10 @@ package body Cmd.Version is
             else
                rem_pattern := SUS (loc_name);
             end if;
-            if it_remote.initialize_as_standard_query
-              (reponame => reponame,
-               pattern  => USS (rem_pattern),
-               match    => Database.MATCH_EXACT,
-               just_one => True) /= RESULT_OK
+            if it_remote.initialize_as_standard_query (reponame => this_repo,
+                                                       pattern  => USS (rem_pattern),
+                                                       match    => Database.MATCH_EXACT,
+                                                       just_one => True) /= RESULT_OK
             then
                case it_remote.Next (pkg_access => remote_pkg'Unchecked_Access,
                                     sections   => (Pkgtypes.basic => True, others => False))
@@ -350,7 +352,7 @@ package body Cmd.Version is
                         exit;
 
                      when RESULT_OK =>
-                        if not compare_remote (my_pkg, is_origin) then
+                        if not compare_remote (USS (rname), my_pkg, is_origin) then
                            Event.emit_error ("Failed to initialize remote pkg iterator");
                            all_ok := False;
                         end if;
