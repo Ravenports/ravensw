@@ -690,18 +690,24 @@ package body Core.Config.Read is
             item := Ucl.ucl_object_iterate (obj, iter'Access, True);
             exit when item = null;
 
-            declare
-               key     : String := Ucl.ucl_object_key (item);
-               payload : String := Ucl.ucl_object_tostring_forced (item);
-            begin
-               EV.emit_debug (2, "Setting env var: " & key & "=" & payload);
-               if not IsBlank (key) then
-                  ENV.Set (key, payload);
-                  if key = UA_key then
-                     UA_seen := True;
+            --  ucl_object_tostring_forced doesn't seem to work as advertised
+            --  Passing objects or arrays to environment object gets output as "object" or "array"
+            --  rather than the promised json format.  In any case, it doesn't make sense to
+            --  to pass objects or arrays to set in environment so skip them if found
+            if not Ucl.type_is_object (item) and then not Ucl.type_is_array (item) then
+               declare
+                  key     : String := Ucl.ucl_object_key (item);
+                  payload : String := Ucl.ucl_object_tostring_forced (item);
+               begin
+                  EV.emit_debug (2, "Setting env var: " & key & "=" & payload);
+                  if not IsBlank (key) then
+                     ENV.Set (key, payload);
+                     if key = UA_key then
+                        UA_seen := True;
+                     end if;
                   end if;
-               end if;
-            end;
+               end;
+            end if;
          end loop;
          --  Make sre USER_AGENT is always set in environment
          if not UA_seen then
