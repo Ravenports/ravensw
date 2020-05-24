@@ -97,7 +97,7 @@ package body Core.Repo.Operations is
 
       func    : constant String := "open_repository";
       dbdirfd : Unix.File_Descriptor;
-      result  : Action_Result;
+      result  : Action_Result := RESULT_FATAL;
 
       procedure open_database (key : Text; Element : in out A_repo)
       is
