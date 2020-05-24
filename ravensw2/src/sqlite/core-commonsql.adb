@@ -37,7 +37,7 @@ package body Core.CommonSQL is
 
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
    begin
-      Event.emit_debug (4, "RDB: running " & SQ (joinsql));
+      Event.emit_debug (4, "RDB: running " & DQ (joinsql));
       if SQLite.prepare_sql (db, joinsql, stmt'Access) then
          if not SQLite.step_to_completion (stmt => stmt, num_retries => 6) then
             ERROR_SQLITE (db, srcfile, func, joinsql);

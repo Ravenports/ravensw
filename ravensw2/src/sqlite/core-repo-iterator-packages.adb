@@ -164,7 +164,7 @@ package body Core.Repo.Iterator.Packages is
    begin
       this.typeset := True;
       this.cycles  := once;
-      Event.emit_debug (4, "rdb: running" & SQ (sql));
+      Event.emit_debug (4, "rdb: running " & DQ (sql));
       if SQLite.prepare_sql (pDB    => repositories.Element (this.xrepo).sqlite_handle,
                              sql    => sql,
                              ppStmt => this.stmt'Access)
