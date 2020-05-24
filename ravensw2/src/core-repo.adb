@@ -303,6 +303,7 @@ package body Core.Repo is
          end if;
       end list;
    begin
+      repositories_order.Iterate (list'Access);
       return result;
    end ordered_active_repositories;
 

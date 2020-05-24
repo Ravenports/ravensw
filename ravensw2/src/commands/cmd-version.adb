@@ -317,7 +317,7 @@ package body Cmd.Version is
       declare
          procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor);
 
-         active : Repo.Active_Repository_Name_Set.Vector := Repo.ordered_active_repositories;
+         active : Repo.Active_Repository_Name_Set.Vector;
 
          check_origin : Boolean := not IsBlank (matchorigin);
          check_name   : Boolean := not IsBlank (matchname);
@@ -364,6 +364,11 @@ package body Cmd.Version is
          end scan;
 
       begin
+         if IsBlank (reponame) then
+            active := Repo.ordered_active_repositories;
+         else
+            active.Append (SUS (reponame));
+         end if;
          active.Iterate (scan'Access);
          release_db;
          return all_ok;

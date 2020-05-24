@@ -73,14 +73,17 @@ package body Cmd.Update is
       end if;
 
       if Repo.total_repositories = 0 then
-         Event.emit_error ("No active remote repositories configured");
+         Event.emit_error ("No repositories configured");
          return RESULT_FATAL;
       end if;
 
-      if Repo.count_of_active_repositories = 0 or else
-        (not IsBlank (reponame) and then not Repo.repository_is_active (reponame))
-      then
-         Event.emit_message ("No repositories are enabled");
+      if IsBlank (reponame) then
+         if Repo.count_of_active_repositories = 0 then
+            Event.emit_message ("No repositories are enabled");
+            return RESULT_FATAL;
+         end if;
+      elsif not Repo.repository_is_active (reponame) then
+         Event.emit_message ("The " & reponame & " repository is not active");
          return RESULT_FATAL;
       end if;
 
