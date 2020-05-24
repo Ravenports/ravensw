@@ -255,7 +255,8 @@ package body Core.Repo.Operations is
          begin
             if it.initialize_as_standard_query (reponame => reponame,
                                                 pattern  => "",
-                                                match    => Database.MATCH_ALL) /= RESULT_OK
+                                                match    => Database.MATCH_ALL,
+                                                just_one => True) /= RESULT_OK
             then
                Event.emit_error ("Failed to initialize SQLite pkg iterator");
                SQLite.close_database (repository.sqlite_handle);

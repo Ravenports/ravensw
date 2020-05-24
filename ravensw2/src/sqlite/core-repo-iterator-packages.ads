@@ -49,13 +49,15 @@ package Core.Repo.Iterator.Packages is
       pattern  : String;
       field    : Match_Field;
       sortby   : Match_Field;
-      match    : Database.Match_Behavior) return Action_Result;
+      match    : Database.Match_Behavior;
+      just_one : Boolean) return Action_Result;
 
    function initialize_as_standard_query
      (this     : in out SQLite_Iterator;
       reponame : String;
       pattern  : String;
-      match    : Database.Match_Behavior) return Action_Result;
+      match    : Database.Match_Behavior;
+      just_one : Boolean) return Action_Result;
 
 private
 
@@ -77,6 +79,7 @@ private
          pattern : Text;
          typeset : Boolean := False;
          done    : Boolean := False;
+         limit1  : Boolean := False;
       end record;
 
    overriding procedure Finalize (this : in out SQLite_Iterator);

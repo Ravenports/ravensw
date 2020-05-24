@@ -260,7 +260,8 @@ package body Cmd.Version is
             if it_remote.initialize_as_standard_query
               (reponame => reponame,
                pattern  => USS (rem_pattern),
-               match    => Database.MATCH_EXACT) /= RESULT_OK
+               match    => Database.MATCH_EXACT,
+               just_one => True) /= RESULT_OK
             then
                case it_remote.Next (pkg_access => remote_pkg'Unchecked_Access,
                                     sections   => (Pkgtypes.basic => True, others => False))
@@ -319,7 +320,8 @@ package body Cmd.Version is
       begin
          if it.initialize_as_standard_query (reponame => reponame,
                                              pattern  => pattern,
-                                             match    => match) /= RESULT_OK
+                                             match    => match,
+                                             just_one => False) /= RESULT_OK
          then
             Event.emit_error ("Failed to initialize SQLite pkg iterator");
             release_db;

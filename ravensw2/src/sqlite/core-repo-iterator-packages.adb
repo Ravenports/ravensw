@@ -102,12 +102,12 @@ package body Core.Repo.Iterator.Packages is
       filter : constant String := make_filter;
    begin
       case this.fsort is
-         when none    => return filter & ";";
-         when origin  => return filter & " ORDER BY origin;";
-         when name    => return filter & " ORDER BY name;";
-         when comment => return filter & " ORDER BY comment;";
-         when desc    => return filter & " ORDER BY desc;";
-         when namever => return filter & " ORDER BY name, version;";
+         when none    => return filter;
+         when origin  => return filter & " ORDER BY origin";
+         when name    => return filter & " ORDER BY name";
+         when comment => return filter & " ORDER BY comment";
+         when desc    => return filter & " ORDER BY desc";
+         when namever => return filter & " ORDER BY name, version";
       end case;
    end search_condition;
 
@@ -117,6 +117,8 @@ package body Core.Repo.Iterator.Packages is
    --------------------------------------------------------------------
    function get_sql (this : SQLite_Iterator) return String
    is
+      function limit_wrapper (sql : String) return String;
+
       reponame  : constant String := USS (repositories.Element (this.xrepo).name);
       r_url     : constant String := USS (repositories.Element (this.xrepo).url);
       from      : constant String := " FROM packages AS p ";
@@ -126,31 +128,44 @@ package body Core.Repo.Iterator.Packages is
         & "p.prefix, p.desc, p.arch, p.maintainer, p.www, p.licenselogic, p.flatsize, "
         & "p.pkgsize, p.cksum, p.manifestdigest, p.path AS repopath, " & SQ (reponame)
         & " AS dbname";
+
+      function limit_wrapper (sql : String) return String is
+      begin
+         if this.limit1 then
+            return sql & " LIMIT 1;";
+         else
+            return sql & ";";
+         end if;
+      end limit_wrapper;
    begin
       case this.variant is
          when standard_query =>
-            return selection & from &
-              Database.get_pattern_query (USS (this.pattern), this.mstyle)
-              & " ORDER BY name;";
+            return limit_wrapper
+              (selection & from
+               & Database.get_pattern_query (USS (this.pattern), this.mstyle) & " ORDER BY name");
          when search =>
-            return selection & url_field & from & this.search_condition;
+            return limit_wrapper (selection & url_field & from & this.search_condition);
          when provide =>
-            return selection & from &
-              "INNER JOIN pkg_provides AS ps ON p.id = ps.package_id "
-              & "WHERE ps.provide_id IN (SELECT id from provides WHERE provide = ?1 );";
+            return limit_wrapper
+              (selection & from
+               & "INNER JOIN pkg_provides AS ps ON p.id = ps.package_id "
+               & "WHERE ps.provide_id IN (SELECT id from provides WHERE provide = ?1)");
          when shlib_provide =>
-            return selection & from &
-              "INNER JOIN pkg_shlibs_provided AS ps ON p.id = ps.package_id "
-              & "WHERE ps.shlib_id IN "
-              & "(SELECT id FROM shlibs WHERE name BETWEEN ?1 AND ?1 || '.9');";
+            return limit_wrapper
+              (selection & from
+               & "INNER JOIN pkg_shlibs_provided AS ps ON p.id = ps.package_id "
+               & "WHERE ps.shlib_id IN "
+               & "(SELECT id FROM shlibs WHERE name BETWEEN ?1 AND ?1 || '.9')");
          when require =>
-            return selection & from &
-              "INNER JOIN pkg_shlibs_required AS ps ON p.id = ps.package_id "
-              & "WHERE ps.shlib_id = (SELECT id FROM shlibs WHERE name=?1);";
+            return limit_wrapper
+              (selection & from
+               & "INNER JOIN pkg_shlibs_required AS ps ON p.id = ps.package_id "
+               & "WHERE ps.shlib_id = (SELECT id FROM shlibs WHERE name=?1)");
          when shlib_require =>
-            return selection & from &
-              "INNER JOIN pkg_requires AS ps ON p.id = ps.package_id "
-              & "WHERE ps.require_id = (SELECT id FROM requires WHERE require=?1);";
+            return limit_wrapper
+              (selection & from
+               & "INNER JOIN pkg_requires AS ps ON p.id = ps.package_id "
+               & "WHERE ps.require_id = (SELECT id FROM requires WHERE require=?1)");
       end case;
    end get_sql;
 
@@ -289,7 +304,8 @@ package body Core.Repo.Iterator.Packages is
       pattern  : String;
       field    : Match_Field;
       sortby   : Match_Field;
-      match    : Database.Match_Behavior) return Action_Result
+      match    : Database.Match_Behavior;
+      just_one : Boolean) return Action_Result
    is
    begin
       if this.typeset then
@@ -302,6 +318,7 @@ package body Core.Repo.Iterator.Packages is
       this.field   := field;
       this.fsort   := sortby;
       this.mstyle  := match;
+      this.limit1  := just_one;
       if this.initialize_stmt /= RESULT_OK then
          return RESULT_FATAL;
       end if;
@@ -323,7 +340,8 @@ package body Core.Repo.Iterator.Packages is
      (this     : in out SQLite_Iterator;
       reponame : String;
       pattern  : String;
-      match    : Database.Match_Behavior) return Action_Result
+      match    : Database.Match_Behavior;
+      just_one : Boolean) return Action_Result
    is
    begin
       if this.typeset then
@@ -335,6 +353,7 @@ package body Core.Repo.Iterator.Packages is
       this.xrepo   := SUS (reponame);
       this.pattern := SUS (pattern);
       this.mstyle  := match;
+      this.limit1  := just_one;
       if this.initialize_stmt /= RESULT_OK then
          return RESULT_FATAL;
       end if;
