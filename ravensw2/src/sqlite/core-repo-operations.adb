@@ -173,14 +173,14 @@ package body Core.Repo.Operations is
             sql       : constant String := "SELECT count(name) FROM sqlite_master " &
                                            "WHERE type='table' AND name='repodata'";
          begin
-            if CommonSQL.get_pragma (db      => repository.sqlite_handle,
-                                     srcfile => internal_srcfile,
-                                     func    => func,
-                                     sql     => sql,
-                                     res     => res_int64,
-                                     silence => False) /= RESULT_OK
+            if CommonSQL.get_int64 (db      => repository.sqlite_handle,
+                                    srcfile => internal_srcfile,
+                                    func    => func,
+                                    sql     => sql,
+                                    res     => res_int64,
+                                    silence => False) /= RESULT_OK
             then
-               Event.emit_errno (errprefix & "pragma", sql, Unix.errno);
+               Event.emit_errno (errprefix & "name count", sql, Unix.errno);
                SQLite.close_database (repository.sqlite_handle);
                return;
             end if;
@@ -194,21 +194,21 @@ package body Core.Repo.Operations is
             end if;
          end;
 
-         --  Check package site
+         --
          declare
             res_int64 : int64;
             url       : constant String := repo_url (repository);
-            sql       : constant String := "select count(key) from repodata " &
-                        "WHERE key = " & DQ ("packagesite") & " and value = " & SQ (url);
+            sql       : constant String := "SELECT count(key) from repodata " &
+                        "WHERE key = " & SQ ("packagesite") & " and value = " & SQ (url);
          begin
-            if CommonSQL.get_pragma (db      => repository.sqlite_handle,
-                                     srcfile => internal_srcfile,
-                                     func    => func,
-                                     sql     => sql,
-                                     res     => res_int64,
-                                     silence => False) /= RESULT_OK
+            if CommonSQL.get_int64 (db      => repository.sqlite_handle,
+                                    srcfile => internal_srcfile,
+                                    func    => func,
+                                    sql     => sql,
+                                    res     => res_int64,
+                                    silence => False) /= RESULT_OK
             then
-               Event.emit_errno (errprefix & "pragma", sql, Unix.errno);
+               Event.emit_errno (errprefix & "key count", sql, Unix.errno);
                SQLite.close_database (repository.sqlite_handle);
                return;
             end if;

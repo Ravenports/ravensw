@@ -559,12 +559,12 @@ package body Core.Database.Operations.Schema is
       exp_dbver : constant int64 := int64 (DB_SCHEMA_ALL);
       func      : constant String := "rdb_upgrade";
    begin
-      if CommonSQL.get_pragma (db      => db.sqlite,
-                               srcfile => internal_srcfile,
-                               func    => func,
-                               sql     => "PRAGMA user_version",
-                               res     => cur_dbver,
-                               silence => False) /= RESULT_OK
+      if CommonSQL.get_int64 (db      => db.sqlite,
+                              srcfile => internal_srcfile,
+                              func    => func,
+                              sql     => "PRAGMA user_version",
+                              res     => cur_dbver,
+                              silence => False) /= RESULT_OK
       then
          return RESULT_FATAL;
       end if;

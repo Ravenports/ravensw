@@ -23,12 +23,12 @@ package Core.CommonSQL is
                                   func      : String;
                                   savepoint : String) return Boolean;
 
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        srcfile : String;
-                        func    : String;
-                        sql     : String;
-                        res     : out int64;
-                        silence : Boolean) return Action_Result;
+   function get_int64  (db      : sqlite_h.sqlite3_Access;
+                       srcfile : String;
+                       func    : String;
+                       sql     : String;
+                       res     : out int64;
+                       silence : Boolean) return Action_Result;
 
    function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result;
 

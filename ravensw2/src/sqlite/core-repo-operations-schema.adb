@@ -30,12 +30,12 @@ package body Core.Repo.Operations.Schema is
       reposcver : int64;
       repomajor : int64;
    begin
-      if CommonSQL.get_pragma (db      => db,
-                               srcfile => internal_srcfile,
-                               func    => "repo_upgrade",
-                               sql     => "PRAGMA user_version",
-                               res     => reposcver,
-                               silence => False) /= RESULT_OK
+      if CommonSQL.get_int64 (db      => db,
+                              srcfile => internal_srcfile,
+                              func    => "repo_upgrade",
+                              sql     => "PRAGMA user_version",
+                              res     => reposcver,
+                              silence => False) /= RESULT_OK
       then
          return RESULT_FATAL;
       end if;

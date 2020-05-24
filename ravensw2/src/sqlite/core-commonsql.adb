@@ -121,18 +121,18 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  get_pragma
    --------------------------------------------------------------------
-   function get_pragma (db      : sqlite_h.sqlite3_Access;
-                        srcfile : String;
-                        func    : String;
-                        sql     : String;
-                        res     : out int64;
-                        silence : Boolean) return Action_Result
+   function get_int64 (db      : sqlite_h.sqlite3_Access;
+                      srcfile : String;
+                      func    : String;
+                      sql     : String;
+                      res     : out int64;
+                      silence : Boolean) return Action_Result
    is
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
       nres : SQLite.sql_int64;
    begin
       nres := 0;
-      Event.emit_debug (4, "executing pragma command " & SQ (sql));
+      Event.emit_debug (4, "Single int64 query " & DQ (sql));
       if not SQLite.prepare_sql (db, sql, stmt'Access) then
          if not silence then
             ERROR_SQLITE (db, srcfile, func, sql);
@@ -142,7 +142,7 @@ package body Core.CommonSQL is
 
       if not SQLite.step_to_another_row (stmt => stmt, num_retries => 6) then
          SQLite.finalize_statement (stmt);
-         Event.emit_error ("failed to step through get_pragma()");
+         Event.emit_error ("failed to step through get_int64()");
          return RESULT_FATAL;
       end if;
 
@@ -151,7 +151,7 @@ package body Core.CommonSQL is
       res := int64 (nres);
 
       return RESULT_OK;
-   end get_pragma;
+   end get_int64;
 
 
    --------------------------------------------------------------------
