@@ -687,7 +687,7 @@ package body Core.Config.Read is
          obj := config_get (get_ci_key (environ));
          iter := libucl.ucl_object_iter_t (System.Null_Address);
          loop
-            item := Ucl.ucl_object_iterate (config_object, iter'Access, True);
+            item := Ucl.ucl_object_iterate (obj, iter'Access, True);
             exit when item = null;
 
             declare
