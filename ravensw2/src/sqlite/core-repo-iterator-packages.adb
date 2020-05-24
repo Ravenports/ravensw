@@ -180,6 +180,12 @@ package body Core.Repo.Iterator.Packages is
       this.typeset := True;
       this.cycles  := once;
       Event.emit_debug (4, "rdb: running " & DQ (sql));
+      if not repositories.Contains (this.xrepo) then
+         Event.emit_error (internal_srcfile & " initialize_stmt(): invalid repository name: "
+                             & USS (this.xrepo));
+         return RESULT_FATAL;
+      end if;
+
       if SQLite.prepare_sql (pDB    => repositories.Element (this.xrepo).sqlite_handle,
                              sql    => sql,
                              ppStmt => this.stmt'Access)
