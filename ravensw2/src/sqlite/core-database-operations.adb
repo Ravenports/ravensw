@@ -58,6 +58,8 @@ package body Core.Database.Operations is
          --  database is already open, just load another repository and exit
          --  return rdb_open_remote (db, dbtype, reponame);
 
+         Event.emit_debug (3, "rdb_open: " & reponame & ", establish connection");
+
          --  Create db directory if it doesn't already exist
          if DIR.Exists (dbdir) then
             case DIR.Kind (dbdir) is
@@ -180,6 +182,8 @@ package body Core.Database.Operations is
          Event.emit_debug (1, "raven database profiling is enabled");
          SQLite.set_sqlite_profile (db.sqlite, rdb_profile_callback'Access);
       end if;
+
+      Event.emit_debug (3, "rdb_open: " & reponame & ", successful");
 
       return RESULT_OK;
    end rdb_open;

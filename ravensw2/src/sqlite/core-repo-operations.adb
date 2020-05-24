@@ -349,7 +349,7 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
-   --  initialize_repository
+   --  create_repository
    --------------------------------------------------------------------
    function create_repository (reponame : String) return Action_Result
    is
@@ -459,7 +459,7 @@ package body Core.Repo.Operations is
       start_sql : constant String := "CREATE TABLE IF NOT EXISTS repo_update (n INT);";
       repo_key  : Text := SUS (reponame);
    begin
-      if not repositories.Contains (SUS (reponame)) then
+      if not repositories.Contains (repo_key) then
          raise invalid_repo_name;
       end if;
 
@@ -503,6 +503,10 @@ package body Core.Repo.Operations is
       repo_key   : Text := SUS (reponame);
       local_time : Unix.T_epochtime;
    begin
+      if not repositories.Contains (repo_key) then
+         raise invalid_repo_name;
+      end if;
+
       Event.emit_debug (1, "Proceed: begin update of " & SQ (reponame));
       if force then
          mtime := 0;
