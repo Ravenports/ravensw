@@ -484,4 +484,27 @@ package body Core.Event is
       end if;
    end pipe_event;
 
+
+   --------------------------------------------------------------------
+   --  pipe_event
+   --------------------------------------------------------------------
+   procedure emit_incremental_update (reponame : String; processed : Natural)
+   is
+      num_proc : constant String := int2str (processed);
+      msg      : constant String := reponame & " repository update completed. " & num_proc
+                                             & " packages processed.";
+      jmsg     : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_INCREMENTAL_UPDATE"),
+            json_objectpair ("data",
+              CC (json_pair ("name", reponame),
+                  json_pair ("errno", num_proc)))));
+   begin
+      check_progress;
+      pipe_event (jmsg);
+      if not muted then
+         TIO.Put_Line (msg);
+      end if;
+   end emit_incremental_update;
+
 end Core.Event;

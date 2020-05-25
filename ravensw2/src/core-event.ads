@@ -25,6 +25,8 @@ package Core.Event is
    procedure emit_progress_tick  (prog_current : int64;
                                   prog_total   : int64);
 
+   procedure emit_incremental_update (reponame : String; processed : Natural);
+
 private
 
    package CAL renames Ada.Calendar;

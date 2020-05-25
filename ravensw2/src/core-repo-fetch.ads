@@ -9,14 +9,15 @@ package Core.Repo.Fetch is
 
    function fetch_meta
      (my_repo   : in out A_repo;
-      timestamp : Unix.T_epochtime) return Action_Result;
+      timestamp : in out Unix.T_epochtime) return Action_Result;
 
-   function fetch_remote_extract_to_file_descriptor
+   --  Temporary file produced must be deleted by calling routine
+   function fetch_remote_extract_to_temporary_file
      (my_repo   : in out A_repo;
       filename  : String;
       timestamp : in out Unix.T_epochtime;
-      file_size : in out Unix.T_filesize;
-      retcode   : out Action_Result) return Unix.File_Descriptor;
+      file_size : out int64;
+      retcode   : out Action_Result) return String;
 
 private
 

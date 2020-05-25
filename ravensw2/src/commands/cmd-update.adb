@@ -23,11 +23,12 @@ package body Cmd.Update is
                            quiet    : Boolean;
                            reponame : String) return Action_Result
    is
+      procedure update (Position : Repo.Active_Repository_Name_Set.Cursor);
       function update_successful (reponame : String) return Boolean;
 
-      update_count : Natural := 0;
-      total_count  : Natural := 0;
-      retcode      : Action_Result := RESULT_OK;
+      total_count : Natural := 0;
+      all_okay    : Boolean := True;
+      active      : Repo.Active_Repository_Name_Set.Vector;
 
       function update_successful (reponame : String) return Boolean
       is
@@ -35,34 +36,33 @@ package body Cmd.Update is
       begin
          Event.emit_message ("Updating " & reponame & " repository catalog...");
 
-         rc := Repo.Operations.
-         --  rc := Repo.Operations.update_repository (reponame);
-         --  TODO:  Implement repo update operation
-         --  rc := Repo_Operations.Ops (repo.ops_variant).repo_update (repokey, force);
-         rc := RESULT_UPTODATE;
+         rc := Repo.Operations.update_repository (reponame, force);
 
          total_count := total_count + 1;
          if rc = RESULT_UPTODATE then
             if not quiet then
-               Event.emit_message
-                 (reponame & " repository is up to date.");
+               Event.emit_message (reponame & " repository is up to date.");
             end if;
-            update_count := update_count + 1;
-            return True;
          else
-            if not quiet then
-               Event.emit_message
-                 ("Encountered an error updating the " & reponame & " repository!");
-            end if;
-            --  Save the first encountered error (in case mode is not strict)
-            if retcode = RESULT_OK then
-               return True;
-            else
-               retcode := rc;
+            if rc /= RESULT_OK then
+               if not quiet then
+                  Event.emit_message
+                    ("Encountered an error updating the " & reponame & " repository!");
+               end if;
                return False;
             end if;
          end if;
+         return True;
       end update_successful;
+
+      procedure update (Position : Repo.Active_Repository_Name_Set.Cursor)
+      is
+         rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
+      begin
+         if not update_successful (USS (rname)) then
+            all_okay := False;
+         end if;
+      end update;
 
    begin
       --  Only auto update if the user has write access.
@@ -89,46 +89,24 @@ package body Cmd.Update is
       end if;
 
       if IsBlank (reponame) then
-         declare
-            procedure update (Position : Repo.Active_Repository_Name_Set.Cursor);
-
-            active : Repo.Active_Repository_Name_Set.Vector := Repo.ordered_active_repositories;
-
-            procedure update (Position : Repo.Active_Repository_Name_Set.Cursor)
-            is
-               rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
-               succ  : Boolean;
-            begin
-               succ := update_successful (USS (rname));
-            end update;
-         begin
-            active.Iterate (update'Access);
-         end;
-         if update_count = total_count then
-            if not quiet then
-               Event.emit_message ("All active repositories are up to date.");
-            end if;
-            return RESULT_OK;
-         else
-            if not quiet and then total_count > 1 then
-               Event.emit_message ("Error updating repositories!");
-            end if;
-            if strict then
-               return RESULT_FATAL;
-            else
-               return retcode;
-            end if;
-         end if;
+         active := Repo.ordered_active_repositories;
       else
-         if update_successful (reponame) then
-            return RESULT_OK;
+         active.Append (SUS (reponame));
+      end if;
+
+      active.Iterate (update'Access);
+      if not quiet and then total_count > 1 then
+         if all_okay then
+            Event.emit_message ("All active repositories are up to date.");
          else
-            if strict then
-               return RESULT_FATAL;
-            else
-               return retcode;
-            end if;
+            Event.emit_message ("Error updating repositories!");
          end if;
+      end if;
+
+      if all_okay or else not strict then
+         return RESULT_OK;
+      else
+         return RESULT_FATAL;
       end if;
    end pkgcli_update;
 

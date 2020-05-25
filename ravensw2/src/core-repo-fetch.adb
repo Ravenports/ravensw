@@ -673,7 +673,7 @@ package body Core.Repo.Fetch is
    --------------------------------------------------------------------
    function fetch_meta
      (my_repo   : in out A_repo;
-      timestamp : Unix.T_epochtime) return Action_Result
+      timestamp : in out Unix.T_epochtime) return Action_Result
    is
       procedure silent_close (this_fd : Unix.File_Descriptor);
       procedure erase_metafile;
@@ -893,20 +893,21 @@ package body Core.Repo.Fetch is
 
 
    --------------------------------------------------------------------
-   --  fetch_remote_extract_to_file_descriptor
+   --  fetch_remote_extract_to_temporary_file
    --------------------------------------------------------------------
-   function fetch_remote_extract_to_file_descriptor
+   function fetch_remote_extract_to_temporary_file
      (my_repo   : in out A_repo;
       filename  : String;
       timestamp : in out Unix.T_epochtime;
-      file_size : in out Unix.T_filesize;
-      retcode   : out Action_Result) return Unix.File_Descriptor
+      file_size : out int64;
+      retcode   : out Action_Result) return String
    is
       procedure silent_close_fd (fd : Unix.File_Descriptor);
 
       fd       : Unix.File_Descriptor;
       dest_fd  : Unix.File_Descriptor;
       tmp_file : constant String := temporary_file_name (filename);
+      NOFILE   : constant String := "";
 
       procedure silent_close_fd (fd : Unix.File_Descriptor) is
       begin
@@ -915,21 +916,20 @@ package body Core.Repo.Fetch is
          end if;
       end silent_close_fd;
    begin
+      file_size := 0;
       fd := fetch_remote_tmp (my_repo, filename, timestamp, retcode);
       if not Unix.file_connected (fd) then
-         return Unix.not_connected;
+         return NOFILE;
       end if;
+
+      retcode := RESULT_FATAL;
 
       --  fetch_remote_tmp already established a temporary directory
       dest_fd := open_temporary_file (tmp_file);
       if not Unix.file_connected (fd) then
          Event.emit_error ("Could not create temporary file " & tmp_file & ", aborting update.");
-         retcode := RESULT_FATAL;
          silent_close_fd (fd);
-         return Unix.not_connected;
-      end if;
-      if not Unix.unlink (tmp_file) then
-         Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
+         return NOFILE;
       end if;
 
       if archive_extract_check_archive (my_repo  => my_repo,
@@ -937,22 +937,26 @@ package body Core.Repo.Fetch is
                                         filename => filename,
                                         dest_fd  => dest_fd) /= RESULT_OK
       then
-         retcode := RESULT_FATAL;
          silent_close_fd (dest_fd);
          silent_close_fd (fd);
-         return Unix.not_connected;
+         return NOFILE;
       end if;
 
       --  Thus removing archived file as well
       silent_close_fd (fd);
+      declare
+         fsize : Unix.T_filesize;
       begin
-         file_size := Unix.get_file_size (dest_fd);
+         fsize := Unix.get_file_size (dest_fd);
+         file_size := int64 (fsize);
       exception
          when Unix.bad_stat =>
             silent_close_fd (dest_fd);
-            return Unix.not_connected;
+            return NOFILE;
       end;
-      return dest_fd;
-   end fetch_remote_extract_to_file_descriptor;
+      silent_close_fd (dest_fd);
+      retcode := RESULT_OK;
+      return tmp_file;
+   end fetch_remote_extract_to_temporary_file;
 
 end Core.Repo.Fetch;

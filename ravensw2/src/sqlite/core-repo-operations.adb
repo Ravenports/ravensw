@@ -2,6 +2,7 @@
 --  Reference: ../../License.txt
 
 with Ada.Directories;
+with Ada.Text_IO;
 
 with Core.Event;
 with Core.Context;
@@ -19,6 +20,7 @@ with SQLite;
 package body Core.Repo.Operations is
 
    package DIR renames Ada.Directories;
+   package TIO renames Ada.Text_IO;
 
    --------------------------------------------------------------------
       --  close_repository
@@ -496,20 +498,19 @@ package body Core.Repo.Operations is
    --------------------------------------------------------------------
    function update_proceed
      (reponame : String;
+      filepath : String;
       mtime    : in out Unix.T_epochtime;
       force    : Boolean) return Action_Result
    is
-      repo_key   : Text := SUS (reponame);
       local_time : Unix.T_epochtime;
       my_repo    : A_repo := get_repository (reponame);
-      fd         : Unix.File_Descriptor;
-      size       : Unix.T_filesize;
+      file_size  : int64;
       rc         : Action_Result := RESULT_FATAL;
       skip_rest  : Boolean := False;
    begin
       --  We know repository name is valid; we don't need to check again
 
-      Event.emit_debug (1, "Proceed: begin update of " & SQ (reponame));
+      Event.emit_debug (1, "Proceed: begin update of " & DQ (filepath));
       if force then
          mtime := 0;
       end if;
@@ -521,80 +522,140 @@ package body Core.Repo.Operations is
       if Repo.Fetch.fetch_meta (my_repo   => my_repo,
                                 timestamp => local_time) = RESULT_FATAL
       then
-         Event.emit_notice("repository " & reponame & " has no meta file, using default settings");
+         Event.emit_notice
+           ("repository " & SQ (reponame) & " has no meta file, using default settings.");
       end if;
 
       --
       --  fetch packagesite
       --
       local_time := mtime;
-      fd := Repo.Fetch.fetch_remote_extract_to_file_descriptor
-        (my_repo   => my_repo,
-         filename  => USS (my_repo.meta.manifests),
-         timestamp => local_time,
-         file_size => size,
-         retcode => rc);
-      if not Unix.file_connected (fd) then
-         skip_rest := True;
-      end if;
-
-      if not skip_rest then
-      end if;
-
-      --
---  	/* Fetch packagesite */
---  	local_t = *mtime;
---  	fd = pkg_repo_fetch_remote_extract_fd(repo,
---  		repo->meta->manifests, &local_t, &rc, &len);
---  	if (fd == -1)
---  		goto cleanup;
---  	f = fdopen(fd, "r");
---  	rewind(f);
---
---  	*mtime = local_t;
---  	/*fconflicts = repo_fetch_remote_extract_tmp(repo,
---  			repo_conflicts_archive, "txz", &local_t,
---  			&rc, repo_conflicts_file);*/
---
---  	/* Load local repository data */
---  	xasprintf(&path, "%s-pkgtemp", name);
---  	rename(name, path);
---  	pkg_register_cleanup_callback(rollback_repo, (void *)name);
---  	rc = pkg_repo_binary_init_update(repo);
---  	if (rc != EPKG_OK) {
---  		rc = EPKG_FATAL;
---  		goto cleanup;
---  	}
-
-
-      Event.emit_debug (1, "Proceed: reading new packagesite.yaml for " & SQ (reponame));
-      Event.emit_progress_start ("Processing entries");
-
-      --  200MB should be enough
       declare
-         db  : sqlite_h.sqlite3_Access renames repositories.Element (repo_key).sqlite_handle;
-         res : Action_Result;
-         onward : Boolean := True;
-         intrax : Boolean := False;
+         tmp_manifest : String :=
+           Repo.Fetch.fetch_remote_extract_to_temporary_file
+             (my_repo   => my_repo,
+              filename  => USS (my_repo.meta.manifests),
+              timestamp => local_time,
+              file_size => file_size,
+              retcode   => rc);
+
+         in_trans : Boolean := False;
+         db       : sqlite_h.sqlite3_Access renames my_repo.sqlite_handle;
+         func     : constant String := "update_proceed";
+         backup   : constant String := filepath & "-ravtmp";
+         CIP      : constant String := "CREATE INDEX packages";
+         silentrc : Action_Result;
       begin
-         --  FreeBSD set PRAGMA page_size = getpagesize().
-         --  It's unclear what the benefit is over the default 4Kb page size.
-         --  Omit this PRAGMA for now
-         res := CommonSQL.exec (db, "PRAGMA mmap_size = 209715200;");
-         res := CommonSQL.exec (db, "PRAGMA foreign_keys = OFF;");
-         res := CommonSQL.exec (db, "PRAGMA synchronous = OFF;");
-
-         if not CommonSQL.transaction_begin (db, internal_srcfile, "update_proceed", "REPO") then
-            onward := False;
+         if rc = RESULT_OK then
+            mtime := local_time;
+         else
+            skip_rest := True;
          end if;
 
-         if onward then
-            intrax := True;
-
+         if not skip_rest then
+            DIR.Copy_File (filepath, backup);
+            rc := update_init (reponame);
+            if rc /= RESULT_OK then
+               rc := RESULT_FATAL;
+               skip_rest := True;
+            end if;
          end if;
+
+         if not skip_rest then
+            Event.emit_debug (1, "Proceed: reading new packagesite.yaml for " & SQ (reponame));
+            Event.emit_progress_start ("Processing entries");
+
+            --  200MB should be enough for mmap
+            silentrc := CommonSQL.exec (db, "PRAGMA mmap_size = 209715200;");
+            silentrc := CommonSQL.exec (db, "PRAGMA foreign_keys = OFF;");
+            silentrc := CommonSQL.exec (db, "PRAGMA synchronous = OFF;");
+            --  FreeBSD set PRAGMA page_size = getpagesize().
+            --  It's unclear what the benefit is over the default 4Kb page size.
+            --  Omit this PRAGMA for now
+
+            if CommonSQL.transaction_begin (db, internal_srcfile, func, "REPO") then
+               in_trans := True;
+            else
+               skip_rest := True;
+            end if;
+         end if;
+
+         if not skip_rest then
+            declare
+               file_handle : TIO.File_Type;
+               cnt         : Natural := 0;
+               total_len   : int64 := 0;
+            begin
+               TIO.Open (File => file_handle,
+                         Mode => TIO.In_File,
+                         Name => tmp_manifest);
+               while not TIO.End_Of_File (file_handle) loop
+                  declare
+                     line : constant String := TIO.Get_Line (file_handle);
+                  begin
+                     cnt := cnt + 1;
+                     total_len := total_len + line'Length;
+                     if (cnt mod 10) = 0 then
+                        Event.emit_progress_tick (total_len, file_size);
+                     end if;
+                     --  TODO: rc = pkg_repo_binary_add_from_manifest(line, sqlite, linelen, &keys,
+                     --  &pkg, repo);
+                     if rc = RESULT_OK then
+                        Event.emit_incremental_update (reponame, cnt);
+                     else
+                        exit;
+                     end if;
+                  end;
+               end loop;
+               Event.emit_progress_tick (file_size, file_size);
+               TIO.Close (file_handle);
+            exception
+               when others =>
+                  if TIO.Is_Open (file_handle) then
+                     TIO.Close (file_handle);
+                  end if;
+            end;
+            if rc = RESULT_OK then
+               silentrc := CommonSQL.exec
+                 (db, CIP & "_origin ON packages(origin COLLATE NOCASE);"
+                  & CIP & "_name ON packages(name COLLATE NOCASE);"
+                  & CIP & "_uid_nocase ON packages(name COLLATE NOCASE, origin COLLATE NOCASE);"
+                  & CIP & "_version_nocase ON packages(name COLLATE NOCASE, version);"
+                  & CIP & "_uid ON packages(name, origin);"
+                  & CIP & "_version ON packages(name, version);"
+                  & "CREATE UNIQUE INDEX packages_digest ON packages(manifestdigest);"
+                 );
+            end if;
+         end if;
+
+         --
+         --  CLEANUP
+         --
+         if in_trans then
+            if rc /= RESULT_OK then
+               if not CommonSQL.transaction_rollback (db, internal_srcfile, func, "REPO") then
+                  null;
+               end if;
+            else
+               if CommonSQL.transaction_commit (db, internal_srcfile, func, "REPO") then
+                  rc := RESULT_FATAL;
+               end if;
+            end if;
+         end if;
+
+         --  restore the previous db in case of failures
+         if rc /= RESULT_OK and then rc /= RESULT_UPTODATE then
+            --  failure, so restore to previous database
+            DIR.Delete_File (filepath);
+            DIR.Rename (backup, filepath);
+         else
+            --  remove temporary backup
+            DIR.Delete_File (backup);
+         end if;
+         DIR.Delete_File (tmp_manifest);
+
+         return rc;
       end;
-
-      return RESULT_FATAL;
    end update_proceed;
 
 
@@ -655,7 +716,7 @@ package body Core.Repo.Operations is
          end if;
       end if;
 
-      res := update_proceed (path_to_dbfile, stamp, local_force);
+      res := update_proceed (reponame, path_to_dbfile, stamp, local_force);
       if res /= RESULT_OK and then res /= RESULT_UPTODATE then
          Event.emit_notice ("Unable to update repository " & reponame);
          skip_next_step := True;

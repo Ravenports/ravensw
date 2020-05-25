@@ -63,6 +63,7 @@ private
    --  subroutine of repository_update
    function update_proceed
      (reponame : String;
+      filepath : String;
       mtime    : in out Unix.T_epochtime;
       force    : Boolean) return Action_Result;
 
