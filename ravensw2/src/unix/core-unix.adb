@@ -461,14 +461,36 @@ package body Core.Unix is
 
 
    --------------------------------------------------------------------
-   --  get_file_size
+   --  get_file_size #1
    --------------------------------------------------------------------
-   function get_file_size (sb : struct_stat_Access) return T_filesize
+   function get_file_size (path : String) return T_filesize
    is
+      sb : aliased Unix.struct_stat;
       res : IC.Extensions.long_long;
    begin
-      res := C_get_size (sb);
-      return T_filesize (res);
+      if Unix.stat_ok (path, sb'Unchecked_Access) then
+         res := C_get_size (sb'Unchecked_Access);
+         return T_filesize (res);
+      end if;
+      raise bad_stat;
+   end get_file_size;
+
+
+   --------------------------------------------------------------------
+   --  get_file_size #2
+   --------------------------------------------------------------------
+   function get_file_size (fd : Unix.File_Descriptor) return T_filesize
+   is
+      use type IC.int;
+
+      sb : aliased Unix.struct_stat;
+      res : IC.Extensions.long_long;
+   begin
+      if Unix.C_fstat (fd, sb'Unchecked_Access) = IC.int (0) then
+         res := C_get_size (sb'Unchecked_Access);
+         return T_filesize (res);
+      end if;
+      raise bad_stat;
    end get_file_size;
 
 
@@ -507,6 +529,20 @@ package body Core.Unix is
          IC.Strings.Free (c_path);
       end;
    end set_file_times;
+
+
+   --------------------------------------------------------------------
+   --  get_file_modification_time
+   --------------------------------------------------------------------
+   function get_file_modification_time (path : String) return T_epochtime
+   is
+      sb : aliased Unix.struct_stat;
+   begin
+      if Unix.stat_ok (path, sb'Unchecked_Access) then
+         return get_mtime (sb'Unchecked_Access);
+      end if;
+      raise bad_stat;
+   end get_file_modification_time;
 
 
    --------------------------------------------------------------------

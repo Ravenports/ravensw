@@ -5,9 +5,9 @@ with Ada.Characters.Latin_1;
 
 with Core.Strings;
 with Core.Database.Operations;
+with Core.Repo.Operations;
 with Core.Config;
 with Core.Event;
-with Core.Repo;
 
 use Core.Strings;
 
@@ -35,6 +35,7 @@ package body Cmd.Update is
       begin
          Event.emit_message ("Updating " & reponame & " repository catalog...");
 
+         rc := Repo.Operations.
          --  rc := Repo.Operations.update_repository (reponame);
          --  TODO:  Implement repo update operation
          --  rc := Repo_Operations.Ops (repo.ops_variant).repo_update (repokey, force);

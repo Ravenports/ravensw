@@ -6,6 +6,7 @@ with Ada.Directories;
 with Core.Event;
 with Core.Context;
 with Core.Repo.Meta;
+with Core.Repo.Fetch;
 with Core.Repo.Operations.Schema;
 with Core.Repo.Iterator.Packages;
 with Core.VFS;
@@ -500,10 +501,13 @@ package body Core.Repo.Operations is
    is
       repo_key   : Text := SUS (reponame);
       local_time : Unix.T_epochtime;
+      my_repo    : A_repo := get_repository (reponame);
+      fd         : Unix.File_Descriptor;
+      size       : Unix.T_filesize;
+      rc         : Action_Result := RESULT_FATAL;
+      skip_rest  : Boolean := False;
    begin
-      if not repositories.Contains (repo_key) then
-         raise invalid_repo_name;
-      end if;
+      --  We know repository name is valid; we don't need to check again
 
       Event.emit_debug (1, "Proceed: begin update of " & SQ (reponame));
       if force then
@@ -514,13 +518,30 @@ package body Core.Repo.Operations is
       --  fetch meta
       --
       local_time := mtime;
+      if Repo.Fetch.fetch_meta (my_repo   => my_repo,
+                                timestamp => local_time) = RESULT_FATAL
+      then
+         Event.emit_notice("repository " & reponame & " has no meta file, using default settings");
+      end if;
 
---        /* Fetch meta */
---  	local_t = *mtime;
---  	if (pkg_repo_fetch_meta(repo, &local_t) == EPKG_FATAL)
---  		pkg_emit_notice("repository %s has no meta file, using "
---  		    "default settings", repo->name);
---
+      --
+      --  fetch packagesite
+      --
+      local_time := mtime;
+      fd := Repo.Fetch.fetch_remote_extract_to_file_descriptor
+        (my_repo   => my_repo,
+         filename  => USS (my_repo.meta.manifests),
+         timestamp => local_time,
+         file_size => size,
+         retcode => rc);
+      if not Unix.file_connected (fd) then
+         skip_rest := True;
+      end if;
+
+      if not skip_rest then
+      end if;
+
+      --
 --  	/* Fetch packagesite */
 --  	local_t = *mtime;
 --  	fd = pkg_repo_fetch_remote_extract_fd(repo,
@@ -575,6 +596,97 @@ package body Core.Repo.Operations is
 
       return RESULT_FATAL;
    end update_proceed;
+
+
+   --------------------------------------------------------------------
+   --  update_repository
+   --------------------------------------------------------------------
+   function update_repository (reponame : String; force : Boolean) return Action_Result
+   is
+      update_finish_sql : constant String := "DROP TABLE repo_update;";
+      db_dir            : constant String := Config.configuration_value (Config.dbdir) & "/";
+      path_to_dbfile    : constant String := db_dir & sqlite_filename (reponame);
+      path_to_metafile  : constant String := db_dir & meta_filename (reponame);
+      stamp             : Unix.T_epochtime := 0;
+      got_meta          : Boolean := False;
+      skip_next_step    : Boolean := False;
+      res               : Action_Result;
+      local_force       : Boolean := force;
+   begin
+      if not SQLite.initialize_sqlite then
+         return RESULT_ENODB;
+      end if;
+      if not Repo.repository_is_active (reponame) then
+         return RESULT_OK;
+      end if;
+
+      Event.emit_debug (1, "REPO: verifying update for " & reponame);
+
+      --  First of all, try to open and init repo and check whether it is fine
+      if open_repository (reponame, False) /= RESULT_OK then
+         Event.emit_debug (1, "REPO: need forced update of " & reponame);
+         local_force := True;
+         stamp := 0;
+      else
+         close_repository (SUS (reponame), False);
+         if DIR.Exists (path_to_metafile) then
+            if local_force then
+               stamp := 0;
+               got_meta := True;
+            else
+               begin
+                  stamp := Unix.get_file_modification_time (path_to_metafile);
+                  got_meta := True;
+               exception
+                  when Unix.bad_stat =>
+                     stamp := 0;
+               end;
+            end if;
+         end if;
+         if DIR.Exists (path_to_dbfile) then
+            if not got_meta and then not local_force then
+               begin
+                  stamp := Unix.get_file_modification_time (path_to_dbfile);
+               exception
+                  when Unix.bad_stat =>
+                     stamp := 0;
+               end;
+            end if;
+         end if;
+      end if;
+
+      res := update_proceed (path_to_dbfile, stamp, local_force);
+      if res /= RESULT_OK and then res /= RESULT_UPTODATE then
+         Event.emit_notice ("Unable to update repository " & reponame);
+         skip_next_step := True;
+      end if;
+
+      if not skip_next_step then
+         if res = RESULT_OK then
+            res := CommonSQL.exec (Repo.get_repository (reponame).sqlite_handle,
+                                   update_finish_sql);
+         end if;
+      end if;
+
+      --  Set mtime from http request if possible
+      declare
+         use type Unix.T_epochtime;
+      begin
+         if stamp /= 0 and then res = RESULT_OK then
+            Unix.set_file_times (path        => path_to_dbfile,
+                                 access_time => stamp,
+                                 mod_time    => stamp);
+            if got_meta then
+               Unix.set_file_times (path        => path_to_metafile,
+                                    access_time => stamp,
+                                    mod_time    => stamp);
+            end if;
+         end if;
+      end;
+      close_repository (SUS (reponame), False);
+      return res;
+
+   end update_repository;
 
 
 end Core.Repo.Operations;

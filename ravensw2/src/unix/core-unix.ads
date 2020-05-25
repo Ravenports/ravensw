@@ -9,6 +9,8 @@ package Core.Unix is
 
    package IC renames Interfaces.C;
 
+   bad_stat : exception;
+
    type Unix_Pipe is (named_pipe, unix_socket, something_else);
    type Unix_Socket_Result is (connected, failed_creation, failed_population, failed_connection);
 
@@ -164,8 +166,6 @@ package Core.Unix is
 
    function get_mtime (sb : struct_stat_Access) return T_epochtime;
 
-   function get_file_size (sb : struct_stat_Access) return T_filesize;
-
    procedure set_file_times (path : String;
                              access_time : T_epochtime;
                              mod_time : T_epochtime);
@@ -193,7 +193,12 @@ package Core.Unix is
                     is_directory  : Boolean := False) return Boolean;
 
    --  Returns True if lseek operation successful
-   function reset_file_for_reading (fd : Unix.File_Descriptor) return Boolean;
+   function reset_file_for_reading (fd : File_Descriptor) return Boolean;
+
+   function get_file_modification_time (path : String) return T_epochtime;
+
+   function get_file_size (path : String) return T_filesize;
+   function get_file_size (fd : Unix.File_Descriptor) return T_filesize;
 
 private
 
@@ -269,6 +274,11 @@ private
      (path : IC.Strings.chars_ptr;
       sb   : struct_stat_Access) return IC.int;
    pragma Import (C, C_lstat, "lstat");
+
+   function C_fstat
+     (fd   : File_Descriptor;
+      sb   : struct_stat_Access) return IC.int;
+   pragma Import (C, C_fstat, "fstat");
 
    function C_faccessat_readable
      (dfd  : IC.int;

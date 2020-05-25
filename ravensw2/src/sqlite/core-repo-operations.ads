@@ -15,6 +15,8 @@ package Core.Repo.Operations is
      (reponame : String;
       mode     : Database.RDB_Mode_Flags) return Action_Result;
 
+   function update_repository (reponame : String; force : Boolean) return Action_Result;
+
 private
 
    internal_srcfile : constant String := "core-repo-operations.adb";

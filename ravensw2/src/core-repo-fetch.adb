@@ -22,71 +22,36 @@ package body Core.Repo.Fetch is
    package ENV renames Ada.Environment_Variables;
    package DIR renames Ada.Directories;
 
+
    --------------------------------------------------------------------
    --  fetch_remote_tmp
    --------------------------------------------------------------------
    function fetch_remote_tmp
      (my_repo   : A_repo;
       filename  : String;
-      timestamp : Unix.T_epochtime;
+      timestamp : in out Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor
    is
-      function get_tmpdir return String;
-      function get_tmpdir return String
-      is
-         key_TMPDIR : constant String := "TMPDIR";
-      begin
-         if ENV.Exists (key_TMPDIR) then
-            return ENV.Value (key_TMPDIR);
-         else
-            return "/tmp";
-         end if;
-      end get_tmpdir;
-
       extension : constant String := "tzst";
-      tmpdir    : constant String := get_tmpdir;
       fex       : constant String := "/" & filename & "." & extension;
+      tmp_file  : constant String := temporary_file_name (fex);
       full_url  : constant String := repo_url (my_repo) & fex;
       fd        : Unix.File_Descriptor;
    begin
-      if DIR.Exists (tmpdir) then
-         case DIR.Kind (tmpdir) is
-            when DIR.Directory => null;
-            when others =>
-               Event.emit_error (tmpdir & " exists but it's not a directory");
-               retcode := RESULT_FATAL;
-               return Unix.not_connected;
-         end case;
-      else
-         begin
-            DIR.Create_Path (tmpdir);
-         exception
-            when others =>
-               Event.emit_error ("Failed to create temporary directory " & tmpdir);
-               retcode := RESULT_FATAL;
-               return Unix.not_connected;
-         end;
+      if not temporary_directory_available then
+         retcode := RESULT_FATAL;
+         return Unix.not_connected;
       end if;
 
-      declare
-         tmp_file  : constant String := tmpdir & fex & "." & Utilities.random_characters;
-         tmp_flags : Unix.T_Open_Flags := (RDONLY => True,
-                                           WRONLY => True,
-                                           CREAT  => True,
-                                           TRUNC  => True,
-                                           others => False);
-      begin
-         fd := Unix.open_file (tmp_file, tmp_flags);
-         if not Unix.file_connected (fd) then
-            Event.emit_error
-              ("Could not create temporary file " & tmp_file & ", aborting update.");
-            retcode := RESULT_FATAL;
-            return Unix.not_connected;
-         end if;
-         if not Unix.unlink (tmp_file) then
-            Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
-         end if;
-      end;
+      fd := open_temporary_file (tmp_file);
+      if not Unix.file_connected (fd) then
+         Event.emit_error ("Could not create temporary file " & tmp_file & ", aborting update.");
+         retcode := RESULT_FATAL;
+         return Unix.not_connected;
+      end if;
+      if not Unix.unlink (tmp_file) then
+         Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
+      end if;
 
       retcode := Fetching.fetch_file_to_fd (reponame  => repo_name (my_repo),
                                             file_url  => full_url,
@@ -856,5 +821,138 @@ package body Core.Repo.Fetch is
       end case;
 
    end fetch_meta;
+
+
+   --------------------------------------------------------------------
+   --  get_tmpdir
+   --------------------------------------------------------------------
+   function get_tmpdir return String
+   is
+      key_TMPDIR : constant String := "TMPDIR";
+   begin
+      if ENV.Exists (key_TMPDIR) then
+         return ENV.Value (key_TMPDIR);
+      else
+         return "/tmp";
+      end if;
+   end get_tmpdir;
+
+
+   --------------------------------------------------------------------
+   --  temporary_directory_available
+   --------------------------------------------------------------------
+   function temporary_directory_available return Boolean
+   is
+      tmpdir : constant String := get_tmpdir;
+   begin
+      if DIR.Exists (tmpdir) then
+         case DIR.Kind (tmpdir) is
+            when DIR.Directory => null;
+            when others =>
+               Event.emit_error (tmpdir & " exists but it's not a directory");
+               return False;
+         end case;
+      else
+         begin
+            DIR.Create_Path (tmpdir);
+         exception
+            when others =>
+               Event.emit_error ("Failed to create temporary directory " & tmpdir);
+               return False;
+         end;
+      end if;
+      return True;
+   end temporary_directory_available;
+
+
+   --------------------------------------------------------------------
+   --  temporary_file_name
+   --------------------------------------------------------------------
+   function temporary_file_name (basename : String) return String
+   is
+      tmpdir    : constant String := get_tmpdir;
+      tmp_file  : constant String := tmpdir & basename & "." & Utilities.random_characters;
+   begin
+      return tmp_file;
+   end temporary_file_name;
+
+
+   --------------------------------------------------------------------
+   --  open_temporary_file
+   --------------------------------------------------------------------
+   function open_temporary_file (filename : String) return Unix.File_Descriptor
+   is
+      tmp_flags : Unix.T_Open_Flags := (RDONLY => True,
+                                        WRONLY => True,
+                                        CREAT  => True,
+                                        TRUNC  => True,
+                                        others => False);
+   begin
+      return Unix.open_file (filename, tmp_flags);
+   end open_temporary_file;
+
+
+   --------------------------------------------------------------------
+   --  fetch_remote_extract_to_file_descriptor
+   --------------------------------------------------------------------
+   function fetch_remote_extract_to_file_descriptor
+     (my_repo   : in out A_repo;
+      filename  : String;
+      timestamp : in out Unix.T_epochtime;
+      file_size : in out Unix.T_filesize;
+      retcode   : out Action_Result) return Unix.File_Descriptor
+   is
+      procedure silent_close_fd (fd : Unix.File_Descriptor);
+
+      fd       : Unix.File_Descriptor;
+      dest_fd  : Unix.File_Descriptor;
+      tmp_file : constant String := temporary_file_name (filename);
+
+      procedure silent_close_fd (fd : Unix.File_Descriptor) is
+      begin
+         if Unix.close_file (fd) then
+            null;
+         end if;
+      end silent_close_fd;
+   begin
+      fd := fetch_remote_tmp (my_repo, filename, timestamp, retcode);
+      if not Unix.file_connected (fd) then
+         return Unix.not_connected;
+      end if;
+
+      --  fetch_remote_tmp already established a temporary directory
+      dest_fd := open_temporary_file (tmp_file);
+      if not Unix.file_connected (fd) then
+         Event.emit_error ("Could not create temporary file " & tmp_file & ", aborting update.");
+         retcode := RESULT_FATAL;
+         silent_close_fd (fd);
+         return Unix.not_connected;
+      end if;
+      if not Unix.unlink (tmp_file) then
+         Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
+      end if;
+
+      if archive_extract_check_archive (my_repo  => my_repo,
+                                        fd       => fd,
+                                        filename => filename,
+                                        dest_fd  => dest_fd) /= RESULT_OK
+      then
+         retcode := RESULT_FATAL;
+         silent_close_fd (dest_fd);
+         silent_close_fd (fd);
+         return Unix.not_connected;
+      end if;
+
+      --  Thus removing archived file as well
+      silent_close_fd (fd);
+      begin
+         file_size := Unix.get_file_size (dest_fd);
+      exception
+         when Unix.bad_stat =>
+            silent_close_fd (dest_fd);
+            return Unix.not_connected;
+      end;
+      return dest_fd;
+   end fetch_remote_extract_to_file_descriptor;
 
 end Core.Repo.Fetch;

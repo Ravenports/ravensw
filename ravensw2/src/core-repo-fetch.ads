@@ -7,6 +7,16 @@ with Core.Unix;
 
 package Core.Repo.Fetch is
 
+   function fetch_meta
+     (my_repo   : in out A_repo;
+      timestamp : Unix.T_epochtime) return Action_Result;
+
+   function fetch_remote_extract_to_file_descriptor
+     (my_repo   : in out A_repo;
+      filename  : String;
+      timestamp : in out Unix.T_epochtime;
+      file_size : in out Unix.T_filesize;
+      retcode   : out Action_Result) return Unix.File_Descriptor;
 
 private
 
@@ -15,7 +25,7 @@ private
    function fetch_remote_tmp
      (my_repo   : A_repo;
       filename  : String;
-      timestamp : Unix.T_epochtime;
+      timestamp : in out Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor;
 
    function meta_extract_signature_pubkey
@@ -57,8 +67,9 @@ private
       dest_fd  : Unix.File_Descriptor;
       cert_set : out Set_Signature_Certificates.Vector) return Action_Result;
 
-   function parse_sigkey (encoded_sigkey : String;
-                          signature      : out Signature_Certificate) return Action_Result;
+   function parse_sigkey
+     (encoded_sigkey : String;
+      signature      : out Signature_Certificate) return Action_Result;
 
    function check_fingerprints
      (my_repo  : in out A_repo;
@@ -70,13 +81,13 @@ private
       filename  : String;
       dest_fd   : Unix.File_Descriptor) return Action_Result;
 
-   function fetch_meta
-     (my_repo   : in out A_repo;
-      timestamp : Unix.T_epochtime) return Action_Result;
-
    function fingerprint_certs_verified
      (metafd   : Unix.File_Descriptor;
       cert_set : Set_Signature_Certificates.Vector) return Action_Result;
 
+   function get_tmpdir return String;
+   function temporary_directory_available return Boolean;
+   function temporary_file_name (basename : String) return String;
+   function open_temporary_file (filename : String) return Unix.File_Descriptor;
 
 end Core.Repo.Fetch;
