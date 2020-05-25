@@ -2,11 +2,13 @@
 --  Reference: ../License.txt
 
 with Interfaces;
-with SSL;
-with blake2;
+with System;
 
+with Core.Repo;
 with Core.Event;
 with Core.Utilities;
+with SSL;
+with blake2;
 
 package body Core.Checksum is
 
@@ -324,7 +326,7 @@ package body Core.Checksum is
 
    --------------------------------------------------------------------
    --  checksum_encode
-      --------------------------------------------------------------------
+   --------------------------------------------------------------------
    function checksum_encode (plain : String; checksum_type : A_Checksum_Type) return String is
    begin
       case checksum_type is
@@ -338,6 +340,27 @@ package body Core.Checksum is
          when HASH_TYPE_UNKNOWN        => return "";
       end case;
    end checksum_encode;
+
+
+   --------------------------------------------------------------------
+   --  checksum_hash
+   --------------------------------------------------------------------
+   function checksum_hash
+     (entries       : checksum_entry_crate.Vector;
+      checksum_type : A_Checksum_Type) return String
+   is
+   begin
+      case checksum_type is
+         when HASH_TYPE_SHA256_BASE32  |
+              HASH_TYPE_SHA256_RAW     |
+              HASH_TYPE_SHA256_HEX     => return checksum_hash_sha256 (entries);
+         when HASH_TYPE_BLAKE2_BASE32  |
+              HASH_TYPE_BLAKE2_RAW     => return checksum_hash_blake2b (entries);
+         when HASH_TYPE_BLAKE2S_BASE32 |
+              HASH_TYPE_BLAKE2S_RAW    => return checksum_hash_blake2s (entries);
+         when HASH_TYPE_UNKNOWN        => return "";
+      end case;
+   end checksum_hash;
 
 
    --------------------------------------------------------------------
@@ -693,5 +716,181 @@ package body Core.Checksum is
             return SSL.sha256_size;
       end case;
    end checksum_size;
+
+
+   --------------------------------------------------------------------
+   --  checksum_add_entry
+   --------------------------------------------------------------------
+   procedure checksum_add_entry
+     (entries : in out checksum_entry_crate.Vector;
+      key     : String;
+      value   : Text)
+   is
+      my_entry : checksum_entry;
+   begin
+      my_entry.field := SUS (key);
+      my_entry.value := value;
+      entries.Append (entries);
+   end checksum_add_entry;
+
+
+   --------------------------------------------------------------------
+   --  checksum_add_entry
+   --------------------------------------------------------------------
+   function lower_key (Left, Right : checksum_entry) return Boolean
+   is
+      --  field names can be the same.
+      --  So sort by field names.  If the same, sort by values
+   begin
+      if equivalent (Left.field, Right.field) then
+         return SU."<" (Left.value, Right.value);
+      else
+         return SU."<" (Left.field, Right.field);
+      end if;
+   end lower_key;
+
+
+   --------------------------------------------------------------------
+   --  checksum_generate
+   --------------------------------------------------------------------
+   function checksum_generate
+     (pkg_access    : Pkgtypes.A_Package_Access;
+      checksum_type : A_Checksum_Type) return String
+   is
+      use type Pkgtypes.A_Package_Access;
+      procedure insert_option     (position : Pkgtypes.Package_NVPairs.Cursor);
+      procedure insert_shlib_repq (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_shlib_prov (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_user       (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_group      (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_dependency (position : Pkgtypes.Dependency_Crate.Cursor);
+      procedure insert_provide    (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_require    (position : Pkgtypes.Text_Crate.Cursor);
+
+      entries : checksum_entry_crate.Vector;
+
+      procedure insert_option (position : Pkgtypes.Package_NVPairs.Cursor)
+      is
+         option_key : constant String := USS (Pkgtypes.Package_NVPairs.Key (position));
+         option_val : text renames Pkgtypes.Package_NVPairs.Element (position);
+      begin
+         checksum_add_entry (entries, option_key, option_val);
+      end insert_option;
+
+      procedure insert_shlib_repq (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         checksum_add_entry (entries, "required_shlib", Pkgtypes.Text_Crate.Element (position));
+      end insert_shlib_repq;
+
+      procedure insert_shlib_prov (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         checksum_add_entry (entries, "provided_shlib", Pkgtypes.Text_Crate.Element (position));
+      end insert_shlib_prov;
+
+      procedure insert_user (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         checksum_add_entry (entries, "user", Pkgtypes.Text_Crate.Element (position));
+      end insert_user;
+
+      procedure insert_group (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         checksum_add_entry (entries, "group", Pkgtypes.Text_Crate.Element (position));
+      end insert_group;
+
+      procedure insert_dependency (position : Pkgtypes.Dependency_Crate.Cursor)
+      is
+
+         val : Text := SUS (USS (Pkgtypes.Dependency_Crate.Element (position).name) &
+                              "~" & USS (Pkgtypes.Dependency_Crate.Element (position).origin));
+      begin
+         checksum_add_entry (entries, "depend", val);
+      end insert_dependency;
+
+      procedure insert_provide (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         checksum_add_entry (entries, "provide", Pkgtypes.Text_Crate.Element (position));
+      end insert_provide;
+
+      procedure insert_require (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         checksum_add_entry (entries, "require", Pkgtypes.Text_Crate.Element (position));
+      end insert_require;
+   begin
+      if pkg_access = null or else checksum_type = HASH_TYPE_UNKNOWN then
+         Event.emit_error ("checksum_generate: invalidate arguments");
+         return "";
+      end if;
+
+      checksum_add_entry (entries, "name", pkg_access.name);
+      checksum_add_entry (entries, "origin", pkg_access.origin);
+      checksum_add_entry (entries, "version", pkg_access.version);
+      checksum_add_entry (entries, "arch", pkg_access.arch);
+
+      pkg_access.options.Iterate (insert_option'Access);
+      pkg_access.shlibs_reqd.Iterate (insert_shlib_repq'Access);
+      pkg_access.shlibs_prov.Iterate (insert_shlib_prov'Access);
+      pkg_access.users.Iterate (insert_user'Access);
+      pkg_access.groups.Iterate (insert_group'Access);
+      pkg_access.depends.Iterate (insert_dependency'Access);
+      pkg_access.provides.Iterate (insert_provide'Access);
+      pkg_access.requires.Iterate (insert_require'Access);
+
+      Entry_Sorter.Sort (entries);
+
+      declare
+         bdigest : String := checksum_hash (entries, checksum_type);
+         prefix  : constant String :=
+           int2str (CHECKSUM_CUR_VERSION) & CHECKSUM_SEPARATOR &
+           int2str (A_Checksum_Type'Pos (checksum_type)) & CHECKSUM_SEPARATOR;
+      begin
+         if bdigest = "" then
+            return "";
+         end if;
+         return prefix & checksum_encode (bdigest, checksum_type);
+      end;
+   end checksum_generate;
+
+
+   --------------------------------------------------------------------
+   --  checksum_calculate
+   --------------------------------------------------------------------
+   function checksum_calculate
+     (pkg_access : Pkgtypes.A_Package_Access;
+      rdb        : DOP.RDB_Connection) return Action_Result
+   is
+      cs_type : A_Checksum_Type;
+   begin
+      if System.Word_Size = 32 then
+         cs_type := HASH_TYPE_BLAKE2S_BASE32;
+      else
+         cs_type := HASH_TYPE_BLAKE2_BASE32;
+      end if;
+
+      declare
+         rname : constant String := USS (pkg_access.reponame);
+      begin
+         if Repo.repository_exists (rname) then
+            cs_type := Repo.repo_meta_digest_format (Repo.get_repository (rname));
+         end if;
+      end;
+
+      declare
+         new_digest : constant String := checksum_generate (pkg_access, cs_type);
+      begin
+         if IsBlank (new_digest) then
+            return RESULT_FATAL;
+         end if;
+         pkg_access.digest := SUS (new_digest);
+      end;
+
+      if DOP.rdb_connected (rdb) then
+         --  TODO : pkgdb_set_pkg_digest
+      end if;
+
+      return RESULT_OK;
+
+   end checksum_calculate;
+
+
 
 end Core.Checksum;

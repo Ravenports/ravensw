@@ -4,8 +4,12 @@
 with Ada.Containers.Vectors;
 with Interfaces.C.Extensions;
 
-with Core.Strings; use Core.Strings;
+with Core.Pkgtypes;
+with Core.Strings;
 with Core.Unix;
+with Core.Database.Operations;
+
+use Core.Strings;
 
 package Core.Checksum is
 
@@ -17,6 +21,7 @@ package Core.Checksum is
    --  checksum_file
 
    package CON renames Ada.Containers;
+   package DOP renames Core.Database.Operations;
 
    type A_Checksum_Type is
       (HASH_TYPE_SHA256_BASE32,
@@ -49,19 +54,30 @@ package Core.Checksum is
       path          : String;
       checksum_type : A_Checksum_Type) return String;
 
-   function checksum_symlink (path : String; checksum_type : A_Checksum_Type) return String;
+   function checksum_symlink
+     (path          : String;
+      checksum_type : A_Checksum_Type) return String;
 
    function checksum_symlinkat
      (fd            : Unix.File_Descriptor;
       relative_path : String;
       checksum_type : A_Checksum_Type) return String;
 
-   function checksum_validate_file (path : String; sum : String) return Boolean;
+   function checksum_validate_file
+     (path          : String;
+      sum           : String) return Boolean;
 
-   function checksum_generate_file (path : String; checksum_type : A_Checksum_Type)
-                                        return String;
+   function checksum_generate_file
+     (path          : String;
+      checksum_type : A_Checksum_Type) return String;
 
-   function checksum_data (instr : String;  checksum_type : A_Checksum_Type) return String;
+   function checksum_data
+     (instr         : String;
+      checksum_type : A_Checksum_Type) return String;
+
+   function checksum_calculate
+     (pkg_access : Pkgtypes.A_Package_Access;
+      rdb        : DOP.RDB_Connection) return Action_Result;
 
 private
 
@@ -78,23 +94,37 @@ private
      (Element_Type => checksum_entry,
       Index_Type   => Natural);
 
+   function lower_key (Left, Right : checksum_entry) return Boolean;
+
+   package Entry_Sorter is new checksum_entry_crate.Generic_Sorting ("<" => lower_key);
+
    function checksum_hash_sha256  (entries : checksum_entry_crate.Vector) return String;
    function checksum_hash_blake2b (entries : checksum_entry_crate.Vector) return String;
    function checksum_hash_blake2s (entries : checksum_entry_crate.Vector) return String;
 
-   function checksum_hash_file         (fd : Unix.File_Descriptor;
-                                        checksum_type : A_Checksum_Type) return String;
+   function checksum_hash
+     (entries       : checksum_entry_crate.Vector;
+      checksum_type : A_Checksum_Type) return String;
+
+   function checksum_hash_file
+     (fd : Unix.File_Descriptor;
+      checksum_type : A_Checksum_Type) return String;
+
    function checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String;
-   function checksum_hash_blake2b_file  (fd : Unix.File_Descriptor) return String;
+   function checksum_hash_blake2b_file (fd : Unix.File_Descriptor) return String;
    function checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String;
 
-   function checksum_encode        (plain : String;
-                                    checksum_type : A_Checksum_Type) return String;
+   function checksum_encode
+     (plain : String;
+      checksum_type : A_Checksum_Type) return String;
+
    function checksum_encode_base32 (plain : String) return String;
    function checksum_encode_hex    (plain : String) return String;
 
-   function checksum_hash_bulk         (plain : String;
-                                        checksum_type : A_Checksum_Type) return String;
+   function checksum_hash_bulk
+     (plain : String;
+      checksum_type : A_Checksum_Type) return String;
+
    function checksum_hash_sha256_bulk  (plain : String) return String;
    function checksum_hash_blake2b_bulk (plain : String) return String;
    function checksum_hash_blake2s_bulk (plain : String) return String;
@@ -106,5 +136,14 @@ private
    function checksum_get_type_helper (frag : String) return A_Checksum_Type;
    function checksum_get_type        (cksum : String) return A_Checksum_Type;
    function checksum_file_get_type   (cksum : String) return A_Checksum_Type;
+
+   procedure checksum_add_entry
+     (entries : in out checksum_entry_crate.Vector;
+      key     : String;
+      value   : Text);
+
+   function checksum_generate
+     (pkg_access    : Pkgtypes.A_Package_Access;
+      checksum_type : A_Checksum_Type) return String;
 
 end Core.Checksum;

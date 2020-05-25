@@ -67,4 +67,9 @@ private
       mtime    : in out Unix.T_epochtime;
       force    : Boolean) return Action_Result;
 
+   function add_from_manifest
+     (repo     : A_repo;
+      manifest : String) return Action_Result;
+
+
 end Core.Repo.Operations;

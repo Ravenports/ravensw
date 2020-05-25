@@ -666,4 +666,13 @@ package body Core.Database.Operations is
    end establish_connection;
 
 
+   --------------------------------------------------------------------
+   --  rdb_connected
+   --------------------------------------------------------------------
+   function rdb_connected (db : RDB_Connection) return Boolean is
+   begin
+      return SQLite.db_connected (db.sqlite);
+   end rdb_connected;
+
+
 end Core.Database.Operations;

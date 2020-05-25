@@ -3,8 +3,8 @@
 
 with Ada.Containers.Vectors;
 with Core.Strings;
+with Core.Checksum;
 
-private with Core.Checksum;
 private with Ada.Containers.Hashed_Maps;
 private with sqlite_h;
 
@@ -97,6 +97,12 @@ package Core.Repo is
 
    --  Returns vector of active repositories in order of priority
    function ordered_active_repositories return Active_Repository_Name_Set.Vector;
+
+   --  Returns true if repository is registered with given name
+   function repository_exists (reponame : String) return Boolean;
+
+   --  Return the metafile's digest format
+   function repo_meta_digest_format (repo : A_repo) return Checksum.A_Checksum_Type;
 
 private
 

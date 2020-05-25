@@ -326,5 +326,21 @@ package body Core.Repo is
    end count_of_trusted_fingerprints;
 
 
+   --------------------------------------------------------------------
+   --  repository_exists
+   --------------------------------------------------------------------
+   function repository_exists (reponame : String) return Boolean is
+   begin
+      return repositories.Contains (SUS (reponame));
+   end repository_exists;
+
+
+   --------------------------------------------------------------------
+   --  repo_meta_digest_format
+   --------------------------------------------------------------------
+   function repo_meta_digest_format (repo : A_repo) return Checksum.A_Checksum_Type is
+   begin
+      return repo.meta.digest_format;
+   end repo_meta_digest_format;
 
 end Core.Repo;
