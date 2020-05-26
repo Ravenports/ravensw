@@ -5,8 +5,12 @@ with Ada.Numerics.Discrete_Random;
 with Interfaces;
 with System;
 
-with Core.Strings; use Core.Strings;
+with Core.Strings;
+with Core.Config;
+with Core.Event;
 with Core.Unix;
+
+use Core.Strings;
 
 package body Core.Utilities is
 
@@ -385,5 +389,22 @@ package body Core.Utilities is
    end conv2int;
 
 
+   --------------------------------------------------------------------
+   --  is_valid_abi
+   --------------------------------------------------------------------
+   function is_valid_abi (arch : String; show_errors : Boolean) return Boolean
+   is
+      myarch : String := Config.configuration_value (Config.abi);
+   begin
+      if not Unix.filename_match (arch, myarch) then
+         if arch /= myarch then
+            if show_errors then
+               Event.emit_error ("wrong architecture: " & arch & " instead of " & myarch);
+            end if;
+            return False;
+         end if;
+      end if;
+      return True;
+   end is_valid_abi;
 
 end Core.Utilities;

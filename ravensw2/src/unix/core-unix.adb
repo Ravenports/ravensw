@@ -54,8 +54,19 @@ package body Core.Unix is
    is
       use type IC.int;
    begin
-      return (rc = 0);
+      return (rc = IC.int (0));
    end success;
+
+
+   --------------------------------------------------------------------
+   --  failure
+   --------------------------------------------------------------------
+   function failure (rc : IC.int) return Boolean
+   is
+      use type IC.int;
+   begin
+      return (rc = IC.int (1));
+   end failure;
 
 
    --------------------------------------------------------------------
@@ -355,14 +366,13 @@ package body Core.Unix is
    --------------------------------------------------------------------
    function stat_ok (path : String; sb : struct_stat_Access) return Boolean
    is
-      use type IC.int;
       c_path : IC.Strings.chars_ptr;
       res : IC.int;
    begin
       c_path := IC.Strings.New_String (path);
       res := C_stat (c_path, sb);
       IC.Strings.Free (c_path);
-      return (res = IC.int (0));
+      return success (res);
    end stat_ok;
 
 
@@ -371,14 +381,13 @@ package body Core.Unix is
    --------------------------------------------------------------------
    function lstat_ok (path : String; sb : struct_stat_Access) return Boolean
    is
-      use type IC.int;
       c_path : IC.Strings.chars_ptr;
       res : IC.int;
    begin
       c_path := IC.Strings.New_String (path);
       res := C_lstat (c_path, sb);
       IC.Strings.Free (c_path);
-      return (res = IC.int (0));
+      return success (res);
    end lstat_ok;
 
 
@@ -412,10 +421,9 @@ package body Core.Unix is
    function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
       return Boolean
    is
-      use type IC.int;
       res : IC.int := C_bad_perms (IC.int (fileowner), IC.int (filegroup), sb);
    begin
-      return (res = IC.int (1));
+      return failure (res);
    end bad_perms;
 
 
@@ -425,10 +433,9 @@ package body Core.Unix is
    function wrong_owner (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
       return Boolean
    is
-      use type IC.int;
       res : IC.int := C_wrong_owner (IC.int (fileowner), IC.int (filegroup), sb);
    begin
-      return (res = IC.int (1));
+      return failure (res);
    end wrong_owner;
 
 
@@ -438,7 +445,6 @@ package body Core.Unix is
    function valid_permissions (path : String; permissions : T_Access_Flags) return Boolean
    is
       use type IC.int;
-
       mode   : IC.int := IC.int (0);
       res    : IC.int;
       c_path : IC.Strings.chars_ptr;
@@ -456,7 +462,7 @@ package body Core.Unix is
       c_path := IC.Strings.New_String (path);
       res := C_access (c_path, mode);
       IC.Strings.Free (c_path);
-      return (res = IC.int (0));
+      return success (res);
    end valid_permissions;
 
 
@@ -661,13 +667,11 @@ package body Core.Unix is
    --------------------------------------------------------------------
    function kill (pid : Process_ID) return Boolean
    is
-      use type IC.int;
-
       res : IC.int;
       sig : IC.int := IC.int (0);
    begin
       res := C_kill (pid, sig);
-      return (res = IC.int (0));
+      return success (res);
    end kill;
 
 
@@ -685,14 +689,13 @@ package body Core.Unix is
    --------------------------------------------------------------------
    function unlink (path : String) return Boolean
    is
-      use type IC.int;
       c_path : IC.Strings.chars_ptr;
       res : IC.int;
    begin
       c_path := IC.Strings.New_String (path);
       res := C_unlink (c_path);
       IC.Strings.Free (c_path);
-      return (res = IC.int (0));
+      return success (res);
    end unlink;
 
 
@@ -703,7 +706,6 @@ package body Core.Unix is
                     relative_path : String;
                     is_directory  : Boolean := False) return Boolean
    is
-      use type IC.int;
       c_path : IC.Strings.chars_ptr;
       res : IC.int;
    begin
@@ -713,7 +715,7 @@ package body Core.Unix is
       else
          res := C_unlinkat (fd, c_path, 0);
       end if;
-      return (res = IC.int (0));
+      return success (res);
    end unlink;
 
 

@@ -68,7 +68,7 @@ private
       force    : Boolean) return Action_Result;
 
    function add_from_manifest
-     (repo     : A_repo;
+     (my_repo  : A_repo;
       manifest : String) return Action_Result;
 
 

@@ -37,4 +37,7 @@ package Core.Utilities is
    --  Convert binary string of 4 characters to 32-bit integer considering endianness
    function conv2int (str : bytes4) return uint32;
 
+   --  Return true if ABI is valid
+   function is_valid_abi (arch : String; show_errors : Boolean) return Boolean;
+
 end Core.Utilities;

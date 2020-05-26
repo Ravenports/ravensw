@@ -15,6 +15,7 @@ with Core.Database.CustomCmds;
 with Core.CommonSQL;
 with Core.Checksum;
 with Core.Config;
+with Core.Utilities;
 with Core.Manifest;
 with SQLite;
 
@@ -754,7 +755,7 @@ package body Core.Repo.Operations is
    --  add_from_manifest
    --------------------------------------------------------------------
    function add_from_manifest
-     (repo     : A_repo;
+     (my_repo  : A_repo;
       manifest : String) return Action_Result
    is
       my_pkg : aliased Pkgtypes.A_Package;
@@ -778,30 +779,16 @@ package body Core.Repo.Operations is
          abi := my_pkg.abi;
       end if;
 
---        if IsBlank (abi) or else not
---
---
---  	if (abi == NULL || !is_valid_abi(abi, true)) {
---  		rc = EPKG_FATAL;
---  		pkg_emit_error("repository %s contains packages with wrong ABI: %s",
---  			repo->name, abi);
---  		goto cleanup;
---  	}
---  	if (!is_valid_os_version(pkg)) {
---  		rc = EPKG_FATAL;
---  		pkg_emit_error("repository %s contains packages for wrong OS "
---  		    "version: %s", repo->name, abi);
---  		goto cleanup;
---  	}
---
---  	free(pkg->reponame);
---  	pkg->reponame = xstrdup(repo->name);
---
---  	rc = pkg_repo_binary_add_pkg(pkg, NULL, sqlite, true);
---
---  cleanup:
---  	pkg_free(pkg);
---
+
+      if IsBlank (abi) or else not Utilities.is_valid_abi (USS (abi), True) then
+         Event.emit_error ("repository " & Repo.repo_name (my_repo) &
+                             " contains packages with wrong ABI: " & USS (abi));
+         return RESULT_FATAL;
+      end if;
+      my_pkg.reponame := SUS (Repo.repo_name (my_repo));
+
+      --  TODO: rc = pkg_repo_binary_add_pkg(pkg, NULL, sqlite, true);
+
 --  	return (rc);
       return RESULT_FATAL;
    end add_from_manifest;

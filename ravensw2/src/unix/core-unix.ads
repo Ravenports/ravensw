@@ -213,6 +213,7 @@ private
       end record;
 
    function success (rc : IC.int) return Boolean;
+   function failure (rc : IC.int) return Boolean;
 
    function C_Strerror (Errnum : IC.int) return IC.Strings.chars_ptr;
    pragma Import (C, C_Strerror, "strerror");
