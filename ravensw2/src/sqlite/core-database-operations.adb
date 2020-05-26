@@ -706,6 +706,37 @@ package body Core.Database.Operations is
 
 
    --------------------------------------------------------------------
+   --  push_arg (unbounded string)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; textual_arg : Text)
+   is
+      new_entry : Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_String;
+      new_entry.data_string := textual_arg;
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
+   --  push_arg (boolean)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; boolean_arg : Boolean)
+   is
+      new_entry : Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_Number;
+      if boolean_arg then
+         new_entry.data_number := 1;
+      else
+         new_entry.data_number := 0;
+      end if;
+      args.Append (new_entry);
+   end push_arg;
+
+
+
+   --------------------------------------------------------------------
    --  set_pkg_digest
    --------------------------------------------------------------------
    function set_pkg_digest (pkg_access : Pkgtypes.A_Package_Access;
@@ -714,7 +745,7 @@ package body Core.Database.Operations is
       args : Set_Stmt_Args.Vector;
       index : constant Schema.prstmt_index := Schema.UPDATE_DIGEST;
    begin
-      push_arg (args, USS (pkg_access.digest));
+      push_arg (args, pkg_access.digest);
       push_arg (args, int64 (pkg_access.id));
       if Schema.run_prepared_statement (index, args) then
          return RESULT_OK;
@@ -724,6 +755,194 @@ package body Core.Database.Operations is
          return RESULT_FATAL;
       end if;
    end set_pkg_digest;
+
+
+   --------------------------------------------------------------------
+   --  add_pkg_to_database
+   --------------------------------------------------------------------
+   function add_pkg_to_database
+     (pkg_access : Pkgtypes.A_Package_Access;
+      rdb_access : RDB_Connection_Access;
+      pkg_path   : String;
+      forced     : Boolean) return Action_Result
+   is
+      function get_arch return String;
+      function insert_main_package (rc : out Action_Result) return Boolean;
+      procedure spit_out_error (index : Schema.prstmt_index; extra : String := "");
+      procedure insert_dependency  (position : Pkgtypes.Dependency_Crate.Cursor);
+      procedure insert_category    (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_license     (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_shlib_reqd  (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_shlib_prov  (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_provide     (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_require     (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_option      (position : Pkgtypes.Package_NVPairs.Cursor);
+      procedure insert_annotations (position : Pkgtypes.Package_NVPairs.Cursor);
+
+      rc      : Action_Result;
+      problem : Boolean := False;
+
+      function get_arch return String is
+      begin
+         if IsBlank (pkg_access.abi) then
+            return USS (pkg_access.arch);
+         else
+            return USS (pkg_access.abi);
+         end if;
+      end get_arch;
+
+      procedure spit_out_error (index : Schema.prstmt_index; extra : String := "") is
+      begin
+         CommonSQL.ERROR_SQLITE
+           (rdb_access.sqlite,
+            internal_srcfile,
+            "add_pkg_to_database",
+            "Prep stmt " & index'Img & extra);
+      end spit_out_error;
+
+      function insert_main_package (rc : out Action_Result) return Boolean
+      is
+         args : Set_Stmt_Args.Vector;
+         index : constant Schema.prstmt_index := Schema.PKG;
+         sqerr : sqlite_h.enum_error_types;
+      begin
+         --  "TTTT_TTTT_TIII_TTTT_I",
+         push_arg (args, pkg_access.origin);
+         push_arg (args, pkg_access.name);
+         push_arg (args, pkg_access.version);
+         push_arg (args, pkg_access.comment);
+
+         push_arg (args, pkg_access.desc);
+         push_arg (args, get_arch);
+         push_arg (args, pkg_access.maintainer);
+         push_arg (args, pkg_access.www);
+
+         push_arg (args, pkg_access.prefix);
+         push_arg (args, int64 (pkg_access.pkgsize));
+         push_arg (args, int64 (pkg_access.flatsize));
+         push_arg (args, int64 (Pkgtypes.License_Logic'Pos (pkg_access.licenselogic)));
+
+         push_arg (args, pkg_access.sum);
+         push_arg (args, pkg_access.repopath);
+         push_arg (args, pkg_access.digest);
+         push_arg (args, pkg_access.old_version);
+
+         push_arg (args, pkg_access.vital);
+
+         if Schema.run_prepared_statement (index, args) then
+            rc := RESULT_OK;
+            return True;
+         else
+            sqerr := SQLite.get_last_error_code (rdb_access.sqlite);
+            case sqerr is
+               when sqlite_h.SQLITE_CONSTRAINT =>
+                  Event.emit_debug (3, "Deleting conflicting package " & USS (pkg_access.origin)
+                                    & "-" & USS (pkg_access.version));
+                  rc := delete_conflicting_package (origin   => pkg_access.origin,
+                                                    version  => pkg_access.version,
+                                                    pkg_path => SUS (pkg_path),
+                                                    forced   => forced);
+                  case rc is
+                     when RESULT_FATAL =>
+                        spit_out_error (index, " (delete conflict failed)");
+                     when RESULT_END =>
+                        --  repo already has newer
+                        null;
+                     when others =>
+                        --  conflict cleared, try again
+                        null;
+                  end case;
+               when others =>
+                  spit_out_error (index);
+                  rc := RESULT_FATAL;
+            end case;
+            return False;
+         end if;
+      end insert_main_package;
+
+      procedure insert_dependency (position : Pkgtypes.Dependency_Crate.Cursor)
+      is
+         dep : Pkgtypes.Package_Dependency renames Pkgtypes.Dependency_Crate.Element (position);
+         args : Set_Stmt_Args.Vector;
+         index : constant Schema.prstmt_index := Schema.DEPENDENCIES;
+      begin
+         if not problem then
+            push_arg (args, pkg_access.origin);
+            push_arg (args, pkg_access.name);
+            push_arg (args, pkg_access.version);
+            push_arg (args, int64 (pkg_access.id));
+            problem := Schema.run_prepared_statement (index, args);
+         end if;
+      end insert_dependency;
+
+      procedure insert_category (position : Pkgtypes.Text_Crate.Cursor)
+      is
+         args1  : Set_Stmt_Args.Vector;
+         args2  : Set_Stmt_Args.Vector;
+         index1 : constant Schema.prstmt_index := Schema.CATEGORY1;
+         index2 : constant Schema.prstmt_index := Schema.CATEGORY2;
+      begin
+         if not problem then
+            push_arg (args1, Pkgtypes.Text_Crate.Element (position));
+            problem := Schema.run_prepared_statement (index1, args1);
+            if problem then
+               spit_out_error (index1);
+            else
+               push_arg (args2, int64 (pkg_access.id));
+               push_arg (args2, Pkgtypes.Text_Crate.Element (position));
+               problem := Schema.run_prepared_statement (index2, args2);
+               if problem then
+                  spit_out_error (index2);
+               end if;
+            end if;
+         end if;
+      end insert_category;
+
+   begin
+      loop
+         rc := RESULT_FATAL;
+         exit when insert_main_package (rc);
+         case rc is
+            when RESULT_FATAL => return RESULT_FATAL;
+            when RESULT_END   => return RESULT_END;
+            when others       => null;
+         end case;
+      end loop;
+      pkg_access.id :=
+        Pkgtypes.Package_ID (sqlite_h.sqlite3_last_insert_rowid (rdb_access.sqlite));
+
+      pkg_access.depends.Iterate (insert_dependency'Access);
+      if not problem then
+         pkg_access.categories.Iterate (insert_category'Access);
+      end if;
+      if not problem then
+         pkg_access.licenses.Iterate (insert_license'Access);
+      end if;
+      if not problem then
+         pkg_access.options.Iterate (insert_option'Access);
+      end if;
+      if not problem then
+         pkg_access.shlibs_reqd.Iterate (insert_shlib_reqd'Access);
+      end if;
+      if not problem then
+         pkg_access.shlibs_prov.Iterate (insert_shlib_prov'Access);
+      end if;
+      if not problem then
+         pkg_access.requires.Iterate (insert_require'Access);
+      end if;
+      if not problem then
+         pkg_access.provides.Iterate (insert_provide'Access);
+      end if;
+      if not problem then
+         pkg_access.annotations.Iterate (insert_annotations'Access);
+      end if;
+
+      if problem then
+         return RESULT_FATAL;
+      else
+         return RESULT_OK;
+      end if;
+   end add_pkg_to_database;
 
 
 end Core.Database.Operations;

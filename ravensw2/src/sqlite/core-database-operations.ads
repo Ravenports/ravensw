@@ -52,8 +52,15 @@ package Core.Database.Operations is
 
    function rdb_connected (db : RDB_Connection_Access) return Boolean;
 
-   function set_pkg_digest (pkg_access : Pkgtypes.A_Package_Access;
-                            rdb_access : RDB_Connection_Access) return Action_Result;
+   function set_pkg_digest
+     (pkg_access : Pkgtypes.A_Package_Access;
+      rdb_access : RDB_Connection_Access) return Action_Result;
+
+   function add_pkg_to_database
+     (pkg_access : Pkgtypes.A_Package_Access;
+      rdb_access : RDB_Connection_Access;
+      pkg_path   : String;
+      forced     : Boolean) return Action_Result;
 
 private
 
@@ -100,5 +107,13 @@ private
    --  build up prepared statement arguments
    procedure push_arg (args : in out Set_Stmt_Args.Vector; numeric_arg : int64);
    procedure push_arg (args : in out Set_Stmt_Args.Vector; textual_arg : String);
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; textual_arg : Text);
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; boolean_arg : Boolean);
+
+   function delete_conflicting_package
+     (origin   : Text;
+      version  : Text;
+      pkg_path : Text;
+      forced   : Boolean) return Action_Result;
 
 end Core.Database.Operations;

@@ -759,7 +759,7 @@ package body Core.Checksum is
    is
       use type Pkgtypes.A_Package_Access;
       procedure insert_option     (position : Pkgtypes.Package_NVPairs.Cursor);
-      procedure insert_shlib_repq (position : Pkgtypes.Text_Crate.Cursor);
+      procedure insert_shlib_reqd (position : Pkgtypes.Text_Crate.Cursor);
       procedure insert_shlib_prov (position : Pkgtypes.Text_Crate.Cursor);
       procedure insert_user       (position : Pkgtypes.Text_Crate.Cursor);
       procedure insert_group      (position : Pkgtypes.Text_Crate.Cursor);
@@ -777,10 +777,10 @@ package body Core.Checksum is
          checksum_add_entry (entries, option_key, option_val);
       end insert_option;
 
-      procedure insert_shlib_repq (position : Pkgtypes.Text_Crate.Cursor) is
+      procedure insert_shlib_reqd (position : Pkgtypes.Text_Crate.Cursor) is
       begin
          checksum_add_entry (entries, "required_shlib", Pkgtypes.Text_Crate.Element (position));
-      end insert_shlib_repq;
+      end insert_shlib_reqd;
 
       procedure insert_shlib_prov (position : Pkgtypes.Text_Crate.Cursor) is
       begin
@@ -827,7 +827,7 @@ package body Core.Checksum is
       checksum_add_entry (entries, "arch", pkg_access.arch);
 
       pkg_access.options.Iterate (insert_option'Access);
-      pkg_access.shlibs_reqd.Iterate (insert_shlib_repq'Access);
+      pkg_access.shlibs_reqd.Iterate (insert_shlib_reqd'Access);
       pkg_access.shlibs_prov.Iterate (insert_shlib_prov'Access);
       pkg_access.users.Iterate (insert_user'Access);
       pkg_access.groups.Iterate (insert_group'Access);

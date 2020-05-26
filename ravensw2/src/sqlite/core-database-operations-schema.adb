@@ -21,7 +21,7 @@ package body Core.Database.Operations.Schema is
             return "INSERT OR IGNORE INTO mtree(content) VALUES(?1)";
 
          when PKG =>
-            --  return "TTTTTTTTTTIIITTTI";
+            --  return "TTTTTTTTTIIITTTTI",
             return "INSERT OR REPLACE INTO packages (origin, name, version, comment, desc, " &
               "message, arch, maintainer, www, prefix, flatsize, automatic, licenselogic, " &
               "mtree_id, time, manifestdigest, dep_formula, vital) " &
