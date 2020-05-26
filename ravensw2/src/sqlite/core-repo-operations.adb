@@ -15,6 +15,7 @@ with Core.Database.CustomCmds;
 with Core.CommonSQL;
 with Core.Checksum;
 with Core.Config;
+with Core.Manifest;
 with SQLite;
 
 
@@ -760,13 +761,14 @@ package body Core.Repo.Operations is
       abi    : Text;
    begin
       my_pkg.package_type := Pkgtypes.PKG_REMOTE;
-      if Manifest.parse_manifest (my_pkg'Access, manifest) /= RESULT_OK then
+      if Core.Manifest.parse_manifest (my_pkg'Unchecked_Access, manifest) /= RESULT_OK then
          return RESULT_FATAL;
       end if;
 
       if IsBlank (my_pkg.digest) or else not Checksum.checksum_is_valid (my_pkg.digest) then
-         -- TODO:  pkg_checksum_calculate(pkg, NULL);
-         null;
+         if Checksum.checksum_calculate (my_pkg'Unchecked_Access, null) /= RESULT_OK then
+            return RESULT_FATAL;
+         end if;
       end if;
 
       --  Does ravensw ever run into a blank abi situation?  Might be a pkgng thing ...
@@ -776,35 +778,32 @@ package body Core.Repo.Operations is
          abi := my_pkg.abi;
       end if;
 
-      if IsBlank (abi) or else not
-
-
-
-	if (pkg->digest == NULL || !pkg_checksum_is_valid(pkg->digest, strlen(pkg->digest)))
-		pkg_checksum_calculate(pkg, NULL);
-	abi = pkg->abi != NULL ? pkg->abi : pkg->arch;
-	if (abi == NULL || !is_valid_abi(abi, true)) {
-		rc = EPKG_FATAL;
-		pkg_emit_error("repository %s contains packages with wrong ABI: %s",
-			repo->name, abi);
-		goto cleanup;
-	}
-	if (!is_valid_os_version(pkg)) {
-		rc = EPKG_FATAL;
-		pkg_emit_error("repository %s contains packages for wrong OS "
-		    "version: %s", repo->name, abi);
-		goto cleanup;
-	}
-
-	free(pkg->reponame);
-	pkg->reponame = xstrdup(repo->name);
-
-	rc = pkg_repo_binary_add_pkg(pkg, NULL, sqlite, true);
-
-cleanup:
-	pkg_free(pkg);
-
-	return (rc);
+--        if IsBlank (abi) or else not
+--
+--
+--  	if (abi == NULL || !is_valid_abi(abi, true)) {
+--  		rc = EPKG_FATAL;
+--  		pkg_emit_error("repository %s contains packages with wrong ABI: %s",
+--  			repo->name, abi);
+--  		goto cleanup;
+--  	}
+--  	if (!is_valid_os_version(pkg)) {
+--  		rc = EPKG_FATAL;
+--  		pkg_emit_error("repository %s contains packages for wrong OS "
+--  		    "version: %s", repo->name, abi);
+--  		goto cleanup;
+--  	}
+--
+--  	free(pkg->reponame);
+--  	pkg->reponame = xstrdup(repo->name);
+--
+--  	rc = pkg_repo_binary_add_pkg(pkg, NULL, sqlite, true);
+--
+--  cleanup:
+--  	pkg_free(pkg);
+--
+--  	return (rc);
+      return RESULT_FATAL;
    end add_from_manifest;
 
 end Core.Repo.Operations;

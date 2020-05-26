@@ -856,7 +856,7 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function checksum_calculate
      (pkg_access : Pkgtypes.A_Package_Access;
-      rdb        : DOP.RDB_Connection) return Action_Result
+      rdb_access : DOP.RDB_Connection_Access) return Action_Result
    is
       cs_type : A_Checksum_Type;
    begin
@@ -883,12 +883,11 @@ package body Core.Checksum is
          pkg_access.digest := SUS (new_digest);
       end;
 
-      if DOP.rdb_connected (rdb) then
-         --  TODO : pkgdb_set_pkg_digest
+      if  DOP.rdb_connected (rdb_access) then
+         return DOP.set_pkg_digest (pkg_access, rdb_access);
       end if;
 
       return RESULT_OK;
-
    end checksum_calculate;
 
 

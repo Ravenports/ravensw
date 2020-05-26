@@ -45,9 +45,19 @@ package Core.Database is
       dbname : String)
       return Action_Result;
 
+   type Stmt_Argument is private;
+
 private
 
    case_sensitivity_setting : Boolean := False;
+
+   type Stmt_Argument_Datatype is (Provide_Number, Provide_String);
+   type Stmt_Argument is
+      record
+         datatype    : Stmt_Argument_Datatype;
+         data_number : int64;
+         data_string : Text;
+      end record;
 
    function rdb_security_status
      (path : String;

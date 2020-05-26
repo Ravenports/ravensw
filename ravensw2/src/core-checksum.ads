@@ -77,7 +77,7 @@ package Core.Checksum is
 
    function checksum_calculate
      (pkg_access : Pkgtypes.A_Package_Access;
-      rdb        : DOP.RDB_Connection) return Action_Result;
+      rdb_access : DOP.RDB_Connection_Access) return Action_Result;
 
 private
 

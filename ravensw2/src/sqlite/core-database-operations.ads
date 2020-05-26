@@ -1,16 +1,23 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
-private with Ada.Containers.Vectors;
+with Ada.Containers.Vectors;
 private with Interfaces.C;
 
+with Core.Pkgtypes;
 private with Core.Unix;
 private with sqlite_h;
 
 package Core.Database.Operations is
 
+   package CON renames Ada.Containers;
+
    type RDB_Connection is limited private;
    type RDB_Connection_Access is access all RDB_Connection;
+
+   package Set_Stmt_Args is new CON.Vectors
+     (Element_Type => Stmt_Argument,
+      Index_Type   => Natural);
 
    --  rdb_open with a blank reponame opens all active repositories
    --  rdb_open_all is equivalent to above
@@ -43,9 +50,13 @@ package Core.Database.Operations is
       dtype : RDB_Type)
       return Action_Result;
 
+   function rdb_connected (db : RDB_Connection_Access) return Boolean;
+
+   function set_pkg_digest (pkg_access : Pkgtypes.A_Package_Access;
+                            rdb_access : RDB_Connection_Access) return Action_Result;
+
 private
 
-   package CON renames Ada.Containers;
    package IC  renames Interfaces.C;
 
    internal_srcfile : constant String := "core-database-operations.adb";
@@ -85,5 +96,9 @@ private
       pid : Unix.Process_ID) return Boolean;
 
    function establish_connection (db : in out RDB_Connection) return Action_Result;
+
+   --  build up prepared statement arguments
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; numeric_arg : int64);
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; textual_arg : String);
 
 end Core.Database.Operations;

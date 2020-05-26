@@ -669,10 +669,61 @@ package body Core.Database.Operations is
    --------------------------------------------------------------------
    --  rdb_connected
    --------------------------------------------------------------------
-   function rdb_connected (db : RDB_Connection) return Boolean is
+   function rdb_connected (db : RDB_Connection_Access) return Boolean is
    begin
-      return SQLite.db_connected (db.sqlite);
+      if db = null then
+         return False;
+      else
+         return SQLite.db_connected (db.all.sqlite);
+      end if;
    end rdb_connected;
+
+
+   --------------------------------------------------------------------
+   --  push_arg (number)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; numeric_arg : int64)
+   is
+      new_entry : Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_Number;
+      new_entry.data_number := numeric_arg;
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
+   --  push_arg (string)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Stmt_Args.Vector; textual_arg : String)
+   is
+      new_entry : Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_String;
+      new_entry.data_string := SUS (textual_arg);
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
+   --  set_pkg_digest
+   --------------------------------------------------------------------
+   function set_pkg_digest (pkg_access : Pkgtypes.A_Package_Access;
+                            rdb_access : RDB_Connection_Access) return Action_Result
+   is
+      args : Set_Stmt_Args.Vector;
+      index : constant Schema.prstmt_index := Schema.UPDATE_DIGEST;
+   begin
+      push_arg (args, USS (pkg_access.digest));
+      push_arg (args, int64 (pkg_access.id));
+      if Schema.run_prepared_statement (index, args) then
+         return RESULT_OK;
+      else
+         CommonSQL.ERROR_SQLITE (rdb_access.sqlite, internal_srcfile, "set_pkg_digest",
+                                 "Prep stmt " & index'Img);
+         return RESULT_FATAL;
+      end if;
+   end set_pkg_digest;
 
 
 end Core.Database.Operations;

@@ -11,154 +11,179 @@ use Core.Strings;
 package body Core.Database.Operations.Schema is
 
    --------------------------------------------------------------------
-   --  prstmt_text_argtypes
-   --------------------------------------------------------------------
-   function prstmt_text_argtypes (index : prstmt_index) return String is
-   begin
-      case index is
-         when MTREE              => return "T";
-         when PKG                => return "TTTTTTTTTTIIITTTI";
-         when DEPS_UPDATE        => return "TTT";
-         when DEPENDENCIES       => return "TTTI";
-         when FILES              => return "TTI";
-         when FILES_REPLACE      => return "TTI";
-         when DIRS1              => return "T";
-         when DIRS2              => return "ITI";
-         when CATEGORY1          => return "T";
-         when CATEGORY2          => return "IT";
-         when LICENSES1          => return "T";
-         when LICENSES2          => return "IT";
-         when USERS1             => return "T";
-         when USERS2             => return "IT";
-         when GROUPS1            => return "T";
-         when GROUPS2            => return "IT";
-         when SCRIPT1            => return "T";
-         when SCRIPT2            => return "TII";
-         when OPTION1            => return "T";
-         when OPTION2            => return "ITT";
-         when SHLIBS1            => return "T";
-         when SHLIBS_REQD        => return "IT";
-         when SHLIBS_PROV        => return "IT";
-         when ANNOTATE1          => return "T";
-         when ANNOTATE2          => return "ITT";
-         when ANNOTATE_ADD1      => return "TTTT";
-         when ANNOTATE_DEL1      => return "TTT";
-         when ANNOTATE_DEL2      => return "";
-         when CONFLICT           => return "IT";
-         when PKG_PROVIDE        => return "IT";
-         when PROVIDE            => return "T";
-         when UPDATE_DIGEST      => return "TI";
-         when CONFIG_FILES       => return "TTI";
-         when UPDATE_CONFIG_FILE => return "TT";
-         when PKG_REQUIRE        => return "IT";
-         when REQUIRE            => return "T";
-      end case;
-   end prstmt_text_argtypes;
-
-
-   --------------------------------------------------------------------
    --  prstmt_text_sql
    --------------------------------------------------------------------
    function prstmt_text_sql (index : prstmt_index) return String is
    begin
       case index is
          when MTREE =>
+            --  return "T";
             return "INSERT OR IGNORE INTO mtree(content) VALUES(?1)";
+
          when PKG =>
+            --  return "TTTTTTTTTTIIITTTI";
             return "INSERT OR REPLACE INTO packages (origin, name, version, comment, desc, " &
               "message, arch, maintainer, www, prefix, flatsize, automatic, licenselogic, " &
               "mtree_id, time, manifestdigest, dep_formula, vital) " &
               "VALUES( ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, " &
               "(SELECT id FROM mtree WHERE content = ?14), NOW(), ?15, ?16, ?17 )";
+
          when DEPS_UPDATE =>
+            --  return "TTT";
             return "UPDATE deps SET origin=?1, version=?2 WHERE name=?3";
+
          when DEPENDENCIES =>
+            --  return "TTTI";
             return "INSERT INTO deps (origin, name, version, package_id) VALUES (?1, ?2, ?3, ?4)";
+
          when FILES =>
+            --  return "TTI";
             return "INSERT INTO files (path, sha256, package_id) VALUES (?1, ?2, ?3)";
+
          when FILES_REPLACE =>
+            --  return "TTI";
             return "INSERT OR REPLACE INTO files (path, sha256, package_id) VALUES (?1, ?2, ?3)";
+
          when DIRS1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO directories(path) VALUES(?1)";
+
          when DIRS2 =>
+            --  return "ITI";
             return "INSERT INTO pkg_directories(package_id, directory_id, try) " &
               "VALUES (?1, (SELECT id FROM directories WHERE path = ?2), ?3)";
+
          when CATEGORY1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO categories(name) VALUES(?1)";
+
          when CATEGORY2 =>
+            --  return "IT";
             return "INSERT INTO pkg_categories(package_id, category_id) " &
               "VALUES (?1, (SELECT id FROM categories WHERE name = ?2))";
+
          when LICENSES1 =>
+            --   return "T";
             return "INSERT OR IGNORE INTO licenses(name) VALUES(?1)";
+
          when LICENSES2 =>
+            --  return "IT";
             return "INSERT INTO pkg_licenses(package_id, license_id) " &
               "VALUES (?1, (SELECT id FROM licenses WHERE name = ?2))";
+
          when USERS1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO users(name) VALUES(?1)";
+
          when USERS2 =>
+            --  return "IT";
             return "INSERT INTO pkg_users(package_id, user_id) " &
               "VALUES (?1, (SELECT id FROM users WHERE name = ?2))";
+
          when GROUPS1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO groups(name) VALUES(?1)";
+
          when GROUPS2 =>
+            --  return "IT";
             return "INSERT INTO pkg_groups(package_id, group_id) " &
               "VALUES (?1, (SELECT id FROM groups WHERE name = ?2))";
+
          when SCRIPT1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO script(script) VALUES (?1)";
+
          when SCRIPT2 =>
+            --  return "TII";
             return "INSERT INTO pkg_script(script_id, package_id, type) " &
               "VALUES ((SELECT script_id FROM script WHERE script = ?1), ?2, ?3)";
+
          when OPTION1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO option (option) VALUES (?1)";
+
          when OPTION2 =>
+            --  return "ITT";
             return "INSERT INTO pkg_option(package_id, option_id, value) " &
               "VALUES (?1, (SELECT option_id FROM option WHERE option = ?2), ?3)";
+
          when SHLIBS1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO shlibs(name) VALUES(?1)";
+
          when SHLIBS_REQD =>
+            --  return "IT";
             return "INSERT OR IGNORE INTO pkg_shlibs_required(package_id, shlib_id) " &
               "VALUES (?1, (SELECT id FROM shlibs WHERE name = ?2))";
+
          when SHLIBS_PROV =>
+            --  return "IT";
             return "INSERT OR IGNORE INTO pkg_shlibs_provided(package_id, shlib_id) " &
               "VALUES (?1, (SELECT id FROM shlibs WHERE name = ?2))";
+
          when ANNOTATE1 =>
+            --  return "T";
             return "INSERT OR IGNORE INTO annotation(annotation) VALUES (?1)";
+
          when ANNOTATE2 =>
+            --  return "ITT";
             return "INSERT OR ROLLBACK INTO pkg_annotation(package_id, tag_id, value_id) " &
               "VALUES (?1, (SELECT annotation_id FROM annotation WHERE annotation = ?2)," &
               " (SELECT annotation_id FROM annotation WHERE annotation = ?3))";
+
          when ANNOTATE_ADD1 =>
+            --  return "TTTT";
             return "INSERT OR IGNORE INTO pkg_annotation(package_id, tag_id, value_id) " &
               "VALUES (" &
               " (SELECT id FROM packages WHERE name = ?1 )," &
               " (SELECT annotation_id FROM annotation WHERE annotation = ?2)," &
               " (SELECT annotation_id FROM annotation WHERE annotation = ?3))";
+
          when ANNOTATE_DEL1 =>
+            --  return "TTT";
             return "DELETE FROM pkg_annotation WHERE package_id IN" &
               " (SELECT id FROM packages WHERE name = ?1) AND tag_id IN" &
               " (SELECT annotation_id FROM annotation WHERE annotation = ?2)";
+
          when ANNOTATE_DEL2 =>
+            --  return "";
             return "DELETE FROM annotation WHERE annotation_id NOT IN" &
               " (SELECT tag_id FROM pkg_annotation) AND annotation_id NOT IN" &
               " (SELECT value_id FROM pkg_annotation)";
+
          when CONFLICT =>
+            --  return "IT";
             return "INSERT INTO pkg_conflicts(package_id, conflict_id) " &
               "VALUES (?1, (SELECT id FROM packages WHERE name = ?2))";
+
          when PKG_PROVIDE =>
+            --  return "IT";
             return "INSERT INTO pkg_provides(package_id, provide_id) " &
               "VALUES (?1, (SELECT id FROM provides WHERE provide = ?2))";
+
          when PROVIDE =>
+            --  return "T";
             return "INSERT OR IGNORE INTO provides(provide) VALUES(?1)";
+
          when UPDATE_DIGEST =>
+            --  return "TI";
             return "UPDATE packages SET manifestdigest=?1 WHERE id=?2";
+
          when CONFIG_FILES =>
+            --  return "TTI";
             return "INSERT INTO config_files(path, content, package_id) VALUES (?1, ?2, ?3)";
+
          when UPDATE_CONFIG_FILE =>
+            --  return "TT";
             return "UPDATE config_files SET content=?1 WHERE path=?2";
+
          when PKG_REQUIRE =>
+            --  return "IT";
             return "INSERT INTO pkg_requires(package_id, require_id) " &
               "VALUES (?1, (SELECT id FROM requires WHERE require = ?2))";
+
          when REQUIRE =>
+            --  return "T";
             return "INSERT OR IGNORE INTO requires(require) VALUES(?1)";
       end case;
    end prstmt_text_sql;
@@ -701,4 +726,39 @@ package body Core.Database.Operations.Schema is
    end upgrade_sql_for_version;
 
 
+   --------------------------------------------------------------------
+   --  run_prepared_statement
+   --------------------------------------------------------------------
+   function run_prepared_statement
+     (index : prstmt_index;
+      args  : Set_Stmt_Args.Vector) return Boolean
+   is
+      procedure bind (position : Set_Stmt_Args.Cursor);
+
+      column : Natural := 0;
+
+      procedure bind (position : Set_Stmt_Args.Cursor)
+      is
+         arg : Stmt_Argument renames Set_Stmt_Args.Element (position);
+      begin
+         column := column + 1;
+         case arg.datatype is
+            when Provide_Number =>
+               SQLite.bind_integer (pStmt        => prepared_statements (index),
+                                    column_index => column,
+                                    value        => SQLite.sql_int64 (arg.data_number));
+            when Provide_String =>
+               SQLite.bind_string (pStmt        => prepared_statements (index),
+                                   column_index => column,
+                                   value        => USS (arg.data_string));
+         end case;
+      end bind;
+   begin
+      if not SQLite.reset_statement (prepared_statements (index)) then
+         Event.emit_error ("failed to reset prepared statement #" & index'Img);
+         return False;
+      end if;
+      args.Iterate (bind'Access);
+      return SQLite.step_to_completion (prepared_statements (index));
+   end run_prepared_statement;
 end Core.Database.Operations.Schema;
