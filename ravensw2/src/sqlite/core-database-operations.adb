@@ -11,6 +11,7 @@ with Core.Database.Operations.Schema;
 with Core.Repo.Operations;
 with Core.Strings;
 with Core.Context;
+with Core.Version;
 with Core.Config;
 with Core.Event;
 with Core.Repo;
@@ -778,6 +779,8 @@ package body Core.Database.Operations is
       procedure insert_require     (position : Pkgtypes.Text_Crate.Cursor);
       procedure insert_option      (position : Pkgtypes.Package_NVPairs.Cursor);
       procedure insert_annotations (position : Pkgtypes.Package_NVPairs.Cursor);
+      procedure insert_generic     (index1, index2 : Schema.prstmt_index; value : Text);
+      procedure insert_generic_nv  (index1, index2 : Schema.prstmt_index; name, value : Text);
 
       rc      : Action_Result;
       problem : Boolean := False;
@@ -875,28 +878,106 @@ package body Core.Database.Operations is
          end if;
       end insert_dependency;
 
-      procedure insert_category (position : Pkgtypes.Text_Crate.Cursor)
+      procedure insert_generic (index1, index2 : Schema.prstmt_index; value : Text)
       is
-         args1  : Set_Stmt_Args.Vector;
-         args2  : Set_Stmt_Args.Vector;
-         index1 : constant Schema.prstmt_index := Schema.CATEGORY1;
-         index2 : constant Schema.prstmt_index := Schema.CATEGORY2;
+         args1 : Set_Stmt_Args.Vector;
+         args2 : Set_Stmt_Args.Vector;
       begin
          if not problem then
-            push_arg (args1, Pkgtypes.Text_Crate.Element (position));
+            push_arg (args1, value);
             problem := Schema.run_prepared_statement (index1, args1);
             if problem then
                spit_out_error (index1);
             else
                push_arg (args2, int64 (pkg_access.id));
-               push_arg (args2, Pkgtypes.Text_Crate.Element (position));
+               push_arg (args2, value);
                problem := Schema.run_prepared_statement (index2, args2);
                if problem then
                   spit_out_error (index2);
                end if;
             end if;
          end if;
+      end insert_generic;
+
+      procedure insert_category (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         insert_generic (Schema.CATEGORY1,
+                         Schema.CATEGORY2,
+                         Pkgtypes.Text_Crate.Element (position));
       end insert_category;
+
+      procedure insert_license (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         insert_generic (Schema.LICENSES1,
+                         Schema.LICENSES2,
+                         Pkgtypes.Text_Crate.Element (position));
+      end insert_license;
+
+      procedure insert_shlib_reqd (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         insert_generic (Schema.SHLIBS1,
+                         Schema.SHLIBS_REQD,
+                         Pkgtypes.Text_Crate.Element (position));
+      end insert_shlib_reqd;
+
+      procedure insert_shlib_prov (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         insert_generic (Schema.SHLIBS1,
+                         Schema.SHLIBS_PROV,
+                         Pkgtypes.Text_Crate.Element (position));
+      end insert_shlib_prov;
+
+      procedure insert_provide (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         insert_generic (Schema.PROVIDE,
+                         Schema.PKG_PROVIDE,
+                         Pkgtypes.Text_Crate.Element (position));
+      end insert_provide;
+
+      procedure insert_require (position : Pkgtypes.Text_Crate.Cursor) is
+      begin
+         insert_generic (Schema.REQUIRE,
+                         Schema.PKG_REQUIRE,
+                         Pkgtypes.Text_Crate.Element (position));
+      end insert_require;
+
+      procedure insert_generic_nv (index1, index2 : Schema.prstmt_index; name, value : Text)
+      is
+         args1 : Set_Stmt_Args.Vector;
+         args2 : Set_Stmt_Args.Vector;
+      begin
+         if not problem then
+            push_arg (args1, name);
+            problem := Schema.run_prepared_statement (index1, args1);
+            if problem then
+               spit_out_error (index1);
+            else
+               push_arg (args2, int64 (pkg_access.id));
+               push_arg (args2, name);
+               push_arg (args2, value);
+               problem := Schema.run_prepared_statement (index2, args2);
+               if problem then
+                  spit_out_error (index2);
+               end if;
+            end if;
+         end if;
+      end insert_generic_nv;
+
+      procedure insert_option (position : Pkgtypes.Package_NVPairs.Cursor) is
+      begin
+         insert_generic_nv (index1 => Schema.OPTION1,
+                            index2 => Schema.OPTION2,
+                            name   => Pkgtypes.Package_NVPairs.Key (position),
+                            value  => Pkgtypes.Package_NVPairs.Element (position));
+      end insert_option;
+
+      procedure insert_annotations (position : Pkgtypes.Package_NVPairs.Cursor) is
+      begin
+         insert_generic_nv (index1 => Schema.ANNOTATE1,
+                            index2 => Schema.ANNOTATE2,
+                            name   => Pkgtypes.Package_NVPairs.Key (position),
+                            value  => Pkgtypes.Package_NVPairs.Element (position));
+      end insert_annotations;
 
    begin
       loop
@@ -912,30 +993,14 @@ package body Core.Database.Operations is
         Pkgtypes.Package_ID (sqlite_h.sqlite3_last_insert_rowid (rdb_access.sqlite));
 
       pkg_access.depends.Iterate (insert_dependency'Access);
-      if not problem then
-         pkg_access.categories.Iterate (insert_category'Access);
-      end if;
-      if not problem then
-         pkg_access.licenses.Iterate (insert_license'Access);
-      end if;
-      if not problem then
-         pkg_access.options.Iterate (insert_option'Access);
-      end if;
-      if not problem then
-         pkg_access.shlibs_reqd.Iterate (insert_shlib_reqd'Access);
-      end if;
-      if not problem then
-         pkg_access.shlibs_prov.Iterate (insert_shlib_prov'Access);
-      end if;
-      if not problem then
-         pkg_access.requires.Iterate (insert_require'Access);
-      end if;
-      if not problem then
-         pkg_access.provides.Iterate (insert_provide'Access);
-      end if;
-      if not problem then
-         pkg_access.annotations.Iterate (insert_annotations'Access);
-      end if;
+      pkg_access.categories.Iterate (insert_category'Access);
+      pkg_access.licenses.Iterate (insert_license'Access);
+      pkg_access.options.Iterate (insert_option'Access);
+      pkg_access.shlibs_reqd.Iterate (insert_shlib_reqd'Access);
+      pkg_access.shlibs_prov.Iterate (insert_shlib_prov'Access);
+      pkg_access.requires.Iterate (insert_require'Access);
+      pkg_access.provides.Iterate (insert_provide'Access);
+      pkg_access.annotations.Iterate (insert_annotations'Access);
 
       if problem then
          return RESULT_FATAL;
@@ -944,5 +1009,55 @@ package body Core.Database.Operations is
       end if;
    end add_pkg_to_database;
 
+
+   --------------------------------------------------------------------
+   --  delete_conflicting_package
+   --------------------------------------------------------------------
+   function delete_conflicting_package
+     (origin   : Text;
+      version  : Text;
+      pkg_path : Text;
+      forced   : Boolean) return Action_Result
+   is
+      function kill_package return Action_Result;
+
+      osversion : constant String := Schema.retrieve_prepared_version (origin);
+
+      function kill_package return Action_Result
+      is
+         args : Set_Stmt_Args.Vector;
+      begin
+         push_arg (args, origin);
+         push_arg (args, origin);
+         if Schema.run_prepared_statement (Schema.DELETE, args) then
+            return RESULT_OK;
+         else
+            return RESULT_FATAL;
+         end if;
+      end kill_package;
+
+   begin
+      if IsBlank (osversion) then
+         return RESULT_FATAL;
+      end if;
+      if forced then
+         return kill_package;
+      else
+         case Core.Version.pkg_version_cmp (osversion, USS (version)) is
+            when -1 =>
+               Event.emit_error
+                 ("duplicate package origin: replacing older version " & osversion
+                  & " in repo with package " & USS (pkg_path) & " for origin " & USS (origin));
+               return kill_package;
+            when 0 | 1 =>
+               Event.emit_error
+                 ("duplicate package origin: package " & USS (pkg_path)
+                  & " is not newer than version " & osversion
+                  & " already in repo for origin " & USS (origin));
+               --  keep what is already in the repo
+               return RESULT_END;
+         end case;
+      end if;
+   end delete_conflicting_package;
 
 end Core.Database.Operations;

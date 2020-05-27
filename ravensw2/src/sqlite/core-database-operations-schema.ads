@@ -41,7 +41,11 @@ package Core.Database.Operations.Schema is
       CONFIG_FILES,
       UPDATE_CONFIG_FILE,
       PKG_REQUIRE,
-      REQUIRE
+      REQUIRE,
+      DELETE,
+      --  RETURNS DATA
+      EXISTS,
+      REPO_VERSION
      );
 
    --  Initialize and finalize all prepared statements
@@ -59,6 +63,9 @@ package Core.Database.Operations.Schema is
    function run_prepared_statement
      (index : prstmt_index;
       args  : Set_Stmt_Args.Vector) return Boolean;
+
+   --  Executes and resets REPO_VERSION prepared statement (single result)
+   function retrieve_prepared_version (origin : Text) return String;
 
 private
 
