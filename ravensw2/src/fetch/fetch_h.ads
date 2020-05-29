@@ -4,6 +4,7 @@
 pragma Style_Checks (Off);
 
 with Interfaces.C.Strings;
+with System;
 
 package fetch_h is
 
@@ -307,8 +308,8 @@ package fetch_h is
    pragma Import (C, es_fread, "es_fread");
 
    function es_getline
-     (arg1 : access IC.char;
-      arg2 : IC.size_t;
+     (arg1 : system.Address;
+      arg2 : access IC.size_t;
       arg3 : Extended_Stream) return IC.long;
    pragma Import (C, es_getline, "es_getline");
 
