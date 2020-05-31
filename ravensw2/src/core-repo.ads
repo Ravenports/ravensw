@@ -2,11 +2,14 @@
 --  Reference: ../License.txt
 
 with Ada.Containers.Vectors;
+with Ada.Containers.Hashed_Maps;
+with Core.Pkgtypes;
 with Core.Strings;
 with Core.Checksum;
+with Core.Unix;
 
-private with Ada.Containers.Hashed_Maps;
 private with sqlite_h;
+private with Libfetch;
 
 use Core.Strings;
 
@@ -104,6 +107,8 @@ package Core.Repo is
    --  Return the metafile's digest format
    function repo_meta_digest_format (repo : A_repo) return Checksum.A_Checksum_Type;
 
+   function repo_environment (repo : A_repo) return Pkgtypes.Package_NVPairs.Map;
+
 private
 
    --  Obsolete, but maintained for compatability
@@ -152,13 +157,6 @@ private
      (Element_Type => Meta_Certificate,
       Index_Type   => Natural);
 
-   package A_nvpair_crate is new CON.Hashed_Maps
-     (Key_Type        => Text,
-      Element_Type    => Text,
-      Hash            => map_hash,
-      Equivalent_Keys => equivalent,
-      "="             => SU."=");
-
    package A_DNS_srvinfo_crate is new CON.Vectors
      (Element_Type => DNS_srvinfo,
       Index_Type   => Natural);
@@ -170,6 +168,13 @@ private
    package A_Fingerprint_crate is new CON.Vectors
      (Element_Type => A_fingerprint,
       Index_Type   => Natural);
+
+   type SSH_IO_Info is
+      record
+         fd_in  : Unix.File_Descriptor;
+         fd_out : Unix.File_Descriptor;
+         pid    : Unix.Process_ID;
+      end record;
 
    type Repo_Metadata is
       record
@@ -208,10 +213,10 @@ private
          enable         : Boolean;
          priority       : A_priority;
          flags          : A_repo_flag;
-         env            : A_nvpair_crate.Map;
+         env            : Pkgtypes.Package_NVPairs.Map;
          sqlite_handle  : aliased sqlite_h.sqlite3_Access;
-         --  ssh
-         --  sshio
+         ssh            : Libfetch.Fetch_Stream;
+         ssh_io         : SSH_IO_Info;
 
          --  can't use immutable records inside containers
          --  srv and http are used mutually exclusively

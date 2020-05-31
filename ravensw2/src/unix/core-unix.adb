@@ -732,4 +732,76 @@ package body Core.Unix is
    end reset_file_for_reading;
 
 
+   --------------------------------------------------------------------
+   --  write_to_file_descriptor
+   --------------------------------------------------------------------
+   function write_to_file_descriptor
+     (fd  : Unix.File_Descriptor;
+      msg : String) return Boolean
+   is
+      bufsiz : constant IC.size_t := msg'Length;
+      buffer : array (msg'Range) of aliased IC.unsigned_char;
+      res    : IC.Extensions.long_long;
+   begin
+      for x in msg'Range loop
+         buffer (x) := IC.unsigned_char (Character'Pos (msg (x)));
+      end loop;
+      res := C_write (fd, buffer (buffer'First)'Access, bufsiz);
+      return (res = IC.Extensions.long_long (bufsiz));
+   end write_to_file_descriptor;
+
+
+   --------------------------------------------------------------------
+   --  get_exit_status
+   --------------------------------------------------------------------
+   function get_exit_status (stat : IC.int) return Integer
+   is
+      use type Interfaces.Unsigned_32;
+      new_stat : Interfaces.Unsigned_32;
+   begin
+      new_stat := Interfaces.Shift_Right (Interfaces.Unsigned_32 (stat), 8);
+      return Integer (new_stat and Interfaces.Unsigned_32 (16#FF#));
+   end get_exit_status;
+
+
+   --------------------------------------------------------------------
+   --  wait_for_pid
+   --------------------------------------------------------------------
+   function wait_for_pid (pid : Process_ID; exit_status : out Integer) return Boolean
+   is
+      stat       : aliased IC.int := 0;
+      options    : IC.int := 0;
+      bad_result : constant Process_ID := -1;
+      EINTR      : constant Integer := 4;   -- hopefully this is universal
+   begin
+      loop
+         exit when C_waitpid (pid, stat'Access, options) /= bad_result;
+         if errno /= EINTR then
+            exit_status := -1;
+            return False;
+         end if;
+      end loop;
+      exit_status := get_exit_status (stat);
+      return True;
+   end wait_for_pid;
+
+
+   --------------------------------------------------------------------
+   --  sendmsg
+   --------------------------------------------------------------------
+   function sendmsg
+     (socket  : File_Descriptor;
+      msg_iov : access iovec;
+      iovcnt  : Natural) return int64
+   is
+      msg : aliased msghdr;
+      flags : constant IC.int := 0;
+   begin
+      msg.msg_iov := msg_iov;
+      msg.msg_iovlen := IC.size_t (iovcnt);
+
+      return int64 (C_sendmsg (socket, msg'Access, flags));
+   end sendmsg;
+
+
 end Core.Unix;

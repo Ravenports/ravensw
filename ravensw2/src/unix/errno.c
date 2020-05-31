@@ -26,3 +26,9 @@ int last_error_NOENT(void)
 {
   return (errno == ENOENT);
 }
+
+void
+set_ECONNRESET(void)
+{
+  errno = ECONNRESET;
+}

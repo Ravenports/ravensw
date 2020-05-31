@@ -4,6 +4,7 @@
 pragma Style_Checks (Off);
 
 with Interfaces.C.Strings;
+with Interfaces.C.Extensions;
 with System;
 
 package fetch_h is
@@ -310,13 +311,49 @@ package fetch_h is
    function es_getline
      (arg1 : system.Address;
       arg2 : access IC.size_t;
-      arg3 : Extended_Stream) return IC.long;
+      arg3 : Extended_Stream) return IC.Extensions.long_long;
    pragma Import (C, es_getline, "es_getline");
 
    function es_fprintf
      (arg1 : Extended_Stream;
       arg2 : ICS.chars_ptr) return IC.int;
    pragma Import (C, es_fprintf, "es_fprintf");
+
+   type es_cookie_read_function_t is access function
+     (arg1 : System.Address;
+      arg2 : System.Address;
+      arg3 : IC.size_t) return IC.Extensions.long_long;
+   pragma Convention (C, es_cookie_read_function_t);
+
+   type es_cookie_write_function_t is access function
+     (arg1 : System.Address;
+      arg2 : System.Address;
+      arg3 : IC.size_t) return IC.Extensions.long_long;
+   pragma Convention (C, es_cookie_write_function_t);
+
+   type es_cookie_seek_function_t is access function
+     (arg1 : System.Address;
+      arg2 : access IC.long;
+      arg3 : IC.int) return IC.int;
+   pragma Convention (C, es_cookie_seek_function_t);
+
+   type es_cookie_close_function_t is access function
+     (arg1 : System.Address) return IC.int;
+   pragma Convention (C, es_cookie_close_function_t);
+
+   type es_cookie_io_functions_t is record
+      func_read  : es_cookie_read_function_t;
+      func_write : es_cookie_write_function_t;
+      func_seek  : es_cookie_seek_function_t;
+      func_close : es_cookie_close_function_t;
+   end record;
+   pragma Convention (C_Pass_By_Copy, es_cookie_io_functions_t);
+
+   function es_fopencookie
+     (cookie    : System.Address;
+      mode      : ICS.chars_ptr;
+      functions : es_cookie_io_functions_t) return estream_t;
+   pragma Import (C, es_fopencookie, "es_fopencookie");
 
 private
 

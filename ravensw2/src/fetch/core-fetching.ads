@@ -1,12 +1,13 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
---  Reference: ../License.txt
+--  Reference: ../../License.txt
 
 with Core.Unix;
+with Core.Repo;
 
 package Core.Fetching is
 
    function fetch_file_to_fd
-     (reponame  : String;
+     (my_repo   : Repo.A_repo;
       file_url  : String;
       dest_fd   : Unix.File_Descriptor;
       timestamp : Unix.T_epochtime;

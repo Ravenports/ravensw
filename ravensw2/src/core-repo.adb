@@ -343,4 +343,13 @@ package body Core.Repo is
       return repo.meta.digest_format;
    end repo_meta_digest_format;
 
+
+   --------------------------------------------------------------------
+   --  repo_environment
+   --------------------------------------------------------------------
+   function repo_environment (repo : A_repo) return Pkgtypes.Package_NVPairs.Map is
+   begin
+      return repo.env;
+   end repo_environment;
+
 end Core.Repo;

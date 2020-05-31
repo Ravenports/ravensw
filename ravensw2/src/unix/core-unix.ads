@@ -25,6 +25,13 @@ package Core.Unix is
 
    type T_filesize  is mod 2**64;
 
+   type iovec is
+      record
+         iov_base : access IC.char;
+         iov_len  : IC.size_t;
+      end record;
+   pragma Convention (C, iovec);
+
    --  Set both RDONLY and WRONLY to get RDRW flags
    type T_Open_Flags is
       record
@@ -80,6 +87,10 @@ package Core.Unix is
    --  Set errno to zero
    procedure reset_errno;
    pragma Import (C, reset_errno, "reset_errno");
+
+   --  Set errno to ECONNRESET
+   procedure set_ECONNRESET;
+   pragma Import (C, set_ECONNRESET, "set_ECONNRESET");
 
    --  Get Process ID
    function getpid return Process_ID;
@@ -199,6 +210,17 @@ package Core.Unix is
 
    function get_file_size (path : String) return T_filesize;
    function get_file_size (fd : Unix.File_Descriptor) return T_filesize;
+
+   function write_to_file_descriptor
+     (fd  : Unix.File_Descriptor;
+      msg : String) return Boolean;
+
+   function wait_for_pid (pid : Process_ID; exit_status : out Integer) return Boolean;
+
+   function sendmsg
+     (socket  : File_Descriptor;
+      msg_iov : access iovec;
+      iovcnt  : Natural) return int64;
 
 private
 
@@ -372,5 +394,43 @@ private
                      offset : IC.Extensions.long_long;
                      whence : IC.int) return IC.Extensions.long_long;
    pragma Import (C, C_lseek, "lseek");
+
+   function C_write
+     (fd : Unix.File_Descriptor;
+      buf    : access IC.unsigned_char;
+      bufsiz : IC.size_t) return IC.Extensions.long_long;
+   pragma Import (C, C_write, "write");
+
+   function C_waitpid
+     (wpid    : Process_ID;
+      status  : access IC.int;
+      options : IC.int) return Process_ID;
+   pragma Import (C, C_waitpid, "waitpid");
+
+   function get_exit_status (stat : IC.int) return Integer;
+
+
+
+   type socklen_t is mod 2**32;
+
+   type msghdr is
+      record
+         msg_name       : access IC.char;  --  Address to send to/receive from.
+         msg_namelen    : socklen_t;       --  Length of address data.
+         msg_iov        : access iovec;    --  Vector of data to send/receive into.
+         msg_iovlen     : IC.size_t;       --  Number of elements in the vector.
+         msg_control    : access IC.char;  --  Ancillary data (eg BSD filedesc passing)
+         msg_controllen : socklen_t;       --  Ancillary data buffer length.
+         msg_flags      : IC.int;          --  Flags on received message.
+      end record;
+   pragma Convention (C, msghdr);
+
+   function C_sendmsg
+     (S     : Unix.File_Descriptor;
+      msg   : access msghdr;
+      flags : IC.int) return IC.Extensions.long_long;
+   pragma Import (C, C_sendmsg, "sendmsg");
+
+
 
 end Core.Unix;
