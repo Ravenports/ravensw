@@ -245,7 +245,6 @@ package Core.Pkgtypes is
          dirs         : Directory_Crate.Map;
          files        : File_Crate.Vector;
          config_files : Config_File_Crate.Map;
-         --  ...
          rootpath     : Text;
          rootfd       : Unix.File_Descriptor := Unix.not_connected;
          package_type : Package_Location     := PKG_FILE;

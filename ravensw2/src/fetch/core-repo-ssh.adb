@@ -309,7 +309,8 @@ package body Core.Repo.SSH is
                   return RESULT_OK;
                else
                   if leads (line, "ok:") then
-                     Event.emit_debug (1, "SSH> server is: " & line (4 .. line'Last));
+                     Event.emit_debug
+                       (1, "SSH> server is: " & line (line'First + 3  .. line'Last));
                   else
                      Event.emit_debug (1, "SSH> server rejected, got: " & line);
                      Libfetch.fx_close (my_repo.ssh);
@@ -336,7 +337,7 @@ package body Core.Repo.SSH is
             Event.emit_debug (1, "SSH> recv: " & line);
             if leads (line, "ok:") then
                begin
-                  size := int64'Value (line (4 .. line'Last));
+                  size := int64'Value (line (line'First + 3 .. line'Last));
                exception
                   when others =>
                      Event.emit_error ("start_ssh: failed to parse " & line);
@@ -390,5 +391,69 @@ package body Core.Repo.SSH is
       SU.Append (cmd_text, " " & progname & " ssh");
       return USS (cmd_text);
    end compose_ssh_command;
+
+
+   --------------------------------------------------------------------
+   --  set_http_mirrors
+   --------------------------------------------------------------------
+   procedure set_http_mirrors
+     (my_repo   : in out A_repo;
+      url       : String)
+   is
+      fstream : Libfetch.Fetch_Stream;
+   begin
+      if not my_repo.http.Is_Empty then
+         return;
+      end if;
+
+      fstream := Libfetch.fx_GetURL (url, "");
+      if not Libfetch.stream_is_active (fstream) then
+         return;
+      end if;
+
+      loop
+         declare
+            done : Boolean;
+            line : constant String := Libfetch.fx_getline (my_repo.ssh, done);
+         begin
+            exit when done;
+            if leads (line, "URL:") then
+               declare
+                  trimmed : String := trim (line (line'First + 4 .. line'Last));
+               begin
+                  if not IsBlank (trimmed) then
+                     my_repo.http.Append (convert_to_mirror (trimmed));
+                  end if;
+               end;
+            end if;
+         end;
+      end loop;
+      Libfetch.fx_close (fstream);
+
+   end set_http_mirrors;
+
+
+   --------------------------------------------------------------------
+   --  set_http_mirrors
+   --------------------------------------------------------------------
+   function convert_to_mirror (url : String) return A_http_mirror
+   is
+      components : Libfetch.URL_Component_Set;
+      result     : A_http_mirror;
+   begin
+      components      := Libfetch.parse_url (url);
+      result.scheme   := SUS (Libfetch.url_scheme (components));
+      result.user     := SUS (Libfetch.url_user   (components));
+      result.pwd      := SUS (Libfetch.url_pwd    (components));
+      result.host     := SUS (Libfetch.url_host   (components));
+      result.doc      := SUS (Libfetch.url_doc    (components));
+      result.port     := Libfetch.url_port     (components);
+      result.offset   := Libfetch.url_offset   (components);
+      result.length   := Libfetch.url_length   (components);
+      result.ims_time := Libfetch.url_ims_time (components);
+      result.netrcfd  := Libfetch.url_netrcfd  (components);
+      return result;
+   end convert_to_mirror;
+
 
 end Core.Repo.SSH;

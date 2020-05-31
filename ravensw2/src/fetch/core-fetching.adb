@@ -7,6 +7,7 @@ with Core.Pkgtypes;
 with Core.Strings;
 with Core.Config;
 with Core.Event;
+with Core.Repo.SSH;
 with Libfetch;
 
 use Core.Strings;
@@ -19,7 +20,7 @@ package body Core.Fetching is
    --  fetch_file_to_fd
    --------------------------------------------------------------------
    function fetch_file_to_fd
-     (my_repo   : Repo.A_repo;
+     (my_repo   : in out Repo.A_repo;
       file_url  : String;
       dest_fd   : Unix.File_Descriptor;
       timestamp : Unix.T_epochtime;
@@ -34,13 +35,19 @@ package body Core.Fetching is
       retry         : int64 := max_retry;
 
       URL_SCHEME_PREFIX : constant String := "pkg+";
+      use_ssh           : Boolean;
+      use_http          : Boolean;
+      use_https         : Boolean;
+      use_ftp           : Boolean;
       pkg_url_scheme    : Boolean;
       new_url           : Text;
+      size              : int64;
 
       env_to_unset      : Pkgtypes.Text_Crate.Vector;
       env_to_restore    : Pkgtypes.Package_NVPairs.Map;
 
       url_components    : Libfetch.URL_Component_Set;
+      remote            : Libfetch.Fetch_Stream;
 
       procedure set_env (position : Pkgtypes.Package_NVPairs.Cursor)
       is
@@ -59,12 +66,12 @@ package body Core.Fetching is
 
       procedure restore_env (position : Pkgtypes.Package_NVPairs.Cursor)
       is
-         procedure unset (position : Pkgtypes.Text_Crate.Cursor);
-         procedure restore (position : Pkgtypes.Package_NVPairs.Cursor);
+         procedure unset (pos2 : Pkgtypes.Text_Crate.Cursor);
+         procedure restore (pos2 : Pkgtypes.Package_NVPairs.Cursor);
 
          procedure unset (pos2 : Pkgtypes.Text_Crate.Cursor)
          is
-            key : String := USS (Pkgtypes.Package_NVPairs.Element (pos2));
+            key : String := USS (Pkgtypes.Text_Crate.Element (pos2));
          begin
             ENV.Clear (key);
          end unset;
@@ -121,11 +128,82 @@ package body Core.Fetching is
          return RESULT_FATAL;
       end if;
 
-      Libfetch.provide_last_timestamp (timestamp, url_components);
+      Libfetch.provide_IMS_timestamp (timestamp, url_components);
 
-      if Libfetch.url_scheme (url_components) = "ssh" then
+      declare
+         scheme : constant String := Libfetch.url_scheme (url_components);
+      begin
+         use_ssh   := (scheme = "ssh");
+         use_http  := (scheme = "http");
+         use_https := (scheme = "https");
+         use_ftp   := (scheme = "ftp");
+      end;
+
+      if use_ssh then
+         if Repo.SSH.start_ssh (my_repo, url_components, size) /= RESULT_OK then
+            Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+            return RESULT_FATAL;
+         end if;
+         remote := Repo.repo_ssh (my_repo);
+      end if;
+
+      loop
+         exit when Libfetch.stream_is_active (remote);
+         case Repo.repo_mirror_type (my_repo) is
+            when Repo.SRV =>
+               if use_http or else use_ftp then
+                  if not pkg_url_scheme then
+                     declare
+                        scheme : constant String := Libfetch.url_scheme (url_components);
+                        host   : constant String := Libfetch.url_host (url_components);
+                        zone   : constant String := "_" & scheme & "._tcp." & host;
+                     begin
+                        Event.emit_notice
+                          ("Warning: use of " & scheme
+                           & ":// URL scheme with SRV records is deprecated: "
+                           & "switch to pkg+" & scheme & "://");
+                     end;
+                  end if;
+               end if;
+            when Repo.HTTP =>
+               declare
+                  function get_zone return String;
+                  function get_zone return String
+                  is
+                     port : Natural := Libfetch.url_port (url_components);
+                     host : constant String := Libfetch.url_host (url_components);
+                  begin
+                     if port = 0 then
+                        if use_http then
+                           port := 80;
+                        else
+                           port := 443;
+                        end if;
+                     end if;
+                     if use_http then
+                        return "http://" & host & ":" & int2str (port);
+                     else
+                        return "https://" & host & ":" & int2str (port);
+                     end if;
+                  end get_zone;
+               begin
+                  if use_http or else use_https then
+                     Repo.SSH.set_http_mirrors (my_repo, get_zone);
+                  end if;
+               end;
+               --  http_current = repo->http;
+            when Repo.NOMIRROR =>
+               null;
+         end case;
+      end loop;
+
+      if not use_ssh then
+         null;
       end if;
 
    end fetch_file_to_fd;
+
+
+
 
 end Core.Fetching;

@@ -53,7 +53,7 @@ package body Core.Repo.Fetch is
          Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
       end if;
 
-      retcode := Fetching.fetch_file_to_fd (reponame  => repo_name (my_repo),
+      retcode := Fetching.fetch_file_to_fd (my_repo   => my_repo,
                                             file_url  => full_url,
                                             dest_fd   => fd,
                                             timestamp => timestamp,

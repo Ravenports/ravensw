@@ -55,8 +55,8 @@ package Libfetch is
    --  Returns True if url parsing was succesful
    function url_is_valid (url_components : URL_Component_Set) return Boolean;
 
-   --  If timestamp > 0 then set the url components with it
-   procedure provide_last_timestamp
+   --  Set the If-Modified-Since timestamp
+   procedure provide_IMS_timestamp
      (timestamp : Core.Unix.T_epochtime;
       url_components : in out URL_Component_Set);
 
@@ -78,12 +78,26 @@ package Libfetch is
    --  Return host component of url
    function url_host (url_components : URL_Component_Set) return String;
 
+   --  Return pwd component of url
+   function url_pwd (url_components : URL_Component_Set) return String;
+
+   --  Return offset component of url
+   function url_offset (url_components : URL_Component_Set) return Integer;
+
+   --  Return length component of url
+   function url_length (url_components : URL_Component_Set) return Natural;
+
+   --  Return netrcfd component of url
+   function url_netrcfd (url_components : URL_Component_Set) return Core.Unix.File_Descriptor;
+
    --  Return True if extended stream is connected
    function stream_is_active (fstream : Fetch_Stream) return Boolean;
 
    function open_cookie
      (cookie    : System.Address;
       functions : fetch_h.es_cookie_io_functions_t) return Fetch_Stream;
+
+   function fx_GetURL (URL, flags : String) return Fetch_Stream;
 
 private
 

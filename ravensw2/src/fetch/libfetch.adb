@@ -186,16 +186,16 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-      --  provide_last_timestamp
+      --  provide_IMS_timestamp
    --------------------------------------------------------------------
-   procedure provide_last_timestamp
+   procedure provide_IMS_timestamp
      (timestamp : Core.Unix.T_epochtime;
       url_components : in out URL_Component_Set)
    is
       c_timestamp : Interfaces.Integer_64 := Interfaces.Integer_64 (timestamp);
    begin
       url_components.components.ims_time := c_timestamp;
-   end provide_last_timestamp;
+   end provide_IMS_timestamp;
 
 
    --------------------------------------------------------------------
@@ -235,6 +235,15 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
+   --  url_pwd
+   --------------------------------------------------------------------
+   function url_pwd (url_components : URL_Component_Set) return String is
+   begin
+      return IC.To_Ada (url_components.components.pwd);
+   end url_pwd;
+
+
+   --------------------------------------------------------------------
    --  url_doc
    --------------------------------------------------------------------
    function url_doc (url_components : URL_Component_Set) return String is
@@ -269,6 +278,33 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
+   --  url_offset
+   --------------------------------------------------------------------
+   function url_offset (url_components : URL_Component_Set) return Integer is
+   begin
+      return Integer (url_components.components.offset);
+   end url_offset;
+
+
+   --------------------------------------------------------------------
+   --  url_length
+   --------------------------------------------------------------------
+   function url_length (url_components : URL_Component_Set) return Natural is
+   begin
+      return Natural (url_components.components.length);
+   end url_length;
+
+
+   --------------------------------------------------------------------
+   --  url_netrcfd
+   --------------------------------------------------------------------
+   function url_netrcfd (url_components : URL_Component_Set) return Core.Unix.File_Descriptor is
+   begin
+      return Core.Unix.File_Descriptor (url_components.components.netrcfd);
+   end url_netrcfd;
+
+
+   --------------------------------------------------------------------
    --  open_cookie
    --------------------------------------------------------------------
    function open_cookie
@@ -290,5 +326,31 @@ package body Libfetch is
       ICS.Free (es_mode);
       return result;
    end open_cookie;
+
+
+   --------------------------------------------------------------------
+   --  fx_GetURL
+   --------------------------------------------------------------------
+   function fx_GetURL (URL, flags : String) return Fetch_Stream
+   is
+      use type fetch_h.Extended_Stream;
+      arg1 : ICS.chars_ptr;
+      arg2 : ICS.chars_ptr;
+      result : Fetch_Stream;
+   begin
+      arg1 := ICS.New_String (URL);
+      arg2 := ICS.New_String (flags);
+
+      result.estream := fetch_h.fetchGetURL (arg1, arg2);
+      if result.estream /= null then
+         result.active := True;
+      end if;
+
+      ICS.Free (arg1);
+      ICS.Free (arg2);
+
+      return result;
+   end fx_GetURL;
+
 
 end Libfetch;

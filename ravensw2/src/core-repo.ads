@@ -7,9 +7,9 @@ with Core.Pkgtypes;
 with Core.Strings;
 with Core.Checksum;
 with Core.Unix;
+with Libfetch;
 
 private with sqlite_h;
-private with Libfetch;
 
 use Core.Strings;
 
@@ -107,7 +107,11 @@ package Core.Repo is
    --  Return the metafile's digest format
    function repo_meta_digest_format (repo : A_repo) return Checksum.A_Checksum_Type;
 
+   --  Returns the vector of environment settings
    function repo_environment (repo : A_repo) return Pkgtypes.Package_NVPairs.Map;
+
+   --  Returns a copy of the ssh stream
+   function repo_ssh (repo : A_repo) return Libfetch.Fetch_Stream;
 
 private
 
@@ -148,9 +152,16 @@ private
 
    type A_http_mirror is
       record
-         --  url : struct url    Use the url record from fetch bind later
-         urlp1 : Text;
-         urlp2 : Text;
+         scheme   : Text;
+         user     : Text;
+         pwd      : Text;
+         host     : Text;
+         port     : Natural;
+         doc      : Text;
+         offset   : Integer;
+         length   : Natural;
+         ims_time : Unix.T_epochtime;
+         netrcfd  : Unix.File_Descriptor;
       end record;
 
    package A_cert_crate is new CON.Vectors

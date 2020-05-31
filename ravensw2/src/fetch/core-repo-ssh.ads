@@ -13,6 +13,10 @@ package Core.Repo.SSH is
       url_components : Libfetch.URL_Component_Set;
       size           : out int64) return Action_Result;
 
+   procedure set_http_mirrors
+     (my_repo   : in out A_repo;
+      url       : String);
+
 private
 
    package IC renames Interfaces.C;
@@ -35,5 +39,8 @@ private
    function compose_ssh_command
      (my_repo        : in out A_repo;
       url_components : Libfetch.URL_Component_Set) return String;
+
+   function convert_to_mirror (url : String) return A_http_mirror;
+
 
 end Core.Repo.SSH;

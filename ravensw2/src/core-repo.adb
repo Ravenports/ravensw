@@ -352,4 +352,13 @@ package body Core.Repo is
       return repo.env;
    end repo_environment;
 
+
+   --------------------------------------------------------------------
+   --  repo_ssh
+   --------------------------------------------------------------------
+   function repo_ssh (repo : A_repo) return Libfetch.Fetch_Stream is
+   begin
+      return repo.ssh;
+   end repo_ssh;
+
 end Core.Repo;
