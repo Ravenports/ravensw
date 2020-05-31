@@ -40,4 +40,7 @@ package Core.Utilities is
    --  Return true if ABI is valid
    function is_valid_abi (arch : String; show_errors : Boolean) return Boolean;
 
+   --  Return path of bourne shell (not bash)
+   function bourne_shell return String;
+
 end Core.Utilities;

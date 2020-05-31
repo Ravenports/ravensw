@@ -407,4 +407,23 @@ package body Core.Utilities is
       return True;
    end is_valid_abi;
 
+
+   --------------------------------------------------------------------
+   --  bourne_shell
+   --------------------------------------------------------------------
+   function bourne_shell return String is
+   begin
+      case platform is
+         when solaris
+            | omnios  => return "/usr/xpg4/bin/sh";
+         when freebsd
+            | dragonfly
+            | netbsd
+            | openbsd
+            | linux
+            | macos
+            | generic_unix => return "/bin/sh";
+      end case;
+   end bourne_shell;
+
 end Core.Utilities;

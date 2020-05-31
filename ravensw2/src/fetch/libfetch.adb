@@ -51,6 +51,15 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
+   --  get_fetch_timeout
+   --------------------------------------------------------------------
+   function get_fetch_timeout return Natural is
+   begin
+      return Natural (fetch_h.fetchTimeout);
+   end get_fetch_timeout;
+
+
+   --------------------------------------------------------------------
    --  fx_error
    --------------------------------------------------------------------
    function fx_error (fstream : Fetch_Stream) return Boolean
@@ -183,12 +192,9 @@ package body Libfetch is
      (timestamp : Core.Unix.T_epochtime;
       url_components : in out URL_Component_Set)
    is
-      use type IC.long;
-      c_timestamp : IC.long := IC.long (timestamp);
+      c_timestamp : Interfaces.Integer_64 := Interfaces.Integer_64 (timestamp);
    begin
-      if c_timestamp > 0 then
-         url_components.components.ims_time := c_timestamp;
-      end if;
+      url_components.components.ims_time := c_timestamp;
    end provide_last_timestamp;
 
 
@@ -199,5 +205,90 @@ package body Libfetch is
    begin
       return IC.To_Ada (url_components.components.scheme);
    end url_scheme;
+
+
+   --------------------------------------------------------------------
+   --  url_user
+   --------------------------------------------------------------------
+   function url_user (url_components : URL_Component_Set) return String is
+   begin
+      return IC.To_Ada (url_components.components.user);
+   end url_user;
+
+
+   --------------------------------------------------------------------
+   --  url_host
+   --------------------------------------------------------------------
+   function url_host (url_components : URL_Component_Set) return String is
+   begin
+      return IC.To_Ada (url_components.components.host);
+   end url_host;
+
+
+   --------------------------------------------------------------------
+   --  stream_is_active
+   --------------------------------------------------------------------
+   function stream_is_active (fstream : Fetch_Stream) return Boolean is
+   begin
+      return fstream.active;
+   end stream_is_active;
+
+
+   --------------------------------------------------------------------
+   --  url_doc
+   --------------------------------------------------------------------
+   function url_doc (url_components : URL_Component_Set) return String is
+   begin
+      return ICS.Value (url_components.components.doc);
+   end url_doc;
+
+
+   --------------------------------------------------------------------
+   --  url_ims_time
+   --------------------------------------------------------------------
+   function url_ims_time (url_components : URL_Component_Set) return Core.Unix.T_epochtime
+   is
+      use type Interfaces.Integer_64;
+   begin
+      if url_components.components.ims_time < 0 then
+         return 0;
+      else
+         return Core.Unix.T_epochtime (url_components.components.ims_time);
+      end if;
+   end url_ims_time;
+
+
+   --------------------------------------------------------------------
+   --  url_port
+   --------------------------------------------------------------------
+   function url_port (url_components : URL_Component_Set) return Natural
+   is
+   begin
+      return Natural (url_components.components.port);
+   end url_port;
+
+
+   --------------------------------------------------------------------
+   --  open_cookie
+   --------------------------------------------------------------------
+   function open_cookie
+     (cookie    : System.Address;
+      functions : fetch_h.es_cookie_io_functions_t) return Fetch_Stream
+   is
+      use type fetch_h.Extended_Stream;
+      es_mode : ICS.chars_ptr;
+      result  : Fetch_Stream;
+   begin
+      es_mode := ICS.New_String ("a+");
+      result.estream := fetch_h.es_fopencookie (cookie    => cookie,
+                                                mode      => es_mode,
+                                                functions => functions);
+      if result.estream /= null then
+         result.active := True;
+      end if;
+
+      ICS.Free (es_mode);
+      return result;
+   end open_cookie;
 
 end Libfetch;

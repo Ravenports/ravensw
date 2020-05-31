@@ -3,6 +3,7 @@
 
 with Ada.Characters.Latin_1;
 with Interfaces.C_Streams;
+with Core.Strings;
 
 package body Core.Unix is
 
@@ -416,6 +417,42 @@ package body Core.Unix is
 
 
    --------------------------------------------------------------------
+   --  last_error_INTR
+   --------------------------------------------------------------------
+   function last_error_INTR return Boolean
+   is
+      use type IC.int;
+      target_error : IC.int := C_errno_EINTR;
+   begin
+      return (target_error /= IC.int (0));
+   end last_error_INTR;
+
+
+   --------------------------------------------------------------------
+   --  last_error_AGAIN
+   --------------------------------------------------------------------
+   function last_error_AGAIN return Boolean
+   is
+      use type IC.int;
+      target_error : IC.int := C_errno_EAGAIN;
+   begin
+      return (target_error /= IC.int (0));
+   end last_error_AGAIN;
+
+
+   --------------------------------------------------------------------
+   --  last_error_CONNRESET
+   --------------------------------------------------------------------
+   function last_error_CONNRESET return Boolean
+   is
+      use type IC.int;
+      target_error : IC.int := C_errno_ECONNRESET;
+   begin
+      return (target_error /= IC.int (0));
+   end last_error_CONNRESET;
+
+
+   --------------------------------------------------------------------
    --  bad_perms
    --------------------------------------------------------------------
    function bad_perms (fileowner : uid_t; filegroup : uid_t; sb : struct_stat_Access)
@@ -471,10 +508,10 @@ package body Core.Unix is
    --------------------------------------------------------------------
    function get_file_size (path : String) return T_filesize
    is
-      sb : aliased Unix.struct_stat;
+      sb : aliased struct_stat;
       res : IC.Extensions.long_long;
    begin
-      if Unix.stat_ok (path, sb'Unchecked_Access) then
+      if stat_ok (path, sb'Unchecked_Access) then
          res := C_get_size (sb'Unchecked_Access);
          return T_filesize (res);
       end if;
@@ -485,14 +522,14 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  get_file_size #2
    --------------------------------------------------------------------
-   function get_file_size (fd : Unix.File_Descriptor) return T_filesize
+   function get_file_size (fd : File_Descriptor) return T_filesize
    is
       use type IC.int;
 
-      sb : aliased Unix.struct_stat;
+      sb : aliased struct_stat;
       res : IC.Extensions.long_long;
    begin
-      if Unix.C_fstat (fd, sb'Unchecked_Access) = IC.int (0) then
+      if C_fstat (fd, sb'Unchecked_Access) = IC.int (0) then
          res := C_get_size (sb'Unchecked_Access);
          return T_filesize (res);
       end if;
@@ -542,9 +579,9 @@ package body Core.Unix is
    --------------------------------------------------------------------
    function get_file_modification_time (path : String) return T_epochtime
    is
-      sb : aliased Unix.struct_stat;
+      sb : aliased struct_stat;
    begin
-      if Unix.stat_ok (path, sb'Unchecked_Access) then
+      if stat_ok (path, sb'Unchecked_Access) then
          return get_mtime (sb'Unchecked_Access);
       end if;
       raise bad_stat;
@@ -559,7 +596,7 @@ package body Core.Unix is
       buffer : array (1 .. max_bytes) of aliased IC.unsigned_char;
       res    : IC.Extensions.long_long;
    begin
-      res := C_read (fd, buffer (1)'Access, IC.size_t (max_bytes));
+      res := C_read (fd, buffer (buffer'First)'Access, IC.size_t (max_bytes));
       if res <= IC.Extensions.long_long (0) then
          return "";
       else
@@ -722,7 +759,7 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  reset_file_for_reading
    --------------------------------------------------------------------
-   function reset_file_for_reading (fd : Unix.File_Descriptor) return Boolean
+   function reset_file_for_reading (fd : File_Descriptor) return Boolean
    is
       res      : IC.Extensions.long_long;
       SEEK_SET : constant IC.int := 0;
@@ -736,7 +773,7 @@ package body Core.Unix is
    --  write_to_file_descriptor
    --------------------------------------------------------------------
    function write_to_file_descriptor
-     (fd  : Unix.File_Descriptor;
+     (fd  : File_Descriptor;
       msg : String) return Boolean
    is
       bufsiz : constant IC.size_t := msg'Length;
@@ -772,11 +809,10 @@ package body Core.Unix is
       stat       : aliased IC.int := 0;
       options    : IC.int := 0;
       bad_result : constant Process_ID := -1;
-      EINTR      : constant Integer := 4;   -- hopefully this is universal
    begin
       loop
          exit when C_waitpid (pid, stat'Access, options) /= bad_result;
-         if errno /= EINTR then
+         if not last_error_INTR then
             exit_status := -1;
             return False;
          end if;
@@ -803,5 +839,99 @@ package body Core.Unix is
       return int64 (C_sendmsg (socket, msg'Access, flags));
    end sendmsg;
 
+
+   --------------------------------------------------------------------
+   --  poll_read
+   --------------------------------------------------------------------
+   function poll_read
+     (fd : File_Descriptor;
+      timeout_ms : Integer) return Integer
+   is
+      pfd : aliased pollfd;
+      res : IC.int;
+   begin
+      pfd.fd     := fd;
+      pfd.events := POLLIN and POLLERR;
+      pfd.events := 0;
+      res := C_poll (fds     => pfd'Access,
+                     nfds    => 1,
+                     timeout => IC.int (timeout_ms));
+      return Integer (res);
+   end poll_read;
+
+
+   --------------------------------------------------------------------
+   --  poll_write
+   --------------------------------------------------------------------
+   function poll_write
+     (fd : File_Descriptor;
+      timeout_ms : Integer) return Integer
+   is
+      pfd : aliased pollfd;
+      res : IC.int;
+   begin
+      pfd.fd     := fd;
+      pfd.events := POLLOUT and POLLERR;
+      pfd.events := 0;
+      res := C_poll (fds     => pfd'Access,
+                     nfds    => 1,
+                     timeout => IC.int (timeout_ms));
+      return Integer (res);
+   end poll_write;
+
+
+   --------------------------------------------------------------------
+   --  socket_pair_stream
+   --------------------------------------------------------------------
+   function socket_pair_stream (sv : access Two_Sockets) return Boolean
+   is
+      res : IC.int;
+   begin
+      res := C_socket_pair_stream (sv);
+      return success (res);
+   end socket_pair_stream;
+
+
+   --------------------------------------------------------------------
+   --  dup2
+   --------------------------------------------------------------------
+   function dup2 (oldd, newd : File_Descriptor) return Boolean
+   is
+      res : IC.int;
+   begin
+      res := C_dup2 (oldd, newd);
+      return success (res);
+   end dup2;
+
+
+   --------------------------------------------------------------------
+   --  execvp
+   --------------------------------------------------------------------
+   procedure execvp (exec_program, exec_arguments : String)
+   is
+      num_args : Positive := Strings.count_char (exec_arguments, LAT.LF) + 1;
+      delim    : String (1 .. 1) := (1 => LAT.LF);
+   begin
+      declare
+         arg0 : IC.Strings.chars_ptr;
+         argv : array (1 .. num_args + 1) of aliased IC.Strings.chars_ptr;
+         res  : IC.int;
+      begin
+         arg0 := IC.Strings.New_String (exec_program);
+         for x in 1 .. num_args loop
+            argv (x) := IC.Strings.New_String (Strings.specific_field (exec_arguments, x, delim));
+         end loop;
+         argv (num_args + 1) := IC.Strings.Null_Ptr;
+
+         res := C_execvp (arg0, argv (argv'First)'Access);
+
+         --  If successful, this should never run
+         IC.Strings.Free (arg0);
+         for x in 1 .. num_args - 1 loop
+            IC.Strings.Free (argv (x));
+         end loop;
+         raise bad_execvp;
+      end;
+   end execvp;
 
 end Core.Unix;

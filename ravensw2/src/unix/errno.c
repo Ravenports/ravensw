@@ -27,8 +27,29 @@ int last_error_NOENT(void)
   return (errno == ENOENT);
 }
 
+int last_error_CONNRESET(void)
+{
+   return (errno == ECONNRESET);
+}
+
+int last_error_INTR(void)
+{
+   return (errno == EINTR);
+}
+
+int last_error_AGAIN(void)
+{
+   return (errno == EAGAIN);
+}
+
 void
 set_ECONNRESET(void)
 {
   errno = ECONNRESET;
+}
+
+void
+set_ETIMEDOUT(void)
+{
+  errno = ETIMEDOUT;
 }

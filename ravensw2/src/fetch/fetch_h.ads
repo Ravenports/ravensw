@@ -46,7 +46,7 @@ package fetch_h is
 
    MAXERRSTRING  : constant := 256;
 
-   subtype time_t is IC.long;
+   subtype time_t is Interfaces.Integer_64;
    subtype anon884_scheme_array is Interfaces.C.char_array (0 .. 16);
    subtype anon884_user_array   is Interfaces.C.char_array (0 .. 256);
    subtype anon884_pwd_array    is Interfaces.C.char_array (0 .. 256);
@@ -352,7 +352,7 @@ package fetch_h is
    function es_fopencookie
      (cookie    : System.Address;
       mode      : ICS.chars_ptr;
-      functions : es_cookie_io_functions_t) return estream_t;
+      functions : es_cookie_io_functions_t) return Extended_Stream;
    pragma Import (C, es_fopencookie, "es_fopencookie");
 
 private

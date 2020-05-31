@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #endif
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -39,6 +40,11 @@ int
 connect_socket (const char *path, int newfd) {
   return (5);
 }
+
+int
+socket_pair_stream (int	*sv) {
+  return (6);
+}
 #else
 int
 connect_socket (const char *path, int newfd)
@@ -66,5 +72,36 @@ connect_socket (const char *path, int newfd)
   }
 
   return (1);
+}
+
+int
+socket_pair_stream (int	*sv) {
+  return socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
+}
+
+void
+set_nonblocking(int fd)
+{
+	int flags;
+
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
+		return;
+	if (!(flags & O_NONBLOCK)) {
+		flags |= O_NONBLOCK;
+		fcntl(fd, F_SETFL, flags);
+	}
+}
+
+void
+set_blocking(int fd)
+{
+	int flags;
+
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
+		return;
+	if (flags & O_NONBLOCK) {
+		flags &= ~O_NONBLOCK;
+		fcntl(fd, F_SETFL, flags);
+	}
 }
 #endif

@@ -1,8 +1,9 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with System;
 with Core.Unix;
-private with fetch_h;
+with fetch_h;
 
 package Libfetch is
 
@@ -19,6 +20,9 @@ package Libfetch is
 
    --  Set libfetch.fetchTimeout
    procedure set_fetch_timeout (timeout : Natural);
+
+   --  Retrieve libfetch.fetchTimeout
+   function get_fetch_timeout return Natural;
 
    --  Returns True if an error occurred on the extended stream
    function fx_error (fstream : Fetch_Stream) return Boolean;
@@ -58,6 +62,28 @@ package Libfetch is
 
    --  Return scheme component of url
    function url_scheme (url_components : URL_Component_Set) return String;
+
+   --  Return doc commonent of url
+   function url_doc (url_components : URL_Component_Set) return String;
+
+   --  Return If-Modified-Since time of url
+   function url_ims_time (url_components : URL_Component_Set) return Core.Unix.T_epochtime;
+
+   --  Return port component of url
+   function url_port (url_components : URL_Component_Set) return Natural;
+
+   --  Return user component of url
+   function url_user (url_components : URL_Component_Set) return String;
+
+   --  Return host component of url
+   function url_host (url_components : URL_Component_Set) return String;
+
+   --  Return True if extended stream is connected
+   function stream_is_active (fstream : Fetch_Stream) return Boolean;
+
+   function open_cookie
+     (cookie    : System.Address;
+      functions : fetch_h.es_cookie_io_functions_t) return Fetch_Stream;
 
 private
 
