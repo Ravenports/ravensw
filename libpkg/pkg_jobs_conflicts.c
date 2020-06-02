@@ -53,7 +53,7 @@ struct pkg_conflict_chain {
 static struct sipkey *
 pkg_conflicts_sipkey_init(void)
 {
-	static struct sipkey *kinit;
+	static struct sipkey *kinit = NULL;
 
 	if (kinit == NULL) {
 		kinit = xmalloc(sizeof(*kinit));
