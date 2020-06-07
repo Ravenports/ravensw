@@ -181,7 +181,7 @@ package body libarchive is
    --------------------------------------------------------------------
    function read_data_into_file_descriptor
      (arc : archive_Access;
-      fd  : Unix.File_Descriptor) return Boolean
+      fd  : Core.Unix.File_Descriptor) return Boolean
    is
       result : archive_result;
    begin

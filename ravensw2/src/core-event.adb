@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+with Interfaces;
 with Ada.Calendar.Arithmetic;
 with Ada.Characters.Latin_1;
 with Ada.Environment_Variables;
@@ -486,7 +487,7 @@ package body Core.Event is
 
 
    --------------------------------------------------------------------
-   --  pipe_event
+   --  emit_incremental_update
    --------------------------------------------------------------------
    procedure emit_incremental_update (reponame : String; processed : Natural)
    is
@@ -506,5 +507,108 @@ package body Core.Event is
          TIO.Put_Line (msg);
       end if;
    end emit_incremental_update;
+
+
+   --------------------------------------------------------------------
+   --  job_status_begin
+   --------------------------------------------------------------------
+   procedure job_status_begin (fetching : Boolean)
+   is
+      use type Interfaces.Unsigned_32;
+      max_depth : Interfaces.Unsigned_32;
+   begin
+      our_progress.message_buffer := blank;
+
+      if fetching then
+         --  We don't show progression steps on the fetching display.
+         return;
+      end if;
+
+      if Context.reveal_jailed then
+         SU.Append (our_progress.message_buffer, "[" & Context.reveal_jail_name & "] ");
+      end if;
+
+      --  Only used for pkg-add right now.
+      if our_progress.dependency_depth > 0 then
+         if our_progress.dependency_depth > 1 then
+            max_depth := Interfaces.Unsigned_32 (our_progress.dependency_depth * 2);
+            for n in Interfaces.Unsigned_32 (1) .. max_depth loop
+               if (n mod 4) = 0 and then n /= max_depth then
+                  SU.Append (our_progress.message_buffer, LAT.Vertical_Line);
+               else
+                  SU.Append (our_progress.message_buffer, LAT.Space);
+               end if;
+            end loop;
+         end if;
+         SU.Append (our_progress.message_buffer, "`-- ");
+      end if;
+
+      if our_progress.number_to_download > 0 then
+         SU.Append (our_progress.message_buffer, "["
+                    & int2str (our_progress.number_downloaded) & "\"
+                    & int2str (our_progress.number_to_download) & "] ");
+      elsif our_progress.number_actions > 0 then
+         SU.Append (our_progress.message_buffer, "["
+                    & int2str (our_progress.actions_performed) & "\"
+                    & int2str (our_progress.number_actions) & "] ");
+      end if;
+   end job_status_begin;
+
+
+   --------------------------------------------------------------------
+   --  emit_fetch_begin
+   --------------------------------------------------------------------
+   procedure emit_fetch_begin (url : String)
+   is
+      function filename_41 (full_name : String) return String;
+
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_FETCH_BEGIN"),
+            json_objectpair ("data", json_pair ("url", url))));
+
+      function filename_41 (full_name : String) return String
+      is
+         result : String (1 .. 41) := (others => ' ');
+      begin
+         if full_name'Length > 41 then
+            result := full_name (full_name'First .. full_name'First + 39) & "*";
+         else
+            result (1 .. full_name'Length) := full_name;
+         end if;
+         return result;
+      end filename_41;
+   begin
+      check_progress;
+      pipe_event (jmsg);
+
+      if our_progress.number_to_download > 0 then
+         our_progress.number_downloaded := our_progress.number_downloaded + 1;
+      end if;
+
+      if muted then
+         return;
+      end if;
+
+      job_status_begin (True);
+      our_progress.progress_debit := True;
+      SU.Append (our_progress.message_buffer, filename_41 (Strings.tail (url, "/")));
+   end emit_fetch_begin;
+
+
+   --------------------------------------------------------------------
+   --  emit_fetch_finished
+   --------------------------------------------------------------------
+   procedure emit_fetch_finished (url : String)
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_FETCH_FINISHED"),
+            json_objectpair ("data", json_pair ("url", url))));
+   begin
+      check_progress;
+      pipe_event (jmsg);
+      our_progress.progress_debit := False;
+   end emit_fetch_finished;
 
 end Core.Event;

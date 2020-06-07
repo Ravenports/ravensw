@@ -27,6 +27,9 @@ package Core.Event is
 
    procedure emit_incremental_update (reponame : String; processed : Natural);
 
+   procedure emit_fetch_begin    (url : String);
+   procedure emit_fetch_finished (url : String);
+
 private
 
    package CAL renames Ada.Calendar;
@@ -48,6 +51,12 @@ private
          last_update           : CAL.Time;
          timer_begin           : CAL.Time;
          have_terminal         : Boolean;
+
+         number_to_download    : Natural;
+         number_actions        : Natural;
+         number_downloaded     : Natural;
+         actions_performed     : Natural;
+         dependency_depth      : Natural;
       end record;
 
    muted        : Boolean := False;
@@ -58,5 +67,7 @@ private
    procedure draw_progressbar (current, total : int64);
 
    procedure pipe_event (json_message : String);
+
+   procedure job_status_begin (fetching : Boolean);
 
 end Core.Event;

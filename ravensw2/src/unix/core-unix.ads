@@ -190,9 +190,15 @@ package Core.Unix is
 
    function get_mtime (sb : struct_stat_Access) return T_epochtime;
 
-   procedure set_file_times (path : String;
-                             access_time : T_epochtime;
-                             mod_time : T_epochtime);
+   procedure set_file_times
+     (path        : String;
+      access_time : T_epochtime;
+      mod_time    : T_epochtime);
+
+   procedure set_file_times
+     (fd          : File_Descriptor;
+      access_time : T_epochtime;
+      mod_time    : T_epochtime);
 
    function read_fd (fd : File_Descriptor; max_bytes : Natural) return String;
 
@@ -419,6 +425,12 @@ private
      (path  : IC.Strings.chars_ptr;
       times : Timeval_Access) return IC.int;
    pragma Import (C, C_utimes, "utimes");
+
+   function C_futimesat
+     (fd      : File_Descriptor;
+      relpath : IC.Strings.chars_ptr;
+      times   : Timeval_Access) return IC.int;
+   pragma Import (C, C_futimesat, "futimesat");
 
    function C_read
      (fd     : File_Descriptor;

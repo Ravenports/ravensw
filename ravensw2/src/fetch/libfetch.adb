@@ -129,9 +129,9 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-   --  fx_read
+   --  fx_fread
    --------------------------------------------------------------------
-   function fx_read
+   function fx_fread
      (fstream       : Fetch_Stream;
       number_chunks : Positive;
       chunk_size    : Positive;
@@ -156,7 +156,7 @@ package body Libfetch is
          end loop;
          return result;
       end;
-   end fx_read;
+   end fx_fread;
 
 
    --------------------------------------------------------------------

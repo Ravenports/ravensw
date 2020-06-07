@@ -12,6 +12,8 @@ package Core.Context is
    function reveal_pkg_rootdir return String;
    function reveal_debug_level return ST_Debug_Level;
    function reveal_developer_mode return Boolean;
+   function reveal_jailed return Boolean;
+   function reveal_jail_name return String;
 
    procedure close_eventpipe;
    procedure close_root_fd;
@@ -30,8 +32,10 @@ private
          eventpipe      : Unix.File_Descriptor := Unix.not_connected;
          debug_level    : ST_Debug_Level := ST_Debug_Level'First;
          developer_mode : Boolean        := False;
+         jailed         : Boolean        := False;
          pkg_rootdir    : Text;
          cachedir       : Text;
+         jail_name      : Text;
          rootfd         : Unix.File_Descriptor := Unix.not_connected;
          cachedirfd     : Unix.File_Descriptor := Unix.not_connected;
          dbdirfd        : Unix.File_Descriptor := Unix.not_connected;

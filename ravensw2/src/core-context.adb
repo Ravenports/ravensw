@@ -65,6 +65,24 @@ package body Core.Context is
 
 
    --------------------------------------------------------------------
+   --  reveal_jailed
+   --------------------------------------------------------------------
+   function reveal_jailed return Boolean is
+   begin
+      return context.jailed;
+   end reveal_jailed;
+
+
+   --------------------------------------------------------------------
+   --  reveal_jail_name
+   --------------------------------------------------------------------
+   function reveal_jail_name return String is
+   begin
+      return USS (context.jail_name);
+   end reveal_jail_name;
+
+
+   --------------------------------------------------------------------
    --  register_event_pipe_via_file
    --------------------------------------------------------------------
    function register_event_pipe_via_file (pipe_name : String) return Boolean

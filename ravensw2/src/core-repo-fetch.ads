@@ -9,13 +9,13 @@ package Core.Repo.Fetch is
 
    function fetch_meta
      (my_repo   : in out A_repo;
-      timestamp : in out Unix.T_epochtime) return Action_Result;
+      timestamp : access Unix.T_epochtime) return Action_Result;
 
    --  Temporary file produced must be deleted by calling routine
    function fetch_remote_extract_to_temporary_file
      (my_repo   : in out A_repo;
       filename  : String;
-      timestamp : in out Unix.T_epochtime;
+      timestamp : access Unix.T_epochtime;
       file_size : out int64;
       retcode   : out Action_Result) return String;
 
@@ -24,9 +24,9 @@ private
    package CON renames Ada.Containers;
 
    function fetch_remote_tmp
-     (my_repo   : A_repo;
+     (my_repo   : in out A_repo;
       filename  : String;
-      timestamp : in out Unix.T_epochtime;
+      timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor;
 
    function meta_extract_signature_pubkey

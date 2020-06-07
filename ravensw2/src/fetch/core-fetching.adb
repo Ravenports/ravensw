@@ -45,7 +45,7 @@ package body Core.Fetching is
       pkg_url_scheme    : Boolean;
       new_url           : Text;
       fetch_opts        : Text;
-      size              : int64;
+      size              : int64   := 0;
       http_index        : Natural := 0;
       srv_index         : Natural := 0;
 
@@ -323,6 +323,62 @@ package body Core.Fetching is
       if size <= 0 and then filesize > 0 then
          size := int64 (filesize);
       end if;
+
+      Event.emit_fetch_begin (file_url);
+      Event.emit_progress_start ("");
+      declare
+         one_char   : constant Positive := 1;
+         requested  : constant Positive := 8192;
+         chars_read : Natural;
+         done : int64 := int64 (offset);
+         left : int64 := int64 (requested);
+      begin
+         if size > 0 then
+            left := size - done;
+         end if;
+         loop
+            declare
+               line : String := Libfetch.fx_fread (remote, one_char, requested, chars_read);
+            begin
+               if chars_read > 0 then
+                  if not Unix.write_to_file_descriptor (dest_fd, line) then
+                     Event.emit_errno ("fetch_file_to_fd", "write_chunk", Unix.errno);
+                     Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+                     Libfetch.free_url (url_components);
+                     if not use_ssh then
+                        Libfetch.fx_close (remote);
+                     end if;
+                     return RESULT_FATAL;
+                  end if;
+                  done := done + int64 (chars_read);
+                  if size > 0 then
+                     left := left - int64 (chars_read);
+                     Event.emit_debug  (4, "Read status:" & done'Img & " over" & size'Img);
+                     Event.emit_progress_tick (done, size);
+                  else
+                     Event.emit_debug (4, "Read status: " & done'Img);
+                  end if;
+               end if;
+            end;
+            exit when chars_read = 0;
+         end loop;
+         Event.emit_progress_tick (done, done);
+      end;
+      Event.emit_fetch_finished (file_url);
+
+      Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+      Libfetch.free_url (url_components);
+
+      if not use_ssh then
+         if Libfetch.fx_error (remote) then
+            Event.emit_error (file_url & ": " & Libfetch.get_last_fetch_error);
+         end if;
+         Libfetch.fx_close (remote);
+         return RESULT_FATAL;
+      end if;
+
+      Unix.set_file_times (dest_fd, timestamp.all, timestamp.all);
+      return RESULT_OK;
 
    end fetch_file_to_fd;
 

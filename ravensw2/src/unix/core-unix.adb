@@ -550,13 +550,12 @@ package body Core.Unix is
 
 
    --------------------------------------------------------------------
-   --  get_mtime
+   --  set_file_times #1
    --------------------------------------------------------------------
    procedure set_file_times (path : String;
                              access_time : T_epochtime;
                              mod_time : T_epochtime)
    is
-
       ftimes : array (1 .. 2) of aliased Timeval;
    begin
       ftimes (1).Tv_Sec := Timeval_Unit (access_time);
@@ -571,6 +570,25 @@ package body Core.Unix is
          res := C_utimes (c_path, ftimes (1)'Unchecked_Access);
          IC.Strings.Free (c_path);
       end;
+   end set_file_times;
+
+
+   --------------------------------------------------------------------
+   --  set_file_times #2
+   --------------------------------------------------------------------
+   procedure set_file_times
+     (fd          : File_Descriptor;
+      access_time : T_epochtime;
+      mod_time    : T_epochtime)
+   is
+      ftimes : array (1 .. 2) of aliased Timeval;
+      res    : IC.int;
+   begin
+      ftimes (1).Tv_Sec := Timeval_Unit (access_time);
+      ftimes (1).Tv_Usec := 0;
+      ftimes (2).Tv_Sec := Timeval_Unit (mod_time);
+      ftimes (2).Tv_Usec := 0;
+      res := C_futimesat (fd, IC.Strings.Null_Ptr, ftimes (1)'Unchecked_Access);
    end set_file_times;
 
 

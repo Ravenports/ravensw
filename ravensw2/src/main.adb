@@ -25,6 +25,8 @@ begin
       return;
    end if;
 
+   --  TODO: establish jail in context
+
    if CB.execute_command (comline_inputs) then
       ACL.Set_Exit_Status (Code => ACL.Success);
    else

@@ -35,7 +35,7 @@ package Libfetch is
    --  Given a number of objects of a given size to read, return the concatenated
    --  data as a string.  When successful, chunks read will equal number_chunks.
    --  Reasons for chunks_read being less include reaching End of File or encountering an error
-   function fx_read
+   function fx_fread
      (fstream       : Fetch_Stream;
       number_chunks : Positive;
       chunk_size    : Positive;

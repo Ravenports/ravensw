@@ -505,7 +505,7 @@ package body Core.Repo.Operations is
       mtime    : in out Unix.T_epochtime;
       force    : Boolean) return Action_Result
    is
-      local_time : Unix.T_epochtime;
+      local_time : aliased Unix.T_epochtime;
       my_repo    : A_repo := get_repository (reponame);
       file_size  : int64;
       rc         : Action_Result := RESULT_FATAL;
@@ -523,7 +523,7 @@ package body Core.Repo.Operations is
       --
       local_time := mtime;
       if Repo.Fetch.fetch_meta (my_repo   => my_repo,
-                                timestamp => local_time) = RESULT_FATAL
+                                timestamp => local_time'Access) = RESULT_FATAL
       then
          Event.emit_notice
            ("repository " & SQ (reponame) & " has no meta file, using default settings.");
@@ -538,7 +538,7 @@ package body Core.Repo.Operations is
            Repo.Fetch.fetch_remote_extract_to_temporary_file
              (my_repo   => my_repo,
               filename  => USS (my_repo.meta.manifests),
-              timestamp => local_time,
+              timestamp => local_time'Access,
               file_size => file_size,
               retcode   => rc);
 

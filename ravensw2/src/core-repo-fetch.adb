@@ -27,9 +27,9 @@ package body Core.Repo.Fetch is
    --  fetch_remote_tmp
    --------------------------------------------------------------------
    function fetch_remote_tmp
-     (my_repo   : A_repo;
+     (my_repo   : in out A_repo;
       filename  : String;
-      timestamp : in out Unix.T_epochtime;
+      timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor
    is
       extension : constant String := "tzst";
@@ -673,7 +673,7 @@ package body Core.Repo.Fetch is
    --------------------------------------------------------------------
    function fetch_meta
      (my_repo   : in out A_repo;
-      timestamp : in out Unix.T_epochtime) return Action_Result
+      timestamp : access Unix.T_epochtime) return Action_Result
    is
       procedure silent_close (this_fd : Unix.File_Descriptor);
       procedure erase_metafile;
@@ -898,7 +898,7 @@ package body Core.Repo.Fetch is
    function fetch_remote_extract_to_temporary_file
      (my_repo   : in out A_repo;
       filename  : String;
-      timestamp : in out Unix.T_epochtime;
+      timestamp : access Unix.T_epochtime;
       file_size : out int64;
       retcode   : out Action_Result) return String
    is

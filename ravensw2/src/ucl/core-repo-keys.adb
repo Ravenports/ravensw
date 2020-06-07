@@ -67,6 +67,8 @@ package body Core.Repo.Keys is
       fd := Unix.open_file (full_path, open_flags);
       if not Unix.file_connected (fd) then
          Event.emit_with_strerror ("cannot load fingerprints from " & full_path);
+         result.hash_type := HASH_UNKNOWN;
+         result.hash := SUS ("hash-error");
          return result;
       end if;
 
