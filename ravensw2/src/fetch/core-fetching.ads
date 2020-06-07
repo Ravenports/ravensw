@@ -10,7 +10,7 @@ package Core.Fetching is
      (my_repo   : in out Repo.A_repo;
       file_url  : String;
       dest_fd   : Unix.File_Descriptor;
-      timestamp : Unix.T_epochtime;
+      timestamp : access Unix.T_epochtime;
       offset    : Unix.T_filesize;
       filesize  : Unix.T_filesize) return Action_Result;
 

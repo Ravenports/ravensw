@@ -66,7 +66,7 @@ package fetch_h is
    pragma Convention (C_Pass_By_Copy, url);
 
    type url_stat is record
-      size : aliased IC.int;
+      size  : aliased IC.int;
       atime : aliased time_t;
       mtime : aliased time_t;
    end record;

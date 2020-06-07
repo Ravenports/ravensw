@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Interfaces.C.Strings;
 with System;
 with Core.Unix;
 with fetch_h;
@@ -52,12 +53,35 @@ package Libfetch is
    --  breaks down url into its components
    function parse_url (url : String) return URL_Component_Set;
 
+   --  Frees resources used by URL components
+   procedure free_url (url_components : URL_Component_Set);
+
    --  Returns True if url parsing was succesful
    function url_is_valid (url_components : URL_Component_Set) return Boolean;
 
    --  Set the If-Modified-Since timestamp
    procedure provide_IMS_timestamp
      (timestamp : Core.Unix.T_epochtime;
+      url_components : in out URL_Component_Set);
+
+   --  Set the host information
+   procedure provide_host_information
+     (host : String;
+      port : Natural;
+      url_components : in out URL_Component_Set);
+
+   --  Set the scheme
+   procedure provide_scheme
+     (scheme : String;
+      url_components : in out URL_Component_Set);
+
+   procedure provide_doc
+     (doc : String;
+      holder : Interfaces.C.Strings.char_array_access;
+      url_components : in out URL_Component_Set);
+
+   procedure provide_offset
+     (offset : Core.Unix.T_filesize;
       url_components : in out URL_Component_Set);
 
    --  Return scheme component of url
@@ -77,6 +101,9 @@ package Libfetch is
 
    --  Return host component of url
    function url_host (url_components : URL_Component_Set) return String;
+
+   --  returns either "[user]@[host]" or just "[host]" depending if user is blank or not
+   function url_user_at_host (url_components : URL_Component_Set) return String;
 
    --  Return pwd component of url
    function url_pwd (url_components : URL_Component_Set) return String;
@@ -99,12 +126,24 @@ package Libfetch is
 
    function fx_GetURL (URL, flags : String) return Fetch_Stream;
 
+   function fx_XGet
+     (url_components : in out URL_Component_Set;
+      flags          : String) return Fetch_Stream;
+
+   function get_file_modification_time
+     (url_components : URL_Component_Set) return Core.Unix.T_epochtime;
+
+   function get_fetched_file_size
+     (url_components : URL_Component_Set) return Core.Unix.T_filesize;
+
 private
 
    type URL_Component_Set is
       record
          valid      : Boolean;
          components : access fetch_h.url;
+         status     : aliased fetch_h.url_stat;
+         orig_doc   : Interfaces.C.Strings.chars_ptr;
       end record;
 
    type Fetch_Stream is

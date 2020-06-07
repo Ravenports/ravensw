@@ -8,14 +8,44 @@ with Libfetch;
 
 package Core.Repo.SSH is
 
+   bad_http_index : exception;
+   bad_srv_index  : exception;
+
+   type Mirror_Host is
+      record
+         scheme : Text;
+         host   : Text;
+         port   : Natural;
+         doc    : Text;
+      end record;
+
+   type SRV_Host is
+      record
+         host   : Text;
+         port   : Natural;
+      end record;
+
    function start_ssh
      (my_repo        : in out A_repo;
       url_components : Libfetch.URL_Component_Set;
       size           : out int64) return Action_Result;
 
-   procedure set_http_mirrors
+   --  Sets SRV mirrors from the given url
+   --  If none found, zero is returned -- otherwise 1 is returned
+   function set_http_mirrors
      (my_repo   : in out A_repo;
-      url       : String);
+      url       : String) return Natural;
+
+   function get_http_mirror
+     (my_repo  : A_repo;
+      index    : Natural) return Mirror_Host;
+
+   function get_srv_information
+     (my_repo  : A_repo;
+      index    : Natural) return SRV_Host;
+
+   function total_http_mirrors (my_repo : A_repo) return Natural;
+   function total_srv_records (my_repo : A_repo) return Natural;
 
 private
 

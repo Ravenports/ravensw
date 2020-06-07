@@ -2,12 +2,15 @@
 --  Reference: ../../License.txt
 
 with Ada.Environment_Variables;
+with Interfaces.C;
 
 with Core.Pkgtypes;
 with Core.Strings;
+with Core.Context;
 with Core.Config;
 with Core.Event;
 with Core.Repo.SSH;
+with Core.Repo.DNS;
 with Libfetch;
 
 use Core.Strings;
@@ -23,7 +26,7 @@ package body Core.Fetching is
      (my_repo   : in out Repo.A_repo;
       file_url  : String;
       dest_fd   : Unix.File_Descriptor;
-      timestamp : Unix.T_epochtime;
+      timestamp : access Unix.T_epochtime;
       offset    : Unix.T_filesize;
       filesize  : Unix.T_filesize) return Action_Result
    is
@@ -41,13 +44,19 @@ package body Core.Fetching is
       use_ftp           : Boolean;
       pkg_url_scheme    : Boolean;
       new_url           : Text;
+      fetch_opts        : Text;
       size              : int64;
+      http_index        : Natural := 0;
+      srv_index         : Natural := 0;
 
       env_to_unset      : Pkgtypes.Text_Crate.Vector;
       env_to_restore    : Pkgtypes.Package_NVPairs.Map;
 
       url_components    : Libfetch.URL_Component_Set;
       remote            : Libfetch.Fetch_Stream;
+      zerochar          : constant Interfaces.C.char := Interfaces.C.char'Val (0);
+      docpath           : aliased Interfaces.C.char_array := (0 .. 1023 => zerochar);
+
 
       procedure set_env (position : Pkgtypes.Package_NVPairs.Cursor)
       is
@@ -87,6 +96,8 @@ package body Core.Fetching is
          env_to_unset.iterate (unset'Access);
          env_to_restore.Iterate (restore'Access);
       end restore_env;
+
+      use type Unix.T_filesize;
    begin
 
       --  /* A URL of the form http://host.example.com/ where
@@ -128,7 +139,10 @@ package body Core.Fetching is
          return RESULT_FATAL;
       end if;
 
-      Libfetch.provide_IMS_timestamp (timestamp, url_components);
+      if timestamp /= null then
+         Libfetch.provide_IMS_timestamp (timestamp.all, url_components);
+      end if;
+      Libfetch.provide_offset (offset, url_components);
 
       declare
          scheme : constant String := Libfetch.url_scheme (url_components);
@@ -142,6 +156,7 @@ package body Core.Fetching is
       if use_ssh then
          if Repo.SSH.start_ssh (my_repo, url_components, size) /= RESULT_OK then
             Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+            Libfetch.free_url (url_components);
             return RESULT_FATAL;
          end if;
          remote := Repo.repo_ssh (my_repo);
@@ -152,18 +167,19 @@ package body Core.Fetching is
          case Repo.repo_mirror_type (my_repo) is
             when Repo.SRV =>
                if use_http or else use_ftp then
-                  if not pkg_url_scheme then
-                     declare
-                        scheme : constant String := Libfetch.url_scheme (url_components);
-                        host   : constant String := Libfetch.url_host (url_components);
-                        zone   : constant String := "_" & scheme & "._tcp." & host;
-                     begin
+                  declare
+                     scheme : constant String := Libfetch.url_scheme (url_components);
+                     host   : constant String := Libfetch.url_host (url_components);
+                     zone   : constant String := "_" & scheme & "._tcp." & host;
+                  begin
+                     if not pkg_url_scheme then
                         Event.emit_notice
                           ("Warning: use of " & scheme
                            & ":// URL scheme with SRV records is deprecated: "
                            & "switch to pkg+" & scheme & "://");
-                     end;
-                  end if;
+                     end if;
+                     srv_index := Repo.DNS.set_dns_srvinfo (my_repo, zone);
+                  end;
                end if;
             when Repo.HTTP =>
                declare
@@ -188,17 +204,124 @@ package body Core.Fetching is
                   end get_zone;
                begin
                   if use_http or else use_https then
-                     Repo.SSH.set_http_mirrors (my_repo, get_zone);
+                     http_index := Repo.SSH.set_http_mirrors (my_repo, get_zone);
                   end if;
                end;
-               --  http_current = repo->http;
             when Repo.NOMIRROR =>
                null;
          end case;
+
+         case Repo.repo_mirror_type (my_repo) is
+         when Repo.HTTP =>
+            if http_index > 0 then
+               declare
+                  info : Repo.SSH.Mirror_Host;
+                  doc_original : String := Libfetch.url_doc (url_components);
+               begin
+                  info := Repo.SSH.get_http_mirror (my_repo, http_index);
+                  Libfetch.provide_host_information (USS (info.host), info.port, url_components);
+                  Libfetch.provide_scheme (USS (info.scheme), url_components);
+                  Libfetch.provide_doc (doc            => USS (info.doc) & doc_original,
+                                        holder         => docpath'Unchecked_Access,
+                                        url_components => url_components);
+               end;
+            end if;
+         when Repo.SRV =>
+            if srv_index > 0 then
+               declare
+                  info : Repo.SSH.SRV_Host;
+               begin
+                  info := Repo.SSH.get_srv_information (my_repo, srv_index);
+                  Libfetch.provide_host_information (USS (info.host), info.port, url_components);
+               end;
+            end if;
+         when Repo.NOMIRROR =>
+            null;
+         end case;
+
+         fetch_opts := SUS ("i");
+         case Repo.repo_ipv_type (my_repo) is
+            when Repo.REPO_FLAGS_LIMIT_IPV4 =>
+               SU.Append (fetch_opts, "4");
+            when Repo.REPO_FLAGS_LIMIT_IPV6 =>
+               SU.Append (fetch_opts, "6");
+            when Repo.REPO_FLAGS_DEFAULT =>
+               null;
+         end case;
+         if Context.reveal_debug_level = 4 then
+            SU.Append (fetch_opts, "v");
+         end if;
+
+         Event.emit_debug
+           (1, "Fetch: fetching from: "
+            & Libfetch.url_scheme (url_components) & "://"
+            & Libfetch.url_user_at_host (url_components)
+            & Libfetch.url_doc (url_components)
+            & " with opts " & DQ (USS (fetch_opts)));
+
+         remote := Libfetch.fx_XGet (url_components, USS (fetch_opts));
+         if not Libfetch.stream_is_active (remote) then
+            if Libfetch.last_fetch_ok then
+               Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+               Libfetch.free_url (url_components);
+               return RESULT_UPTODATE;
+            end if;
+
+            retry := retry - 1;
+            if retry <= 0 or else Libfetch.last_fetch_unavailable then
+               Event.emit_error (file_url & ": " & Libfetch.get_last_fetch_error);
+               Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+               Libfetch.free_url (url_components);
+               return RESULT_FATAL;
+            end if;
+
+            case Repo.repo_mirror_type (my_repo) is
+            when Repo.HTTP =>
+               if http_index > 0 then
+                  http_index := http_index + 1;
+                  if http_index > Repo.SSH.total_http_mirrors (my_repo) then
+                     http_index := 1;
+                  end if;
+               end if;
+            when Repo.SRV =>
+               if srv_index > 0 then
+                  srv_index := srv_index + 1;
+                  if srv_index > Repo.SSH.total_srv_records (my_repo) then
+                     srv_index := 1;
+                  end if;
+               end if;
+            when Repo.NOMIRROR =>
+               delay (1.0);
+            end case;
+         end if;
+
       end loop;
 
+
       if not use_ssh then
-         null;
+         if timestamp /= null then
+            declare
+               use type Unix.T_epochtime;
+               mtime : Unix.T_epochtime := Libfetch.get_file_modification_time (url_components);
+            begin
+               if mtime > 0 then
+                  if mtime <= timestamp.all then
+                     Repo.repo_environment (my_repo).Iterate (restore_env'Access);
+                     Libfetch.free_url (url_components);
+                     Libfetch.fx_close (remote);
+                     return RESULT_UPTODATE;
+                  else
+                     timestamp.all := mtime;
+                  end if;
+               end if;
+            end;
+         end if;
+         size := int64 (Libfetch.get_fetched_file_size (url_components));
+      end if;
+
+
+      if size <= 0 and then filesize > 0 then
+         size := int64 (filesize);
       end if;
 
    end fetch_file_to_fd;

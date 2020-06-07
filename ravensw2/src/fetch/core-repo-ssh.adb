@@ -396,19 +396,20 @@ package body Core.Repo.SSH is
    --------------------------------------------------------------------
    --  set_http_mirrors
    --------------------------------------------------------------------
-   procedure set_http_mirrors
+   function set_http_mirrors
      (my_repo   : in out A_repo;
-      url       : String)
+      url       : String) return Natural
    is
       fstream : Libfetch.Fetch_Stream;
+      index   : Natural := 0;
    begin
       if not my_repo.http.Is_Empty then
-         return;
+         return 1;
       end if;
 
       fstream := Libfetch.fx_GetURL (url, "");
       if not Libfetch.stream_is_active (fstream) then
-         return;
+         return 0;
       end if;
 
       loop
@@ -423,12 +424,14 @@ package body Core.Repo.SSH is
                begin
                   if not IsBlank (trimmed) then
                      my_repo.http.Append (convert_to_mirror (trimmed));
+                     index := 1;
                   end if;
                end;
             end if;
          end;
       end loop;
       Libfetch.fx_close (fstream);
+      return index;
 
    end set_http_mirrors;
 
@@ -454,6 +457,88 @@ package body Core.Repo.SSH is
       result.netrcfd  := Libfetch.url_netrcfd  (components);
       return result;
    end convert_to_mirror;
+
+
+   --------------------------------------------------------------------
+   --  get_http_mirror
+   --------------------------------------------------------------------
+   function get_http_mirror
+     (my_repo  : A_repo;
+      index    : Natural) return Mirror_Host
+   is
+      procedure flip (position : A_http_mirror_crate.Cursor);
+
+      result : Mirror_Host;
+      track  : Natural := 0;
+
+      procedure flip (position : A_http_mirror_crate.Cursor)
+      is
+         site : A_http_mirror renames A_http_mirror_crate.Element (position);
+      begin
+         track := track + 1;
+         if track = index then
+            result.host   := site.host;
+            result.port   := site.port;
+            result.scheme := site.scheme;
+            result.doc    := site.doc;
+         end if;
+      end flip;
+   begin
+      if index = 0 or else index > Natural (my_repo.http.Length) then
+         raise bad_http_index;
+      end if;
+      my_repo.http.Iterate (flip'Access);
+      return result;
+   end get_http_mirror;
+
+
+   --------------------------------------------------------------------
+   --  get_srv_information
+   --------------------------------------------------------------------
+   function get_srv_information
+     (my_repo  : A_repo;
+      index    : Natural) return SRV_Host
+   is
+      procedure flip (position : A_DNS_srvinfo_crate.Cursor);
+
+      result : SRV_Host;
+      track  : Natural := 0;
+
+      procedure flip (position : A_DNS_srvinfo_crate.Cursor)
+      is
+         site : DNS_srvinfo renames A_DNS_srvinfo_crate.Element (position);
+      begin
+         track := track + 1;
+         if track = index then
+            result.host   := site.host;
+            result.port   := site.port;
+         end if;
+      end flip;
+   begin
+      if index = 0 or else index > Natural (my_repo.srv.Length) then
+         raise bad_srv_index;
+      end if;
+      my_repo.srv.Iterate (flip'Access);
+      return result;
+   end get_srv_information;
+
+
+   --------------------------------------------------------------------
+   --  total_http_mirrors
+   --------------------------------------------------------------------
+   function total_http_mirrors (my_repo : A_repo) return Natural is
+   begin
+      return Natural (my_repo.http.Length);
+   end total_http_mirrors;
+
+
+   --------------------------------------------------------------------
+   --  total_srv_records
+   --------------------------------------------------------------------
+   function total_srv_records (my_repo : A_repo) return Natural is
+   begin
+      return Natural (my_repo.srv.Length);
+   end total_srv_records;
 
 
 end Core.Repo.SSH;

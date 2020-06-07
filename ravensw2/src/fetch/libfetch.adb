@@ -1,7 +1,6 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
-with Interfaces.C.Strings;
 with Interfaces.C.Extensions;
 
 package body Libfetch is
@@ -161,7 +160,7 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-      --  url_is_valid
+   --  url_is_valid
    --------------------------------------------------------------------
    function url_is_valid (url_components : URL_Component_Set) return Boolean is
    begin
@@ -170,7 +169,7 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-      --  parse_url
+   --  parse_url
    --------------------------------------------------------------------
    function parse_url (url : String) return URL_Component_Set
    is
@@ -178,7 +177,8 @@ package body Libfetch is
       arg1           : ICS.chars_ptr;
    begin
       arg1 := ICS.New_String (url);
-      url_components.components  := fetch_h.fetchParseURL (arg1);
+      url_components.components := fetch_h.fetchParseURL (arg1);
+      url_components.orig_doc   := url_components.components.doc;
       ICS.Free (arg1);
       url_components.valid := (url_components.components /= null);
       return url_components;
@@ -186,7 +186,17 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-      --  provide_IMS_timestamp
+   --  free_url
+   --------------------------------------------------------------------
+   procedure free_url (url_components : URL_Component_Set) is
+   begin
+      url_components.components.doc := url_components.orig_doc;
+      fetch_h.fetchFreeURL (url_components.components);
+   end free_url;
+
+
+   --------------------------------------------------------------------
+   --  provide_IMS_timestamp
    --------------------------------------------------------------------
    procedure provide_IMS_timestamp
      (timestamp : Core.Unix.T_epochtime;
@@ -199,7 +209,78 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-      --  url_scheme
+   --  provide_host_information
+   --------------------------------------------------------------------
+   procedure provide_host_information
+     (host : String;
+      port : Natural;
+      url_components : in out URL_Component_Set)
+   is
+      use type IC.size_t;
+      index : IC.size_t := url_components.components.host'First;
+   begin
+      url_components.components.port := IC.int (port);
+      url_components.components.host := (others => IC.char'Val (0));
+      for x in host'Range loop
+         url_components.components.host (index) := IC.char'Val (Character'Pos (host (x)));
+         index := index + 1;
+      end loop;
+   end provide_host_information;
+
+
+   --------------------------------------------------------------------
+   --  provide_scheme
+   --------------------------------------------------------------------
+   procedure provide_scheme
+     (scheme : String;
+      url_components : in out URL_Component_Set)
+   is
+      use type IC.size_t;
+      index : IC.size_t := url_components.components.scheme'First;
+   begin
+      url_components.components.scheme := (others => IC.char'Val (0));
+      for x in scheme'Range loop
+         url_components.components.scheme (index) := IC.char'Val (Character'Pos (scheme (x)));
+         index := index + 1;
+      end loop;
+   end provide_scheme;
+
+
+   --------------------------------------------------------------------
+   --  provide_doc
+   --------------------------------------------------------------------
+   procedure provide_doc
+     (doc : String;
+      holder : ICS.char_array_access;
+      url_components : in out URL_Component_Set)
+   is
+      use type IC.size_t;
+      index : IC.size_t := holder.all'First;
+   begin
+      holder.all := (others => IC.char'Val (0));
+      for x in doc'Range loop
+         holder.all (index) := IC.char'Val (Character'Pos (doc (x)));
+         index := index + 1;
+      end loop;
+      url_components.components.doc := ICS.To_Chars_Ptr (holder);
+   end provide_doc;
+
+
+   --------------------------------------------------------------------
+   --  provide_offset
+   --------------------------------------------------------------------
+   procedure provide_offset
+     (offset : Core.Unix.T_filesize;
+      url_components : in out URL_Component_Set)
+   is
+      c_offset : IC.int := IC.int (offset);
+   begin
+      url_components.components.offset := c_offset;
+   end provide_offset;
+
+
+   --------------------------------------------------------------------
+   --  url_scheme
    --------------------------------------------------------------------
    function url_scheme (url_components : URL_Component_Set) return String is
    begin
@@ -223,6 +304,22 @@ package body Libfetch is
    begin
       return IC.To_Ada (url_components.components.host);
    end url_host;
+
+
+   --------------------------------------------------------------------
+   --  url_user_at_host
+   --------------------------------------------------------------------
+   function url_user_at_host (url_components : URL_Component_Set) return String
+   is
+      user : String := url_user (url_components);
+      host : String := url_host (url_components);
+   begin
+      if user = "" then
+         return host;
+      else
+         return user & "@" & host;
+      end if;
+   end url_user_at_host;
 
 
    --------------------------------------------------------------------
@@ -352,5 +449,48 @@ package body Libfetch is
       return result;
    end fx_GetURL;
 
+
+   --------------------------------------------------------------------
+   --  fx_XGet
+   --------------------------------------------------------------------
+   function fx_XGet
+     (url_components : in out URL_Component_Set;
+      flags          : String) return Fetch_Stream
+   is
+      use type fetch_h.Extended_Stream;
+      arg3   : ICS.chars_ptr;
+      result : Fetch_Stream;
+   begin
+      arg3 := ICS.New_String (flags);
+      result.estream := fetch_h.fetchXGet (arg1 => url_components.components,
+                                           arg2 => url_components.status'Access,
+                                           arg3 => arg3);
+      if result.estream /= null then
+         result.active := True;
+      end if;
+
+      ICS.Free (arg3);
+      return result;
+   end fx_XGet;
+
+
+   --------------------------------------------------------------------
+   --  get_file_modification_time
+   --------------------------------------------------------------------
+   function get_file_modification_time
+     (url_components : URL_Component_Set) return Core.Unix.T_epochtime is
+   begin
+      return Core.Unix.T_epochtime (url_components.status.mtime);
+   end get_file_modification_time;
+
+
+   --------------------------------------------------------------------
+   --  get_fetched_file_size
+   --------------------------------------------------------------------
+   function get_fetched_file_size
+     (url_components : URL_Component_Set) return Core.Unix.T_filesize is
+   begin
+      return Core.Unix.T_filesize (url_components.status.size);
+   end get_fetched_file_size;
 
 end Libfetch;
