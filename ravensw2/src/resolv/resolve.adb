@@ -577,4 +577,25 @@ package body Resolve is
    end dump_response;
 
 
+   --------------------------------------------------------------------
+   --  set_nameserver
+   --------------------------------------------------------------------
+   procedure set_nameserver (nameserver : String)
+   is
+      use type IC.int;
+
+      nsname : ICS.chars_ptr;
+      res : IC.int;
+   begin
+      nsname := ICS.New_String (nameserver);
+      res := resolv_h.C_set_nameserver (nsname);
+      if Integer (res) = -2 then
+         TIO.Put_Line ("Setting nameserver is not supported on glibc-based systems, ignoring.");
+      elsif Integer (res) /= 0 then
+         TIO.Put_Line ("Unable to set nameserver, ignoring.");
+      end if;
+      ICS.Free (nsname);
+   end set_nameserver;
+
+
 end Resolve;

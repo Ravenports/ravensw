@@ -80,6 +80,8 @@ package Resolve is
 
    procedure dump_response (response : DNS_Response);
 
+   procedure set_nameserver (nameserver : String);
+
 private
 
    subtype DNS_Header is String (1 .. 12);

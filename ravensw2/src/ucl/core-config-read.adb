@@ -13,6 +13,7 @@ with Core.Event;
 with Core.Elf_Operations;
 with Core.Repo.Read;
 with Core.Metalog;
+with Resolve;
 with Ucl;
 
 
@@ -768,7 +769,13 @@ package body Core.Config.Read is
          return RESULT_FATAL;
       end if;
 
-      --  TODO: bypass resolv.conf
+      declare
+         nserver : String := config_get_string (get_ci_key (nameserver));
+      begin
+         if not Isblank (nserver) then
+            Resolve.set_nameserver (nserver);
+         end if;
+      end;
 
       declare
          metalog_filename : String := config_get_string (get_ci_key (metalog_file));

@@ -177,5 +177,8 @@ package resolv_h is
       length  : IC.int) return IC.int;
    pragma Import (C, C_dn_expand, "__dn_expand");
 
+   function C_set_nameserver
+     (nsname : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_set_nameserver, "set_nameserver");
 
 end resolv_h;
