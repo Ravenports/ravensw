@@ -17,7 +17,7 @@ package body Resolve is
    --------------------------------------------------------------------
    --  resolve_query
    --------------------------------------------------------------------
-   function resolve_query (domain_name : String) return String
+   function resolve_query (zone : String) return String
    is
       use type IC.int;
 
@@ -26,7 +26,7 @@ package body Resolve is
       anslen : IC.int := IC.int (1024);
       answer : aliased IC.char_array (1 .. IC.size_t (anslen));
    begin
-      dname := ICS.New_String (domain_name);
+      dname := ICS.New_String (zone);
       res := resolv_h.C_res_query (dname  => dname,
                                    rclass => resolv_h.ns_c_in,
                                    rtype  => resolv_h.ns_t_srv,
@@ -188,7 +188,7 @@ package body Resolve is
    --------------------------------------------------------------------
    --  conv_atype
    --------------------------------------------------------------------
-   function conv_atype  (atype  : resolv_h.ns_type) return AType_Value
+   function conv_atype (atype : resolv_h.ns_type) return AType_Value
    is
    begin
       case atype is
@@ -309,6 +309,11 @@ package body Resolve is
    --------------------------------------------------------------------
    function translate_response (response : String) return DNS_Response
    is
+      use type IC.size_t;
+
+      function slice2 (bindex : IC.size_t) return bytes2;
+      function slice4 (bindex : IC.size_t) return bytes4;
+
       hostlen  : constant IC.size_t := 1024;
       host     : aliased IC.char_array (1 .. hostlen);
       buffer   : aliased IC.char_array (1 .. response'Length);
@@ -317,7 +322,19 @@ package body Resolve is
       result   : DNS_Response;
       header   : Arpa_Header;
 
-      use type IC.size_t;
+      function slice2 (bindex : IC.size_t) return bytes2 is
+      begin
+         return IC.To_Ada (buffer (bindex)) & IC.To_Ada (buffer (bindex + 1));
+      end slice2;
+
+      function slice4 (bindex : IC.size_t) return bytes4 is
+      begin
+         return IC.To_Ada (buffer (bindex))
+           & IC.To_Ada (buffer (bindex + 1))
+           & IC.To_Ada (buffer (bindex + 2))
+           & IC.To_Ada (buffer (bindex + 3));
+      end slice4;
+
    begin
       result.valid := False;
       if response'Length < 12 then
@@ -352,8 +369,8 @@ package body Resolve is
                                             exp_dn  => host (host'First)'Access,
                                             length  => IC.int (hostlen));
                index := index + IC.size_t (len);
-               raw_type  := nbo2int (IC.To_Ada (buffer (index .. index + 1)));
-               raw_class := nbo2int (IC.To_Ada (buffer (index + 2 .. index + 3)));
+               raw_type  := nbo2int (slice2 (index));
+               raw_class := nbo2int (slice2 (index + 2));
                index := index + 4;
 
                frag.question := Strings.SUS (IC.To_Ada (host));
@@ -383,20 +400,20 @@ package body Resolve is
                                             exp_dn  => host (host'First)'Access,
                                             length  => IC.int (hostlen));
                index := index + IC.size_t (len);
-               raw_type  := nbo2int (IC.To_Ada (buffer (index .. index + 1)));
-               raw_class := nbo2int (IC.To_Ada (buffer (index + 2 .. index + 3)));
+               raw_type  := nbo2int (slice2 (index));
+               raw_class := nbo2int (slice2 (index + 2));
                index := index + 4;
                answer.name     := Strings.SUS (IC.To_Ada (host));
                answer.atype    := conv_atype  (ns_type_equivalent (raw_type));
                answer.aclass   := conv_aclass (ns_class_equivalent (raw_class));
-               answer.ttl      := nbo2int (IC.To_Ada (buffer (index .. index + 3)));
-               answer.rdlength := nbo2int (IC.To_Ada (buffer (index + 4 .. index + 5)));
+               answer.ttl      := nbo2int (slice4 (index));
+               answer.rdlength := nbo2int (slice2 (index + 4));
                index := index + 6;
                case answer.atype is
                   when T_SRV =>
-                     answer.priority := nbo2int (IC.To_Ada (buffer (index .. index + 1)));
-                     answer.weight   := nbo2int (IC.To_Ada (buffer (index + 2 .. index + 3)));
-                     answer.port     := nbo2int (IC.To_Ada (buffer (index + 4 .. index + 5)));
+                     answer.priority := nbo2int (slice2 (index));
+                     answer.weight   := nbo2int (slice2 (index + 2));
+                     answer.port     := nbo2int (slice2 (index + 4));
                      index := index + 6;
                      len := resolv_h.C_dn_expand (msg     => buffer (buffer'First)'Access,
                                                   eomorig => buffer (buffer'Last)'Access,
@@ -412,6 +429,7 @@ package body Resolve is
                      answer.target   := Strings.SUS ("not-a-srv-record!");
                end case;
                answer.weight2 := 0;
+               result.answers.Append (answer);
             end;
          end loop;
       end;
@@ -448,6 +466,7 @@ package body Resolve is
          index : Natural;
          gen   : Rand_Weight.Generator;
       begin
+         Rand_Weight.Reset (gen);
          for x in canvas'First .. canvas'First + num_duplicates - 1 loop
             index := Character'Pos (canvas (x)) - 1;
             combined := combined + response.answers.Element (index).weight;
@@ -477,8 +496,8 @@ package body Resolve is
             duplicates (num_found) := Character'Val (x);
             for y in x + 1 .. total loop
                if not exclude (x) and then not exclude (y) then
-                  if response.answers.Element (x - 1).weight =
-                    response.answers.Element (y - 1).weight
+                  if response.answers.Element (x - 1).priority =
+                    response.answers.Element (y - 1).priority
                   then
                      num_found := num_found + 1;
                      duplicates (num_found) := Character'Val (y);
@@ -503,9 +522,10 @@ package body Resolve is
    --------------------------------------------------------------------
    function host_less_than (A, B : An_Answer) return Boolean
    is
+      --  sort priority lowest to highest, weights highest to lowest
    begin
       if A.priority = B.priority then
-         return A.weight2 < B.weight2;
+         return A.weight2 > B.weight2;
       else
          return A.priority < B.priority;
       end if;
@@ -538,7 +558,7 @@ package body Resolve is
          TIO.Put_Line ("Answer type    : " & answer.atype'Img);
          TIO.Put_Line ("Answer class   : " & answer.aclass'Img);
          TIO.Put_Line ("Answer TTL     :" & answer.ttl'Img);
-         TIO.Put_Line ("answer RDLenght:" & answer.rdlength'Img);
+         TIO.Put_Line ("answer RDLength:" & answer.rdlength'Img);
          TIO.Put_Line ("Answer priority:" & answer.priority'Img);
          TIO.Put_Line ("Answer weight  :" & answer.weight'Img);
          TIO.Put_Line ("Answer weight2 :" & answer.weight2'Img);

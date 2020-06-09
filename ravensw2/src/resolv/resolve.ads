@@ -74,7 +74,7 @@ package Resolve is
          valid     : Boolean;
       end record;
 
-   function resolve_query (domain_name : String) return String;
+   function resolve_query (zone : String) return String;
    function translate_response (response : String) return DNS_Response;
    procedure sort_response (response : in out DNS_Response);
 
