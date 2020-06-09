@@ -27,6 +27,10 @@ package body Core.Repo.DNS is
          declare
             response : Resolve.DNS_Response := Resolve.translate_response (header_and_payload);
          begin
+            if not response.valid then
+               return 0;
+            end if;
+
             Resolve.sort_response (response);
             my_repo.srv := response.answers;
             if my_repo.srv.Is_Empty then

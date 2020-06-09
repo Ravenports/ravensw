@@ -78,6 +78,8 @@ package Resolve is
    function translate_response (response : String) return DNS_Response;
    procedure sort_response (response : in out DNS_Response);
 
+   procedure dump_response (response : DNS_Response);
+
 private
 
    subtype DNS_Header is String (1 .. 12);

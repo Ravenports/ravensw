@@ -2,6 +2,7 @@
 --  Reference: ../../License.txt
 
 with Interfaces.C.Strings;
+with Ada.Text_IO;
 with System;
 
 with Core.Strings;
@@ -11,6 +12,7 @@ package body Resolve is
    package IC  renames Interfaces.C;
    package ICS renames Interfaces.C.Strings;
    package INT renames Interfaces;
+   package TIO renames Ada.Text_IO;
 
    --------------------------------------------------------------------
    --  resolve_query
@@ -508,6 +510,51 @@ package body Resolve is
          return A.priority < B.priority;
       end if;
    end host_less_than;
+
+
+   --------------------------------------------------------------------
+   --  dump_response
+   --------------------------------------------------------------------
+   procedure dump_response (response : DNS_Response)
+   is
+      procedure print_question (Position : Question_Crate.Cursor);
+      procedure print_answer   (Position : Answer_Crate.Cursor);
+
+      procedure print_question (Position : Question_Crate.Cursor)
+      is
+         question : A_Question renames Question_Crate.Element (position);
+      begin
+         TIO.Put_Line ("Question host : " & Strings.USS (question.question));
+         TIO.Put_Line ("Question type : " & question.qtype'Img);
+         TIO.Put_Line ("Question class: " & question.qclass'Img);
+         TIO.Put_Line ("");
+      end print_question;
+
+      procedure print_answer (Position : Answer_Crate.Cursor)
+      is
+         answer : An_Answer renames Answer_Crate.Element (Position);
+      begin
+         TIO.Put_Line ("Answer name    : " & Strings.USS (answer.name));
+         TIO.Put_Line ("Answer type    : " & answer.atype'Img);
+         TIO.Put_Line ("Answer class   : " & answer.aclass'Img);
+         TIO.Put_Line ("Answer TTL     :" & answer.ttl'Img);
+         TIO.Put_Line ("answer RDLenght:" & answer.rdlength'Img);
+         TIO.Put_Line ("Answer priority:" & answer.priority'Img);
+         TIO.Put_Line ("Answer weight  :" & answer.weight'Img);
+         TIO.Put_Line ("Answer weight2 :" & answer.weight2'Img);
+         TIO.Put_Line ("Answer target  : " & Strings.USS (answer.target));
+         TIO.Put_Line ("Answer port    :" & answer.port'Img);
+         TIO.Put_Line ("");
+      end print_answer;
+   begin
+      if response.valid then
+         TIO.Put_Line ("SRV records valid");
+      else
+         TIO.Put_Line ("### SRV records invalid ####");
+      end if;
+      response.questions.Iterate (print_question'Access);
+      response.answers.Iterate (print_answer'Access);
+   end dump_response;
 
 
 end Resolve;
