@@ -8,6 +8,7 @@ with Core.Strings;
 with Core.Checksum;
 with Core.Unix;
 with Libfetch;
+with Resolve;
 
 private with sqlite_h;
 
@@ -138,18 +139,6 @@ private
          name        : Text;
       end record;
 
-   type DNS_srvinfo is
-      record
-         dns_type    : Natural;
-         class       : Natural;
-         ttl         : Natural;
-         priority    : Natural;
-         weight      : Natural;
-         port        : Natural;
-         finalweight : Natural;
-         host        : Text;
-      end record;
-
    type A_http_mirror is
       record
          scheme   : Text;
@@ -166,10 +155,6 @@ private
 
    package A_cert_crate is new CON.Vectors
      (Element_Type => Meta_Certificate,
-      Index_Type   => Natural);
-
-   package A_DNS_srvinfo_crate is new CON.Vectors
-     (Element_Type => DNS_srvinfo,
       Index_Type   => Natural);
 
    package A_http_mirror_crate is new CON.Vectors
@@ -231,7 +216,7 @@ private
 
          --  can't use immutable records inside containers
          --  srv and http are used mutually exclusively
-         srv            : A_DNS_srvinfo_crate.Vector;
+         srv            : Resolve.Answer_Crate.Vector;
          http           : A_http_mirror_crate.Vector;
       end record;
 

@@ -9,6 +9,7 @@ with Core.Event;
 with Core.Config;
 with Core.Utilities;
 
+with Resolve;
 with fetch_h;
 
 package body Core.Repo.SSH is
@@ -499,19 +500,19 @@ package body Core.Repo.SSH is
      (my_repo  : A_repo;
       index    : Natural) return SRV_Host
    is
-      procedure flip (position : A_DNS_srvinfo_crate.Cursor);
+      procedure flip (position : Resolve.Answer_Crate.Cursor);
 
       result : SRV_Host;
       track  : Natural := 0;
 
-      procedure flip (position : A_DNS_srvinfo_crate.Cursor)
+      procedure flip (position : Resolve.Answer_Crate.Cursor)
       is
-         site : DNS_srvinfo renames A_DNS_srvinfo_crate.Element (position);
+         site : Resolve.An_Answer renames Resolve.Answer_Crate.Element (position);
       begin
          track := track + 1;
          if track = index then
-            result.host   := site.host;
-            result.port   := site.port;
+            result.host   := site.target;
+            result.port   := Natural (site.port);
          end if;
       end flip;
    begin
