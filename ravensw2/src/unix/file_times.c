@@ -3,7 +3,9 @@
  * Reference: ../../License.txt
  */
 
+#include <fcntl.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 int
 set_file_times (int fd, long access_time, long mod_time)
