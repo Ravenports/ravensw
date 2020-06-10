@@ -387,7 +387,7 @@ private
    pragma Import (C, C_errno_EINTR, "last_error_INTR");
 
    function C_errno_ECONNRESET return IC.int;
-   pragma Import (C, C_errno_ECONNRESET, "last_error_ECONNRESET");
+   pragma Import (C, C_errno_ECONNRESET, "last_error_CONNRESET");
 
    function C_errno_EAGAIN return IC.int;
    pragma Import (C, C_errno_EAGAIN, "last_error_AGAIN");
@@ -409,28 +409,17 @@ private
    function C_get_size (sb : struct_stat_Access) return IC.Extensions.long_long;
    pragma Import (C, C_get_size, "get_size");
 
-   type Timeval_Unit is new IC.int;
-   pragma Convention (C, Timeval_Unit);
-
-   type Timeval is record
-      Tv_Sec  : Timeval_Unit;
-      Tv_Usec : Timeval_Unit;
-   end record;
-   pragma Convention (C, Timeval);
-
-   type Timeval_Access is access all Timeval;
-   pragma Convention (C, Timeval_Access);
-
-   function C_utimes
-     (path  : IC.Strings.chars_ptr;
-      times : Timeval_Access) return IC.int;
-   pragma Import (C, C_utimes, "utimes");
-
-   function C_futimesat
+   function C_set_file_times
      (fd      : File_Descriptor;
-      relpath : IC.Strings.chars_ptr;
-      times   : Timeval_Access) return IC.int;
-   pragma Import (C, C_futimesat, "futimesat");
+      atime   : IC.long;
+      mtime   : IC.long) return IC.int;
+   pragma Import (C, C_set_file_times, "set_file_times");
+
+   function C_set_file_times2
+     (path  : IC.Strings.chars_ptr;
+      atime   : IC.long;
+      mtime   : IC.long) return IC.int;
+   pragma Import (C, C_set_file_times2, "set_file_times2");
 
    function C_read
      (fd     : File_Descriptor;

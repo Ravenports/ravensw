@@ -38,7 +38,7 @@ package SSL is
    function RSA_cert_verified (hash, signature : String; RSA_pointer : RSA_Access) return Boolean;
 
    procedure RSA_free (RSA : RSA_Access);
-   pragma Import (C, RSA_free);
+   pragma Import (C, RSA_free, "RSA_free");
 
    function RSA_empty (RSA : RSA_Access) return Boolean;
 
@@ -99,7 +99,7 @@ private
    pragma Import (C, C_RSA_verify, "RSA_verify");
 
    function C_BIO_free (BIO : BIO_Access) return IC.int;
-   pragma Import (C, C_BIO_free, "RSA_free");
+   pragma Import (C, C_BIO_free, "BIO_free");
 
    function C_BIO_new_mem_buf
      (buf : ICS.char_array_access;

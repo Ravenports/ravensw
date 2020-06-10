@@ -552,24 +552,16 @@ package body Core.Unix is
    --------------------------------------------------------------------
    --  set_file_times #1
    --------------------------------------------------------------------
-   procedure set_file_times (path : String;
-                             access_time : T_epochtime;
-                             mod_time : T_epochtime)
+   procedure set_file_times
+     (fd          : File_Descriptor;
+      access_time : T_epochtime;
+      mod_time    : T_epochtime)
    is
-      ftimes : array (1 .. 2) of aliased Timeval;
+      atime  : IC.long := IC.long (access_time);
+      mtime  : IC.long := IC.long (mod_time);
+      res    : IC.int;
    begin
-      ftimes (1).Tv_Sec := Timeval_Unit (access_time);
-      ftimes (1).Tv_Usec := 0;
-      ftimes (2).Tv_Sec := Timeval_Unit (mod_time);
-      ftimes (2).Tv_Usec := 0;
-      declare
-         c_path : IC.Strings.chars_ptr;
-         res    : IC.int;
-      begin
-         c_path := IC.Strings.New_String (path);
-         res := C_utimes (c_path, ftimes (1)'Unchecked_Access);
-         IC.Strings.Free (c_path);
-      end;
+      res := C_set_file_times (fd, atime, mtime);
    end set_file_times;
 
 
@@ -577,18 +569,18 @@ package body Core.Unix is
    --  set_file_times #2
    --------------------------------------------------------------------
    procedure set_file_times
-     (fd          : File_Descriptor;
+     (path        : String;
       access_time : T_epochtime;
       mod_time    : T_epochtime)
    is
-      ftimes : array (1 .. 2) of aliased Timeval;
+      atime  : IC.long := IC.long (access_time);
+      mtime  : IC.long := IC.long (mod_time);
+      c_path : IC.Strings.chars_ptr;
       res    : IC.int;
    begin
-      ftimes (1).Tv_Sec := Timeval_Unit (access_time);
-      ftimes (1).Tv_Usec := 0;
-      ftimes (2).Tv_Sec := Timeval_Unit (mod_time);
-      ftimes (2).Tv_Usec := 0;
-      res := C_futimesat (fd, IC.Strings.Null_Ptr, ftimes (1)'Unchecked_Access);
+      c_path := IC.Strings.New_String (path);
+      res := C_set_file_times2 (c_path, atime, mtime);
+      IC.Strings.Free (c_path);
    end set_file_times;
 
 
