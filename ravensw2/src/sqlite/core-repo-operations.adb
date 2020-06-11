@@ -17,6 +17,7 @@ with Core.Checksum;
 with Core.Config;
 with Core.Utilities;
 with Core.Manifest;
+with Core.Version;
 with SQLite;
 
 
@@ -808,6 +809,41 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
+   --  delete_conflicting_package
+   --------------------------------------------------------------------
+   function delete_conflicting_package
+     (origin   : Text;
+      version  : Text;
+      pkg_path : Text;
+      forced   : Boolean) return Action_Result
+   is
+      osversion : constant String := Schema.retrieve_prepared_version (origin);
+   begin
+      if IsBlank (osversion) then
+         return RESULT_FATAL;
+      end if;
+      if forced then
+         return Schema.kill_package (origin);
+      else
+         case Core.Version.pkg_version_cmp (osversion, USS (version)) is
+            when -1 =>
+               Event.emit_error
+                 ("duplicate package origin: replacing older version " & osversion
+                  & " in repo with package " & USS (pkg_path) & " for origin " & USS (origin));
+               return Schema.kill_package (origin);
+            when 0 | 1 =>
+               Event.emit_error
+                 ("duplicate package origin: package " & USS (pkg_path)
+                  & " is not newer than version " & osversion
+                  & " already in repo for origin " & USS (origin));
+               --  keep what is already in the repo
+               return RESULT_END;
+         end case;
+      end if;
+   end delete_conflicting_package;
+
+
+   --------------------------------------------------------------------
    --  add_from_manifest
    --------------------------------------------------------------------
    function add_from_manifest
@@ -843,10 +879,10 @@ package body Core.Repo.Operations is
       end if;
       my_pkg.reponame := SUS (Repo.repo_name (my_repo));
 
-      --  TODO: rc = pkg_repo_binary_add_pkg(pkg, NULL, sqlite, true);
-
---  	return (rc);
-      return RESULT_FATAL;
+      return add_package_to_repository (pkg_access => my_pkg'Unchecked_Access,
+                                        my_repo    => my_repo,
+                                        pkg_path   => "",
+                                        forced     => True);
    end add_from_manifest;
 
 end Core.Repo.Operations;

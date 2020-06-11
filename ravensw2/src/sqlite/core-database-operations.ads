@@ -110,10 +110,4 @@ private
    procedure push_arg (args : in out Set_Stmt_Args.Vector; textual_arg : Text);
    procedure push_arg (args : in out Set_Stmt_Args.Vector; boolean_arg : Boolean);
 
-   function delete_conflicting_package
-     (origin   : Text;
-      version  : Text;
-      pkg_path : Text;
-      forced   : Boolean) return Action_Result;
-
 end Core.Database.Operations;

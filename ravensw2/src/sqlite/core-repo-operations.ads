@@ -21,6 +21,12 @@ package Core.Repo.Operations is
 
    function update_repository (reponame : String; force : Boolean) return Action_Result;
 
+   function delete_conflicting_package
+     (origin   : Text;
+      version  : Text;
+      pkg_path : Text;
+      forced   : Boolean) return Action_Result;
+
 private
 
    internal_srcfile : constant String := "core-repo-operations.adb";
@@ -80,5 +86,11 @@ private
    procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; textual_arg : String);
    procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; textual_arg : Text);
    procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; boolean_arg : Boolean);
+
+   function add_package_to_repository
+     (pkg_access : Pkgtypes.A_Package_Access;
+      my_repo    : A_repo;
+      pkg_path   : String;
+      forced     : Boolean) return Action_Result;
 
 end Core.Repo.Operations;

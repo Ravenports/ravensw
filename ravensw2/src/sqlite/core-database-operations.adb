@@ -8,10 +8,9 @@ with Interfaces.C.Strings;
 with Core.CommonSQL;
 with Core.Database.CustomCmds;
 with Core.Database.Operations.Schema;
-with Core.Repo.Operations.Schema;
+with Core.Repo.Operations;
 with Core.Strings;
 with Core.Context;
-with Core.Version;
 with Core.Config;
 with Core.Event;
 with Core.Repo;
@@ -841,10 +840,10 @@ package body Core.Database.Operations is
                when sqlite_h.SQLITE_CONSTRAINT =>
                   Event.emit_debug (3, "Deleting conflicting package " & USS (pkg_access.origin)
                                     & "-" & USS (pkg_access.version));
-                  rc := delete_conflicting_package (origin   => pkg_access.origin,
-                                                    version  => pkg_access.version,
-                                                    pkg_path => SUS (pkg_path),
-                                                    forced   => forced);
+                  rc := ROP.delete_conflicting_package (origin   => pkg_access.origin,
+                                                        version  => pkg_access.version,
+                                                        pkg_path => SUS (pkg_path),
+                                                        forced   => forced);
                   case rc is
                      when RESULT_FATAL =>
                         spit_out_error (index, " (delete conflict failed)");
@@ -1008,40 +1007,5 @@ package body Core.Database.Operations is
          return RESULT_OK;
       end if;
    end add_pkg_to_database;
-
-
-   --------------------------------------------------------------------
-   --  delete_conflicting_package
-   --------------------------------------------------------------------
-   function delete_conflicting_package
-     (origin   : Text;
-      version  : Text;
-      pkg_path : Text;
-      forced   : Boolean) return Action_Result
-   is
-      osversion : constant String := ROP.Schema.retrieve_prepared_version (origin);
-   begin
-      if IsBlank (osversion) then
-         return RESULT_FATAL;
-      end if;
-      if forced then
-         return ROP.Schema.kill_package (origin);
-      else
-         case Core.Version.pkg_version_cmp (osversion, USS (version)) is
-            when -1 =>
-               Event.emit_error
-                 ("duplicate package origin: replacing older version " & osversion
-                  & " in repo with package " & USS (pkg_path) & " for origin " & USS (origin));
-               return ROP.Schema.kill_package (origin);
-            when 0 | 1 =>
-               Event.emit_error
-                 ("duplicate package origin: package " & USS (pkg_path)
-                  & " is not newer than version " & osversion
-                  & " already in repo for origin " & USS (origin));
-               --  keep what is already in the repo
-               return RESULT_END;
-         end case;
-      end if;
-   end delete_conflicting_package;
 
 end Core.Database.Operations;
