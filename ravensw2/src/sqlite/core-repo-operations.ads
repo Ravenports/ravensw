@@ -7,6 +7,10 @@ private with Core.Unix;
 
 package Core.Repo.Operations is
 
+   package Set_Repo_Stmt_Args is new CON.Vectors
+     (Element_Type => Repo_Stmt_Argument,
+      Index_Type   => Natural);
+
    function open_repository (reponame : String; readonly : Boolean) return Action_Result;
 
    procedure close_all_open_repositories;
@@ -71,5 +75,10 @@ private
      (my_repo  : A_repo;
       manifest : String) return Action_Result;
 
+   --  build up prepared statement arguments
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; numeric_arg : int64);
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; textual_arg : String);
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; textual_arg : Text);
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; boolean_arg : Boolean);
 
 end Core.Repo.Operations;

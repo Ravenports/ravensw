@@ -752,6 +752,62 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
+   --  push_arg (number)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; numeric_arg : int64)
+   is
+      new_entry : Repo_Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_Number;
+      new_entry.data_number := numeric_arg;
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
+   --  push_arg (string)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; textual_arg : String)
+   is
+      new_entry : Repo_Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_String;
+      new_entry.data_string := SUS (textual_arg);
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
+   --  push_arg (unbounded string)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; textual_arg : Text)
+   is
+      new_entry : Repo_Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_String;
+      new_entry.data_string := textual_arg;
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
+   --  push_arg (boolean)
+   --------------------------------------------------------------------
+   procedure push_arg (args : in out Set_Repo_Stmt_Args.Vector; boolean_arg : Boolean)
+   is
+      new_entry : Repo_Stmt_Argument;
+   begin
+      new_entry.datatype := Provide_Number;
+      if boolean_arg then
+         new_entry.data_number := 1;
+      else
+         new_entry.data_number := 0;
+      end if;
+      args.Append (new_entry);
+   end push_arg;
+
+
+   --------------------------------------------------------------------
    --  add_from_manifest
    --------------------------------------------------------------------
    function add_from_manifest

@@ -186,19 +186,6 @@ package body Core.Database.Operations.Schema is
             --  arguments "T";
             return "INSERT OR IGNORE INTO requires(require) VALUES(?1)";
 
-         when DELETE =>
-            --  arguments "TT"
-            return "DELETE FROM packages WHERE origin=?1;"
-              & "DELETE FROM pkg_search WHERE origin=?1;";
-
-         when EXISTS =>
-            --  arguments "T"
-            return "SELECT count(*) FROM packages WHERE cksum=?1";
-
-         when REPO_VERSION =>
-            --  arguments "T"
-            return "SELECT version FROM packages WHERE origin=?1";
-
       end case;
    end prstmt_text_sql;
 
@@ -768,12 +755,6 @@ package body Core.Database.Operations.Schema is
          end case;
       end bind;
    begin
-      case index is
-         when REPO_VERSION | EXISTS =>
-            Event.emit_error ("Incompatible index type " & index'Img & " (returns value)");
-            return False;
-         when others => null;
-      end case;
       if not SQLite.reset_statement (prepared_statements (index)) then
          Event.emit_error ("failed to reset prepared statement #" & index'Img);
          return False;
@@ -781,27 +762,5 @@ package body Core.Database.Operations.Schema is
       args.Iterate (bind'Access);
       return SQLite.step_to_completion (prepared_statements (index));
    end run_prepared_statement;
-
-
-   --------------------------------------------------------------------
-   --  retrieve_prepared_version
-   --------------------------------------------------------------------
-   function retrieve_prepared_version (origin : Text) return String
-   is
-   begin
-      if not SQLite.reset_statement (prepared_statements (REPO_VERSION)) then
-         Event.emit_error ("failed to reset prepared statement #REPO_VERSION");
-         return "";
-      end if;
-      SQLite.bind_string (pStmt        => prepared_statements (REPO_VERSION),
-                          column_index => 1,
-                          value        => USS (origin));
-      if SQLite.step_to_another_row (prepared_statements (REPO_VERSION)) then
-         return SQLite.retrieve_string (prepared_statements (REPO_VERSION), 0);
-      else
-         Event.emit_error ("failed to retrieve version of " & USS (origin));
-         return "";
-      end if;
-   end retrieve_prepared_version;
 
 end Core.Database.Operations.Schema;

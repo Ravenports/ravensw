@@ -8,7 +8,7 @@ with Interfaces.C.Strings;
 with Core.CommonSQL;
 with Core.Database.CustomCmds;
 with Core.Database.Operations.Schema;
-with Core.Repo.Operations;
+with Core.Repo.Operations.Schema;
 with Core.Strings;
 with Core.Context;
 with Core.Version;
@@ -1019,36 +1019,20 @@ package body Core.Database.Operations is
       pkg_path : Text;
       forced   : Boolean) return Action_Result
    is
-      function kill_package return Action_Result;
-
-      osversion : constant String := Schema.retrieve_prepared_version (origin);
-
-      function kill_package return Action_Result
-      is
-         args : Set_Stmt_Args.Vector;
-      begin
-         push_arg (args, origin);
-         push_arg (args, origin);
-         if Schema.run_prepared_statement (Schema.DELETE, args) then
-            return RESULT_OK;
-         else
-            return RESULT_FATAL;
-         end if;
-      end kill_package;
-
+      osversion : constant String := ROP.Schema.retrieve_prepared_version (origin);
    begin
       if IsBlank (osversion) then
          return RESULT_FATAL;
       end if;
       if forced then
-         return kill_package;
+         return ROP.Schema.kill_package (origin);
       else
          case Core.Version.pkg_version_cmp (osversion, USS (version)) is
             when -1 =>
                Event.emit_error
                  ("duplicate package origin: replacing older version " & osversion
                   & " in repo with package " & USS (pkg_path) & " for origin " & USS (origin));
-               return kill_package;
+               return ROP.Schema.kill_package (origin);
             when 0 | 1 =>
                Event.emit_error
                  ("duplicate package origin: package " & USS (pkg_path)

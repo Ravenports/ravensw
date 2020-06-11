@@ -24,6 +24,13 @@ package Core.Repo.Operations.Schema is
    procedure prstmt_finalize (db : in out sqlite_h.sqlite3_Access);
    function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result;
 
+   --  Executes and resets REPO_VERSION prepared statement (single result)
+   function retrieve_prepared_version (origin : Text) return String;
+
+   --  executes DELETE prepared statement (no results)
+   --  Return RESULT_OK upon success
+   function kill_package (origin : Text) return Action_Result;
+
 private
 
    package IC renames Interfaces.C;
@@ -53,8 +60,5 @@ private
 
    --  SQL associated with prstmt_index enumeration
    function prstmt_text_sql (index : repository_stmt_index) return String;
-
-   --  Argument types associated with prstmt_index enumeration
-   function prstmt_text_argtypes (index : repository_stmt_index) return String;
 
 end Core.Repo.Operations.Schema;

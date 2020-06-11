@@ -22,6 +22,7 @@ package Core.Repo is
 
    type A_repo is private;
    type Repo_Metadata is private;
+   type Repo_Stmt_Argument is private;
    type A_mirror is (SRV, HTTP, NOMIRROR);
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
    type A_repo_flag is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
@@ -241,6 +242,14 @@ private
 
    package Priority_Sorter is new Repos_Priority_Crate.Generic_Sorting
      ("<" => repo_priority_less_than);
+
+   type Repo_Stmt_Argument_Datatype is (Provide_Number, Provide_String);
+   type Repo_Stmt_Argument is
+      record
+         datatype    : Repo_Stmt_Argument_Datatype;
+         data_number : int64;
+         data_string : Text;
+      end record;
 
    repositories       : Repository_Crate.Map;
    repositories_order : Repos_Priority_Crate.Vector;
