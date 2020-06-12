@@ -122,11 +122,11 @@ package body Core.CommonSQL is
    --  get_pragma
    --------------------------------------------------------------------
    function get_int64 (db      : sqlite_h.sqlite3_Access;
-                      srcfile : String;
-                      func    : String;
-                      sql     : String;
-                      res     : out int64;
-                      silence : Boolean) return Action_Result
+                       srcfile : String;
+                       func    : String;
+                       sql     : String;
+                       res     : out int64;
+                       silence : Boolean) return Action_Result
    is
       stmt : aliased sqlite_h.sqlite3_stmt_Access;
       nres : SQLite.sql_int64;
