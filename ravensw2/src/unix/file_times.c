@@ -10,6 +10,10 @@
 int
 set_file_times (int fd, long access_time, long mod_time)
 {
+#ifdef _WIN32
+  return (-1);
+#else
+ #if defined (__sun__) && !defined (HAVE_UTIMENSAT)
   struct timeval ftimes[2] = {
     {
       .tv_sec  = access_time,
@@ -20,12 +24,18 @@ set_file_times (int fd, long access_time, long mod_time)
       .tv_usec = 0
     }
   };
-#ifdef _WIN32
-  return (-1);
-#else
- #if defined (__sun__) && !defined (HAVE_UTIMENSAT)
   return (futimesat (fd, NULL, ftimes));
  #else
+  struct timespec ftimes[2] = {
+    {
+      .tv_sec  = access_time,
+      .tv_nsec = 0
+    },
+    {
+      .tv_sec  = mod_time,
+      .tv_nsec = 0
+    }
+  };
   return (utimensat (fd, NULL, ftimes, 0));
  #endif
 #endif
@@ -34,6 +44,11 @@ set_file_times (int fd, long access_time, long mod_time)
 int
 set_file_times2 (const char *path, long access_time, long mod_time)
 {
+
+#ifdef _WIN32
+  return (-1);
+#else
+ #if defined (__sun__) && !defined (HAVE_UTIMENSAT)
   struct timeval ftimes[2] = {
     {
       .tv_sec  = access_time,
@@ -44,12 +59,18 @@ set_file_times2 (const char *path, long access_time, long mod_time)
       .tv_usec = 0
     }
   };
-#ifdef _WIN32
-  return (-1);
-#else
- #if defined (__sun__) && !defined (HAVE_UTIMENSAT)
   return utimes (path, ftimes);
  #else
+  struct timespec ftimes[2] = {
+    {
+      .tv_sec  = access_time,
+      .tv_nsec = 0
+    },
+    {
+      .tv_sec  = mod_time,
+      .tv_nsec = 0
+    }
+  };
   return (utimensat (AT_FDCWD, path, ftimes, 0));
  #endif
 #endif
