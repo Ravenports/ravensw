@@ -121,7 +121,7 @@ package body Core.Repo.Operations.Schema is
 
          --  Apply change
          Event.emit_debug (3, "Repo mod: " & msg);
-         Event.emit_debug (4, "Pkgdb: running " & SQ (sql));
+         Event.emit_debug (4, "rdb: running " & SQ (sql));
          if not SQLite.exec_sql (db, sql, errmsg) then
             Event.emit_error ("sqlite: " & USS (errmsg));
             rc := RESULT_FATAL;
@@ -459,7 +459,7 @@ package body Core.Repo.Operations.Schema is
    function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result is
    begin
       for S in repository_stmt_index'Range loop
-         Event.emit_debug (4, "Pkgdb: preparing statement " & SQ (prstmt_text_sql (S)));
+         Event.emit_debug (4, "rdb: preparing statement " & SQ (prstmt_text_sql (S)));
          if not SQLite.prepare_sql (pDB    => db,
                                     sql    => prstmt_text_sql (S),
                                     ppStmt => prepared_statements (S)'Access)
