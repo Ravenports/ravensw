@@ -35,11 +35,11 @@ package body Core.Status is
          dbsuccess : Boolean := False;
          sql       : constant String := "SELECT COUNT(*) FROM packages";
          db        : aliased sqlite_h.sqlite3_Access;
-         stmt      : aliased sqlite_h.sqlite3_stmt_Access;
+         stmt      : SQLite.thick_stmt;
       begin
          if SQLite.initialize_sqlite then
             if SQLite.open_sqlite_database_readonly (dbfile, db'Access) then
-               if SQLite.prepare_sql (db, sql, stmt'Access) then
+               if SQLite.prepare_sql (db, sql, stmt) then
                   if SQLite.step_to_another_row (stmt) then
                      result.count := Integer (SQLite.retrieve_integer (stmt, 0));
                      dbsuccess := True;

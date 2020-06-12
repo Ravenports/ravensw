@@ -398,7 +398,7 @@ package body Core.Repo.Operations is
             return;
          end if;
          declare
-            stmt : aliased sqlite_h.sqlite3_stmt_Access;
+            stmt : SQLite.thick_stmt;
             sql1 : constant String :=
               "CREATE TABLE IF NOT EXISTS repodata ("
               & "  key TEXT UNIQUE NOT NULL,"
@@ -413,7 +413,7 @@ package body Core.Repo.Operations is
                SQLite.close_database (db);
                return;
             end if;
-            if not SQLite.prepare_sql (db, sql2, stmt'Access) then
+            if not SQLite.prepare_sql (db, sql2, stmt) then
                CommonSQL.ERROR_SQLITE (db, internal_srcfile, "create_repository", sql2);
                SQLite.close_database (db);
                return;

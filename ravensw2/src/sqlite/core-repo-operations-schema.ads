@@ -3,6 +3,7 @@
 
 with sqlite_h;
 private with Interfaces.C;
+private with SQLite;
 
 package Core.Repo.Operations.Schema is
 
@@ -73,7 +74,7 @@ private
 
    type field is (SQL_string, summary);
 
-   prepared_statements : array (repository_stmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
+   prepared_statements : array (repository_stmt_index) of SQLite.thick_stmt;
 
    --  Given a version that we want to upgrade to, return sql statements to get there
    function get_info (version : Upgrade_Series; info_type : field) return String;

@@ -35,10 +35,10 @@ package body Core.CommonSQL is
          end if;
       end joinsql;
 
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      stmt : SQLite.thick_stmt;
    begin
       Event.emit_debug (4, "RDB: running " & DQ (joinsql));
-      if SQLite.prepare_sql (db, joinsql, stmt'Access) then
+      if SQLite.prepare_sql (db, joinsql, stmt) then
          if not SQLite.step_to_completion (stmt => stmt, num_retries => 6) then
             ERROR_SQLITE (db, srcfile, func, joinsql);
             SQLite.finalize_statement (stmt);
@@ -128,12 +128,12 @@ package body Core.CommonSQL is
                        res     : out int64;
                        silence : Boolean) return Action_Result
    is
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      stmt : SQLite.thick_stmt;
       nres : SQLite.sql_int64;
    begin
       nres := 0;
       Event.emit_debug (4, "Single int64 query " & DQ (sql));
-      if not SQLite.prepare_sql (db, sql, stmt'Access) then
+      if not SQLite.prepare_sql (db, sql, stmt) then
          if not silence then
             ERROR_SQLITE (db, srcfile, func, sql);
          end if;

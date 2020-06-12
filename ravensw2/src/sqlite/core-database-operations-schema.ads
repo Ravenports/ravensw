@@ -2,6 +2,7 @@
 --  Reference: ../../License.txt
 
 with sqlite_h;
+private with SQLite;
 
 package Core.Database.Operations.Schema is
 
@@ -66,7 +67,7 @@ private
 
    type Upgrade_Series is range 35 .. DB_SCHEMA_ALL;
 
-   prepared_statements : array (prstmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
+   prepared_statements : array (prstmt_index) of SQLite.thick_stmt;
 
    --  Given a version that we want to upgrade to, return sql statements to get there
    function upgrade_sql_for_version (version : Upgrade_Series) return String;

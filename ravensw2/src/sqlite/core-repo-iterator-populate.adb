@@ -6,7 +6,6 @@ with Core.Event;
 with Core.Utilities;
 with Core.Context;
 with Core.CommonSQL;
-with SQLite;
 
 use Core.Strings;
 
@@ -15,8 +14,9 @@ package body Core.Repo.Iterator.Populate is
    --------------------------------------------------------------------
    --  populate_pkg
    --------------------------------------------------------------------
-   procedure populate_pkg (stmt : sqlite_h.sqlite3_stmt_Access;
-                           pkg_access : Pkgtypes.A_Package_Access)
+   procedure populate_pkg
+     (stmt       : SQLite.thick_stmt;
+      pkg_access : Pkgtypes.A_Package_Access)
    is
       function get_text (col_index : Natural) return Text;
       function get_boolean (col_index : Natural) return Boolean;
@@ -224,7 +224,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_category
    --------------------------------------------------------------------
    function add_category
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -238,7 +238,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_license
    --------------------------------------------------------------------
    function add_license
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -252,7 +252,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_user
    --------------------------------------------------------------------
    function add_user
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -266,7 +266,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_group
    --------------------------------------------------------------------
    function add_group
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -280,7 +280,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_shlib_prov
    --------------------------------------------------------------------
    function add_shlib_prov
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -294,7 +294,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_shlib_reqd
    --------------------------------------------------------------------
    function add_shlib_reqd
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -308,7 +308,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_provides
    --------------------------------------------------------------------
    function add_provides
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -322,7 +322,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_requires
    --------------------------------------------------------------------
    function add_requires
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -336,7 +336,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_conflict
    --------------------------------------------------------------------
    function add_conflict
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       unique_id : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -358,7 +358,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_annotation
    --------------------------------------------------------------------
    function add_annotation
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       name  : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -375,7 +375,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_directory
    --------------------------------------------------------------------
    function add_directory
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       data : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -394,7 +394,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_scripts
    --------------------------------------------------------------------
    function add_scripts
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       use type SQLite.sql_int64;
@@ -418,7 +418,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_rdeps
    --------------------------------------------------------------------
    function add_rdeps
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       name    : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -437,7 +437,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_files
    --------------------------------------------------------------------
    function add_files
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       path   : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -458,7 +458,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_config_files
    --------------------------------------------------------------------
    function add_config_files
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       path    : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -472,7 +472,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_options
    --------------------------------------------------------------------
    function add_options
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       name  : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -486,7 +486,7 @@ package body Core.Repo.Iterator.Populate is
    --  add_deps
    --------------------------------------------------------------------
    function add_deps
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result
    is
       name    : Text := SUS (SQLite.retrieve_string (stmt, 0));
@@ -505,7 +505,7 @@ package body Core.Repo.Iterator.Populate is
    --  no_operation
    --------------------------------------------------------------------
    function no_operation
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result is
    begin
       return RESULT_OK;
@@ -768,7 +768,7 @@ package body Core.Repo.Iterator.Populate is
       section    : Pkgtypes.Load_Section;
       sql        : String) return Action_Result
    is
-      stmt : aliased sqlite_h.sqlite3_stmt_Access;
+      stmt : SQLite.thick_stmt;
    begin
       if pkg_access.sections (section) then
          --  already loaded
@@ -781,7 +781,7 @@ package body Core.Repo.Iterator.Populate is
 
          when others =>
             Event.emit_debug (4, "pop: running " & SQ (sql));
-            if not SQLite.prepare_sql (db, sql, stmt'Access) then
+            if not SQLite.prepare_sql (db, sql, stmt) then
                CommonSQL.ERROR_SQLITE (db, internal_srcfile, "load_val", sql);
                return RESULT_FATAL;
             end if;

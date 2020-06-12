@@ -274,11 +274,11 @@ package body Core.Database.Operations is
    function rdb_write_lock_pid (db : in out RDB_Connection) return Action_Result
    is
       lock_pid_sql : constant String := "INSERT INTO pkg_lock_pid VALUES (?1);";
-      stmt         : aliased sqlite_h.sqlite3_stmt_Access;
+      stmt         : SQLite.thick_stmt;
    begin
-      if SQLite.prepare_sql (pDB    => db.sqlite,
-                             sql    => lock_pid_sql,
-                             ppStmt => stmt'Access)
+      if SQLite.prepare_sql (pDB  => db.sqlite,
+                             sql  => lock_pid_sql,
+                             stmt => stmt)
       then
          SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (Unix.getpid));
          if not SQLite.step_to_completion (stmt) then
@@ -305,14 +305,14 @@ package body Core.Database.Operations is
       use type Unix.Process_ID;
 
       query : constant String := "SELECT pid FROM pkg_lock_pid;";
-      stmt  : aliased sqlite_h.sqlite3_stmt_Access;
+      stmt  : SQLite.thick_stmt;
       lpid  : Unix.Process_ID;
       pid   : Unix.Process_ID;
       found : Integer := 0;
    begin
-      if SQLite.prepare_sql (pDB    => db.sqlite,
-                             sql    => query,
-                             ppStmt => stmt'Access)
+      if SQLite.prepare_sql (pDB  => db.sqlite,
+                             sql  => query,
+                             stmt => stmt)
       then
          lpid := Unix.getpid;
 
@@ -356,11 +356,11 @@ package body Core.Database.Operations is
       pid : Unix.Process_ID) return Boolean
    is
       lock_pid_sql : constant String := "DELETE FROM pkg_lock_pid WHERE pid = ?1;";
-      stmt         : aliased sqlite_h.sqlite3_stmt_Access;
+      stmt         : SQLite.thick_stmt;
    begin
-      if SQLite.prepare_sql (pDB    => db.sqlite,
-                             sql    => lock_pid_sql,
-                             ppStmt => stmt'Access)
+      if SQLite.prepare_sql (pDB  => db.sqlite,
+                             sql  => lock_pid_sql,
+                             stmt => stmt)
       then
          SQLite.bind_integer (stmt, 1, SQLite.sql_int64 (pid));
          if not SQLite.step_to_completion (stmt) then

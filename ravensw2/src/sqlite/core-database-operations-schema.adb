@@ -4,7 +4,6 @@
 with Core.Strings;
 with Core.Event;
 with Core.CommonSQL;
-with SQLite;
 
 use Core.Strings;
 
@@ -197,7 +196,6 @@ package body Core.Database.Operations.Schema is
    begin
       for S in Schema.prstmt_index'Range loop
          SQLite.finalize_statement (prepared_statements (S));
-         prepared_statements (S) := null;
       end loop;
       db.prstmt_initialized := False;
    end prstmt_finalize;
@@ -212,9 +210,9 @@ package body Core.Database.Operations.Schema is
          for S in prstmt_index'Range loop
             Event.emit_debug
               (4, "Pkgdb: preparing statement " & SQ (prstmt_text_sql (S)));
-            if not SQLite.prepare_sql (pDB    => db.sqlite,
-                                       sql    => prstmt_text_sql (S),
-                                       ppStmt => prepared_statements (S)'Access)
+            if not SQLite.prepare_sql (pDB  => db.sqlite,
+                                       sql  => prstmt_text_sql (S),
+                                       stmt => prepared_statements (S))
             then
                CommonSQL.ERROR_SQLITE
                  (db.sqlite, internal_srcfile, "prstmt_initialize", prstmt_text_sql (S));
@@ -745,11 +743,11 @@ package body Core.Database.Operations.Schema is
          column := column + 1;
          case arg.datatype is
             when Provide_Number =>
-               SQLite.bind_integer (pStmt        => prepared_statements (index),
+               SQLite.bind_integer (stmt         => prepared_statements (index),
                                     column_index => column,
                                     value        => SQLite.sql_int64 (arg.data_number));
             when Provide_String =>
-               SQLite.bind_string (pStmt        => prepared_statements (index),
+               SQLite.bind_string (stmt         => prepared_statements (index),
                                    column_index => column,
                                    value        => USS (arg.data_string));
          end case;

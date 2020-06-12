@@ -5,12 +5,17 @@ with sqlite_h;
 with regex_h;
 with Core.Strings;
 
+private with Ada.Containers.Vectors;
+private with Interfaces.C.Strings;
+
 use Core;
 use Core.Strings;
 
 package SQLite is
 
    type sql_int64 is range -(2**63) .. +(2**63 - 1);
+   type Step_Result is (row_present, no_more_data, something_else);
+   type thick_stmt is private;
 
    --  return True on success
    function initialize_sqlite return Boolean;
@@ -29,36 +34,44 @@ package SQLite is
    function prepare_sql
      (pDB    : sqlite_h.sqlite3_Access;
       sql    : String;
-      ppStmt : not null access sqlite_h.sqlite3_stmt_Access) return Boolean;
+      stmt   : out thick_stmt) return Boolean;
 
    --  Return True if row found after the step
-   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
+   function step_to_another_row (stmt : thick_stmt) return Boolean;
 
    --  Return True if query done after the step (no data returned)
-   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
+   function step_to_completion (stmt : thick_stmt) return Boolean;
+
+   --  Step through prepared statement, returning indication of 3 possible results
+   function step (stmt : thick_stmt) return Step_Result;
 
    --  Return True if row found after the step, attempt num_retries when SQLITE_BUSY encountered
-   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
-                                 return Boolean;
+   function step_to_another_row
+     (stmt        : thick_stmt;
+      num_retries : Natural) return Boolean;
 
    --  Return True if query done after the step, attempt num_retries when SQLITE_BUSY encountered
-   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
-                                return Boolean;
+   function step_to_completion
+     (stmt        : thick_stmt;
+      num_retries : Natural) return Boolean;
 
    --  After stepping, return 64-bit integer from given column
-   function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
-                              column : Natural) return sql_int64;
+   function retrieve_integer
+     (stmt   : thick_stmt;
+      column : Natural) return sql_int64;
 
    --  After stepping, return string from given column
-   function retrieve_string (stmt : sqlite_h.sqlite3_stmt_Access;
-                             column : Natural) return String;
+   function retrieve_string
+     (stmt   : thick_stmt;
+      column : Natural) return String;
 
    --  After stepping, return boolean from given column
-   function retrieve_boolean (stmt : sqlite_h.sqlite3_stmt_Access;
-                             column : Natural) return Boolean;
+   function retrieve_boolean
+     (stmt   : thick_stmt;
+      column : Natural) return Boolean;
 
    --  Close statement after use, don't return result
-   procedure finalize_statement (stmt : sqlite_h.sqlite3_stmt_Access);
+   procedure finalize_statement (stmt : in out thick_stmt);
 
    --  Close an open database, don't check result
    procedure close_database (db : sqlite_h.sqlite3_Access);
@@ -104,27 +117,44 @@ package SQLite is
      (db       : sqlite_h.sqlite3_Access;
       callback : sqlite_h.cb_trace);
 
-   function reset_statement (pStmt : sqlite_h.sqlite3_stmt_Access) return Boolean;
+   function reset_statement
+     (stmt : thick_stmt) return Boolean;
 
-   function get_number_of_columns (pStmt : sqlite_h.sqlite3_stmt_Access) return Integer;
+   function get_number_of_columns
+     (stmt : thick_stmt) return Integer;
 
-   function get_column_name (pStmt : sqlite_h.sqlite3_stmt_Access;
-                             column_index : Natural) return String;
+   function get_column_name
+     (stmt         : thick_stmt;
+      column_index : Natural) return String;
 
    procedure bind_integer
-     (pStmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt         : thick_stmt;
       column_index : Natural;
-      value : sql_int64);
+      value        : sql_int64);
 
    procedure bind_string
-     (pStmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt         : in out thick_stmt;
       column_index : Natural;
-      value : String);
+      value        : String);
 
    function get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String;
 
    function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer;
 
    function database_corrupt (db : sqlite_h.sqlite3_Access) return Boolean;
+
+private
+
+   package Char_Pointer_Crate is new Ada.Containers.Vectors
+     (Element_Type => Interfaces.C.Strings.chars_ptr,
+      Index_Type   => Natural,
+      "="          => Interfaces.C.Strings."=");
+
+   type thick_stmt is
+      record
+         pStmt : aliased sqlite_h.sqlite3_stmt_Access;
+         char_pointers : Char_Pointer_Crate.Vector;
+      end record;
+
 
 end SQLite;

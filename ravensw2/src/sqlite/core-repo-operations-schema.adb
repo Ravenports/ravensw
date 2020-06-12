@@ -3,7 +3,6 @@
 
 with Core.Event;
 with Core.CommonSQL;
-with SQLite;
 
 package body Core.Repo.Operations.Schema is
 
@@ -448,7 +447,6 @@ package body Core.Repo.Operations.Schema is
    begin
       for S in repository_stmt_index'Range loop
          SQLite.finalize_statement (prepared_statements (S));
-         prepared_statements (S) := null;
       end loop;
    end prstmt_finalize;
 
@@ -461,9 +459,9 @@ package body Core.Repo.Operations.Schema is
       for S in repository_stmt_index'Range loop
          Event.emit_debug
             (4, "rdb: store " & pad_right (S'Img, 12) & " > " & SQ (prstmt_text_sql (S)));
-         if not SQLite.prepare_sql (pDB    => db,
-                                    sql    => prstmt_text_sql (S),
-                                    ppStmt => prepared_statements (S)'Access)
+         if not SQLite.prepare_sql (pDB  => db,
+                                    sql  => prstmt_text_sql (S),
+                                    stmt => prepared_statements (S))
          then
             CommonSQL.ERROR_SQLITE
               (db, internal_srcfile, "prstmt_initialize", prstmt_text_sql (S));
@@ -484,7 +482,7 @@ package body Core.Repo.Operations.Schema is
          Event.emit_error ("failed to reset prepared statement #REPO_VERSION");
          return "";
       end if;
-      SQLite.bind_string (pStmt        => prepared_statements (REPO_VERSION),
+      SQLite.bind_string (stmt         => prepared_statements (REPO_VERSION),
                           column_index => 1,
                           value        => USS (origin));
       if SQLite.step_to_another_row (prepared_statements (REPO_VERSION)) then
@@ -514,11 +512,11 @@ package body Core.Repo.Operations.Schema is
          column := column + 1;
          case arg.datatype is
             when Provide_Number =>
-               SQLite.bind_integer (pStmt        => prepared_statements (index),
+               SQLite.bind_integer (stmt         => prepared_statements (index),
                                     column_index => column,
                                     value        => SQLite.sql_int64 (arg.data_number));
             when Provide_String =>
-               SQLite.bind_string (pStmt        => prepared_statements (index),
+               SQLite.bind_string (stmt         => prepared_statements (index),
                                    column_index => column,
                                    value        => USS (arg.data_string));
          end case;

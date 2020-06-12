@@ -2,9 +2,6 @@
 --  Reference: ../../License.txt
 
 with Ada.Unchecked_Conversion;
-
-with Interfaces.C;
-with Interfaces.C.Strings;
 with System;
 
 package body SQLite is
@@ -74,12 +71,13 @@ package body SQLite is
    function prepare_sql
      (pDB    : sqlite_h.sqlite3_Access;
       sql    : String;
-      ppStmt : not null access sqlite_h.sqlite3_stmt_Access) return Boolean
+      stmt   : out thick_stmt) return Boolean
    is
       use type IC.int;
 
       c_sql     : ICS.chars_ptr;
       result    : IC.int;
+      new_stmt  : thick_stmt;
       unlimited : constant IC.int := IC.int (-1);
       pzTail    : aliased ICS.chars_ptr := ICS.Null_Ptr;
    begin
@@ -87,9 +85,10 @@ package body SQLite is
       result := sqlite_h.sqlite3_prepare_v2 (db     => pDB,
                                              zSql   => c_sql,
                                              nByte  => unlimited,
-                                             ppStmt => ppStmt,
+                                             ppStmt => new_stmt.pStmt'Access,
                                              pzTail => pzTail'Access);
       ICS.Free (c_sql);
+      stmt := new_stmt;
       return (result = sqlite_h.SQLITE_OK);
    end prepare_sql;
 
@@ -97,13 +96,13 @@ package body SQLite is
    --------------------------------------------------------------------
    --  step_to_another_row #1
    --------------------------------------------------------------------
-   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean
+   function step_to_another_row (stmt : thick_stmt) return Boolean
    is
       use type IC.int;
 
       result : IC.int;
    begin
-      result := sqlite_h.sqlite3_step (stmt);
+      result := sqlite_h.sqlite3_step (stmt.pStmt);
       return (result = sqlite_h.SQLITE_ROW);
    end step_to_another_row;
 
@@ -111,13 +110,13 @@ package body SQLite is
    --------------------------------------------------------------------
    --  step_to_completion #1
    --------------------------------------------------------------------
-   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access) return Boolean
+   function step_to_completion (stmt : thick_stmt) return Boolean
    is
       use type IC.int;
 
       result : IC.int;
    begin
-      result := sqlite_h.sqlite3_step (stmt);
+      result := sqlite_h.sqlite3_step (stmt.pStmt);
       return (result = sqlite_h.SQLITE_DONE);
    end step_to_completion;
 
@@ -125,8 +124,9 @@ package body SQLite is
    --------------------------------------------------------------------
    --  step_to_another_row #2
    --------------------------------------------------------------------
-   function step_to_another_row (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
-                                 return Boolean
+   function step_to_another_row
+     (stmt        : thick_stmt;
+      num_retries : Natural) return Boolean
    is
       use type IC.int;
 
@@ -135,7 +135,7 @@ package body SQLite is
       counter : Natural := 0;
    begin
       loop
-         result := sqlite_h.sqlite3_step (stmt);
+         result := sqlite_h.sqlite3_step (stmt.pStmt);
          exit when Integer (result) /= sqlite_h.enum_error_types'Pos (sqlite_h.SQLITE_BUSY);
          exit when counter > num_retries;
          counter := counter + 1;
@@ -148,8 +148,9 @@ package body SQLite is
    --------------------------------------------------------------------
    --  step_to_completion #2
    --------------------------------------------------------------------
-   function step_to_completion (stmt : sqlite_h.sqlite3_stmt_Access; num_retries : Natural)
-                                return Boolean
+   function step_to_completion
+     (stmt        : thick_stmt;
+      num_retries : Natural) return Boolean
    is
       use type IC.int;
 
@@ -158,7 +159,7 @@ package body SQLite is
       counter : Natural := 0;
    begin
       loop
-         result := sqlite_h.sqlite3_step (stmt);
+         result := sqlite_h.sqlite3_step (stmt.pStmt);
          exit when Integer (result) /= sqlite_h.enum_error_types'Pos (sqlite_h.SQLITE_BUSY);
          exit when counter > num_retries;
          counter := counter + 1;
@@ -169,14 +170,34 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  step
+   --------------------------------------------------------------------
+   function step (stmt : thick_stmt) return Step_Result
+   is
+      result : IC.int;
+   begin
+      result := sqlite_h.sqlite3_step (stmt.pStmt);
+      case result is
+         when sqlite_h.SQLITE_DONE =>
+            return no_more_data;
+         when sqlite_h.SQLITE_ROW =>
+            return row_present;
+         when others =>
+            return something_else;
+      end case;
+   end step;
+
+
+   --------------------------------------------------------------------
    --  retrieve_integer
    --------------------------------------------------------------------
-   function retrieve_integer (stmt : sqlite_h.sqlite3_stmt_Access;
-                              column : Natural) return sql_int64
+   function retrieve_integer
+     (stmt   : thick_stmt;
+      column : Natural) return sql_int64
    is
       result : sqlite_h.sql64;
    begin
-      result := sqlite_h.sqlite3_column_int64 (stmt, IC.int (column));
+      result := sqlite_h.sqlite3_column_int64 (stmt.pStmt, IC.int (column));
       return sql_int64 (result);
    end retrieve_integer;
 
@@ -184,13 +205,14 @@ package body SQLite is
    --------------------------------------------------------------------
    --  retrieve_string
    --------------------------------------------------------------------
-   function retrieve_string (stmt : sqlite_h.sqlite3_stmt_Access;
-                             column : Natural) return String
+   function retrieve_string
+     (stmt   : thick_stmt;
+      column : Natural) return String
    is
       result : ICS.chars_ptr;
    begin
       --  Don't free result!
-      result := sqlite_h.sqlite3_column_text (stmt, IC.int (column));
+      result := sqlite_h.sqlite3_column_text (stmt.pStmt, IC.int (column));
       return ICS.Value (result);
    end retrieve_string;
 
@@ -198,14 +220,15 @@ package body SQLite is
    --------------------------------------------------------------------
    --  retrieve_boolean
    --------------------------------------------------------------------
-   function retrieve_boolean (stmt : sqlite_h.sqlite3_stmt_Access;
-                              column : Natural) return Boolean
+   function retrieve_boolean
+     (stmt   : thick_stmt;
+      column : Natural) return Boolean
    is
       use type sqlite_h.sql64;
 
       result : sqlite_h.sql64;
    begin
-      result := sqlite_h.sqlite3_column_int64 (stmt, IC.int (column));
+      result := sqlite_h.sqlite3_column_int64 (stmt.pStmt, IC.int (column));
       return (result /= 0);
    end retrieve_boolean;
 
@@ -213,14 +236,26 @@ package body SQLite is
    --------------------------------------------------------------------
    --  finalize_statement
    --------------------------------------------------------------------
-   procedure finalize_statement (stmt : sqlite_h.sqlite3_stmt_Access)
+   procedure finalize_statement (stmt : in out thick_stmt)
    is
-      use type sqlite_h.sqlite3_stmt_Access;
+      procedure free_string (Position : Char_Pointer_Crate.Cursor);
+      procedure really_free (Element : in out ICS.chars_ptr);
+
+      procedure free_string (Position : Char_Pointer_Crate.Cursor) is
+      begin
+         stmt.char_pointers.Update_Element (Position, really_free'Access);
+      end free_string;
+
+      procedure really_free (Element : in out ICS.chars_ptr) is
+      begin
+         ICS.Free (Element);
+      end really_free;
+
       result : IC.int;
    begin
-      if stmt /= null then
-         result := sqlite_h.sqlite3_finalize (stmt);
-      end if;
+      result := sqlite_h.sqlite3_finalize (stmt.pStmt);
+      stmt.char_pointers.Iterate (free_string'Access);
+      stmt.pStmt := null;
    end finalize_statement;
 
 
@@ -401,12 +436,13 @@ package body SQLite is
    --------------------------------------------------------------------
    --  reset_statement
    --------------------------------------------------------------------
-   function reset_statement (pStmt : sqlite_h.sqlite3_stmt_Access) return Boolean
+   function reset_statement
+     (stmt : thick_stmt) return Boolean
    is
       use type IC.int;
       res : IC.int;
    begin
-      res := sqlite_h.sqlite3_reset (pStmt);
+      res := sqlite_h.sqlite3_reset (stmt.pStmt);
       return (res = sqlite_h.SQLITE_OK);
    end reset_statement;
 
@@ -414,11 +450,12 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_number_of_columns
    --------------------------------------------------------------------
-   function get_number_of_columns (pStmt : sqlite_h.sqlite3_stmt_Access) return Integer
+   function get_number_of_columns
+     (stmt : thick_stmt) return Integer
    is
       numcols : IC.int;
    begin
-      numcols := sqlite_h.sqlite3_column_count (pStmt);
+      numcols := sqlite_h.sqlite3_column_count (stmt.pStmt);
       return (Integer (numcols));
    end get_number_of_columns;
 
@@ -426,13 +463,14 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_column_name
    --------------------------------------------------------------------
-   function get_column_name (pStmt : sqlite_h.sqlite3_stmt_Access;
-                             column_index : Natural) return String
+   function get_column_name
+     (stmt         : thick_stmt;
+      column_index : Natural) return String
    is
       name : ICS.chars_ptr;
    begin
       --  Don't free result!
-      name := sqlite_h.sqlite3_column_name (pStmt, IC.int (column_index));
+      name := sqlite_h.sqlite3_column_name (stmt.pStmt, IC.int (column_index));
       return ICS.Value (name);
    end get_column_name;
 
@@ -441,14 +479,16 @@ package body SQLite is
    --  bind_integer
    --------------------------------------------------------------------
    procedure bind_integer
-     (pStmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt         : thick_stmt;
       column_index : Natural;
-      value : sql_int64)
+      value        : sql_int64)
    is
       c_value : constant sqlite_h.sql64 := sqlite_h.sql64 (value);
       res : IC.int;
    begin
-      res := sqlite_h.sqlite3_bind_int64 (pStmt, IC.int (column_index), c_value);
+      res := sqlite_h.sqlite3_bind_int64 (Handle => stmt.pStmt,
+                                          Index  => IC.int (column_index),
+                                          Value  => c_value);
    end bind_integer;
 
 
@@ -456,20 +496,20 @@ package body SQLite is
    --  bind_string
    --------------------------------------------------------------------
    procedure bind_string
-     (pStmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt         : in out thick_stmt;
       column_index : Natural;
-      value : String)
+      value        : String)
    is
       txt : ICS.chars_ptr;
       res : IC.int;
    begin
       txt := ICS.New_String (value);
-      res := sqlite_h.sqlite3_bind_text (Handle     => pStmt,
+      res := sqlite_h.sqlite3_bind_text (Handle     => stmt.pStmt,
                                          Index      => IC.int (column_index),
                                          Text       => txt,
                                          nBytes     => IC.int (-1),
-                                         destructor => sqlite_h.SQLITE_TRANSIENT);
-      ICS.Free (txt);
+                                         destructor => sqlite_h.SQLITE_STATIC);
+      stmt.char_pointers.Append (txt);
    end bind_string;
 
 

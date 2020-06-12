@@ -2,12 +2,14 @@
 --  Reference: ../../License.txt
 
 with Core.Pkgtypes;
+with SQLite;
 with sqlite_h;
 
 package Core.Repo.Iterator.Populate is
 
-   procedure populate_pkg (stmt : sqlite_h.sqlite3_stmt_Access;
-                           pkg_access : Pkgtypes.A_Package_Access);
+   procedure populate_pkg
+     (stmt       : SQLite.thick_stmt;
+      pkg_access : Pkgtypes.A_Package_Access);
 
    --  Iterate section type, load all sections by default.
    --  If "sections" argument is passed, selectively load sections
@@ -58,75 +60,75 @@ private
    function get_attribute (column_name : String) return pkg_attr;
 
    function add_category
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_license
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_user
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_group
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_shlib_prov
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_shlib_reqd
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_provides
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_requires
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_conflict
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_annotation
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_directory
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_scripts
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_rdeps
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_files
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_config_files
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_options
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function add_deps
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function no_operation
-     (stmt : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    function pkg_adddir_attr
@@ -173,7 +175,7 @@ private
       value      : Text) return Action_Result;
 
    type val_load_callback is access function
-     (stmt       : sqlite_h.sqlite3_stmt_Access;
+     (stmt       : SQLite.thick_stmt;
       pkg_access : Pkgtypes.A_Package_Access) return Action_Result;
 
    load_val_operation : constant array (Pkgtypes.Load_Section'Range) of val_load_callback :=

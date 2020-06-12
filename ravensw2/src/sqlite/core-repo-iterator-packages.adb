@@ -188,9 +188,9 @@ package body Core.Repo.Iterator.Packages is
       begin
          Event.emit_debug
             (4, "rdb: initializing " & pad_right (this.variant'Img, 14) & " > " &  DQ (sql));
-         if SQLite.prepare_sql (pDB    => repositories.Element (this.xrepo).sqlite_handle,
-                                sql    => sql,
-                                ppStmt => this.stmt'Access)
+         if SQLite.prepare_sql (pDB  => repositories.Element (this.xrepo).sqlite_handle,
+                                sql  => sql,
+                                stmt => this.stmt)
          then
             return RESULT_OK;
          end if;
@@ -393,9 +393,9 @@ package body Core.Repo.Iterator.Packages is
          return RESULT_END;
       end if;
 
-      case sqlite_h.sqlite3_step (this.stmt) is
+      case SQLite.step (this.stmt) is
 
-         when sqlite_h.SQLITE_ROW =>
+         when SQLite.row_present =>
             --  We do not expect pkg_access to be null.  The caller has to allocate
             --  space as necessary
             Populate.populate_pkg (this.stmt, pkg_access);
@@ -411,7 +411,7 @@ package body Core.Repo.Iterator.Packages is
                  pkg_access => pkg_access,
                  sections   => sections);
 
-         when sqlite_h.SQLITE_DONE =>
+         when SQLite.no_more_data =>
             this.done := True;
             case this.cycles is
                when cycled =>
@@ -427,7 +427,7 @@ package body Core.Repo.Iterator.Packages is
                   return RESULT_END;
             end case;
 
-         when others =>
+         when SQLite.something_else =>
             CommonSQL.ERROR_SQLITE (db      => repositories.Element (this.xrepo).sqlite_handle,
                                     srcfile => internal_srcfile,
                                     func    => "Repo.Iterator.Packages.Next",

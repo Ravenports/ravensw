@@ -5,7 +5,7 @@ with Ada.Finalization;
 
 with Core.Pkgtypes;
 with Core.Database;
-with sqlite_h;
+with SQLite;
 
 package Core.Repo.Iterator.Packages is
 
@@ -68,7 +68,7 @@ private
    type SQLite_Iterator is
      new Ada.Finalization.Limited_Controlled with
       record
-         stmt    : aliased sqlite_h.sqlite3_stmt_Access;
+         stmt    : SQLite.thick_stmt;
          counter : Natural;
          variant : A_Variant;
          mstyle  : Database.Match_Behavior;
