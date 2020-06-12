@@ -23,7 +23,9 @@ is
                                            "WHERE type='table' AND name='repodata'";
 begin
    okay := SQLite.initialize_sqlite;
-   SQLite.rdb_syscall_overload;
+   --  rdb_syscall_overload requires Core.Context to be populated.
+   --  Use stock open routines for this test
+   --  SQLite.rdb_syscall_overload;
    if not SQLite.open_sqlite_database_readonly (db_path, handle'Access) then
       TIO.Put_Line ("failed to open " & db_path);
       if SQLite.database_corrupt (handle) then
