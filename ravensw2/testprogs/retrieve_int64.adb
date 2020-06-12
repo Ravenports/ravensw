@@ -3,6 +3,7 @@
 
 with Ada.Text_IO;
 with Core.CommonSQL;
+with Core.VFS;
 with sqlite_h;
 with SQLite;
 
