@@ -459,7 +459,8 @@ package body Core.Repo.Operations.Schema is
    function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result is
    begin
       for S in repository_stmt_index'Range loop
-         Event.emit_debug (4, "rdb: preparing statement " & SQ (prstmt_text_sql (S)));
+         Event.emit_debug
+            (4, "rdb: store " & pad_right (S'Img, 12) & " > " & SQ (prstmt_text_sql (S)));
          if not SQLite.prepare_sql (pDB    => db,
                                     sql    => prstmt_text_sql (S),
                                     ppStmt => prepared_statements (S)'Access)

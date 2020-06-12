@@ -6,7 +6,7 @@ usage:
 	@echo "make retrieve_int64"
 
 clean:
-	rm -f dns_srv retrieve_int64
+	rm -f dns_srv retrieve_int64 check_bind
 	rm -f *.ali *.o b~*
 
 dns_srv: dns_srv.adb
@@ -43,6 +43,13 @@ sql3int.o: ../src/sqlite/sqlite3_interface.c
 	${CC} -c ${CFLAGS} -I../../external/sqlite ${.ALLSRC} -o ${.TARGET}
 
 retrieve_int64: retrieve_int64.adb ${unix_objs} sql3int.o
+	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+	gnatmake -g -fstack-check ${.TARGET} -aI../src/resolv \
+		-aI../src -aI../src/sqlite -aI../src/regex -aI../src/unix \
+		-largs ../../external/sqlite/libsqlite_pic.a \
+		${unix_objs} sql3int.o
+
+check_bind: check_bind.adb ${unix_objs} sql3int.o
 	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
 	gnatmake -g -fstack-check ${.TARGET} -aI../src/resolv \
 		-aI../src -aI../src/sqlite -aI../src/regex -aI../src/unix \

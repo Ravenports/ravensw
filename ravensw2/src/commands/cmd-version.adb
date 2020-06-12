@@ -264,7 +264,7 @@ package body Cmd.Version is
             if it_remote.initialize_as_standard_query (reponame => this_repo,
                                                        pattern  => USS (rem_pattern),
                                                        match    => Database.MATCH_EXACT,
-                                                       just_one => True) /= RESULT_OK
+                                                       just_one => True) = RESULT_OK
             then
                case it_remote.Next (pkg_access => remote_pkg'Unchecked_Access,
                                     sections   => (Pkgtypes.basic => True, others => False))
