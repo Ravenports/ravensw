@@ -114,6 +114,7 @@ package body Core.Database.Operations is
       if Repo.repository_is_active (reponame) then
          if ROP.open_repository (reponame, True) /= RESULT_OK then
             Event.emit_error ("Failed to open repository " & reponame);
+            return RESULT_FATAL;
          end if;
          return RESULT_OK;
       else

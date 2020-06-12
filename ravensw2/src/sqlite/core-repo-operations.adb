@@ -172,6 +172,13 @@ package body Core.Repo.Operations is
             end if;
          end;
 
+         --  initialize repository database
+         if initialize_repository (key) /= RESULT_OK then
+            Event.emit_error ("Unable to initialize open " & reponame & " repository database.");
+            SQLite.close_database (repository.sqlite_handle);
+            return;
+         end if;
+
          --  Verify database is usable
          declare
             res_int64 : int64;
@@ -477,11 +484,6 @@ package body Core.Repo.Operations is
 
       if open_repository (reponame, False) /= RESULT_OK then
          Event.emit_notice ("Unable to open created repository " & reponame);
-         return RESULT_FATAL;
-      end if;
-
-      if initialize_repository (repo_key) /= RESULT_OK then
-         Event.emit_notice ("Unable to initialize repository " & reponame);
          return RESULT_FATAL;
       end if;
 
