@@ -6,6 +6,29 @@ private with Interfaces.C;
 
 package Core.Repo.Operations.Schema is
 
+   type repository_stmt_index is
+     (PKG,
+      DEPS,
+      CAT1,
+      CAT2,
+      LIC1,
+      LIC2,
+      OPT1,
+      OPT2,
+      SHLIB1,
+      SHLIB_REQD,
+      SHLIB_PROV,
+      ANNOTATE1,
+      ANNOTATE2,
+      EXISTS,
+      REPO_VERSION,
+      DELETE,
+      PROVIDE,
+      PROVIDES,
+      REQUIRE,
+      REQUIRES
+     );
+
    --  For empty database files, we import up to version 2013 immediately.
    --  Future versions are taken care of silently by the upgrade mechanism.
    function import_schema_2013 (db : sqlite_h.sqlite3_Access) return Action_Result;
@@ -31,6 +54,10 @@ package Core.Repo.Operations.Schema is
    --  Return RESULT_OK upon success
    function kill_package (origin : Text) return Action_Result;
 
+   function run_repo_prepared_statement
+     (index : repository_stmt_index;
+      args  : Set_Repo_Stmt_Args.Vector) return Boolean;
+
 private
 
    package IC renames Interfaces.C;
@@ -45,6 +72,8 @@ private
    type Upgrade_Series is range 2014 .. REPO_SCHEMA_ALL;
 
    type field is (SQL_string, summary);
+
+   prepared_statements : array (repository_stmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
 
    --  Given a version that we want to upgrade to, return sql statements to get there
    function get_info (version : Upgrade_Series; info_type : field) return String;

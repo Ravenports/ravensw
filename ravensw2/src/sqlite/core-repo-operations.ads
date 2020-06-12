@@ -31,31 +31,6 @@ private
 
    internal_srcfile : constant String := "core-repo-operations.adb";
 
-   type repository_stmt_index is
-     (PKG,
-      DEPS,
-      CAT1,
-      CAT2,
-      LIC1,
-      LIC2,
-      OPT1,
-      OPT2,
-      SHLIB1,
-      SHLIB_REQD,
-      SHLIB_PROV,
-      ANNOTATE1,
-      ANNOTATE2,
-      EXISTS,
-      REPO_VERSION,
-      DELETE,
-      PROVIDE,
-      PROVIDES,
-      REQUIRE,
-      REQUIRES
-     );
-
-   prepared_statements : array (repository_stmt_index) of aliased sqlite_h.sqlite3_stmt_Access;
-
    --  Close open repository database
    procedure close_repository (reponame : Text; commit : Boolean);
 
