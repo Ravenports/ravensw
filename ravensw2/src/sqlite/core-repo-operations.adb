@@ -37,7 +37,7 @@ package body Core.Repo.Operations is
       is
          repository : A_repo renames Element;
       begin
-         Schema.prstmt_finalize (repository.sqlite_handle);
+         ROS.prstmt_finalize (repository.sqlite_handle);
          SQLite.close_database (repository.sqlite_handle);
          repository.sqlite_handle := null;
       end close_database;
@@ -237,7 +237,7 @@ package body Core.Repo.Operations is
          declare
             upres : Action_Result;
          begin
-            upres := Schema.repo_upgrade (repository.sqlite_handle, reponame);
+            upres := ROS.repo_upgrade (repository.sqlite_handle, reponame);
             case upres is
                when RESULT_UPTODATE => null;
                when RESULT_OK       => null;
@@ -342,7 +342,7 @@ package body Core.Repo.Operations is
 
          if onward then
             Database.CustomCmds.define_six_functions (db);
-            if Schema.prstmt_initialize (db) /= RESULT_OK then
+            if ROS.prstmt_initialize (db) /= RESULT_OK then
                onward := False;
             end if;
          end if;
@@ -389,11 +389,11 @@ package body Core.Repo.Operations is
             Event.emit_errno ("sqlite3_open", dbfile, Unix.errno);
             return;
          end if;
-         if Schema.import_schema_2013 (db) /= RESULT_OK then
+         if ROS.import_schema_2013 (db) /= RESULT_OK then
             SQLite.close_database (db);
             return;
          end if;
-         if Schema.repo_upgrade (db, reponame) /= RESULT_OK then
+         if ROS.repo_upgrade (db, reponame) /= RESULT_OK then
             SQLite.close_database (db);
             return;
          end if;
@@ -820,20 +820,20 @@ package body Core.Repo.Operations is
       pkg_path : Text;
       forced   : Boolean) return Action_Result
    is
-      osversion : constant String := Schema.retrieve_prepared_version (origin);
+      osversion : constant String := ROS.retrieve_prepared_version (origin);
    begin
       if IsBlank (osversion) then
          return RESULT_FATAL;
       end if;
       if forced then
-         return Schema.kill_package (origin);
+         return ROS.kill_package (origin);
       else
          case Core.Version.pkg_version_cmp (osversion, USS (version)) is
             when -1 =>
                Event.emit_error
                  ("duplicate package origin: replacing older version " & osversion
                   & " in repo with package " & USS (pkg_path) & " for origin " & USS (origin));
-               return Schema.kill_package (origin);
+               return ROS.kill_package (origin);
             when 0 | 1 =>
                Event.emit_error
                  ("duplicate package origin: package " & USS (pkg_path)
