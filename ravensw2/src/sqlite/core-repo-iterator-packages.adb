@@ -142,7 +142,8 @@ package body Core.Repo.Iterator.Packages is
          when standard_query =>
             return limit_wrapper
               (selection & from
-               & Database.get_pattern_query (USS (this.pattern), this.mstyle) & " ORDER BY name");
+               & Database.get_pattern_query (USS (this.pattern), this.mstyle)
+               & " ORDER BY p.name");
          when search =>
             return limit_wrapper (selection & url_field & from & this.search_condition);
          when provide =>

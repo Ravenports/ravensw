@@ -7,7 +7,7 @@ with Interfaces.C.Extensions;
 with Core.Pkgtypes;
 with Core.Strings;
 with Core.Unix;
-with Core.Database.Operations;
+with Core.Database;
 
 use Core.Strings;
 
@@ -21,7 +21,6 @@ package Core.Checksum is
    --  checksum_file
 
    package CON renames Ada.Containers;
-   package DOP renames Core.Database.Operations;
 
    type A_Checksum_Type is
       (HASH_TYPE_SHA256_BASE32,
@@ -77,7 +76,7 @@ package Core.Checksum is
 
    function checksum_calculate
      (pkg_access : Pkgtypes.A_Package_Access;
-      rdb_access : DOP.RDB_Connection_Access) return Action_Result;
+      rdb_access : Database.RDB_Connection_Access) return Action_Result;
 
 private
 

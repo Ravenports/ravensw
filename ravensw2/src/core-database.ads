@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../License.txt
 
+private with sqlite_h;
 
 package Core.Database is
 
@@ -46,6 +47,8 @@ package Core.Database is
       return Action_Result;
 
    type Stmt_Argument is private;
+   type RDB_Connection is limited private;
+   type RDB_Connection_Access is access all RDB_Connection;
 
 private
 
@@ -57,6 +60,12 @@ private
          datatype    : Stmt_Argument_Datatype;
          data_number : int64;
          data_string : Text;
+      end record;
+
+   type RDB_Connection is limited
+      record
+         sqlite             : aliased sqlite_h.sqlite3_Access;
+         prstmt_initialized : Boolean;
       end record;
 
    function rdb_security_status

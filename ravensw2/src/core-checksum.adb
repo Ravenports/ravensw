@@ -7,12 +7,14 @@ with System;
 with Core.Repo;
 with Core.Event;
 with Core.Utilities;
+with Core.Database.Operations;
 with SSL;
 with blake2;
 
 package body Core.Checksum is
 
    package ITF renames Interfaces;
+   package DOP renames Core.Database.Operations;
 
    --------------------------------------------------------------------
    --  checksum_type_from_string
@@ -856,7 +858,7 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function checksum_calculate
      (pkg_access : Pkgtypes.A_Package_Access;
-      rdb_access : DOP.RDB_Connection_Access) return Action_Result
+      rdb_access : Database.RDB_Connection_Access) return Action_Result
    is
       cs_type : A_Checksum_Type;
    begin

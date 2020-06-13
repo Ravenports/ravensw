@@ -12,9 +12,6 @@ package Core.Database.Operations is
 
    package CON renames Ada.Containers;
 
-   type RDB_Connection is limited private;
-   type RDB_Connection_Access is access all RDB_Connection;
-
    package Set_Stmt_Args is new CON.Vectors
      (Element_Type => Stmt_Argument,
       Index_Type   => Natural);
@@ -67,12 +64,6 @@ private
    package IC  renames Interfaces.C;
 
    internal_srcfile : constant String := "core-database-operations.adb";
-
-   type RDB_Connection is limited
-      record
-         sqlite             : aliased sqlite_h.sqlite3_Access;
-         prstmt_initialized : Boolean;
-      end record;
 
    function rdb_open_remote (db       : in out RDB_Connection;
                              dbtype   : RDB_Source;

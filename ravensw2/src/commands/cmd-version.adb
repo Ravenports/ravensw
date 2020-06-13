@@ -7,6 +7,7 @@ with Core.Config;
 with Core.Event;
 with Core.Version;
 with Core.Database.Operations;
+with Core.Database.Iterator;
 with Core.Repo.Iterator.Packages;
 with Core.Printf;
 with Core.Pkgtypes;
@@ -221,7 +222,7 @@ package body Cmd.Version is
                                return Boolean;
 
       retcode : Action_Result;
-      db      : DBO.RDB_Connection;
+      db      : Database.RDB_Connection;
       all_ok  : Boolean := True;
 
       procedure release_db is
@@ -328,17 +329,16 @@ package body Cmd.Version is
          procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor)
          is
             rname  : Text renames Repo.Active_Repository_Name_Set.Element (Position);
-            it     : Repo.Iterator.Packages.SQLite_Iterator;
+            it     : Database.Iterator.DB_SQLite_Iterator;
             my_pkg : aliased Pkgtypes.A_Package;
          begin
             if all_ok then
-               if it.initialize_as_standard_query (reponame => USS (rname),
+               if it.initialize_as_standard_query (conn     => db,
                                                    pattern  => pattern,
                                                    match    => match,
                                                    just_one => False) /= RESULT_OK
                then
-                  Event.emit_error
-                    ("Failed to initialize SQLite basic iterator (" & USS (rname) & ")");
+                  Event.emit_error ("Failed to initialize SQLite basic iterator (local)");
                   all_ok := False;
                end if;
             end if;
