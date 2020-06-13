@@ -126,7 +126,7 @@ package body Core.Database.Iterator is
          sql : constant String := this.get_sql;
       begin
          Event.emit_debug
-            (4, "localdb: initializing " & pad_right (this.variant'Img, 14) & " > " &  DQ (sql));
+            (4, "local: initializing " & pad_right (this.variant'Img, 14) & " > " &  DQ (sql));
          if SQLite.prepare_sql (pDB  => this.dbconn,
                                 sql  => sql,
                                 stmt => this.stmt)
@@ -268,4 +268,5 @@ package body Core.Database.Iterator is
             return RESULT_FATAL;
       end case;
    end Next;
+
 end Core.Database.Iterator;

@@ -464,7 +464,7 @@ package body Core.Repo.Operations.Schema is
                                     stmt => prepared_statements (S))
          then
             CommonSQL.ERROR_SQLITE
-              (db, internal_srcfile, "prstmt_initialize", prstmt_text_sql (S));
+              (db, internal_srcfile, "repo_prstmt_initialize", prstmt_text_sql (S));
             return RESULT_FATAL;
          end if;
       end loop;

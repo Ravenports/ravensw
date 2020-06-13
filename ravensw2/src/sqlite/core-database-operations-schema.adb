@@ -209,13 +209,13 @@ package body Core.Database.Operations.Schema is
       if not db.prstmt_initialized then
          for S in prstmt_index'Range loop
             Event.emit_debug
-              (4, "Pkgdb: preparing statement " & SQ (prstmt_text_sql (S)));
+              (4, "local: store " & pad_right (S'Img, 12) & " > " & SQ (prstmt_text_sql (S)));
             if not SQLite.prepare_sql (pDB  => db.sqlite,
                                        sql  => prstmt_text_sql (S),
                                        stmt => prepared_statements (S))
             then
                CommonSQL.ERROR_SQLITE
-                 (db.sqlite, internal_srcfile, "prstmt_initialize", prstmt_text_sql (S));
+                 (db.sqlite, internal_srcfile, "local_prstmt_initialize", prstmt_text_sql (S));
                return RESULT_FATAL;
             end if;
             db.prstmt_initialized := True;
