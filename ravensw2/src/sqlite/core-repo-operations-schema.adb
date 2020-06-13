@@ -80,7 +80,7 @@ package body Core.Repo.Operations.Schema is
          return RESULT_REPOSCHEMA;
       end if;
 
-      if SQLite.database_was_opened_readonly (db, "main") then
+      if SQLite.database_was_opened_readonly (db, SQLite.primary_db_identity) then
          Event.emit_error
            ("Repo " & reponame & " needs schema upgrade from " & int2str (Integer (reposcver)) &
               " to " & REPO_SCHEMA_VERSION & "but it was opened as read-only");

@@ -17,6 +17,8 @@ package SQLite is
    type Step_Result is (row_present, no_more_data, something_else);
    type thick_stmt is private;
 
+   primary_db_identity : constant String := "main";
+
    --  return True on success
    function initialize_sqlite return Boolean;
 

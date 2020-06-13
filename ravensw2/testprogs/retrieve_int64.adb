@@ -3,7 +3,6 @@
 
 with Ada.Text_IO;
 with Core.CommonSQL;
-with Core.VFS;
 with sqlite_h;
 with SQLite;
 
@@ -23,9 +22,7 @@ is
                                            "WHERE type='table' AND name='repodata'";
 begin
    okay := SQLite.initialize_sqlite;
-   --  rdb_syscall_overload requires Core.Context to be populated.
-   --  Use stock open routines for this test
-   --  SQLite.rdb_syscall_overload;
+   SQLite.rdb_syscall_overload;
    if not SQLite.open_sqlite_database_readonly (db_path, handle'Access) then
       TIO.Put_Line ("failed to open " & db_path);
       if SQLite.database_corrupt (handle) then
@@ -36,7 +33,7 @@ begin
 
    if CommonSQL.get_int64 (db      => handle,
                            srcfile => intsrc,
-                           func    => "main",
+                           func    => "retrieve_int64",
                            sql     => sql,
                            res     => res_int64,
                            silence => False) /= RESULT_OK

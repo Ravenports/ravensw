@@ -378,7 +378,7 @@ package body Core.Database.CustomCmds is
       argsval : not null access sqlite_h.sqlite3_value_Access)
    is
       db : sqlite_h.sqlite3_Access := sqlite_h.sqlite3_context_db_handle (context);
-      db_filename : constant String := SQLite.get_db_filename (db, "main");
+      db_filename : constant String := SQLite.get_db_filename (db, SQLite.primary_db_identity);
       errmsg : IC.Strings.chars_ptr;
       argv   : array (1 .. 2) of sqlite_h.sqlite3_value_Access;
 

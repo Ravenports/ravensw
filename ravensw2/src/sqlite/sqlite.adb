@@ -410,7 +410,7 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
-   --  database_was_opened_readonly
+   --  get_sql
    --------------------------------------------------------------------
    function get_sql (pStmt : sqlite_h.sqlite3_stmt_Access) return String
    is
