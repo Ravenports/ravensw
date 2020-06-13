@@ -190,21 +190,21 @@ package body Core.Database.Operations.Schema is
 
 
    --------------------------------------------------------------------
-   --  prstmt_finalize
+   --  local_prstmt_finalize
    --------------------------------------------------------------------
-   procedure prstmt_finalize (db : in out RDB_Connection) is
+   procedure local_prstmt_finalize (db : in out RDB_Connection) is
    begin
       for S in Schema.prstmt_index'Range loop
          SQLite.finalize_statement (prepared_statements (S));
       end loop;
       db.prstmt_initialized := False;
-   end prstmt_finalize;
+   end local_prstmt_finalize;
 
 
    --------------------------------------------------------------------
-   --  prstmt_initialize
+   --  local_prstmt_initialize
    --------------------------------------------------------------------
-   function prstmt_initialize (db : in out RDB_Connection) return Action_Result is
+   function local_prstmt_initialize (db : in out RDB_Connection) return Action_Result is
    begin
       if not db.prstmt_initialized then
          for S in prstmt_index'Range loop
@@ -222,7 +222,7 @@ package body Core.Database.Operations.Schema is
          end loop;
       end if;
       return RESULT_OK;
-   end prstmt_initialize;
+   end local_prstmt_initialize;
 
 
    --------------------------------------------------------------------

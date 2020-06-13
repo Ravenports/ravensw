@@ -46,8 +46,8 @@ package Core.Database.Operations.Schema is
      );
 
    --  Initialize and finalize all prepared statements
-   procedure prstmt_finalize (db : in out RDB_Connection);
-   function prstmt_initialize (db : in out RDB_Connection) return Action_Result;
+   procedure local_prstmt_finalize (db : in out RDB_Connection);
+   function local_prstmt_initialize (db : in out RDB_Connection) return Action_Result;
 
    --  For empty database files, we import up to version 34 immediately.
    --  Future versions are taken care of silently by the upgrade mechanism.

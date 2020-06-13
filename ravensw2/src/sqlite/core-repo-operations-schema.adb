@@ -441,20 +441,20 @@ package body Core.Repo.Operations.Schema is
 
 
    --------------------------------------------------------------------
-   --  prstmt_finalize
+   --  repo_prstmt_finalize
    --------------------------------------------------------------------
-   procedure prstmt_finalize (db : in out sqlite_h.sqlite3_Access) is
+   procedure repo_prstmt_finalize (db : in out sqlite_h.sqlite3_Access) is
    begin
       for S in repository_stmt_index'Range loop
          SQLite.finalize_statement (prepared_statements (S));
       end loop;
-   end prstmt_finalize;
+   end repo_prstmt_finalize;
 
 
    --------------------------------------------------------------------
-   --  prstmt_initialize
+   --  repo_prstmt_initialize
    --------------------------------------------------------------------
-   function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result is
+   function repo_prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result is
    begin
       for S in repository_stmt_index'Range loop
          Event.emit_debug
@@ -469,7 +469,7 @@ package body Core.Repo.Operations.Schema is
          end if;
       end loop;
       return RESULT_OK;
-   end prstmt_initialize;
+   end repo_prstmt_initialize;
 
 
    --------------------------------------------------------------------

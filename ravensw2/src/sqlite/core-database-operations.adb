@@ -71,7 +71,7 @@ package body Core.Database.Operations is
       result : Action_Result;
    begin
       if establish_connection (db) = RESULT_OK then
-         if Schema.prstmt_initialize (db) /= RESULT_OK then
+         if Schema.local_prstmt_initialize (db) /= RESULT_OK then
             Event.emit_error (func & ": Failed to initialize prepared statements");
             rdb_close (db);
             return RESULT_FATAL;
@@ -162,7 +162,7 @@ package body Core.Database.Operations is
       use type sqlite_h.sqlite3_Access;
    begin
       if db.prstmt_initialized then
-         Schema.prstmt_finalize (db);
+         Schema.local_prstmt_finalize (db);
       end if;
       if db.sqlite /= null then
          ROP.close_all_open_repositories;

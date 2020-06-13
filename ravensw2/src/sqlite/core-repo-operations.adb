@@ -37,7 +37,7 @@ package body Core.Repo.Operations is
       is
          repository : A_repo renames Element;
       begin
-         ROS.prstmt_finalize (repository.sqlite_handle);
+         ROS.repo_prstmt_finalize (repository.sqlite_handle);
          SQLite.close_database (repository.sqlite_handle);
          repository.sqlite_handle := null;
       end close_database;
@@ -342,7 +342,7 @@ package body Core.Repo.Operations is
 
          if onward then
             Database.CustomCmds.define_six_functions (db);
-            if ROS.prstmt_initialize (db) /= RESULT_OK then
+            if ROS.repo_prstmt_initialize (db) /= RESULT_OK then
                onward := False;
             end if;
          end if;

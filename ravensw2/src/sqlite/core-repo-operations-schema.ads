@@ -45,8 +45,8 @@ package Core.Repo.Operations.Schema is
    function repo_upgrade (db : sqlite_h.sqlite3_Access; reponame : String) return Action_Result;
 
    --  Initialize and finalize all prepared statements
-   procedure prstmt_finalize (db : in out sqlite_h.sqlite3_Access);
-   function prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result;
+   procedure repo_prstmt_finalize (db : in out sqlite_h.sqlite3_Access);
+   function repo_prstmt_initialize (db : in out sqlite_h.sqlite3_Access) return Action_Result;
 
    --  Executes and resets REPO_VERSION prepared statement (single result)
    function retrieve_prepared_version (origin : Text) return String;
