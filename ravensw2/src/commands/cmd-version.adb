@@ -319,60 +319,64 @@ package body Cmd.Version is
       end if;
 
       declare
-         procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor);
-
-         active : Repo.Active_Repository_Name_Set.Vector;
-
+         active       : Repo.Active_Repository_Name_Set.Vector;
          check_origin : Boolean := not IsBlank (matchorigin);
          check_name   : Boolean := not IsBlank (matchname);
          is_origin    : Boolean := False;
-
-         procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor)
-         is
-            rname  : Text renames Repo.Active_Repository_Name_Set.Element (Position);
-            it     : Database.Iterator.DB_SQLite_Iterator;
-            my_pkg : aliased Pkgtypes.A_Package;
-         begin
-            if all_ok then
-               if it.initialize_as_standard_query (conn     => db,
-                                                   pattern  => pattern,
-                                                   match    => match,
-                                                   just_one => False) /= RESULT_OK
-               then
-                  Event.emit_error ("Failed to initialize SQLite basic iterator (local)");
-                  all_ok := False;
-               end if;
-            end if;
-            if all_ok then
-               loop
-                  --  Next can be OK/END/FATAL
-                  case it.Next (pkg_access => my_pkg'Unchecked_Access,
-                                sections   => (Pkgtypes.basic => True, others => False))
-                  is
-                     when RESULT_END =>
-                        exit;
-
-                     when RESULT_OK =>
-                        if not compare_remote (USS (rname), my_pkg, is_origin) then
-                           Event.emit_error ("Failed to initialize remote pkg iterator");
-                           all_ok := False;
-                        end if;
-
-                     when others =>
-                        Event.emit_error ("Failed to retrieve package in version cmd");
-                        all_ok := False;
-                  end case;
-               end loop;
-            end if;
-         end scan;
-
+         it           : Database.Iterator.DB_SQLite_Iterator;
       begin
          if IsBlank (reponame) then
             active := Repo.ordered_active_repositories;
          else
             active.Append (SUS (reponame));
          end if;
-         active.Iterate (scan'Access);
+
+         if it.initialize_as_standard_query (conn     => db,
+                                             pattern  => pattern,
+                                             match    => match,
+                                             just_one => False) /= RESULT_OK
+         then
+            Event.emit_error ("Failed to initialize SQLite basic iterator (local)");
+            return False;
+         end if;
+
+         loop
+            declare
+               procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor);
+
+               my_pkg : aliased Pkgtypes.A_Package;
+
+               procedure scan (Position : Repo.Active_Repository_Name_Set.Cursor)
+               is
+                  rname  : Text renames Repo.Active_Repository_Name_Set.Element (Position);
+               begin
+                  if all_ok then
+                     if not compare_remote (USS (rname), my_pkg, is_origin) then
+                        Event.emit_error ("Failed to initialize remote pkg iterator");
+                        all_ok := False;
+                     end if;
+                  end if;
+               end scan;
+            begin
+               --  Next can be OK/END/FATAL
+               case it.Next (pkg_access => my_pkg'Unchecked_Access,
+                             sections   => (Pkgtypes.basic => True, others => False))
+               is
+                  when RESULT_END =>
+                     exit;
+
+                  when RESULT_OK =>
+                     active.Iterate (scan'Access);
+
+                  when others =>
+                     Event.emit_error ("Failed to retrieve package in version cmd");
+                     all_ok := False;
+
+               end case;
+            end;
+            exit when not all_ok;
+         end loop;
+
          release_db;
          return all_ok;
       end;
