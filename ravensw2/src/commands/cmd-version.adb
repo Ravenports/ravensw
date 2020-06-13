@@ -308,6 +308,7 @@ package body Cmd.Version is
       end if;
 
       if DBO.rdb_open_all (db, Database.RDB_REMOTE) /= RESULT_OK then
+         Event.emit_notice ("At least one database failed to open, exiting.");
          return False;
       end if;
 

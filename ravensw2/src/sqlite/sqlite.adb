@@ -89,6 +89,7 @@ package body SQLite is
                                              pzTail => pzTail'Access);
       ICS.Free (c_sql);
       stmt := new_stmt;
+      stmt.initialized := True;
       return (result = sqlite_h.SQLITE_OK);
    end prepare_sql;
 
@@ -253,9 +254,12 @@ package body SQLite is
 
       result : IC.int;
    begin
-      result := sqlite_h.sqlite3_finalize (stmt.pStmt);
+      if stmt.initialized then
+         result := sqlite_h.sqlite3_finalize (stmt.pStmt);
+      end if;
       stmt.char_pointers.Iterate (free_string'Access);
       stmt.pStmt := null;
+      stmt.initialized := False;
    end finalize_statement;
 
 

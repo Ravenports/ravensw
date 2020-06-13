@@ -154,6 +154,7 @@ private
       record
          pStmt : aliased sqlite_h.sqlite3_stmt_Access;
          char_pointers : Char_Pointer_Crate.Vector;
+         initialized   : Boolean;
       end record;
 
 
