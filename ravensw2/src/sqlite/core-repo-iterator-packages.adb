@@ -91,11 +91,11 @@ package body Core.Repo.Iterator.Packages is
       begin
          case this.field is
             when none    => return "";
-            when origin  => return this.search_how ("origin");
-            when name    => return this.search_how ("name");
-            when comment => return this.search_how ("comment");
-            when desc    => return this.search_how ("desc");
-            when namever => return this.search_how ("name || '-' || version");
+            when origin  => return this.search_how ("p.origin");
+            when name    => return this.search_how ("p.name");
+            when comment => return this.search_how ("p.comment");
+            when desc    => return this.search_how ("p.desc");
+            when namever => return this.search_how ("p.name || '-' || p.version");
          end case;
       end make_filter;
 
@@ -103,11 +103,11 @@ package body Core.Repo.Iterator.Packages is
    begin
       case this.fsort is
          when none    => return filter;
-         when origin  => return filter & " ORDER BY origin";
-         when name    => return filter & " ORDER BY name";
-         when comment => return filter & " ORDER BY comment";
-         when desc    => return filter & " ORDER BY desc";
-         when namever => return filter & " ORDER BY name, version";
+         when origin  => return filter & " ORDER BY p.origin";
+         when name    => return filter & " ORDER BY p.name";
+         when comment => return filter & " ORDER BY p.comment";
+         when desc    => return filter & " ORDER BY p.desc";
+         when namever => return filter & " ORDER BY p.name, p.version";
       end case;
    end search_condition;
 
