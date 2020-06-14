@@ -378,6 +378,24 @@ package body Core.Repo.Iterator.Packages is
 
 
    --------------------------------------------------------------------
+   --  rebind
+   --------------------------------------------------------------------
+   procedure rebind
+     (this       : in out SQLite_Iterator;
+      pattern    : String)
+   is
+   begin
+      case this.mstyle is
+         when Database.MATCH_ALL
+            | Database.MATCH_CONDITION => null;
+         when others =>
+            Sqlite.clear_bindings (this.stmt);
+            SQLite.bind_string (this.stmt, 1, pattern);
+      end case;
+   end rebind;
+
+
+   --------------------------------------------------------------------
    --  Next
    --------------------------------------------------------------------
    function Next (this       : in out SQLite_Iterator;

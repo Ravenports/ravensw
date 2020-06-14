@@ -141,6 +141,9 @@ package SQLite is
       column_index : Natural;
       value        : String);
 
+   procedure clear_bindings
+     (stmt         : in out thick_stmt);
+
    function get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String;
 
    function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer;

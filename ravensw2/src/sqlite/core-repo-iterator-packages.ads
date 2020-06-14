@@ -12,16 +12,23 @@ package Core.Repo.Iterator.Packages is
    illegal_match_style : exception;
 
    type SQLite_Iterator is tagged limited private;
+   type SQlite_Iterator_Access is access all SQLite_Iterator;
+
    type Match_Field is (none, origin, name, namever, comment, desc);
 
    procedure Reset (this : in out SQLite_Iterator);
 
    function count  (this : in out SQLite_Iterator) return Natural;
 
-   function Next   (this       : in out SQLite_Iterator;
-                    pkg_access : Pkgtypes.A_Package_Access;
-                    sections   : Pkgtypes.Package_Load_Flags := (others => True))
-                    return Action_Result;
+   function Next
+     (this       : in out SQLite_Iterator;
+      pkg_access : Pkgtypes.A_Package_Access;
+      sections   : Pkgtypes.Package_Load_Flags := (others => True))
+      return Action_Result;
+
+   procedure rebind
+     (this       : in out SQLite_Iterator;
+      pattern    : String);
 
    function initialize_as_provide
      (this     : in out SQLite_Iterator;

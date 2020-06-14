@@ -17,6 +17,7 @@ package body Cmd.Version is
 
    package VER renames Core.Version;
    package DBO renames Core.Database.Operations;
+   package RIT renames Core.Repo.Iterator.Packages;
 
    --------------------------------------------------------------------
    --  execute_version_command
@@ -237,16 +238,17 @@ package body Cmd.Version is
    is
       procedure release_db;
       procedure print (Position : Line_Crate.Cursor);
+      procedure iterator_initialize (Position : Repo.Active_Repository_Name_Set.Cursor);
       function compare_remote (this_repo : String;
-                               local_pkg : Pkgtypes.A_Package;
-                               is_origin : in out Boolean)
-                               return Boolean;
+                               local_pkg : Pkgtypes.A_Package) return Boolean;
 
       retcode : Action_Result;
       db      : Database.RDB_Connection;
       all_ok  : Boolean := True;
       lines   : Line_Crate.Vector;
+      cyclers : array (1 .. Repo.count_of_active_repositories) of RIT.SQLite_Iterator;
       leftlen : Natural := 0;
+      cyindex : Natural;
 
       procedure release_db is
       begin
@@ -257,72 +259,60 @@ package body Cmd.Version is
       end release_db;
 
       function compare_remote (this_repo : String;
-                               local_pkg : Pkgtypes.A_Package;
-                               is_origin : in out Boolean) return Boolean
+                               local_pkg : Pkgtypes.A_Package) return Boolean
       is
          loc_name    : String := Printf.format_attribute (local_pkg, Printf.PKG_NAME);
          loc_origin  : String := Printf.format_attribute (local_pkg, Printf.PKG_ORIGIN);
          loc_version : String := Printf.format_attribute (local_pkg, Printf.PKG_VERSION);
          skip        : Boolean := False;
-         it_remote   : Repo.Iterator.Packages.SQLite_Iterator;
          remote_pkg  : aliased Pkgtypes.A_Package;
-         rem_pattern : Text;
          new_line    : Display_Line;
       begin
+         cyindex := cyindex + 1;
          if option_origin then
+            cyclers (cyindex).rebind (loc_origin);
             if loc_origin /= matchorigin then
                skip := True;
-               is_origin := True;
             end if;
          elsif option_name then
+            cyclers (cyindex).rebind (loc_name);
             if loc_name /= matchname then
                skip := True;
-               is_origin := False;
             end if;
          end if;
          if not skip then
-            if is_origin then
-               rem_pattern := SUS (loc_origin);
-            else
-               rem_pattern := SUS (loc_name);
-            end if;
-            if it_remote.initialize_as_standard_query (reponame => this_repo,
-                                                       pattern  => USS (rem_pattern),
-                                                       match    => Database.MATCH_EXACT,
-                                                       just_one => True) = RESULT_OK
-            then
-               case it_remote.Next (pkg_access => remote_pkg'Unchecked_Access,
-                                    sections   => (Pkgtypes.basic => True, others => False))
-               is
-                  when RESULT_OK =>
-                     new_line :=
-                       print_version
-                         (pkg_version => loc_version,
-                          pkg_name    => loc_name,
-                          pkg_origin  => loc_origin,
-                          source      => "remote",
-                          ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION));
+            case cyclers (cyindex).Next
+              (pkg_access => remote_pkg'Unchecked_Access,
+               sections   => (Pkgtypes.basic => True, others => False))
+            is
+               when RESULT_OK =>
+                  new_line :=
+                    print_version
+                      (pkg_version => loc_version,
+                       pkg_name    => loc_name,
+                       pkg_origin  => loc_origin,
+                       source      => "remote",
+                       ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION));
 
-                  when others =>
-                     new_line :=
-                       print_version
-                         (pkg_version => loc_version,
-                          pkg_name    => loc_name,
-                          pkg_origin  => loc_origin,
-                          source      => "remote",
-                          ver         => "");
-               end case;
-               if new_line.valid then
-                  if leftlen < SU.Length (new_line.identifier) then
-                     leftlen := SU.Length (new_line.identifier);
-                  end if;
-                  lines.Append (new_line);
+               when others =>
+                  new_line :=
+                    print_version
+                      (pkg_version => loc_version,
+                       pkg_name    => loc_name,
+                       pkg_origin  => loc_origin,
+                       source      => "remote",
+                       ver         => "");
+            end case;
+            if new_line.valid then
+               if leftlen < SU.Length (new_line.identifier) then
+                  leftlen := SU.Length (new_line.identifier);
                end if;
-            else
-               return False;
+               lines.Append (new_line);
             end if;
+            return True;
+         else
+            return False;
          end if;
-         return True;
       end compare_remote;
 
       procedure print (Position : Line_Crate.Cursor)
@@ -334,6 +324,24 @@ package body Cmd.Version is
                        & "  " & USS (item.extra_info));
 
       end print;
+
+      procedure iterator_initialize (Position : Repo.Active_Repository_Name_Set.Cursor)
+      is
+         rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
+      begin
+         cyindex := cyindex + 1;
+         --  pattern "XXX" indicates it's not an origin or "~" pattern
+         if cyclers (cyindex).initialize_as_standard_query
+           (reponame => USS (rname),
+            pattern  => "XXX",
+            match    => Database.MATCH_EXACT,
+            just_one => True) /= RESULT_OK
+         then
+            Event.emit_error ("Failed to initialize " & USS (rname) & " repository iterator");
+            all_ok := False;
+         end if;
+      end iterator_initialize;
+
 
    begin
       if auto_update then
@@ -362,13 +370,18 @@ package body Cmd.Version is
          active       : Repo.Active_Repository_Name_Set.Vector;
          check_origin : Boolean := not IsBlank (matchorigin);
          check_name   : Boolean := not IsBlank (matchname);
-         is_origin    : Boolean := False;
          it           : Database.Iterator.DB_SQLite_Iterator;
       begin
          if IsBlank (reponame) then
             active := Repo.ordered_active_repositories;
          else
             active.Append (SUS (reponame));
+         end if;
+         --  set up Repo iterators (one for each active repository)
+         cyindex := 0;
+         active.Iterate (iterator_initialize'Access);
+         if not all_ok then
+            return False;
          end if;
 
          if it.initialize_as_standard_query (conn     => db,
@@ -391,7 +404,7 @@ package body Cmd.Version is
                   rname  : Text renames Repo.Active_Repository_Name_Set.Element (Position);
                begin
                   if all_ok then
-                     if not compare_remote (USS (rname), my_pkg, is_origin) then
+                     if not compare_remote (USS (rname), my_pkg) then
                         Event.emit_error ("Failed to initialize remote pkg iterator");
                         all_ok := False;
                      end if;
@@ -406,6 +419,7 @@ package body Cmd.Version is
                      exit;
 
                   when RESULT_OK =>
+                     cyindex := 0;
                      active.Iterate (scan'Access);
 
                   when others =>

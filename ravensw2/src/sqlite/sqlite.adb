@@ -264,6 +264,31 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  clear_bindings
+   --------------------------------------------------------------------
+   procedure clear_bindings
+     (stmt         : in out thick_stmt)
+   is
+      procedure free_string (Position : Char_Pointer_Crate.Cursor);
+      procedure really_free (Element : in out ICS.chars_ptr);
+
+      procedure free_string (Position : Char_Pointer_Crate.Cursor) is
+      begin
+         stmt.char_pointers.Update_Element (Position, really_free'Access);
+      end free_string;
+
+      procedure really_free (Element : in out ICS.chars_ptr) is
+      begin
+         ICS.Free (Element);
+      end really_free;
+   begin
+      stmt.char_pointers.Iterate (free_string'Access);
+      stmt.char_pointers.Clear;
+   end clear_bindings;
+
+
+
+   --------------------------------------------------------------------
    --  close_database
    --------------------------------------------------------------------
    procedure close_database (db : sqlite_h.sqlite3_Access)
