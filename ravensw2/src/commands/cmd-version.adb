@@ -239,8 +239,8 @@ package body Cmd.Version is
       procedure release_db;
       procedure print (Position : Line_Crate.Cursor);
       procedure iterator_initialize (Position : Repo.Active_Repository_Name_Set.Cursor);
-      function compare_remote (this_repo : String;
-                               local_pkg : Pkgtypes.A_Package) return Boolean;
+      procedure compare_remote (this_repo : String;
+                                local_pkg : Pkgtypes.A_Package);
 
       retcode : Action_Result;
       db      : Database.RDB_Connection;
@@ -258,8 +258,8 @@ package body Cmd.Version is
          DBO.rdb_close (db);
       end release_db;
 
-      function compare_remote (this_repo : String;
-                               local_pkg : Pkgtypes.A_Package) return Boolean
+      procedure compare_remote (this_repo : String;
+                               local_pkg : Pkgtypes.A_Package)
       is
          loc_name    : String := Printf.format_attribute (local_pkg, Printf.PKG_NAME);
          loc_origin  : String := Printf.format_attribute (local_pkg, Printf.PKG_ORIGIN);
@@ -274,12 +274,7 @@ package body Cmd.Version is
             if loc_origin /= matchorigin then
                skip := True;
             else
-               case match is
-                  when Database.MATCH_ALL
-                     | Database.MATCH_CONDITION => null;
-                  when others =>
-                     cyclers (cyindex).rebind (loc_origin);
-               end case;
+               cyclers (cyindex).rebind (loc_origin);
             end if;
          else
             if option_name then
@@ -288,12 +283,7 @@ package body Cmd.Version is
                end if;
             end if;
             if not skip then
-               case match is
-                  when Database.MATCH_ALL
-                     | Database.MATCH_CONDITION => null;
-                  when others =>
-                     cyclers (cyindex).rebind (loc_name);
-               end case;
+               cyclers (cyindex).rebind (loc_name);
             end if;
          end if;
          if not skip then
@@ -325,9 +315,6 @@ package body Cmd.Version is
                end if;
                lines.Append (new_line);
             end if;
-            return True;
-         else
-            return False;
          end if;
       end compare_remote;
 
@@ -343,16 +330,23 @@ package body Cmd.Version is
 
       procedure iterator_initialize (Position : Repo.Active_Repository_Name_Set.Cursor)
       is
+         function set_pattern return String;
+         function set_pattern return String is
+         begin
+            if option_origin then
+               return "XX:standard";
+            else
+               return "XXX";
+            end if;
+         end set_pattern;
          rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
       begin
          cyindex := cyindex + 1;
 
-         --  pattern "XXX" indicates it's not an origin or "~" pattern
-         --  It it ignore for MATCH_ALL conditions
          if cyclers (cyindex).initialize_as_standard_query
            (reponame => USS (rname),
-            pattern  => "XXX",
-            match    => match,
+            pattern  => set_pattern,
+            match    => Database.MATCH_EXACT,
             just_one => True) /= RESULT_OK
          then
             Event.emit_error ("Failed to initialize " & USS (rname) & " repository iterator");
@@ -419,12 +413,7 @@ package body Cmd.Version is
                is
                   rname  : Text renames Repo.Active_Repository_Name_Set.Element (Position);
                begin
-                  if all_ok then
-                     if not compare_remote (USS (rname), my_pkg) then
-                        Event.emit_error ("Failed to initialize remote pkg iterator");
-                        all_ok := False;
-                     end if;
-                  end if;
+                  compare_remote (USS (rname), my_pkg);
                end scan;
             begin
                --  Next can be OK/END/FATAL
