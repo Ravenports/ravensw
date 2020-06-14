@@ -178,11 +178,10 @@ package body Cmd.Version is
       end if;
 
       line.comparison := key;
-      if option_origin then
-         line.identifier := SUS (pkg_origin);
-      else
-         line.identifier := SUS (pkg_name & "-" & pkg_version);
-      end if;
+      --  This behavior differs from pkgng
+      --  Display name-version always.  Displaying origin when search was origin-based
+      --  no longer makes since with a many-to-1 subpackage relationship to origin.
+      line.identifier := SUS (pkg_name & "-" & pkg_version);
 
       if option_verbose then
          case key is
@@ -324,7 +323,7 @@ package body Cmd.Version is
       begin
          TIO.Put_Line (pad_right (USS (item.identifier), leftlen)
                        & " " & item.comparison
-                       & "  " & USS (item.extra_info));
+                       & " " & USS (item.extra_info));
 
       end print;
 
