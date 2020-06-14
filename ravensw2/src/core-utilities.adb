@@ -282,7 +282,7 @@ package body Core.Utilities is
    --------------------------------------------------------------------
    function random_characters (number : Positive := 6) return String
    is
-      type Random_Range is new Integer range 33 .. 96;
+      type Random_Range is new Integer range 0 .. 61;
       package Rand_Int is new ada.numerics.discrete_random (Random_Range);
       gen : Rand_Int.Generator;
       num : Random_Range;
@@ -292,7 +292,11 @@ package body Core.Utilities is
       Rand_Int.Reset (gen);
       for x in result'Range loop
          num := Rand_Int.Random (gen);
-         result (x) := Character'Val (num);
+         case num is
+            when  0 ..  9 => result (x) := Character'Val (Character'Pos ('0') + num);
+            when 10 .. 35 => result (x) := Character'Val (Character'Pos ('A') + num - 10);
+            when 36 .. 61 => result (x) := Character'Val (Character'Pos ('a') + num - 36);
+         end case;
       end loop;
       return result;
    end random_characters;

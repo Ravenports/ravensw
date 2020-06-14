@@ -27,7 +27,7 @@ package Core.Utilities is
    --  Given a value, format with "KiB", "MiB", "GiB", "TiB", prefixes as necessary (power 2)
    function format_bytes_IEC (bytes : int64) return String;
 
-   --  Returns *number* of characters as a strings ranging from ASCII 33 to 96.
+   --  Returns *number* of characters as a strings ranging from characters 0-9,A-Z,a-z
    --  Suitable for random names for temporary files
    function random_characters (number : Positive := 6) return String;
 
