@@ -266,8 +266,7 @@ package body SQLite is
    --------------------------------------------------------------------
    --  clear_bindings
    --------------------------------------------------------------------
-   procedure clear_bindings
-     (stmt         : in out thick_stmt)
+   procedure clear_bindings (stmt : in out thick_stmt)
    is
       procedure free_string (Position : Char_Pointer_Crate.Cursor);
       procedure really_free (Element : in out ICS.chars_ptr);
@@ -286,7 +285,6 @@ package body SQLite is
    begin
       stmt.char_pointers.Iterate (free_string'Access);
       stmt.char_pointers.Clear;
-      res := sqlite_h.sqlite3_reset (stmt.pStmt);
       res := sqlite_h.sqlite3_clear_bindings (stmt.pStmt);
    end clear_bindings;
 

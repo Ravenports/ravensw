@@ -389,6 +389,9 @@ package body Core.Repo.Iterator.Packages is
          when Database.MATCH_ALL
             | Database.MATCH_CONDITION => null;
          when others =>
+            if not SQlite.reset_statement (this.stmt) then
+               Event.emit_error ("Failed to reset statement for rebind");
+            end if;
             Sqlite.clear_bindings (this.stmt);
             SQLite.bind_string (this.stmt, 1, pattern);
       end case;
