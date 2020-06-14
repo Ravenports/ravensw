@@ -72,12 +72,21 @@ package body Cmd.Version is
          Database.set_case_sensitivity (sensitive => False);
       end if;
 
-      option_verbose  := comline.verb_verbose;
-      option_origin   := comline.version_disp_origin;
-      option_name     := not IsBlank (comline.version_pkg_name);
-      option_status   := (comline.version_not_char /= Character'First);
-      option_nostatus := (comline.version_match_char /= Character'First);
+      option_verbose := comline.verb_verbose;
+      option_origin  := comline.version_disp_origin;
+      option_name    := not IsBlank (comline.version_pkg_name);
 
+      --  -l/-L are mutually exclusive and both can't be set.
+      option_match_status := (comline.version_match_char /= Character'First);
+      if option_match_status then
+         option_cmp_operator := comline.version_match_char;
+         option_avoid_status := False;
+      else
+         option_avoid_status := (comline.version_not_char /= Character'First);
+         if option_avoid_status then
+            option_cmp_operator := comline.version_not_char;
+         end if;
+      end if;
 
 --        if use_conspiracy then
 --           return do_conspiracy_index
@@ -137,8 +146,7 @@ package body Cmd.Version is
       pkg_name     : String;
       pkg_origin   : String;
       source       : String;
-      ver          : String;
-      limchar      : Character) return Display_Line
+      ver          : String) return Display_Line
    is
       key  : Character;
       line : Display_Line;
@@ -158,11 +166,13 @@ package body Cmd.Version is
          end case;
       end if;
 
-      if option_status and then limchar /= key then
+      if option_match_status and then option_cmp_operator /= key then
+         --  skip records where the key does not match given character
          return line;
       end if;
 
-      if option_nostatus and then limchar = key then
+      if option_avoid_status and then option_cmp_operator = key then
+         --  skip records where the key matches given character
          return line;
       end if;
 
@@ -291,8 +301,7 @@ package body Cmd.Version is
                           pkg_name    => loc_name,
                           pkg_origin  => loc_origin,
                           source      => "remote",
-                          ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION),
-                          limchar     => match_char);
+                          ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION));
 
                   when others =>
                      new_line :=
@@ -301,8 +310,7 @@ package body Cmd.Version is
                           pkg_name    => loc_name,
                           pkg_origin  => loc_origin,
                           source      => "remote",
-                          ver         => "",
-                          limchar     => not_char);
+                          ver         => "");
                end case;
                if new_line.valid then
                   if leftlen < SU.Length (new_line.identifier) then

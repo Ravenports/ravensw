@@ -15,11 +15,12 @@ private
    --  ravensw version -T <pkgname> <pattern>
    function do_testpattern (pkgname, pattern : String) return Boolean;
 
-   option_verbose  : Boolean;
-   option_origin   : Boolean;
-   option_name     : Boolean;
-   option_status   : Boolean;
-   option_nostatus : Boolean;
+   option_verbose : Boolean;
+   option_origin  : Boolean;
+   option_name    : Boolean;
+   option_match_status : Boolean;
+   option_avoid_status : Boolean;
+   option_cmp_operator : Character;
 
    type Display_Line is
       record
@@ -39,8 +40,7 @@ private
       pkg_name     : String;
       pkg_origin   : String;
       source       : String;
-      ver          : String;
-      limchar      : Character) return Display_Line;
+      ver          : String) return Display_Line;
 
    --  ravensw -R [-l limchar | -L limchar] [-O origin | -n pkgname] [-r reponame]
    --  [-U] [-e|-g|-x] pattern
