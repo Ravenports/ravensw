@@ -21,14 +21,26 @@ private
    option_status   : Boolean;
    option_nostatus : Boolean;
 
+   type Display_Line is
+      record
+         identifier : Text;
+         comparison : Character;
+         extra_info : Text;
+         valid      : Boolean;
+      end record;
+
+   package Line_Crate is new CON.Vectors
+     (Element_Type => Display_Line,
+      Index_Type   => Natural);
+
    --  output
-   procedure print_version
+   function print_version
      (pkg_version  : String;
       pkg_name     : String;
       pkg_origin   : String;
       source       : String;
       ver          : String;
-      limchar      : Character);
+      limchar      : Character) return Display_Line;
 
    --  ravensw -R [-l limchar | -L limchar] [-O origin | -n pkgname] [-r reponame]
    --  [-U] [-e|-g|-x] pattern

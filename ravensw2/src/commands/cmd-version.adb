@@ -132,28 +132,18 @@ package body Cmd.Version is
    --------------------------------------------------------------------
    --  print_version
    --------------------------------------------------------------------
-   procedure print_version
+   function print_version
      (pkg_version  : String;
       pkg_name     : String;
       pkg_origin   : String;
       source       : String;
       ver          : String;
-      limchar      : Character)
+      limchar      : Character) return Display_Line
    is
-      function format_identifier (identifier : String) return String;
-
-      key : Character;
-
-      function format_identifier (identifier : String) return String
-      is
-         result : String := pad_right (identifier, 41);
-      begin
-         if identifier'Length > 41 then
-            result (result'Last) := "*";
-         end if
-         return result;
-      end format_identifier;
+      key  : Character;
+      line : Display_Line;
    begin
+      line.valid := False;
       if IsBlank (ver) then
          if IsBlank (source) then
             key := '!';
@@ -169,30 +159,38 @@ package body Cmd.Version is
       end if;
 
       if option_status and then limchar /= key then
-         return;
+         return line;
       end if;
 
       if option_nostatus and then limchar = key then
-         return;
+         return line;
       end if;
 
+      line.comparison := key;
       if option_origin then
-         TIO.Put (format_identifier (pkg_origin) & " " & key);
+         line.identifier := SUS (pkg_origin);
       else
-         TIO.Put (format_identifier (pkg_name & "-" & pkg_version) & " " & key);
+         line.identifier := SUS (pkg_name & "-" & pkg_version);
       end if;
 
       if option_verbose then
          case key is
-            when '<' => TIO.Put ("   needs updating (" & source & " has " & ver & ")");
-            when '=' => TIO.Put ("   up-to-date with " & source);
-            when '>' => TIO.Put ("   succeeds " & source & " (" & source & " has " & ver & ")");
-            when '?' => TIO.Put ("   orphaned: " & pkg_origin);
-            when '!' => TIO.Put ("   Comparison failed");
-            when others => TIO.Put_Line ("?????");
+            when '<' =>
+               line.extra_info := SUS ("needs updating (" & source & " has " & ver & ")");
+            when '=' =>
+               line.extra_info := SUS ("up-to-date with " & source);
+            when '>' =>
+               line.extra_info := SUS ("newer (" & source & " has " & ver & ")");
+            when '?' =>
+               line.extra_info := SUS ("orphaned: " & pkg_origin);
+            when '!' =>
+               line.extra_info := SUS ("Comparison failed");
+            when others =>
+               line.extra_info := SUS ("?????");
          end case;
       end if;
-      TIO.Put_Line ("");
+      line.valid := True;
+      return line;
    end print_version;
 
 
@@ -228,6 +226,7 @@ package body Cmd.Version is
       reponame    : String) return Boolean
    is
       procedure release_db;
+      procedure print (Position : Line_Crate.Cursor);
       function compare_remote (this_repo : String;
                                local_pkg : Pkgtypes.A_Package;
                                is_origin : in out Boolean)
@@ -236,6 +235,8 @@ package body Cmd.Version is
       retcode : Action_Result;
       db      : Database.RDB_Connection;
       all_ok  : Boolean := True;
+      lines   : Line_Crate.Vector;
+      leftlen : Natural := 0;
 
       procedure release_db is
       begin
@@ -256,6 +257,7 @@ package body Cmd.Version is
          it_remote   : Repo.Iterator.Packages.SQLite_Iterator;
          remote_pkg  : aliased Pkgtypes.A_Package;
          rem_pattern : Text;
+         new_line    : Display_Line;
       begin
          if option_origin then
             if loc_origin /= matchorigin then
@@ -283,29 +285,47 @@ package body Cmd.Version is
                                     sections   => (Pkgtypes.basic => True, others => False))
                is
                   when RESULT_OK =>
-                     print_version
-                       (pkg_version => loc_version,
-                        pkg_name    => loc_name,
-                        pkg_origin  => loc_origin,
-                        source      => "remote",
-                        ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION),
-                        limchar     => match_char);
+                     new_line :=
+                       print_version
+                         (pkg_version => loc_version,
+                          pkg_name    => loc_name,
+                          pkg_origin  => loc_origin,
+                          source      => "remote",
+                          ver         => Printf.format_attribute (remote_pkg, Printf.PKG_VERSION),
+                          limchar     => match_char);
 
                   when others =>
-                     print_version
-                       (pkg_version => loc_version,
-                        pkg_name    => loc_name,
-                        pkg_origin  => loc_origin,
-                        source      => "remote",
-                        ver         => "",
-                        limchar     => not_char);
+                     new_line :=
+                       print_version
+                         (pkg_version => loc_version,
+                          pkg_name    => loc_name,
+                          pkg_origin  => loc_origin,
+                          source      => "remote",
+                          ver         => "",
+                          limchar     => not_char);
                end case;
+               if new_line.valid then
+                  if leftlen < SU.Length (new_line.identifier) then
+                     leftlen := SU.Length (new_line.identifier);
+                  end if;
+                  lines.Append (new_line);
+               end if;
             else
                return False;
             end if;
          end if;
          return True;
       end compare_remote;
+
+      procedure print (Position : Line_Crate.Cursor)
+      is
+         item : Display_Line renames Line_Crate.Element (Position);
+      begin
+         TIO.Put_Line (pad_right (USS (item.identifier), leftlen)
+                       & " " & item.comparison
+                       & "  " & USS (item.extra_info));
+
+      end print;
 
    begin
       if auto_update then
@@ -388,8 +408,9 @@ package body Cmd.Version is
             end;
             exit when not all_ok;
          end loop;
-
          release_db;
+
+         lines.Iterate (print'Access);
          return all_ok;
       end;
    end do_remote_index;
