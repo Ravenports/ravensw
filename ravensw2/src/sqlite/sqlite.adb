@@ -560,7 +560,9 @@ package body SQLite is
    --------------------------------------------------------------------
    --  translate_char_pointer
    --------------------------------------------------------------------
-   function translate_char_pointer (pointer : ICS.chars_ptr) return String is
+   function translate_char_pointer (pointer : ICS.chars_ptr) return String
+   is
+      use type ICS.chars_ptr;
    begin
       if pointer = ICS.Null_Ptr then
          return "";

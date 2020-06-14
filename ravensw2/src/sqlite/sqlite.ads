@@ -159,6 +159,6 @@ private
          initialized   : Boolean;
       end record;
 
-   function translate_char_pointer (pointer : ICS.chars_ptr) return String;
+   function translate_char_pointer (pointer : Interfaces.C.Strings.chars_ptr) return String;
 
 end SQLite;
