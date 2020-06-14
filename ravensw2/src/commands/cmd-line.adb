@@ -1096,8 +1096,6 @@ package body Cmd.Line is
                         set_error (error_like);
                      end if;
                      last_cmd := version_not_char;
-                  elsif datum = "-o" or else datum = "--origin" then
-                     result.version_disp_origin := True;
                   elsif datum = "-O" or else datum = "--match-origin" then
                      if not IsBlank (result.version_pkg_name) then
                         set_error (error_MON);

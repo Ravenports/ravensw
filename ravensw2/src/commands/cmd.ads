@@ -298,7 +298,6 @@ private
 
          version_behavior     : Versioning_Behavior := no_defined_behavior;
          version_exact_match  : Boolean := False;
-         version_disp_origin  : Boolean := False;
          version_match_char   : Character := Character'First;
          version_not_char     : Character := Character'First;
          version_test1        : Text;

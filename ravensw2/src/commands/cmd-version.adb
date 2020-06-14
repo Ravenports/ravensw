@@ -63,9 +63,9 @@ package body Cmd.Version is
             return do_testpattern (USS (comline.version_test1), USS (comline.version_test2));
       end case;
 
-      match := Database.set_match_behavior (request_exact     => comline.version_exact_match,
-                                            request_glob      => comline.verb_shell_glob,
-                                            request_regex     => comline.verb_use_regex);
+      match := Database.set_match_behavior (request_exact => comline.version_exact_match,
+                                            request_glob  => comline.verb_shell_glob,
+                                            request_regex => comline.verb_use_regex);
 
       if comline.verb_case_sensitive then
          Database.set_case_sensitivity (sensitive => True);
@@ -74,7 +74,7 @@ package body Cmd.Version is
       end if;
 
       option_verbose := comline.verb_verbose;
-      option_origin  := comline.version_disp_origin;
+      option_origin  := not IsBlank (comline.version_origin);
       option_name    := not IsBlank (comline.version_pkg_name);
 
       --  -l/-L are mutually exclusive and both can't be set.
@@ -269,17 +269,31 @@ package body Cmd.Version is
          new_line    : Display_Line;
       begin
          cyindex := cyindex + 1;
+         cyclers (cyindex).Reset;
          if option_origin then
-            cyclers (cyindex).rebind (loc_origin);
             if loc_origin /= matchorigin then
                skip := True;
+            else
+               case match is
+                  when Database.MATCH_ALL
+                     | Database.MATCH_CONDITION => null;
+                  when others =>
+                     cyclers (cyindex).rebind (loc_origin);
+               end case;
             end if;
          else
-            cyclers (cyindex).rebind (loc_name);
             if option_name then
                if loc_name /= matchname then
                   skip := True;
                end if;
+            end if;
+            if not skip then
+               case match is
+                  when Database.MATCH_ALL
+                     | Database.MATCH_CONDITION => null;
+                  when others =>
+                     cyclers (cyindex).rebind (loc_name);
+               end case;
             end if;
          end if;
          if not skip then
@@ -332,11 +346,13 @@ package body Cmd.Version is
          rname : Text renames Repo.Active_Repository_Name_Set.Element (Position);
       begin
          cyindex := cyindex + 1;
+
          --  pattern "XXX" indicates it's not an origin or "~" pattern
+         --  It it ignore for MATCH_ALL conditions
          if cyclers (cyindex).initialize_as_standard_query
            (reponame => USS (rname),
             pattern  => "XXX",
-            match    => Database.MATCH_EXACT,
+            match    => match,
             just_one => True) /= RESULT_OK
          then
             Event.emit_error ("Failed to initialize " & USS (rname) & " repository iterator");
