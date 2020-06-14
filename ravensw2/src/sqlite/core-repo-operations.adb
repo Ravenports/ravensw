@@ -206,7 +206,6 @@ package body Core.Repo.Operations is
             end if;
          end;
 
-         --
          declare
             res_int64 : int64;
             url       : constant String := repo_url (repository);
@@ -683,17 +682,19 @@ package body Core.Repo.Operations is
       if not SQLite.initialize_sqlite then
          return RESULT_ENODB;
       end if;
+      SQLite.rdb_syscall_overload;
       if not Repo.repository_is_active (reponame) then
          return RESULT_OK;
       end if;
 
-      Event.emit_debug (1, "REPO: verifying update for " & reponame);
+      Event.emit_debug (1, "rdb: verifying update for " & reponame);
 
       --  First of all, try to open and init repo and check whether it is fine
       if open_repository (reponame, False) /= RESULT_OK then
-         Event.emit_debug (1, "REPO: need forced update of " & reponame);
+         Event.emit_debug (1, "rdb: need forced update of " & reponame);
          local_force := True;
          stamp := 0;
+         return RESULT_FATAL;
       else
          close_repository (SUS (reponame), False);
          if DIR.Exists (path_to_metafile) then
