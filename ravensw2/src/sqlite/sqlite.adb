@@ -214,7 +214,7 @@ package body SQLite is
    begin
       --  Don't free result!
       result := sqlite_h.sqlite3_column_text (stmt.pStmt, IC.int (column));
-      return ICS.Value (result);
+      return translate_char_pointer (result);
    end retrieve_string;
 
 
@@ -345,7 +345,7 @@ package body SQLite is
       c_msg : ICS.chars_ptr;
    begin
       c_msg := sqlite_h.sqlite3_errmsg (db);
-      return ICS.Value (c_msg);
+      return translate_char_pointer (c_msg);
    end get_last_error_message;
 
 
@@ -384,7 +384,7 @@ package body SQLite is
       if res = sqlite_h.SQLITE_OK then
          return True;
       else
-         msg := SUS (ICS.Value (errmsg));
+         msg := SUS (translate_char_pointer (errmsg));
          ICS.Free (errmsg);
          return False;
       end if;
@@ -417,7 +417,7 @@ package body SQLite is
       sql : ICS.chars_ptr;
    begin
       sql := sqlite_h.sqlite3_sql (pStmt);
-      return ICS.Value (sql);
+      return translate_char_pointer (sql);
    end get_sql;
 
 
@@ -475,7 +475,7 @@ package body SQLite is
    begin
       --  Don't free result!
       name := sqlite_h.sqlite3_column_name (stmt.pStmt, IC.int (column_index));
-      return ICS.Value (name);
+      return translate_char_pointer (name);
    end get_column_name;
 
 
@@ -530,7 +530,7 @@ package body SQLite is
       ICS.Free (zdbname);
 
       --  don't free result!
-      return ICS.Value (res);
+      return translate_char_pointer (res);
    end get_db_filename;
 
 
@@ -555,5 +555,18 @@ package body SQLite is
    begin
       return (SQLite.get_last_error_code (db) = sqlite_h.SQLITE_CORRUPT);
    end database_corrupt;
+
+
+   --------------------------------------------------------------------
+   --  translate_char_pointer
+   --------------------------------------------------------------------
+   function translate_char_pointer (pointer : ICS.chars_ptr) return String is
+   begin
+      if pointer = ICS.Null_Ptr then
+         return "";
+      else
+         return ICS.Value (pointer);
+      end if;
+   end translate_char_pointer;
 
 end SQLite;
