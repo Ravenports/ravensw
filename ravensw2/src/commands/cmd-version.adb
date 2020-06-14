@@ -140,7 +140,19 @@ package body Cmd.Version is
       ver          : String;
       limchar      : Character)
    is
+      function format_identifier (identifier : String) return String;
+
       key : Character;
+
+      function format_identifier (identifier : String) return String
+      is
+         result : String := pad_right (identifier, 41);
+      begin
+         if identifier'Length > 41 then
+            result (result'Last) := "*";
+         end if
+         return result;
+      end format_identifier;
    begin
       if IsBlank (ver) then
          if IsBlank (source) then
@@ -165,9 +177,9 @@ package body Cmd.Version is
       end if;
 
       if option_origin then
-         TIO.Put (pad_right (pkg_origin, 34) & " " & key);
+         TIO.Put (format_identifier (pkg_origin) & " " & key);
       else
-         TIO.Put (pad_right (pkg_name & "-" & pkg_version, 34) & " " & key);
+         TIO.Put (format_identifier (pkg_name & "-" & pkg_version) & " " & key);
       end if;
 
       if option_verbose then
