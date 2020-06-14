@@ -274,10 +274,12 @@ package body Cmd.Version is
             if loc_origin /= matchorigin then
                skip := True;
             end if;
-         elsif option_name then
+         else
             cyclers (cyindex).rebind (loc_name);
-            if loc_name /= matchname then
-               skip := True;
+            if option_name then
+               if loc_name /= matchname then
+                  skip := True;
+               end if;
             end if;
          end if;
          if not skip then
@@ -367,10 +369,8 @@ package body Cmd.Version is
       end if;
 
       declare
-         active       : Repo.Active_Repository_Name_Set.Vector;
-         check_origin : Boolean := not IsBlank (matchorigin);
-         check_name   : Boolean := not IsBlank (matchname);
-         it           : Database.Iterator.DB_SQLite_Iterator;
+         active : Repo.Active_Repository_Name_Set.Vector;
+         it     : Database.Iterator.DB_SQLite_Iterator;
       begin
          if IsBlank (reponame) then
             active := Repo.ordered_active_repositories;
