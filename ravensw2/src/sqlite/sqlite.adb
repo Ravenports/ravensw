@@ -281,9 +281,13 @@ package body SQLite is
       begin
          ICS.Free (Element);
       end really_free;
+
+      res : IC.int;
    begin
       stmt.char_pointers.Iterate (free_string'Access);
       stmt.char_pointers.Clear;
+      reset_statement (stmt);
+      res := sqlite_h.sqlite3_clear_bindings (stmt.pStmt);
    end clear_bindings;
 
 

@@ -433,6 +433,9 @@ package sqlite_h is
                                  dbname : ICS.chars_ptr) return ICS.chars_ptr;
    pragma Import (C, sqlite3_db_filename);
 
+   function sqlite3_clear_bindings (pStmt : sqlite3_stmt_Access) return IC.int;
+   pragma Import (C, sqlite3_clear_bindings);
+
 private
 
    type sqlite3              is limited null record;
