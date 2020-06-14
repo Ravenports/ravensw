@@ -261,10 +261,14 @@ package body Core.Database.Iterator is
             end case;
 
          when SQLite.something_else =>
-            CommonSQL.ERROR_SQLITE (db      => this.dbconn,
-                                    srcfile => internal_srcfile,
-                                    func    => "Database.Iterator.Next",
-                                    query   => "iterator");
+            if SQLite.invalid_regex (this.dbconn) then
+               Event.emit_error ("Regular expression " & SQ (USS (this.pattern)) & " is invalid");
+            else
+               CommonSQL.ERROR_SQLITE (db      => this.dbconn,
+                                       srcfile => internal_srcfile,
+                                       func    => "Database.Iterator.Next",
+                                       query   => "iterator");
+            end if;
             return RESULT_FATAL;
       end case;
    end Next;

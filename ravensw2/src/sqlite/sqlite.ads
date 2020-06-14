@@ -101,6 +101,8 @@ package SQLite is
 
    function get_last_error_code (db : sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types;
 
+   function invalid_regex (db : sqlite_h.sqlite3_Access) return Boolean;
+
    procedure rdb_syscall_overload;
    pragma Import (C, rdb_syscall_overload);
 

@@ -363,6 +363,15 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  invalid_regex
+   --------------------------------------------------------------------
+   function invalid_regex (db : sqlite_h.sqlite3_Access) return Boolean is
+   begin
+      return (get_last_error_message (db) = "Invalid regex");
+   end invalid_regex;
+
+
+   --------------------------------------------------------------------
    --  exec_sql
    --------------------------------------------------------------------
    function exec_sql (db : sqlite_h.sqlite3_Access; sql : String; msg : out Text) return Boolean
