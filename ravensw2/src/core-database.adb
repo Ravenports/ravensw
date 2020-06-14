@@ -59,7 +59,10 @@ package body Core.Database is
    --------------------------------------------------------------------
    --  get_pattern_query
    --------------------------------------------------------------------
-   function get_pattern_query (pattern : String; match_style : Match_Behavior) return String is
+   function get_pattern_query (pattern : String; match_style : Match_Behavior) return String
+   is
+      --  In freebsd ports, origin looks like X/Y, e.g. print/indexinfo
+      --  In Ravenports,    origin looks like X:Y, e.g. indexinfo:standard
    begin
       case match_style is
          when MATCH_ALL => return "";
@@ -67,18 +70,13 @@ package body Core.Database is
       end case;
 
       declare
-         checkorigin : Text;
-         checkuid    : Text;
-
-         tilda : constant String := "~";
-         slash : constant String := "/";
+         checkorigin : Boolean := False;
+         checkuid    : Boolean := False;
       begin
-
          if not IsBlank (pattern) then
-            if contains (pattern, tilda) then
-               checkuid := SUS (tilda & part_2 (pattern, tilda));
-            elsif contains (pattern, slash) then
-               checkorigin := SUS (slash & part_2 (pattern, slash));
+            checkuid := contains (pattern, "~");
+            if not checkuid then
+               checkorigin := contains (pattern, ":");
             end if;
          end if;
 
@@ -88,48 +86,48 @@ package body Core.Database is
             when MATCH_CONDITION =>
                return pattern;
             when MATCH_GLOB =>
-               if IsBlank (checkuid) then
-                  if IsBlank (checkorigin) then
-                     return " WHERE name GLOB ?1 OR name || '-' || version GLOB ?1";
-                  else
-                     return " WHERE origin GLOB ?1";
-                  end if;
-               else
+               if checkuid then
                   return " WHERE name = ?1";
+               else
+                  if checkorigin then
+                     return " WHERE origin GLOB ?1";
+                  else
+                     return " WHERE name GLOB ?1 OR name || '-' || version GLOB ?1";
+                  end if;
                end if;
             when MATCH_REGEX =>
-               if IsBlank (checkuid) then
-                  if IsBlank (checkorigin) then
-                     return " WHERE name REGEXP ?1 OR name || '-' || version REGEXP ?1";
-                  else
-                     return " WHERE origin REGEXP ?1";
-                  end if;
-               else
+               if checkuid then
                   return " WHERE name = ?1";
+               else
+                  if checkorigin then
+                     return " WHERE origin REGEXP ?1";
+                  else
+                     return " WHERE name REGEXP ?1 OR name || '-' || version REGEXP ?1";
+                  end if;
                end if;
             when MATCH_EXACT =>
                if case_sensitivity_is_on then
-                  if IsBlank (checkuid) then
-                     if IsBlank (checkorigin) then
+                  if checkuid then
+                     return " WHERE name = ?1";
+                  else
+                     if checkorigin then
+                        return " WHERE origin = ?1";
+                     else
                         return " WHERE name = ?1 OR (name = SPLIT_VERSION('name', ?1) AND "
                           & " version = SPLIT_VERSION('version', ?1))";
-                     else
-                        return " WHERE origin = ?1";
                      end if;
-                  else
-                     return " WHERE name = ?1";
                   end if;
                else
-                  if IsBlank (checkuid) then
-                     if IsBlank (checkorigin) then
+                  if checkuid then
+                     return " WHERE name = ?1 COLLATE NOCASE";
+                  else
+                     if checkorigin then
+                        return " WHERE origin = ?1 COLLATE NOCASE";
+                     else
                         return " WHERE name = ?1 COLLATE NOCASE OR "
                           & "(name = SPLIT_VERSION('name', ?1) COLLATE NOCASE AND "
                           & " version = SPLIT_VERSION('version', ?1))";
-                     else
-                        return " WHERE origin = ?1 COLLATE NOCASE";
                      end if;
-                  else
-                     return " WHERE name = ?1 COLLATE NOCASE";
                   end if;
                end if;
          end case;
