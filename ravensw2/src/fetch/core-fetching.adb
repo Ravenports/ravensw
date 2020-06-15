@@ -99,6 +99,7 @@ package body Core.Fetching is
 
       use type Unix.T_filesize;
    begin
+      Event.emit_debug (2, "fetch " & file_url & " for " & Repo.repo_name (my_repo));
 
       --  /* A URL of the form http://host.example.com/ where
       --   * host.example.com does not resolve as a simple A record is
