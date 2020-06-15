@@ -355,6 +355,9 @@ package fetch_h is
       functions : es_cookie_io_functions_t) return Extended_Stream;
    pragma Import (C, es_fopencookie, "es_fopencookie");
 
+   function es_init return IC.int;
+   pragma Import (C, es_init, "es_init");
+
 private
 
    type estream_t is limited null record;

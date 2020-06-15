@@ -6,6 +6,7 @@ with Cmd.Line;
 with Cmd.Usage;
 with Cmd.Bahnhof;
 with Core.Finalize;
+with Libfetch;
 
 procedure Main
 is
@@ -19,6 +20,7 @@ is
    comline_inputs : Cmd.Cldata;
 
 begin
+   Libfetch.initialize_estreams;
    comline_inputs := CL.parse_command_line;
    if not CU.command_line_valid (comline_inputs) then
       ACL.Set_Exit_Status (Code => ACL.Failure);

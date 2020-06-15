@@ -136,6 +136,8 @@ package Libfetch is
    function get_fetched_file_size
      (url_components : URL_Component_Set) return Core.Unix.T_filesize;
 
+   procedure initialize_estreams;
+
 private
 
    type URL_Component_Set is

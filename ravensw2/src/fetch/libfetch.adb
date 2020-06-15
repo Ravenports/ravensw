@@ -493,4 +493,15 @@ package body Libfetch is
       return Core.Unix.T_filesize (url_components.status.size);
    end get_fetched_file_size;
 
+
+   --------------------------------------------------------------------
+   --  initialize_estreams
+   --------------------------------------------------------------------
+   procedure initialize_estreams
+   is
+      res : IC.int;
+   begin
+      res := fetch_h.es_init;
+   end initialize_estreams;
+
 end Libfetch;
