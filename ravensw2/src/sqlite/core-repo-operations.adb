@@ -694,7 +694,6 @@ package body Core.Repo.Operations is
          Event.emit_debug (1, "rdb: need forced update of " & reponame);
          local_force := True;
          stamp := 0;
-         return RESULT_FATAL;
       else
          close_repository (SUS (reponame), False);
          if DIR.Exists (path_to_metafile) then

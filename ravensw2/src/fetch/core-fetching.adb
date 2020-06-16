@@ -363,7 +363,15 @@ package body Core.Fetching is
             end;
             exit when chars_read = 0;
          end loop;
-         Event.emit_progress_tick (done, done);
+         if done > 0 then
+            Event.emit_progress_tick (done, done);
+         else
+            if size > 0 then
+               Event.emit_progress_tick (size, size);
+            else
+               Event.emit_progress_tick (1, 1);
+            end if;
+         end if;
       end;
       Event.emit_fetch_finished (file_url);
 

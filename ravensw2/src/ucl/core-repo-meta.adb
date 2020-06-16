@@ -30,7 +30,8 @@ package body Core.Repo.Meta is
       parser := Ucl.ucl_parser_new_lowercase;
 
       if not Ucl.ucl_parser_add_fd (parser, fd) then
-         Event.emit_error ("cannot parse repository meta: " & Ucl.ucl_parser_get_error (parser));
+         Event.emit_error ("Encountered error during meta file parsing.");
+         Event.emit_debug (1, "meta parse failure: " & Ucl.ucl_parser_get_error (parser));
          libucl.ucl_parser_free (parser);
          return result;
       end if;
