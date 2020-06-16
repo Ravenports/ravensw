@@ -23,7 +23,7 @@ is
 
 begin
    --  This can be removed after debugging (?)
-   GET.Trace_On (GET.Every_Raise);
+   GET.Trace_On (GET.Unhandled_Raise);
 
    Libfetch.initialize_estreams;
    comline_inputs := CL.parse_command_line;
