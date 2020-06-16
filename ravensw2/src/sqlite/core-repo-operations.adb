@@ -540,7 +540,7 @@ package body Core.Repo.Operations is
          tmp_manifest : String :=
            Repo.Fetch.fetch_remote_extract_to_temporary_file
              (my_repo   => my_repo,
-              filename  => USS (my_repo.meta.manifests),
+              filename  => USS (my_repo.meta.manifests_archive),
               timestamp => local_time'Access,
               file_size => file_size,
               retcode   => rc);

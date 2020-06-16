@@ -159,9 +159,9 @@ private
 
    type thick_stmt is
       record
-         pStmt : aliased sqlite_h.sqlite3_stmt_Access;
+         pStmt         : aliased sqlite_h.sqlite3_stmt_Access;
          char_pointers : Char_Pointer_Crate.Vector;
-         initialized   : Boolean;
+         initialized   : Boolean := False;
       end record;
 
    function translate_char_pointer (pointer : Interfaces.C.Strings.chars_ptr) return String;
