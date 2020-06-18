@@ -80,7 +80,7 @@ LIBS+=		-lelf_pic
 @endif
 
 @if system_type == solaris
-OTHER_LIBS+=	-lsocket -lrt -lgen
+OTHER_LIBS+=	-lsocket -lrt -lgen -lnsl
 @endif
 
 LOCAL_LDFLAGS=	$(LIBPKG_PIC) $(LIBREPO_PIC) $(LIBS) $(OTHER_LIBS)
