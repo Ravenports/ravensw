@@ -162,8 +162,8 @@ package body Core.Repo.Meta is
      (top     : access libucl.ucl_object_t;
       version : A_Meta_Version) return Repo_Metadata
    is
-      function meta_extract_string (field : String) return Text;
-      function meta_extract_string (field : String) return Text
+      procedure meta_extract_string (field : String; rec_field : in out Text);
+      procedure meta_extract_string (field : String; rec_field : in out Text)
       is
          obj : access constant libucl.ucl_object_t;
       begin
@@ -171,9 +171,7 @@ package body Core.Repo.Meta is
          if obj /= null and then
            Ucl.type_is_string (obj)
          then
-            return SUS (Ucl.ucl_object_tostring (obj));
-         else
-            return blank;
+            rec_field := SUS (Ucl.ucl_object_tostring (obj));
          end if;
       end meta_extract_string;
 
@@ -181,21 +179,28 @@ package body Core.Repo.Meta is
    begin
       result.version           := version;
       result.packing_format    := TZS;   -- hardcoded (not selectable anymore)
-      result.maintainer        := meta_extract_string ("maintainer");
-      result.source            := meta_extract_string ("source");
-      result.source_identifier := meta_extract_string ("source_identifier");
-      result.conflicts         := meta_extract_string ("conflicts");
-      result.conflicts_archive := meta_extract_string ("conflicts_archive");
-      result.digests           := meta_extract_string ("digests");
-      result.digests_archive   := meta_extract_string ("digests_archive");
-      result.manifests         := meta_extract_string ("manifests");
-      result.manifests_archive := meta_extract_string ("manifests_archive");
-      result.fulldb            := meta_extract_string ("fulldb");
-      result.fulldb_archive    := meta_extract_string ("fulldb_archive");
-      result.filesite          := meta_extract_string ("filesite");
-      result.filesite_archive  := meta_extract_string ("filesite_archive");
-      result.digest_format     := Checksum.checksum_type_from_string
-                                  (USS (meta_extract_string ("digest_format")));
+      meta_extract_string ("maintainer", result.maintainer);
+      meta_extract_string ("source", result.source);
+      meta_extract_string ("source_identifier", result.source_identifier);
+      meta_extract_string ("conflicts", result.conflicts);
+      meta_extract_string ("conflicts_archive", result.conflicts_archive);
+      meta_extract_string ("digests", result.digests);
+      meta_extract_string ("digests_archive", result.digests_archive);
+      meta_extract_string ("manifests", result.manifests);
+      meta_extract_string ("manifests_archive", result.manifests_archive);
+      meta_extract_string ("fulldb", result.fulldb);
+      meta_extract_string ("fulldb_archive", result.fulldb_archive);
+      meta_extract_string ("filesite", result.filesite);
+      meta_extract_string ("filesite_archive", result.filesite_archive);
+
+      declare
+         dform : Text := blank;
+      begin
+         meta_extract_string ("digest_format", dform);
+         if not IsBlank (dform) then
+            result.digest_format := Checksum.checksum_type_from_string (USS (dform));
+         end if;
+      end;
 
       declare
          obj : access constant libucl.ucl_object_t;
