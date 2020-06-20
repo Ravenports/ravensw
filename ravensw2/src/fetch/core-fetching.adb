@@ -339,7 +339,10 @@ package body Core.Fetching is
          end if;
          loop
             declare
-               line : String := Libfetch.fx_fread (remote, one_char, requested, chars_read);
+               line : String := Libfetch.fx_fread (fstream       => remote,
+                                                   chunk_size    => one_char,
+                                                   number_chunks => requested,
+                                                   chunks_read   => chars_read);
             begin
                if chars_read > 0 then
                   if not Unix.write_to_file_descriptor (dest_fd, line) then
@@ -365,12 +368,6 @@ package body Core.Fetching is
          end loop;
          if done > 0 then
             Event.emit_progress_tick (done, done);
-         else
-            if size > 0 then
-               Event.emit_progress_tick (size, size);
-            else
-               Event.emit_progress_tick (1, 1);
-            end if;
          end if;
       end;
       Event.emit_fetch_finished (file_url);
@@ -381,17 +378,15 @@ package body Core.Fetching is
       if not use_ssh then
          if Libfetch.fx_error (remote) then
             Event.emit_error (file_url & ": " & Libfetch.get_last_fetch_error);
+            Libfetch.fx_close (remote);
+            return RESULT_FATAL;
          end if;
-         Libfetch.fx_close (remote);
-         return RESULT_FATAL;
       end if;
 
       Unix.set_file_times (dest_fd, timestamp.all, timestamp.all);
       return RESULT_OK;
 
    end fetch_file_to_fd;
-
-
 
 
 end Core.Fetching;

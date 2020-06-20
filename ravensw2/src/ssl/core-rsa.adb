@@ -38,7 +38,8 @@ package body Core.RSA is
          begin
             my_rsa := SSL.load_rsa_public_key_buf (key);
             if SSL.RSA_empty (my_rsa) then
-               Event.emit_error ("error reading public key: " & SSL.get_error_string);
+               Event.emit_error
+                  ("deprecated rsa verify - reading public key: " & SSL.get_error_string);
                return RESULT_FATAL;
             end if;
             verified := SSL.RSA_verified (sha256, signature, my_rsa);
@@ -82,7 +83,7 @@ package body Core.RSA is
          begin
             my_rsa := SSL.load_rsa_public_key_buf (key);
             if SSL.RSA_empty (my_rsa) then
-               Event.emit_error ("error reading public key: " & SSL.get_error_string);
+               Event.emit_error ("verify_cert - reading public key: " & SSL.get_error_string);
                return RESULT_FATAL;
             end if;
             verified := SSL.RSA_cert_verified (hash, signature, my_rsa);

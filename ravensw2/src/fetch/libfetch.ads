@@ -150,7 +150,7 @@ private
 
    type Fetch_Stream is
       record
-         estream : fetch_h.Extended_Stream;
+         estream : fetch_h.Extended_Stream := null;
          active  : Boolean := False;
       end record;
 

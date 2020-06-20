@@ -4,10 +4,18 @@ usage:
 	@echo "usage:"
 	@echo "make dns_srv"
 	@echo "make retrieve_int64"
+	@echo "make check bind"
+	@echo "make fetch_meta_c";
+	@echo "make fetch_meta";
+#	@echo "make load_pubkey_c";
 
 clean:
-	rm -f dns_srv retrieve_int64 check_bind
+	rm -f dns_srv retrieve_int64 check_bind fetch_meta_c fetch_meta
+	rm -r load_pubkey_c
 	rm -f *.ali *.o b~*
+
+CFLAGS=	-I/raven/include
+SSLCFLAGS= -I/raven/libressl/include
 
 dns_srv: dns_srv.adb
 	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
@@ -55,3 +63,22 @@ check_bind: check_bind.adb ${unix_objs} sql3int.o
 		-aI../src -aI../src/sqlite -aI../src/regex -aI../src/unix \
 		-largs ../../external/sqlite/libsqlite_pic.a \
 		${unix_objs} sql3int.o
+
+fetch_meta_c: fetch_meta.c
+	${CC} ${CFLAGS} -o ${.TARGET} ${.ALLSRC} \
+		/raven/lib/libfetch_pic.a \
+		/raven/libressl/lib/libssl_pic.a \
+		/raven/libressl/lib/libcrypto_pic.a
+
+fetch_meta: fetch_meta.adb ${unix_objs}
+	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+	gnatmake -g -fstack-check ${.TARGET} -aI../src/fetch -aI../src \
+		-aI../src/unix -largs ${unix_objs} \
+		/raven/lib/libfetch_pic.a \
+		/raven/libressl/lib/libssl_pic.a \
+		/raven/libressl/lib/libcrypto_pic.a
+
+# load_pubkey_c: load_pubkey.c
+#	${CC} ${CFLAGS} ${SSLCFLAGS} -o ${.TARGET} ${.ALLSRC} \
+#		/raven/libressl/lib/libssl_pic.a \
+#		/raven/libressl/lib/libcrypto_pic.a

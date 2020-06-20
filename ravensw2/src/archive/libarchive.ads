@@ -49,7 +49,7 @@ package libarchive is
    --  thick archive_read_next_header
    function read_next_header
      (arc    : archive_Access;
-      arcent : archive_entry_Access;
+      arcent : AEA_Access;
       error  : out Boolean;
       final  : out Boolean) return Boolean;
 

@@ -163,13 +163,13 @@ package body libarchive is
    --------------------------------------------------------------------
    function read_next_header
      (arc    : archive_Access;
-      arcent : archive_entry_Access;
+      arcent : AEA_Access;
       error  : out Boolean;
       final  : out Boolean) return Boolean
    is
       result : archive_result;
    begin
-      result := archive_read_next_header2 (arc, arcent);
+      result := archive_read_next_header (arc, arcent);
       final  := (result = ARCHIVE_EOF);
       error  := (result /= ARCHIVE_OK) and then (result /= ARCHIVE_EOF);
       return (result = ARCHIVE_OK);

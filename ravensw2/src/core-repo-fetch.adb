@@ -80,7 +80,7 @@ package body Core.Repo.Fetch is
       filename  : String) return Action_Result
    is
       arc        : libarchive_h.archive_Access;
-      arcent     : libarchive_h.archive_entry_Access;
+      arcent     : aliased libarchive_h.archive_entry_Access;
       data_final : Boolean;
       data_error : Boolean;
       acquired   : Boolean := False;
@@ -110,7 +110,8 @@ package body Core.Repo.Fetch is
       end;
 
       loop
-         exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
+         exit when not libarchive.read_next_header
+            (arc, arcent'Unchecked_Access, data_final, data_error);
 
          begin
             if libarchive.entry_pathname (arcent) = filename then
@@ -154,7 +155,7 @@ package body Core.Repo.Fetch is
       retcode   : out Action_Result) return String
    is
       arc        : libarchive_h.archive_Access;
-      arcent     : libarchive_h.archive_entry_Access;
+      arcent     : aliased libarchive_h.archive_entry_Access;
       data_final : Boolean;
       data_error : Boolean;
       result     : Text;
@@ -186,10 +187,11 @@ package body Core.Repo.Fetch is
       end;
 
       loop
-         exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
+         exit when not libarchive.read_next_header
+            (arc, arcent'Unchecked_Access, data_final, data_error);
 
          declare
-            len   : libarchive.arc64;
+            len : libarchive.arc64;
          begin
             if libarchive.entry_pathname (arcent) = "signature" then
                len := libarchive.entry_size (arcent);
@@ -221,7 +223,7 @@ package body Core.Repo.Fetch is
       fingerprints : out Set_File_Contents.Vector) return Action_Result
    is
       arc        : libarchive_h.archive_Access;
-      arcent     : libarchive_h.archive_entry_Access;
+      arcent     : aliased libarchive_h.archive_entry_Access;
       data_final : Boolean;
       data_error : Boolean;
       problem    : Boolean := False;
@@ -253,7 +255,8 @@ package body Core.Repo.Fetch is
       end;
 
       loop
-         exit when not libarchive.read_next_header (arc, arcent, data_final, data_error);
+         exit when not libarchive.read_next_header
+            (arc, arcent'Unchecked_Access, data_final, data_error);
 
          declare
             fpath : constant String := libarchive.entry_pathname (arcent);
