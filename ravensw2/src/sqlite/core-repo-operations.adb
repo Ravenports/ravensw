@@ -393,11 +393,14 @@ package body Core.Repo.Operations is
             SQLite.close_database (db);
             return;
          end if;
-         if ROS.repo_upgrade (db, reponame) /= RESULT_OK then
-            Event.emit_debug (3, "failed to upgrade after initial schema import");
-            SQLite.close_database (db);
-            return;
-         end if;
+         case ROS.repo_upgrade (db, reponame) is
+            when RESULT_OK
+               | RESULT_UPTODATE => null;
+            when others =>
+               Event.emit_debug (3, "failed to upgrade after initial schema import");
+               SQLite.close_database (db);
+               return;
+         end case;
 
          declare
             stmt : SQLite.thick_stmt;
