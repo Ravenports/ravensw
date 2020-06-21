@@ -6,7 +6,7 @@ with Core.Unix;
 package Core.RSA is
 
    function deprecated_rsa_verify
-     (key       : String;
+     (key_file  : String;
       signature : String;
       fd        : Unix.File_Descriptor) return Action_Result;
 

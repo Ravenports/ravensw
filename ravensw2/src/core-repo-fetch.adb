@@ -654,7 +654,7 @@ package body Core.Repo.Fetch is
                return RESULT_FATAL;
             end if;
             --  There has to be only one certificate in the vector;
-            if Core.RSA.deprecated_rsa_verify (key       => USS (my_repo.pubkey),
+            if Core.RSA.deprecated_rsa_verify (key_file  => USS (my_repo.pubkey),
                                                signature => USS (sc.First_Element.sc_sign),
                                                fd        => dest_fd) = RESULT_OK
             then

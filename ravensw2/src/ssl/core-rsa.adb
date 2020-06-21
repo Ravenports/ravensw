@@ -1,9 +1,11 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Ada.Exceptions;
 with Core.Checksum;
 with Core.Strings;
 with Core.Event;
+with Core.File_Operations;
 with SSL;
 
 use Core.Strings;
@@ -14,10 +16,11 @@ package body Core.RSA is
    --  deprecated_rsa_verify
    --------------------------------------------------------------------
    function deprecated_rsa_verify
-     (key       : String;
+     (key_file  : String;
       signature : String;
       fd        : Unix.File_Descriptor) return Action_Result
    is
+      key : String := File_Operations.get_file_contents (key_file);
    begin
       if not Unix.reset_file_for_reading (fd) then
          return RESULT_FATAL;
@@ -51,6 +54,10 @@ package body Core.RSA is
             end if;
          end;
       end;
+   exception
+      when FOP : File_Operations.file_handling =>
+         Event.emit_error ("deprecated_rsa_verify, " & Ada.Exceptions.Exception_Message (FOP));
+         return RESULT_FATAL;
    end deprecated_rsa_verify;
 
 
