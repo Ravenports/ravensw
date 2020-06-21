@@ -12,9 +12,12 @@ package Core.Repo.Fetch is
       timestamp : access Unix.T_epochtime) return Action_Result;
 
    --  Temporary file produced must be deleted by calling routine
+   --  filename is basename of archive (e.g. "packagesite" or "packagesite.tzst"
+   --  innerfile is the full file name of the file to be extracted (e.g. packagesite.yaml)
    function fetch_remote_extract_to_temporary_file
      (my_repo   : in out A_repo;
       filename  : String;
+      innerfile : String;
       timestamp : access Unix.T_epochtime;
       file_size : out int64;
       retcode   : out Action_Result) return String;
@@ -26,6 +29,7 @@ private
    function fetch_remote_tmp
      (my_repo   : in out A_repo;
       filename  : String;
+      unlinked  : Boolean;
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor;
 

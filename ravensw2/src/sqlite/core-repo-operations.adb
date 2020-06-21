@@ -541,6 +541,7 @@ package body Core.Repo.Operations is
            Repo.Fetch.fetch_remote_extract_to_temporary_file
              (my_repo   => my_repo,
               filename  => USS (my_repo.meta.manifests_archive),
+              innerfile => USS (my_repo.meta.manifests),
               timestamp => local_time'Access,
               file_size => file_size,
               retcode   => rc);
@@ -559,7 +560,9 @@ package body Core.Repo.Operations is
          end if;
 
          if not skip_rest then
-            DIR.Copy_File (filepath, backup);
+            if DIR.Exists (filepath) then
+               DIR.Copy_File (filepath, backup);
+            end if;
             rc := update_init (reponame);
             if rc /= RESULT_OK then
                rc := RESULT_FATAL;

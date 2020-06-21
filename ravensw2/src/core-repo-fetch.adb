@@ -29,6 +29,7 @@ package body Core.Repo.Fetch is
    function fetch_remote_tmp
      (my_repo   : in out A_repo;
       filename  : String;
+      unlinked  : Boolean;
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor
    is
@@ -49,8 +50,10 @@ package body Core.Repo.Fetch is
          retcode := RESULT_FATAL;
          return Unix.not_connected;
       end if;
-      if not Unix.unlink (tmp_file) then
-         Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
+      if unlinked then
+         if not Unix.unlink (tmp_file) then
+            Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
+         end if;
       end if;
 
       retcode := Fetching.fetch_file_to_fd (my_repo   => my_repo,
@@ -746,7 +749,11 @@ package body Core.Repo.Fetch is
 
    begin
       dbdirfd := Context.reveal_db_directory_fd;
-      fd := fetch_remote_tmp (my_repo, "meta", timestamp, rc);
+      fd := fetch_remote_tmp (my_repo   => my_repo,
+                              filename  => "meta",
+                              unlinked  => True,
+                              timestamp => timestamp,
+                              retcode   => rc);
       if not Unix.file_connected (fd) then
          return rc;
       end if;
@@ -944,6 +951,7 @@ package body Core.Repo.Fetch is
    function fetch_remote_extract_to_temporary_file
      (my_repo   : in out A_repo;
       filename  : String;
+      innerfile : String;
       timestamp : access Unix.T_epochtime;
       file_size : out int64;
       retcode   : out Action_Result) return String
@@ -963,7 +971,11 @@ package body Core.Repo.Fetch is
       end silent_close_fd;
    begin
       file_size := 0;
-      fd := fetch_remote_tmp (my_repo, filename, timestamp, retcode);
+      fd := fetch_remote_tmp (my_repo   => my_repo,
+                              filename  => filename,
+                              unlinked  => False,
+                              timestamp => timestamp,
+                              retcode   => retcode);
       if not Unix.file_connected (fd) then
          return NOFILE;
       end if;
@@ -980,7 +992,7 @@ package body Core.Repo.Fetch is
 
       if archive_extract_check_archive (my_repo  => my_repo,
                                         fd       => fd,
-                                        filename => filename,
+                                        filename => innerfile,
                                         dest_fd  => dest_fd) /= RESULT_OK
       then
          silent_close_fd (dest_fd);
