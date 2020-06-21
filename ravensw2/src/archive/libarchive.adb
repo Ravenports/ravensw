@@ -182,11 +182,13 @@ package body libarchive is
       final  : out Boolean) return Boolean
    is
       result : archive_result;
+      okay   : Boolean;
    begin
       result := archive_read_next_header (arc, arcent);
+      okay   := (result = ARCHIVE_OK);
       final  := (result = ARCHIVE_EOF);
-      error  := (result /= ARCHIVE_OK) and then (result /= ARCHIVE_EOF);
-      return (result = ARCHIVE_OK);
+      error  := not okay and then not final;
+      return okay;
    end read_next_header;
 
 

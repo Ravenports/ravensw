@@ -110,9 +110,10 @@ package body Core.Repo.Fetch is
       end;
 
       loop
-         exit when not libarchive.read_next_header
-            (arc, arcent'Unchecked_Access, data_final, data_error);
-
+         exit when not libarchive.read_next_header (arc    => arc,
+                                                    arcent => arcent'Unchecked_Access,
+                                                    error  => data_error,
+                                                    final  => data_final);
          begin
             if libarchive.entry_pathname (arcent) = filename then
                if libarchive.read_data_into_file_descriptor (arc, target_fd) then
@@ -192,9 +193,10 @@ package body Core.Repo.Fetch is
 
       loop
          exit when failure;
-         exit when not libarchive.read_next_header
-            (arc, arcent'Unchecked_Access, data_final, data_error);
-
+         exit when not libarchive.read_next_header (arc    => arc,
+                                                    arcent => arcent'Unchecked_Access,
+                                                    error  => data_error,
+                                                    final  => data_final);
          declare
             len : libarchive.arc64;
             entry_file : constant String := libarchive.entry_pathname (arcent);
@@ -276,9 +278,10 @@ package body Core.Repo.Fetch is
 
       loop
          exit when problem;
-         exit when not libarchive.read_next_header
-            (arc, arcent'Unchecked_Access, data_final, data_error);
-
+         exit when not libarchive.read_next_header (arc    => arc,
+                                                    arcent => arcent'Unchecked_Access,
+                                                    error  => data_error,
+                                                    final  => data_final);
          declare
             fpath : constant String := libarchive.entry_pathname (arcent);
             len   : libarchive.arc64;
