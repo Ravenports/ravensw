@@ -29,7 +29,6 @@ private
    function fetch_remote_tmp
      (my_repo   : in out A_repo;
       filename  : String;
-      unlinked  : Boolean;
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor;
 

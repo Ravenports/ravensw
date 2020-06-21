@@ -29,7 +29,6 @@ package body Core.Repo.Fetch is
    function fetch_remote_tmp
      (my_repo   : in out A_repo;
       filename  : String;
-      unlinked  : Boolean;
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor
    is
@@ -50,10 +49,8 @@ package body Core.Repo.Fetch is
          retcode := RESULT_FATAL;
          return Unix.not_connected;
       end if;
-      if unlinked then
-         if not Unix.unlink (tmp_file) then
-            Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
-         end if;
+      if not Unix.unlink (tmp_file) then
+         Event.emit_notice ("Failed to unlink temporary file: " & tmp_file);
       end if;
 
       retcode := Fetching.fetch_file_to_fd (my_repo   => my_repo,
@@ -751,7 +748,6 @@ package body Core.Repo.Fetch is
       dbdirfd := Context.reveal_db_directory_fd;
       fd := fetch_remote_tmp (my_repo   => my_repo,
                               filename  => "meta",
-                              unlinked  => True,
                               timestamp => timestamp,
                               retcode   => rc);
       if not Unix.file_connected (fd) then
@@ -923,7 +919,7 @@ package body Core.Repo.Fetch is
    --------------------------------------------------------------------
    function temporary_file_name (basename : String) return String
    is
-      tmpdir    : constant String := get_tmpdir;
+      tmpdir    : constant String := get_tmpdir & "/";
       tmp_file  : constant String := tmpdir & basename & "." & Utilities.random_characters;
    begin
       return tmp_file;
@@ -973,7 +969,6 @@ package body Core.Repo.Fetch is
       file_size := 0;
       fd := fetch_remote_tmp (my_repo   => my_repo,
                               filename  => filename,
-                              unlinked  => False,
                               timestamp => timestamp,
                               retcode   => retcode);
       if not Unix.file_connected (fd) then
