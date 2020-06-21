@@ -72,11 +72,11 @@ package body Core.Repo.Operations.Schema is
 
       --  so reposcver < REPO_SCHEMA_ALL
 
-      if reposcver < int64 (Upgrade_Series'First) then
+      if reposcver < int64 (Upgrade_Series'First) - 1 then
          Event.emit_error
            ("Repo " & reponame & " (schema version " & int2str (Integer (reposcver)) &
               " is too old to upgrade -- the minimum requirement is schema " &
-              int2str (Integer (Upgrade_Series'First)));
+              int2str (Integer (Upgrade_Series'First) - 1));
          return RESULT_REPOSCHEMA;
       end if;
 
