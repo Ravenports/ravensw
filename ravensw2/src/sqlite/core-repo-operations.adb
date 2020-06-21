@@ -389,13 +389,16 @@ package body Core.Repo.Operations is
             return;
          end if;
          if ROS.import_schema_2013 (db) /= RESULT_OK then
+            Event.emit_debug (3, "failed to import schema 2013");
             SQLite.close_database (db);
             return;
          end if;
          if ROS.repo_upgrade (db, reponame) /= RESULT_OK then
+            Event.emit_debug (3, "failed to upgrade after initial schema import");
             SQLite.close_database (db);
             return;
          end if;
+
          declare
             stmt : SQLite.thick_stmt;
             sql1 : constant String :=
@@ -477,12 +480,12 @@ package body Core.Repo.Operations is
 
       --  [Re]create repo
       if create_repository (reponame) /= RESULT_OK then
-         Event.emit_notice ("Unable to create repository " & reponame);
+         Event.emit_notice ("Unable to create repository " & SQ (reponame));
          return RESULT_FATAL;
       end if;
 
       if open_repository (reponame, False) /= RESULT_OK then
-         Event.emit_notice ("Unable to open created repository " & reponame);
+         Event.emit_notice ("Unable to open created repository " & SQ (reponame));
          return RESULT_FATAL;
       end if;
 
@@ -666,7 +669,7 @@ package body Core.Repo.Operations is
                DIR.Delete_File (backup);
             end if;
          end if;
-         if DIR.Exists (tmp_manifest) then
+         if not IsBlank (tmp_manifest) and then DIR.Exists (tmp_manifest) then
             DIR.Delete_File (tmp_manifest);
          end if;
 
