@@ -159,9 +159,16 @@ package body libarchive is
    --------------------------------------------------------------------
    --  error_string
    --------------------------------------------------------------------
-   function error_string (arc : archive_Access) return String is
+   function error_string (arc : archive_Access) return String
+   is
+      use type ICS.chars_ptr;
+      errstring : ICS.chars_ptr := archive_error_string (arc);
    begin
-      return ICS.Value (archive_error_string (arc));
+      if errstring = ICS.Null_Ptr then
+         return "";
+      else
+         return ICS.Value (errstring);
+      end if;
    end error_string;
 
 
