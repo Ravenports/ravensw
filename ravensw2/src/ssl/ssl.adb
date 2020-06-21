@@ -161,22 +161,32 @@ package body SSL is
       --  * by @bdrewery
 
       NID_sha1 : constant IC.int := 64;
+      zerochar : constant IC.unsigned_char := IC.unsigned_char'First;
       res      : IC.int;
-      m_length : IC.unsigned := IC.unsigned (hash'Length);
-      siglen   : IC.unsigned := IC.unsigned (signature'Length - 1);
-      m        : ICS.chars_ptr;
-      sigbuf   : ICS.chars_ptr;
+      m_length : Natural := Natural (hash'Length);
+      siglen   : Natural := Natural (signature'Length - 1);
+      m        : array (1 .. m_length) of aliased IC.unsigned_char := (others => zerochar);
+      sigbuf   : array (1 .. siglen) of aliased IC.unsigned_char := (others => zerochar);
+      index    : Natural;
    begin
-      m := ICS.New_String (hash);
-      sigbuf := ICS.New_String (signature);
+      index := hash'First;
+      for x in 1 .. m_length loop
+         m (x) := IC.unsigned_char (Character'Pos (hash (index)));
+         index := index + 1;
+      end loop;
+
+      index := signature'First;
+      for x in 1 .. siglen loop
+         sigbuf (x) := IC.unsigned_char (Character'Pos (signature (index)));
+         index := index + 1;
+      end loop;
+
       res := C_RSA_verify (rsa_type => NID_sha1,
-                           m        => m,
-                           m_length => m_length,
-                           sigbuf   => sigbuf,
-                           siglen   => siglen,
+                           m        => m (m'First)'Access,
+                           m_length => IC.unsigned (m_length),
+                           sigbuf   => sigbuf (sigbuf'First)'Access,
+                           siglen   => IC.unsigned (siglen),
                            RSA      => RSA_pointer);
-      ICS.Free (m);
-      ICS.Free (sigbuf);
       return (res /= IC.int (0));
    end RSA_verified;
 
@@ -189,22 +199,31 @@ package body SSL is
       use type IC.int;
 
       NID_sha256 : constant IC.int := 672;
+      zerochar : constant IC.unsigned_char := IC.unsigned_char'First;
       res      : IC.int;
-      m_length : IC.unsigned := IC.unsigned (hash'Length);
-      siglen   : IC.unsigned := IC.unsigned (signature'Length);
-      m        : ICS.chars_ptr;
-      sigbuf   : ICS.chars_ptr;
+      m_length : Natural := Natural (hash'Length);
+      siglen   : Natural := Natural (signature'Length);
+      m        : array (1 .. m_length) of aliased IC.unsigned_char := (others => zerochar);
+      sigbuf   : array (1 .. siglen) of aliased IC.unsigned_char := (others => zerochar);
+      index    : Natural;
    begin
-      m := ICS.New_String (hash);
-      sigbuf := ICS.New_String (signature);
+      index := hash'First;
+      for x in 1 .. m_length loop
+         m (x) := IC.unsigned_char (Character'Pos (hash (index)));
+         index := index + 1;
+      end loop;
+
+      index := signature'First;
+      for x in 1 .. siglen loop
+         sigbuf (x) := IC.unsigned_char (Character'Pos (signature (index)));
+         index := index + 1;
+      end loop;
       res := C_RSA_verify (rsa_type => NID_sha256,
-                           m        => m,
-                           m_length => m_length,
-                           sigbuf   => sigbuf,
-                           siglen   => siglen,
+                           m        => m (m'First)'Access,
+                           m_length => IC.unsigned (m_length),
+                           sigbuf   => sigbuf (sigbuf'First)'Access,
+                           siglen   => IC.unsigned (siglen),
                            RSA      => RSA_pointer);
-      ICS.Free (m);
-      ICS.Free (sigbuf);
       return (res /= IC.int (0));
    end RSA_cert_verified;
 

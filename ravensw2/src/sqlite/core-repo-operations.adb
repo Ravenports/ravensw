@@ -651,13 +651,21 @@ package body Core.Repo.Operations is
          --  restore the previous db in case of failures
          if rc /= RESULT_OK and then rc /= RESULT_UPTODATE then
             --  failure, so restore to previous database
-            DIR.Delete_File (filepath);
-            DIR.Rename (backup, filepath);
+            if DIR.Exists (filepath) then
+               DIR.Delete_File (filepath);
+            end if;
+            if DIR.Exists (backup) then
+               DIR.Rename (backup, filepath);
+            end if;
          else
             --  remove temporary backup
-            DIR.Delete_File (backup);
+            if DIR.Exists (backup) then
+               DIR.Delete_File (backup);
+            end if;
          end if;
-         DIR.Delete_File (tmp_manifest);
+         if DIR.Exists (tmp_manifest) then
+            DIR.Delete_File (tmp_manifest);
+         end if;
 
          return rc;
       end;

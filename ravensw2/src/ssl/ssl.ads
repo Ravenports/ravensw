@@ -91,9 +91,9 @@ private
 
    function C_RSA_verify
      (rsa_type : IC.int;
-      m        : ICS.chars_ptr;
+      m        : access IC.unsigned_char;
       m_length : IC.unsigned;
-      sigbuf   : ICS.chars_ptr;
+      sigbuf   : access IC.unsigned_char;
       siglen   : IC.unsigned;
       RSA      : RSA_Access) return IC.int;
    pragma Import (C, C_RSA_verify, "RSA_verify");
