@@ -41,8 +41,11 @@ private
       Index_Type   => Natural,
       "="          => SU."=");
 
+   --  extracts a target file and returns a set of fingerprints
    function meta_extract_signature_fingerprints
-     (arc_fd : Unix.File_Descriptor;
+     (arc_fd    : Unix.File_Descriptor;
+      target_fd : Unix.File_Descriptor;
+      target    : String;
       fingerprints : out Set_File_Contents.Vector) return Action_Result;
 
    function file_extension_matches (filename, extension : String) return Boolean;

@@ -236,7 +236,9 @@ package body Core.Repo.Fetch is
    --  meta_extract_signature_fingerprints
    --------------------------------------------------------------------
    function meta_extract_signature_fingerprints
-     (arc_fd : Unix.File_Descriptor;
+     (arc_fd    : Unix.File_Descriptor;
+      target_fd : Unix.File_Descriptor;
+      target    : String;
       fingerprints : out Set_File_Contents.Vector) return Action_Result
    is
       arc        : libarchive_h.archive_Access;
@@ -244,6 +246,7 @@ package body Core.Repo.Fetch is
       data_final : Boolean;
       data_error : Boolean;
       problem    : Boolean := False;
+      tgt_found  : Boolean := False;
       block_size : constant := 4096;
       funcname   : constant String := "meta_extract_signature_fingerprints";
    begin
@@ -272,6 +275,7 @@ package body Core.Repo.Fetch is
       end;
 
       loop
+         exit when problem;
          exit when not libarchive.read_next_header
             (arc, arcent'Unchecked_Access, data_final, data_error);
 
@@ -284,12 +288,18 @@ package body Core.Repo.Fetch is
             then
                len := libarchive.entry_size (arcent);
                fingerprints.Append (SUS (libarchive.read_data (arc, len)));
+            elsif fpath = target then
+               if libarchive.read_data_into_file_descriptor (arc, target_fd) then
+                  tgt_found := True;
+               else
+                  Event.emit_error (funcname & ": read into target fd");
+                  problem := True;
+               end if;
             end if;
          exception
             when libarchive.archive_error =>
                Event.emit_error (funcname & ": read_data() " & libarchive.error_string (arc));
                problem := True;
-               exit;
          end;
       end loop;
       if data_error then
@@ -297,6 +307,11 @@ package body Core.Repo.Fetch is
       end if;
       libarchive.read_close (arc);
       libarchive.read_free (arc);
+
+      if not tgt_found then
+         Event.emit_debug (1, funcname & ": target file " & SQ (target) & " not found");
+         return RESULT_FATAL;
+      end if;
 
       if problem then
          return RESULT_FATAL;
@@ -379,7 +394,7 @@ package body Core.Repo.Fetch is
                rc : Action_Result;
                fingerprints : Set_File_Contents.Vector;
             begin
-               rc := meta_extract_signature_fingerprints (fd, fingerprints);
+               rc := meta_extract_signature_fingerprints (fd, dest_fd, filename, fingerprints);
                if rc /= RESULT_OK then
                   Event.emit_error ("Repo SIG_FINGERPRINT extract failed");
                   return RESULT_FATAL;
