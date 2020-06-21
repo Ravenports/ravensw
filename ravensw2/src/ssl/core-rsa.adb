@@ -50,6 +50,8 @@ package body Core.RSA is
             if verified then
                return RESULT_OK;
             else
+               Event.emit_debug (2, "Failed to legacy verify target with key of " & key_file);
+               Event.emit_debug (2, SSL.get_error_string);
                return RESULT_FATAL;
             end if;
          end;
