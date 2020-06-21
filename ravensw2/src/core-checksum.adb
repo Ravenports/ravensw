@@ -469,13 +469,14 @@ package body Core.Checksum is
    --------------------------------------------------------------------
    function checksum_encode_hex (plain : String) return String
    is
-      result : String (1 .. plain'Length * 2);
+      result : String (1 .. plain'Length * 2 + 1);
       index  : Natural := 1;
    begin
       for x in plain'Range loop
          result (index .. index + 1) := Utilities.char2hex (plain (x));
          index := index + 2;
       end loop;
+      result (result'Last) := Character'Val (0);
 
       return result;
    end checksum_encode_hex;

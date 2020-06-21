@@ -128,7 +128,6 @@ package body SSL is
       c_buffer : aliased IC.char_array := (1 .. cert'Length => ' ');
       index    : IC.size_t := c_buffer'First;
       my_bio   : BIO_Access;
-      my_rsa   : aliased RSA_Access;
       result   : RSA_Access;
    begin
       for X in cert'Range loop
@@ -138,7 +137,7 @@ package body SSL is
       my_bio := create_new_memory_BIO (c_buffer);
 
       result := PEM_read_bio_RSA_PUBKEY (bp => my_bio,
-                                         x  => my_rsa'Access,
+                                         x  => null,
                                          cb => null,
                                          u  => System.Null_Address);
       free_BIO (my_bio);
