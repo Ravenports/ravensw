@@ -107,9 +107,16 @@ package body libarchive is
    --------------------------------------------------------------------
    --  entry_pathname
    --------------------------------------------------------------------
-   function entry_pathname (arcent : archive_entry_Access) return String is
+   function entry_pathname (arcent : archive_entry_Access) return String
+   is
+      use type ICS.chars_ptr;
+      pathname : ICS.chars_ptr := archive_entry_pathname (arcent);
    begin
-      return ICS.Value (archive_entry_pathname (arcent));
+      if pathname = ICS.Null_Ptr then
+         return "";
+      else
+         return ICS.Value (pathname);
+      end if;
    end entry_pathname;
 
 

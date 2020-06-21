@@ -134,7 +134,7 @@ package body Core.Repo.Fetch is
       end if;
 
       if not Unix.close_file (target_fd) then
-         Event.emit_error (funcname & ": failed to close archive fd");
+         Event.emit_error (funcname & ": failed to close target fd");
       end if;
       libarchive.read_close (arc);
       libarchive.read_free (arc);
