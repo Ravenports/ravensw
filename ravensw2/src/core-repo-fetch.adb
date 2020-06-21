@@ -680,6 +680,7 @@ package body Core.Repo.Fetch is
    is
       procedure silent_close (this_fd : Unix.File_Descriptor);
       procedure erase_metafile;
+      procedure close_sockets;
 
       dbdirfd : Unix.File_Descriptor;
       fd      : Unix.File_Descriptor;
@@ -701,6 +702,12 @@ package body Core.Repo.Fetch is
       begin
          res := Unix.unlink (dbdirfd, rel_filename, False);
       end erase_metafile;
+
+      procedure close_sockets is
+      begin
+         silent_close (fd);
+         silent_close (metafd);
+      end close_sockets;
 
    begin
       dbdirfd := Context.reveal_db_directory_fd;
@@ -735,14 +742,13 @@ package body Core.Repo.Fetch is
                rc := RESULT_FATAL;
             end if;
 
-            silent_close (fd);
             if rc = RESULT_OK then
                my_repo.meta := Repo.Meta.meta_load (metafd, rc);
-            end if;
-            if rc /= RESULT_OK then
+            else
                erase_metafile;
+               my_repo.meta := Repo.Meta.meta_set_default;
             end if;
-            silent_close (metafd);
+            close_sockets;
             return rc;
 
          when SIG_FINGERPRINT =>
@@ -758,9 +764,8 @@ package body Core.Repo.Fetch is
                                         dest_fd  => metafd,
                                         cert_set => sc) /= RESULT_OK
             then
-               silent_close (metafd);
                erase_metafile;
-               silent_close (fd);
+               close_sockets;
                return RESULT_FATAL;
             end if;
 
@@ -807,20 +812,22 @@ package body Core.Repo.Fetch is
                return RESULT_FATAL;
             end if;
 
-            if fingerprint_certs_verified (metafd, sc) /= RESULT_OK then
+            if fingerprint_certs_verified (metafd, sc) = RESULT_OK then
+               my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+               silent_close (metafd);
+               return rc;
+            else
+               my_repo.meta := Repo.Meta.meta_set_default;
                silent_close (metafd);
                erase_metafile;
                return RESULT_FATAL;
-            else
-               silent_close (metafd);
-               return RESULT_OK;
             end if;
 
          when SIG_NONE =>
 
-            silent_close (fd);
-            silent_close (metafd);
-            return RESULT_OK;
+            my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+            close_sockets;
+            return rc;
       end case;
 
    end fetch_meta;

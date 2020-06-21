@@ -10,6 +10,8 @@ package Core.Repo.Meta is
      (fd      : Unix.File_Descriptor;
       success : out Action_Result) return Repo_Metadata;
 
+   function meta_set_default return Repo_Metadata;
+
 private
 
    invalid_meta_version : constant A_Meta_Version := 0;
@@ -21,8 +23,6 @@ private
    function meta_parse
      (top     : access libucl.ucl_object_t;
       version : A_Meta_Version) return Repo_Metadata;
-
-   function meta_set_default return Repo_Metadata;
 
    function meta_parse_cert
      (obj : access constant libucl.ucl_object_t) return Meta_Certificate;
