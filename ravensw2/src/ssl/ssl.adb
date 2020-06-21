@@ -170,13 +170,13 @@ package body SSL is
       index    : Natural;
    begin
       index := hash'First;
-      for x in 1 .. m_length loop
+      for x in m'Range loop
          m (x) := IC.unsigned_char (Character'Pos (hash (index)));
          index := index + 1;
       end loop;
 
       index := signature'First;
-      for x in 1 .. siglen loop
+      for x in sigbuf'Range loop
          sigbuf (x) := IC.unsigned_char (Character'Pos (signature (index)));
          index := index + 1;
       end loop;
@@ -187,7 +187,7 @@ package body SSL is
                            sigbuf   => sigbuf (sigbuf'First)'Access,
                            siglen   => IC.unsigned (siglen),
                            RSA      => RSA_pointer);
-      return (res /= IC.int (0));
+      return (res = IC.int (1));
    end RSA_verified;
 
 
@@ -224,7 +224,7 @@ package body SSL is
                            sigbuf   => sigbuf (sigbuf'First)'Access,
                            siglen   => IC.unsigned (siglen),
                            RSA      => RSA_pointer);
-      return (res /= IC.int (0));
+      return (res = IC.int (1));
    end RSA_cert_verified;
 
 
