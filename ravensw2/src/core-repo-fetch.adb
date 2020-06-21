@@ -119,8 +119,8 @@ package body Core.Repo.Fetch is
                   acquired := True;
                else
                   Event.emit_error (funcname & ": read into target fd");
-                  exit;
                end if;
+               exit;
             end if;
          exception
             when libarchive.archive_error =>
@@ -152,12 +152,16 @@ package body Core.Repo.Fetch is
    --------------------------------------------------------------------
    function meta_extract_signature_pubkey
      (arc_fd    : Unix.File_Descriptor;
+      target_fd : Unix.File_Descriptor;
+      target    : String;
       retcode   : out Action_Result) return String
    is
       arc        : libarchive_h.archive_Access;
       arcent     : aliased libarchive_h.archive_entry_Access;
       data_final : Boolean;
       data_error : Boolean;
+      failure    : Boolean := False;
+      tgt_found  : Boolean := False;
       result     : Text;
       block_size : constant := 4096;
       funcname   : constant String := "meta_extract_signature_pubkey";
@@ -187,22 +191,30 @@ package body Core.Repo.Fetch is
       end;
 
       loop
+         exit when failure;
          exit when not libarchive.read_next_header
             (arc, arcent'Unchecked_Access, data_final, data_error);
 
          declare
             len : libarchive.arc64;
+            entry_file : constant String := libarchive.entry_pathname (arcent);
          begin
-            if libarchive.entry_pathname (arcent) = "signature" then
+            if entry_file = "signature" then
                len := libarchive.entry_size (arcent);
                result := SUS (libarchive.read_data (arc, len));
                retcode := RESULT_OK;
-               exit;
+            elsif entry_file = target then
+               if libarchive.read_data_into_file_descriptor (arc, target_fd) then
+                  tgt_found := True;
+               else
+                  Event.emit_error (funcname & ": read into target fd");
+                  failure := True;
+               end if;
             end if;
          exception
             when libarchive.archive_error =>
                Event.emit_error (funcname & ": read_data() " & libarchive.error_string (arc));
-               exit;
+               failure := True;
          end;
       end loop;
       if data_error then
@@ -210,6 +222,11 @@ package body Core.Repo.Fetch is
       end if;
       libarchive.read_close (arc);
       libarchive.read_free (arc);
+
+      if not tgt_found then
+         Event.emit_debug (1, funcname & ": target file " & SQ (target) & " not found");
+         retcode := RESULT_FATAL;
+      end if;
 
       return USS (result);
    end meta_extract_signature_pubkey;
@@ -338,7 +355,7 @@ package body Core.Repo.Fetch is
          when SIG_PUBKEY =>
             declare
                rc     : Action_Result;
-               pubkey : String := meta_extract_signature_pubkey (fd, rc);
+               pubkey : String := meta_extract_signature_pubkey (fd, dest_fd, filename, rc);
                cert   : Signature_Certificate;
             begin
                if rc = RESULT_OK then
@@ -744,11 +761,12 @@ package body Core.Repo.Fetch is
 
             if rc = RESULT_OK then
                my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+               close_sockets;
             else
+               close_sockets;
                erase_metafile;
                my_repo.meta := Repo.Meta.meta_set_default;
             end if;
-            close_sockets;
             return rc;
 
          when SIG_FINGERPRINT =>

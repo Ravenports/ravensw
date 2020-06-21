@@ -29,8 +29,11 @@ private
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor;
 
+   --  extracts a target file and returns a signature
    function meta_extract_signature_pubkey
      (arc_fd    : Unix.File_Descriptor;
+      target_fd : Unix.File_Descriptor;
+      target    : String;
       retcode   : out Action_Result) return String;
 
    package Set_File_Contents is new CON.Vectors
