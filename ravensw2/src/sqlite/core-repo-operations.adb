@@ -85,13 +85,13 @@ package body Core.Repo.Operations is
 
 
    --------------------------------------------------------------------
-   --  sqlite_filename
+   --  repo_database_file
    --------------------------------------------------------------------
-   function sqlite_filename (reponame : String) return String is
+   function repo_database_file (reponame : String) return String is
    begin
       --  TODO: Change extension back to ".sqlite" before releasing into production
-      return reponame & ".sqlite.dev";
-   end sqlite_filename;
+      return "repo-" & reponame & ".sqlite.dev";
+   end repo_database_file;
 
 
    --------------------------------------------------------------------
@@ -114,7 +114,7 @@ package body Core.Repo.Operations is
 
          fd         : Unix.File_Descriptor;
          filename   : constant String := meta_filename (reponame);
-         dbfile     : constant String := sqlite_filename ("repo-" & reponame);
+         dbfile     : constant String := repo_database_file (reponame);
          flags      : constant Unix.T_Open_Flags := (RDONLY => True, others => False);
          success    : Action_Result;
          tmp        : Repo_metadata;
@@ -369,7 +369,7 @@ package body Core.Repo.Operations is
    is
       procedure make_it_so (key : Text; Element : in out A_repo);
 
-      dbfile : constant String := sqlite_filename (reponame);
+      dbfile : constant String := repo_database_file (reponame);
       dir_fd : Unix.File_Descriptor;
       result : Action_Result := RESULT_FATAL;
 
@@ -464,7 +464,7 @@ package body Core.Repo.Operations is
    begin
       return Database.check_access (mode   => mode,
                                     dbdir  => db_dir,
-                                    dbname => sqlite_filename (reponame));
+                                    dbname => repo_database_file (reponame));
    end check_repository_access;
 
 
@@ -690,7 +690,7 @@ package body Core.Repo.Operations is
    is
       update_finish_sql : constant String := "DROP TABLE repo_update;";
       db_dir            : constant String := Config.configuration_value (Config.dbdir) & "/";
-      path_to_dbfile    : constant String := db_dir & sqlite_filename (reponame);
+      path_to_dbfile    : constant String := db_dir & repo_database_file (reponame);
       path_to_metafile  : constant String := db_dir & meta_filename (reponame);
       stamp             : Unix.T_epochtime := 0;
       got_meta          : Boolean := False;
