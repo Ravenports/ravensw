@@ -34,7 +34,7 @@ package SQLite is
 
    --  return True on success, stmt is output
    function prepare_sql
-     (pDB    : sqlite_h.sqlite3_Access;
+     (pDB    : not null sqlite_h.sqlite3_Access;
       sql    : String;
       stmt   : out thick_stmt) return Boolean;
 
@@ -95,30 +95,35 @@ package SQLite is
       data     : regex_h.regex_t_Access;
       callback : cb_regex);
 
-   function db_connected (db : sqlite_h.sqlite3_Access) return Boolean;
+   function db_connected
+     (db : sqlite_h.sqlite3_Access) return Boolean;
 
-   function get_last_error_message (db : sqlite_h.sqlite3_Access) return String;
+   function get_last_error_message
+     (db : not null sqlite_h.sqlite3_Access) return String;
 
-   function get_last_error_code (db : sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types;
+   function get_last_error_code
+     (db : not null sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types;
 
-   function invalid_regex (db : sqlite_h.sqlite3_Access) return Boolean;
+   function invalid_regex
+     (db : not null sqlite_h.sqlite3_Access) return Boolean;
 
    procedure rdb_syscall_overload;
    pragma Import (C, rdb_syscall_overload);
 
    function exec_sql
-     (db  : sqlite_h.sqlite3_Access;
+     (db  : not null sqlite_h.sqlite3_Access;
       sql : String;
       msg : out Text) return Boolean;
 
    function database_was_opened_readonly
-     (db     : sqlite_h.sqlite3_Access;
+     (db     : not null sqlite_h.sqlite3_Access;
       dbname : String) return Boolean;
 
-   function get_sql (pStmt : sqlite_h.sqlite3_stmt_Access) return String;
+   function get_sql
+     (pStmt : not null sqlite_h.sqlite3_stmt_Access) return String;
 
    procedure set_sqlite_profile
-     (db       : sqlite_h.sqlite3_Access;
+     (db       : not null sqlite_h.sqlite3_Access;
       callback : sqlite_h.cb_trace);
 
    function reset_statement
@@ -144,11 +149,15 @@ package SQLite is
    procedure clear_bindings
      (stmt         : in out thick_stmt);
 
-   function get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String;
+   function get_db_filename
+     (db  : not null sqlite_h.sqlite3_Access;
+      tag : String) return String;
 
-   function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer;
+   function get_number_of_changes
+     (db : not null sqlite_h.sqlite3_Access) return Integer;
 
-   function database_corrupt (db : sqlite_h.sqlite3_Access) return Boolean;
+   function database_corrupt
+     (db : not null sqlite_h.sqlite3_Access) return Boolean;
 
 private
 

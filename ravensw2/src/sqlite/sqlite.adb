@@ -26,9 +26,10 @@ package body SQLite is
    --------------------------------------------------------------------
    --  open_sqlite_database_readonly
    --------------------------------------------------------------------
-   function open_sqlite_database_readonly (path : String;
-                                           ppDB : not null access sqlite_h.sqlite3_Access)
-                                           return Boolean
+   function open_sqlite_database_readonly
+     (path : String;
+      ppDB : not null access sqlite_h.sqlite3_Access)
+      return Boolean
    is
       c_path  : ICS.chars_ptr;
       result  : IC.int;
@@ -48,9 +49,10 @@ package body SQLite is
    --------------------------------------------------------------------
    --  open_sqlite_database_readwrite
    --------------------------------------------------------------------
-   function open_sqlite_database_readwrite (path : String;
-                                            ppDB : not null access sqlite_h.sqlite3_Access)
-                                            return Boolean
+   function open_sqlite_database_readwrite
+     (path : String;
+      ppDB : not null access sqlite_h.sqlite3_Access)
+      return Boolean
    is
       c_path  : ICS.chars_ptr;
       result  : IC.int;
@@ -69,7 +71,7 @@ package body SQLite is
    --  prepare_sql
    --------------------------------------------------------------------
    function prepare_sql
-     (pDB    : sqlite_h.sqlite3_Access;
+     (pDB    : not null sqlite_h.sqlite3_Access;
       sql    : String;
       stmt   : out thick_stmt) return Boolean
    is
@@ -367,7 +369,8 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_last_error_message
    --------------------------------------------------------------------
-   function get_last_error_message (db : sqlite_h.sqlite3_Access) return String
+   function get_last_error_message
+     (db : not null sqlite_h.sqlite3_Access) return String
    is
       c_msg : ICS.chars_ptr;
    begin
@@ -379,7 +382,8 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_last_error_code
    --------------------------------------------------------------------
-   function get_last_error_code (db : sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types
+   function get_last_error_code
+     (db : not null sqlite_h.sqlite3_Access) return sqlite_h.enum_error_types
    is
       code : IC.int;
    begin
@@ -392,7 +396,9 @@ package body SQLite is
    --------------------------------------------------------------------
    --  invalid_regex
    --------------------------------------------------------------------
-   function invalid_regex (db : sqlite_h.sqlite3_Access) return Boolean is
+   function invalid_regex
+     (db : not null sqlite_h.sqlite3_Access) return Boolean
+   is
    begin
       return (get_last_error_message (db) = "Invalid regex");
    end invalid_regex;
@@ -401,7 +407,10 @@ package body SQLite is
    --------------------------------------------------------------------
    --  exec_sql
    --------------------------------------------------------------------
-   function exec_sql (db : sqlite_h.sqlite3_Access; sql : String; msg : out Text) return Boolean
+   function exec_sql
+     (db  : not null sqlite_h.sqlite3_Access;
+      sql : String;
+      msg : out Text) return Boolean
    is
       use type IC.int;
 
@@ -431,7 +440,7 @@ package body SQLite is
    --  database_was_opened_readonly
    --------------------------------------------------------------------
    function database_was_opened_readonly
-     (db     : sqlite_h.sqlite3_Access;
+     (db     : not null sqlite_h.sqlite3_Access;
       dbname : String) return Boolean
    is
       use type IC.int;
@@ -448,7 +457,7 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_sql
    --------------------------------------------------------------------
-   function get_sql (pStmt : sqlite_h.sqlite3_stmt_Access) return String
+   function get_sql (pStmt : not null sqlite_h.sqlite3_stmt_Access) return String
    is
       sql : ICS.chars_ptr;
    begin
@@ -461,7 +470,7 @@ package body SQLite is
    --  set_sqlite_profile
    --------------------------------------------------------------------
    procedure set_sqlite_profile
-     (db       : sqlite_h.sqlite3_Access;
+     (db       : not null sqlite_h.sqlite3_Access;
       callback : sqlite_h.cb_trace)
    is
       res : IC.int;
@@ -556,7 +565,9 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_db_filename
    --------------------------------------------------------------------
-   function get_db_filename (db : sqlite_h.sqlite3_Access; tag : String) return String
+   function get_db_filename
+     (db  : not null sqlite_h.sqlite3_Access;
+      tag : String) return String
    is
       zdbname : ICS.chars_ptr;
       res     : ICS.chars_ptr;
@@ -573,7 +584,8 @@ package body SQLite is
    --------------------------------------------------------------------
    --  get_number_of_changes
    --------------------------------------------------------------------
-   function get_number_of_changes (db : sqlite_h.sqlite3_Access) return Integer
+   function get_number_of_changes
+     (db : not null sqlite_h.sqlite3_Access) return Integer
    is
       res : IC.int;
    begin
@@ -585,7 +597,8 @@ package body SQLite is
    --------------------------------------------------------------------
    --  database_corrupt
    --------------------------------------------------------------------
-   function database_corrupt (db : sqlite_h.sqlite3_Access) return Boolean
+   function database_corrupt
+     (db : not null sqlite_h.sqlite3_Access) return Boolean
    is
       use type sqlite_h.enum_error_types;
    begin
