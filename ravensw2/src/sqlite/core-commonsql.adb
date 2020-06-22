@@ -18,7 +18,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  run_transaction
    --------------------------------------------------------------------
-   function run_transaction (db        : sqlite_h.sqlite3_Access;
+   function run_transaction (db        : not null sqlite_h.sqlite3_Access;
                              srcfile   : String;
                              func      : String;
                              query     : String;
@@ -56,7 +56,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  transaction_begin
    --------------------------------------------------------------------
-   function transaction_begin (db        : sqlite_h.sqlite3_Access;
+   function transaction_begin (db        : not null sqlite_h.sqlite3_Access;
                                srcfile   : String;
                                func      : String;
                                savepoint : String) return Boolean is
@@ -72,7 +72,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  transaction_commit
    --------------------------------------------------------------------
-   function transaction_commit (db        : sqlite_h.sqlite3_Access;
+   function transaction_commit (db        : not null sqlite_h.sqlite3_Access;
                                 srcfile   : String;
                                 func      : String;
                                 savepoint : String) return Boolean is
@@ -88,7 +88,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  transaction_rollback
    --------------------------------------------------------------------
-   function transaction_rollback (db        : sqlite_h.sqlite3_Access;
+   function transaction_rollback (db        : not null sqlite_h.sqlite3_Access;
                                   srcfile   : String;
                                   func      : String;
                                   savepoint : String) return Boolean
@@ -105,7 +105,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  ERROR_SQLITE
    --------------------------------------------------------------------
-   procedure ERROR_SQLITE (db      : sqlite_h.sqlite3_Access;
+   procedure ERROR_SQLITE (db      : not null sqlite_h.sqlite3_Access;
                            srcfile : String;
                            func    : String;
                            query   : String)
@@ -121,7 +121,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  get_pragma
    --------------------------------------------------------------------
-   function get_int64 (db      : sqlite_h.sqlite3_Access;
+   function get_int64 (db      : not null sqlite_h.sqlite3_Access;
                        srcfile : String;
                        func    : String;
                        sql     : String;
@@ -157,7 +157,9 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  exec
    --------------------------------------------------------------------
-   function exec (db : sqlite_h.sqlite3_Access; sql : String) return Action_Result
+   function exec
+     (db  : not null sqlite_h.sqlite3_Access;
+      sql : String) return Action_Result
    is
       msg : Text;
    begin
@@ -174,7 +176,7 @@ package body Core.CommonSQL is
    --------------------------------------------------------------------
    --  create_function
    --------------------------------------------------------------------
-   procedure create_function (db    : sqlite_h.sqlite3_Access;
+   procedure create_function (db    : not null sqlite_h.sqlite3_Access;
                               name  : String;
                               nargs : Natural;
                               cb    : sqlite_h.cb_xFuncStep)
