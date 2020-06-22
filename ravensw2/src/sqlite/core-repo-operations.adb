@@ -494,8 +494,10 @@ package body Core.Repo.Operations is
 
       declare
          db : sqlite_h.sqlite3_Access renames repositories.Element (repo_key).sqlite_handle;
+         msg : Text;
       begin
-         if CommonSQL.exec (db, check_sql) = RESULT_OK then
+         --  This command is expected to fail, so don't emit errors
+         if SQLite.exec_sql (db, check_sql, msg) then
             Event.emit_notice ("Previous update has not been finished, restart it");
             return RESULT_END;
          else
