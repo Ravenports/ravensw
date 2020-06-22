@@ -20,9 +20,9 @@ package Core.Repo is
 
    invalid_repo_name : exception;
 
-   type A_repo is private;
    type Repo_Metadata is private;
    type Repo_Stmt_Argument is private;
+   type Repo_Cursor is private;
    type A_mirror is (SRV, HTTP, NOMIRROR);
    type A_signature is (SIG_NONE, SIG_PUBKEY, SIG_FINGERPRINT);
    type A_repo_flag is (REPO_FLAGS_DEFAULT, REPO_FLAGS_LIMIT_IPV4, REPO_FLAGS_LIMIT_IPV6);
@@ -33,50 +33,54 @@ package Core.Repo is
       Index_Type   => Natural,
       "="          => SU."=");
 
+   --  Returns the private repository records given its reponame.  If that reponame
+   --  doesn't match a known repository, the invalid_repo_name exception is thrown
+   function get_repository (reponame : String) return Repo_Cursor;
+
    --  Return repo's url
-   function repo_url (repo : A_repo) return String;
+   function repo_url (repo : Repo_Cursor) return String;
 
    --  Return repo's name
-   function repo_name (repo : A_repo) return String;
+   function repo_name (repo : Repo_Cursor) return String;
 
    --  Return repo's public key
-   function repo_pubkey (repo : A_repo) return String;
+   function repo_pubkey (repo : Repo_Cursor) return String;
 
    --  Return repo's fingerprints
-   function repo_fingerprints (repo : A_repo) return String;
+   function repo_fingerprints (repo : Repo_Cursor) return String;
 
    --  Return number of trusted fingerprints
-   function count_of_trusted_fingerprints (repo : A_repo) return Natural;
+   function count_of_trusted_fingerprints (repo : Repo_Cursor) return Natural;
 
    --  Return repo's enabled as string (yes/no)
-   function repo_enabled (repo : A_repo) return String;
+   function repo_enabled (repo : Repo_Cursor) return String;
 
    --  Return repo's enabled state
-   function repo_enabled (repo : A_repo) return Boolean;
+   function repo_enabled (repo : Repo_Cursor) return Boolean;
 
    --  Return repo's mirror type as string
-   function repo_mirror_type (repo : A_repo) return String;
+   function repo_mirror_type (repo : Repo_Cursor) return String;
 
    --  Return repo's mirror type natively
-   function repo_mirror_type (repo : A_repo) return A_mirror;
+   function repo_mirror_type (repo : Repo_Cursor) return A_mirror;
 
    --  Return repo's signature type as string
-   function repo_signature_type (repo : A_repo) return String;
+   function repo_signature_type (repo : Repo_Cursor) return String;
 
    --  Return repo's signature type natively
-   function repo_signature_type (repo : A_repo) return A_signature;
+   function repo_signature_type (repo : Repo_Cursor) return A_signature;
 
    --  Return repo's priority as string
-   function repo_priority (repo : A_repo) return String;
+   function repo_priority (repo : Repo_Cursor) return String;
 
    --  Return repo's priority natively
-   function repo_priority (repo : A_repo) return A_priority;
+   function repo_priority (repo : Repo_Cursor) return A_priority;
 
    --  Return repo's IP protocol type is string
-   function repo_ipv_type (repo : A_repo) return String;
+   function repo_ipv_type (repo : Repo_Cursor) return String;
 
    --  Return repo's IP protocol type natively
-   function repo_ipv_type (repo : A_repo) return A_repo_flag;
+   function repo_ipv_type (repo : Repo_Cursor) return A_repo_flag;
 
    --  Return number of configured repositories that are active.
    function count_of_active_repositories return Natural;
@@ -92,10 +96,6 @@ package Core.Repo is
    --  The name of the first one.
    function first_active_repository return String;
 
-   --  Returns the private repository records given its reponame.  If that reponame
-   --  doesn't match a known repository, the invalid_repo_name exception is thrown
-   function get_repository (reponame : String) return A_repo;
-
    --  The repositories_order repo names are joined with unix line feeds and returned
    --  as a single string.  This are in order of priority
    function joined_priority_order return String;
@@ -107,13 +107,13 @@ package Core.Repo is
    function repository_exists (reponame : String) return Boolean;
 
    --  Return the metafile's digest format
-   function repo_meta_digest_format (repo : A_repo) return Checksum.A_Checksum_Type;
+   function repo_meta_digest_format (repo : Repo_Cursor) return Checksum.A_Checksum_Type;
 
    --  Returns the vector of environment settings
-   function repo_environment (repo : A_repo) return Pkgtypes.Package_NVPairs.Map;
+   function repo_environment (repo : Repo_Cursor) return Pkgtypes.Package_NVPairs.Map;
 
    --  Returns a copy of the ssh stream
-   function repo_ssh (repo : A_repo) return Libfetch.Fetch_Stream;
+   function repo_ssh (repo : Repo_Cursor) return Libfetch.Fetch_Stream;
 
 private
 
@@ -226,6 +226,11 @@ private
       Element_Type    => A_repo,
       Hash            => Strings.map_hash,
       Equivalent_Keys => Strings.equivalent);
+
+   type Repo_Cursor is
+      record
+         position : Repository_Crate.Cursor;
+      end record;
 
    type Priority_Identity is
       record

@@ -10,45 +10,45 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_url
    --------------------------------------------------------------------
-   function repo_url (repo : A_repo) return String is
+   function repo_url (repo : Repo_Cursor) return String is
    begin
-      return USS (repo.url);
+      return USS (Repository_Crate.Element (repo.position).url);
    end repo_url;
 
 
    --------------------------------------------------------------------
    --  repo_name
    --------------------------------------------------------------------
-   function repo_name (repo : A_repo) return String is
+   function repo_name (repo : Repo_Cursor) return String is
    begin
-      return USS (repo.name);
+      return USS (Repository_Crate.Element (repo.position).name);
    end repo_name;
 
 
    --------------------------------------------------------------------
    --  repo_pubkey
    --------------------------------------------------------------------
-   function repo_pubkey (repo : A_repo) return String is
+   function repo_pubkey (repo : Repo_Cursor) return String is
    begin
-      return USS (repo.pubkey);
+      return USS (Repository_Crate.Element (repo.position).pubkey);
    end repo_pubkey;
 
 
    --------------------------------------------------------------------
    --  repo_fingerprints
    --------------------------------------------------------------------
-   function repo_fingerprints (repo : A_repo) return String is
+   function repo_fingerprints (repo : Repo_Cursor) return String is
    begin
-      return USS (repo.fingerprints);
+      return USS (Repository_Crate.Element (repo.position).fingerprints);
    end repo_fingerprints;
 
 
    --------------------------------------------------------------------
    --  repo_enabled #1
    --------------------------------------------------------------------
-   function repo_enabled (repo : A_repo) return String is
+   function repo_enabled (repo : Repo_Cursor) return String is
    begin
-      case repo.enable is
+      case Repository_Crate.Element (repo.position).enable is
          when False => return "no";
          when True  => return "yes";
       end case;
@@ -58,18 +58,18 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_enabled #2
    --------------------------------------------------------------------
-   function repo_enabled (repo : A_repo) return Boolean is
+   function repo_enabled (repo : Repo_Cursor) return Boolean is
    begin
-      return repo.enable;
+      return Repository_Crate.Element (repo.position).enable;
    end repo_enabled;
 
 
    --------------------------------------------------------------------
    --  repo_mirror_type #1
    --------------------------------------------------------------------
-   function repo_mirror_type (repo : A_repo) return String is
+   function repo_mirror_type (repo : Repo_Cursor) return String is
    begin
-      case repo.mirror_type is
+      case Repository_Crate.Element (repo.position).mirror_type is
          when SRV      => return "SRV";
          when HTTP     => return "HTTP";
          when NOMIRROR => return "NONE";
@@ -80,18 +80,18 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_mirror_type #2
    --------------------------------------------------------------------
-   function repo_mirror_type (repo : A_repo) return A_mirror is
+   function repo_mirror_type (repo : Repo_Cursor) return A_mirror is
    begin
-      return repo.mirror_type;
+      return Repository_Crate.Element (repo.position).mirror_type;
    end repo_mirror_type;
 
 
    --------------------------------------------------------------------
    --  repo_signature_type #1
    --------------------------------------------------------------------
-   function repo_signature_type (repo : A_repo) return String is
+   function repo_signature_type (repo : Repo_Cursor) return String is
    begin
-      case repo.signature_type is
+      case Repository_Crate.Element (repo.position).signature_type is
          when SIG_PUBKEY      => return "PUBKEY";
          when SIG_FINGERPRINT => return "FINGERPRINTS";
          when SIG_NONE        => return "NONE";
@@ -102,36 +102,36 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_signature_type #2
    --------------------------------------------------------------------
-   function repo_signature_type (repo : A_repo) return A_signature is
+   function repo_signature_type (repo : Repo_Cursor) return A_signature is
    begin
-      return repo.signature_type;
+      return Repository_Crate.Element (repo.position).signature_type;
    end repo_signature_type;
 
 
    --------------------------------------------------------------------
    --  repo_priority #1
    --------------------------------------------------------------------
-   function repo_priority (repo : A_repo) return String is
+   function repo_priority (repo : Repo_Cursor) return String is
    begin
-      return int2str (Integer (repo.priority));
+      return int2str (Integer (Repository_Crate.Element (repo.position).priority));
    end repo_priority;
 
 
    --------------------------------------------------------------------
    --  repo_priority #2
    --------------------------------------------------------------------
-   function repo_priority (repo : A_repo) return A_priority is
+   function repo_priority (repo : Repo_Cursor) return A_priority is
    begin
-      return repo.priority;
+      return Repository_Crate.Element (repo.position).priority;
    end repo_priority;
 
 
    --------------------------------------------------------------------
    --  repo_ipv_type #1
    --------------------------------------------------------------------
-   function repo_ipv_type (repo : A_repo) return String is
+   function repo_ipv_type (repo : Repo_Cursor) return String is
    begin
-      case repo.flags is
+      case Repository_Crate.Element (repo.position).flags is
          when REPO_FLAGS_LIMIT_IPV4 => return "4";
          when REPO_FLAGS_LIMIT_IPV6 => return "6";
          when REPO_FLAGS_DEFAULT    => return "0";
@@ -142,9 +142,9 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_ipv_type #2
    --------------------------------------------------------------------
-   function repo_ipv_type (repo : A_repo) return A_repo_flag is
+   function repo_ipv_type (repo : Repo_Cursor) return A_repo_flag is
    begin
-      return repo.flags;
+      return Repository_Crate.Element (repo.position).flags;
    end repo_ipv_type;
 
 
@@ -247,12 +247,12 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  get_repository
    --------------------------------------------------------------------
-   function get_repository (reponame : String) return A_repo
+   function get_repository (reponame : String) return Repo_Cursor
    is
       reponame_txt : Text := SUS (reponame);
    begin
       if repositories.Contains (reponame_txt) then
-         return repositories.Element (reponame_txt);
+         return (position => repositories.Find (reponame_txt));
       else
          raise invalid_repo_name;
       end if;
@@ -320,9 +320,9 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  count_of_trusted_fingerprints
    --------------------------------------------------------------------
-   function count_of_trusted_fingerprints (repo : A_repo) return Natural is
+   function count_of_trusted_fingerprints (repo : Repo_Cursor) return Natural is
    begin
-      return Natural (repo.trusted_fprint.Length);
+      return Natural (Repository_Crate.Element (repo.position).trusted_fprint.Length);
    end count_of_trusted_fingerprints;
 
 
@@ -338,27 +338,27 @@ package body Core.Repo is
    --------------------------------------------------------------------
    --  repo_meta_digest_format
    --------------------------------------------------------------------
-   function repo_meta_digest_format (repo : A_repo) return Checksum.A_Checksum_Type is
+   function repo_meta_digest_format (repo : Repo_Cursor) return Checksum.A_Checksum_Type is
    begin
-      return repo.meta.digest_format;
+      return Repository_Crate.Element (repo.position).meta.digest_format;
    end repo_meta_digest_format;
 
 
    --------------------------------------------------------------------
    --  repo_environment
    --------------------------------------------------------------------
-   function repo_environment (repo : A_repo) return Pkgtypes.Package_NVPairs.Map is
+   function repo_environment (repo : Repo_Cursor) return Pkgtypes.Package_NVPairs.Map is
    begin
-      return repo.env;
+      return Repository_Crate.Element (repo.position).env;
    end repo_environment;
 
 
    --------------------------------------------------------------------
    --  repo_ssh
    --------------------------------------------------------------------
-   function repo_ssh (repo : A_repo) return Libfetch.Fetch_Stream is
+   function repo_ssh (repo : Repo_Cursor) return Libfetch.Fetch_Stream is
    begin
-      return repo.ssh;
+      return Repository_Crate.Element (repo.position).ssh;
    end repo_ssh;
 
 end Core.Repo;

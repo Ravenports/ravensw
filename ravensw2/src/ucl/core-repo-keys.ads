@@ -6,7 +6,7 @@ with libucl;
 
 package Core.Repo.Keys is
 
-   function load_fingerprints (my_repo : in out A_repo) return Action_Result;
+   function load_fingerprints (my_repo : Repo_Cursor) return Action_Result;
 
    function extract_public_key (metafd : Unix.File_Descriptor;
                                 name   : String;
@@ -20,7 +20,7 @@ private
    function parse_fingerprint (obj : access libucl.ucl_object_t) return A_fingerprint;
 
    function load_fingerprints_by_type
-     (my_repo  : in out A_repo;
+     (my_repo  : Repo_Cursor;
       validity : Cert_Validity)
       return Action_Result;
 

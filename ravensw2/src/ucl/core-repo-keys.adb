@@ -102,7 +102,7 @@ package body Core.Repo.Keys is
    --------------------------------------------------------------------
    --  load_fingerprints
    --------------------------------------------------------------------
-   function load_fingerprints (my_repo : in out A_repo) return Action_Result is
+   function load_fingerprints (my_repo : Repo_Cursor) return Action_Result is
    begin
       if load_fingerprints_by_type (my_repo, trusted) /= RESULT_OK then
          Event.emit_error ("Error loading trusted certificates");
@@ -126,7 +126,7 @@ package body Core.Repo.Keys is
    --  load_fingerprints_by_type
    --------------------------------------------------------------------
    function load_fingerprints_by_type
-     (my_repo  : in out A_repo;
+     (my_repo  : Repo_Cursor;
       validity : Cert_Validity)
       return Action_Result
    is
@@ -164,8 +164,21 @@ package body Core.Repo.Keys is
          while DIR.More_Entries (Inner_Search) loop
             DIR.Get_Next_Entry (Search => Inner_Search, Directory_Entry => Inner_Dirent);
             declare
+               procedure add_trusted_key (Key : text; Element : in out A_repo);
+               procedure add_revoked_key (Key : text; Element : in out A_repo);
+
                dsn : constant String := DIR.Simple_Name (Inner_Dirent);
                fingerprint : A_fingerprint;
+
+               procedure add_trusted_key (Key : text; Element : in out A_repo) is
+               begin
+                  Element.trusted_fprint.Append (fingerprint);
+               end add_trusted_key;
+
+               procedure add_revoked_key (Key : text; Element : in out A_repo) is
+               begin
+                  Element.revoked_fprint.Append (fingerprint);
+               end add_revoked_key;
             begin
                if dsn /= "." and then dsn /= ".." then
                   fingerprint := load_fingerprint (path, dsn);
@@ -175,8 +188,10 @@ package body Core.Repo.Keys is
                      null;
                   else
                      case validity is
-                        when trusted => my_repo.trusted_fprint.Append (fingerprint);
-                        when revoked => my_repo.revoked_fprint.Append (fingerprint);
+                        when trusted =>
+                           repositories.Update_Element (my_repo.position, add_trusted_key'Access);
+                        when revoked =>
+                           repositories.Update_Element (my_repo.position, add_revoked_key'Access);
                      end case;
                   end if;
                end if;

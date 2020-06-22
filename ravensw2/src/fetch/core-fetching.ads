@@ -7,7 +7,7 @@ with Core.Repo;
 package Core.Fetching is
 
    function fetch_file_to_fd
-     (my_repo   : in out Repo.A_repo;
+     (my_repo   : Repo.Repo_Cursor;
       file_url  : String;
       dest_fd   : Unix.File_Descriptor;
       timestamp : access Unix.T_epochtime;

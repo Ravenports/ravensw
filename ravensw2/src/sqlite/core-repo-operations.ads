@@ -54,7 +54,7 @@ private
       force    : Boolean) return Action_Result;
 
    function add_from_manifest
-     (my_repo  : A_repo;
+     (my_repo  : Repo_Cursor;
       manifest : String) return Action_Result;
 
    --  build up prepared statement arguments
@@ -65,7 +65,7 @@ private
 
    function add_package_to_repository
      (pkg_access : Pkgtypes.A_Package_Access;
-      my_repo    : A_repo;
+      my_repo    : Repo_Cursor;
       pkg_path   : String;
       forced     : Boolean) return Action_Result;
 

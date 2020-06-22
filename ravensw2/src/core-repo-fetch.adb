@@ -27,7 +27,7 @@ package body Core.Repo.Fetch is
    --  fetch_remote_tmp
    --------------------------------------------------------------------
    function fetch_remote_tmp
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       filename  : String;
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor
@@ -337,7 +337,7 @@ package body Core.Repo.Fetch is
    --  archive_extract_archive
    --------------------------------------------------------------------
    function archive_extract_archive
-     (my_repo  : in out A_repo;
+     (my_repo  : Repo_Cursor;
       fd       : Unix.File_Descriptor;
       filename : String;
       dest_fd  : Unix.File_Descriptor;
@@ -498,7 +498,7 @@ package body Core.Repo.Fetch is
    --  check_fingerprints
    --------------------------------------------------------------------
    function check_fingerprints
-     (my_repo  : in out A_repo;
+     (my_repo  : Repo_Cursor;
       cert_set : in out Set_Signature_Certificates.Vector) return Boolean
    is
       procedure scan_certificate (position : Set_Signature_Certificates.Cursor);
@@ -544,7 +544,8 @@ package body Core.Repo.Fetch is
                   aborted := True;
                else
                   --  Check meta keys
-                  my_repo.meta.cert_set.Iterate (scan_meta_key'Access);
+                  Repository_Crate.Element
+                    (my_repo.position).meta.cert_set.Iterate (scan_meta_key'Access);
                   if mk_found then
                      cert_set.Update_Element (position, update_cert'Access);
                   else
@@ -580,13 +581,15 @@ package body Core.Repo.Fetch is
                      end if;
                   end scan_trusted;
                begin
-                  my_repo.revoked_fprint.Iterate (scan_revoked'Access);
+                  Repository_Crate.Element
+                    (my_repo.position).revoked_fprint.Iterate (scan_revoked'Access);
                   if revoked then
                      Event.emit_error ("At least one of the certificates has been revoked");
                      aborted := True;
                   end if;
                   if not aborted then
-                     my_repo.trusted_fprint.Iterate (scan_trusted'Access);
+                     Repository_Crate.Element
+                       (my_repo.position).trusted_fprint.Iterate (scan_trusted'Access);
                   end if;
                end;
             end if;
@@ -598,7 +601,7 @@ package body Core.Repo.Fetch is
       end if;
 
       --  load fingerprints
-      if my_repo.trusted_fprint.Is_Empty then
+      if Repository_Crate.Element (my_repo.position).trusted_fprint.Is_Empty then
          if Repo.Keys.load_fingerprints (my_repo) /= RESULT_OK then
             return False;
          end if;
@@ -658,7 +661,7 @@ package body Core.Repo.Fetch is
    --  archive_extract_check_archive
    --------------------------------------------------------------------
    function archive_extract_check_archive
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       fd        : Unix.File_Descriptor;
       filename  : String;
       dest_fd   : Unix.File_Descriptor) return Action_Result
@@ -678,26 +681,31 @@ package body Core.Repo.Fetch is
 
       case repo_signature_type (my_repo) is
          when SIG_PUBKEY =>
-            if IsBlank (my_repo.pubkey) then
-               Event.emit_error ("No PUBKEY defined. Removing repository.");
-               return RESULT_FATAL;
-            end if;
-            if sc.Is_Empty then
-               Event.emit_error
-                 ("No signature found in the repository. Can not validate against "
-                  & USS (my_repo.pubkey) & " key.");
-               return RESULT_FATAL;
-            end if;
-            --  There has to be only one certificate in the vector;
-            if Core.RSA.deprecated_rsa_verify (key_file  => USS (my_repo.pubkey),
-                                               signature => USS (sc.First_Element.sc_sign),
-                                               fd        => dest_fd) = RESULT_OK
-            then
-               return RESULT_OK;
-            else
-               Event.emit_error ("Invalid signature, removing repository.");
-               return RESULT_FATAL;
-            end if;
+            declare
+               public_key : constant String :=
+                 USS (Repository_Crate.Element (my_repo.position).pubkey);
+            begin
+               if IsBlank (public_key) then
+                  Event.emit_error ("No PUBKEY defined. Removing repository.");
+                  return RESULT_FATAL;
+               end if;
+               if sc.Is_Empty then
+                  Event.emit_error
+                    ("No signature found in the repository. Can not validate against "
+                     & public_key & " key.");
+                  return RESULT_FATAL;
+               end if;
+               --  There has to be only one certificate in the vector;
+               if Core.RSA.deprecated_rsa_verify (key_file  => public_key,
+                                                  signature => USS (sc.First_Element.sc_sign),
+                                                  fd        => dest_fd) = RESULT_OK
+               then
+                  return RESULT_OK;
+               else
+                  Event.emit_error ("Invalid signature, removing repository.");
+                  return RESULT_FATAL;
+               end if;
+            end;
          when SIG_FINGERPRINT =>
             return fingerprint_certs_verified (dest_fd, sc);
          when SIG_NONE =>
@@ -710,18 +718,20 @@ package body Core.Repo.Fetch is
    --  fetch_meta
    --------------------------------------------------------------------
    function fetch_meta
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       timestamp : access Unix.T_epochtime) return Action_Result
    is
       procedure silent_close (this_fd : Unix.File_Descriptor);
       procedure erase_metafile;
       procedure close_sockets;
+      procedure set_metadata (Key : text; Element : in out A_repo);
 
       dbdirfd : Unix.File_Descriptor;
       fd      : Unix.File_Descriptor;
       metafd  : Unix.File_Descriptor;
       rc      : Action_Result;
       sc      : Set_Signature_Certificates.Vector;
+      local   : Repo_metadata := Repo.Meta.meta_set_default;
 
       procedure silent_close (this_fd : Unix.File_Descriptor)
       is
@@ -743,6 +753,11 @@ package body Core.Repo.Fetch is
          silent_close (fd);
          silent_close (metafd);
       end close_sockets;
+
+      procedure set_metadata (Key : text; Element : in out A_repo) is
+      begin
+         Element.meta := local;
+      end set_metadata;
 
    begin
       dbdirfd := Context.reveal_db_directory_fd;
@@ -775,19 +790,17 @@ package body Core.Repo.Fetch is
             if archive_extract_check_archive (my_repo  => my_repo,
                                               fd       => fd,
                                               filename => "meta",
-                                              dest_fd  => metafd) /= RESULT_OK
+                                              dest_fd  => metafd) = RESULT_OK
             then
-               rc := RESULT_FATAL;
-            end if;
-
-            if rc = RESULT_OK then
-               my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+               local := Repo.Meta.meta_load (metafd, rc);
                close_sockets;
             else
+               --  local is default
                close_sockets;
                erase_metafile;
-               my_repo.meta := Repo.Meta.meta_set_default;
+               rc := RESULT_FATAL;
             end if;
+            repositories.Update_Element (my_repo.position, set_metadata'Access);
             return rc;
 
          when SIG_FINGERPRINT =>
@@ -811,7 +824,7 @@ package body Core.Repo.Fetch is
             silent_close (fd);
 
             --  load fingerprints
-            if my_repo.trusted_fprint.Is_Empty then
+            if Repository_Crate.Element (my_repo.position).trusted_fprint.Is_Empty then
                if Repo.Keys.load_fingerprints (my_repo) /= RESULT_OK then
                   silent_close (metafd);
                   erase_metafile;
@@ -852,20 +865,22 @@ package body Core.Repo.Fetch is
             end if;
 
             if fingerprint_certs_verified (metafd, sc) = RESULT_OK then
-               my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+               local := Repo.Meta.meta_load (metafd, rc);
                silent_close (metafd);
+               repositories.Update_Element (my_repo.position, set_metadata'Access);
                return rc;
             else
-               my_repo.meta := Repo.Meta.meta_set_default;
                silent_close (metafd);
                erase_metafile;
+               repositories.Update_Element (my_repo.position, set_metadata'Access);  -- default
                return RESULT_FATAL;
             end if;
 
          when SIG_NONE =>
 
-            my_repo.meta := Repo.Meta.meta_load (metafd, rc);
+            local := Repo.Meta.meta_load (metafd, rc);
             close_sockets;
+            repositories.Update_Element (my_repo.position, set_metadata'Access);
             return rc;
       end case;
 
@@ -945,7 +960,7 @@ package body Core.Repo.Fetch is
    --  fetch_remote_extract_to_temporary_file
    --------------------------------------------------------------------
    function fetch_remote_extract_to_temporary_file
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       filename  : String;
       innerfile : String;
       timestamp : access Unix.T_epochtime;

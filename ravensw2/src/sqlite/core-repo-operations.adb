@@ -208,7 +208,7 @@ package body Core.Repo.Operations is
 
          declare
             res_int64 : int64;
-            url       : constant String := repo_url (repository);
+            url       : constant String := USS (repository.url);
             sql       : constant String := "SELECT count(key) from repodata " &
                         "WHERE key = " & SQ ("packagesite") & " and value = " & SQ (url);
          begin
@@ -517,7 +517,7 @@ package body Core.Repo.Operations is
       force    : Boolean) return Action_Result
    is
       local_time : aliased Unix.T_epochtime;
-      my_repo    : A_repo := get_repository (reponame);
+      my_repo    : Repo_Cursor := get_repository (reponame);
       file_size  : int64;
       rc         : Action_Result := RESULT_FATAL;
       skip_rest  : Boolean := False;
@@ -545,17 +545,18 @@ package body Core.Repo.Operations is
       --
       local_time := mtime;
       declare
+         R       : A_repo renames Repository_Crate.Element (my_repo.position);
+
          tmp_manifest : String :=
            Repo.Fetch.fetch_remote_extract_to_temporary_file
              (my_repo   => my_repo,
-              filename  => USS (my_repo.meta.manifests_archive),
-              innerfile => USS (my_repo.meta.manifests),
+              filename  => USS (R.meta.manifests_archive),
+              innerfile => USS (R.meta.manifests),
               timestamp => local_time'Access,
               file_size => file_size,
               retcode   => rc);
 
          in_trans : Boolean := False;
-         db       : sqlite_h.sqlite3_Access renames my_repo.sqlite_handle;
          func     : constant String := "update_proceed";
          backup   : constant String := filepath & "-ravtmp";
          CIP      : constant String := "CREATE INDEX packages";
@@ -583,14 +584,14 @@ package body Core.Repo.Operations is
             Event.emit_progress_start ("Processing entries");
 
             --  200MB should be enough for mmap
-            silentrc := CommonSQL.exec (db, "PRAGMA mmap_size = 209715200;");
-            silentrc := CommonSQL.exec (db, "PRAGMA foreign_keys = OFF;");
-            silentrc := CommonSQL.exec (db, "PRAGMA synchronous = OFF;");
+            silentrc := CommonSQL.exec (R.sqlite_handle, "PRAGMA mmap_size = 209715200;");
+            silentrc := CommonSQL.exec (R.sqlite_handle, "PRAGMA foreign_keys = OFF;");
+            silentrc := CommonSQL.exec (R.sqlite_handle, "PRAGMA synchronous = OFF;");
             --  FreeBSD set PRAGMA page_size = getpagesize().
             --  It's unclear what the benefit is over the default 4Kb page size.
             --  Omit this PRAGMA for now
 
-            if CommonSQL.transaction_begin (db, internal_srcfile, func, "REPO") then
+            if CommonSQL.transaction_begin (R.sqlite_handle, internal_srcfile, func, "REPO") then
                in_trans := True;
             else
                skip_rest := True;
@@ -633,7 +634,8 @@ package body Core.Repo.Operations is
             end;
             if rc = RESULT_OK then
                silentrc := CommonSQL.exec
-                 (db, CIP & "_origin ON packages(origin COLLATE NOCASE);"
+                 (R.sqlite_handle,
+                    CIP & "_origin ON packages(origin COLLATE NOCASE);"
                   & CIP & "_name ON packages(name COLLATE NOCASE);"
                   & CIP & "_uid_nocase ON packages(name COLLATE NOCASE, origin COLLATE NOCASE);"
                   & CIP & "_version_nocase ON packages(name COLLATE NOCASE, version);"
@@ -649,11 +651,15 @@ package body Core.Repo.Operations is
          --
          if in_trans then
             if rc /= RESULT_OK then
-               if not CommonSQL.transaction_rollback (db, internal_srcfile, func, "REPO") then
+               if not CommonSQL.transaction_rollback
+                 (R.sqlite_handle, internal_srcfile, func, "REPO")
+               then
                   null;
                end if;
             else
-               if CommonSQL.transaction_commit (db, internal_srcfile, func, "REPO") then
+               if CommonSQL.transaction_commit
+                 (R.sqlite_handle, internal_srcfile, func, "REPO")
+               then
                   rc := RESULT_FATAL;
                end if;
             end if;
@@ -697,6 +703,8 @@ package body Core.Repo.Operations is
       skip_next_step    : Boolean := False;
       res               : Action_Result;
       local_force       : Boolean := force;
+      my_repo           : Repo_Cursor := get_repository (reponame);
+      R                 : A_repo renames Repository_Crate.Element (my_repo.position);
    begin
       if not SQLite.initialize_sqlite then
          return RESULT_ENODB;
@@ -749,8 +757,7 @@ package body Core.Repo.Operations is
 
       if not skip_next_step then
          if res = RESULT_OK then
-            res := CommonSQL.exec (Repo.get_repository (reponame).sqlite_handle,
-                                   update_finish_sql);
+            res := CommonSQL.exec (R.sqlite_handle, update_finish_sql);
          end if;
       end if;
 
@@ -869,7 +876,7 @@ package body Core.Repo.Operations is
    --  add_from_manifest
    --------------------------------------------------------------------
    function add_from_manifest
-     (my_repo  : A_repo;
+     (my_repo  : Repo_Cursor;
       manifest : String) return Action_Result
    is
       my_pkg : aliased Pkgtypes.A_Package;
@@ -913,7 +920,7 @@ package body Core.Repo.Operations is
    --------------------------------------------------------------------
    function add_package_to_repository
      (pkg_access : Pkgtypes.A_Package_Access;
-      my_repo    : A_repo;
+      my_repo    : Repo_Cursor;
       pkg_path   : String;
       forced     : Boolean) return Action_Result
    is
@@ -935,6 +942,7 @@ package body Core.Repo.Operations is
 
       rc      : Action_Result;
       problem : Boolean := False;
+      R       : A_repo renames Repository_Crate.Element (my_repo.position);
 
       function get_arch return String is
       begin
@@ -948,7 +956,7 @@ package body Core.Repo.Operations is
       procedure spit_out_error (index : ROS.repository_stmt_index; extra : String := "") is
       begin
          CommonSQL.ERROR_SQLITE
-           (my_repo.sqlite_handle,
+           (R.sqlite_handle,
             internal_srcfile,
             "add_package_to_repository",
             "Prep stmt " & index'Img & extra);
@@ -987,7 +995,7 @@ package body Core.Repo.Operations is
             rc := RESULT_OK;
             return True;
          else
-            sqerr := SQLite.get_last_error_code (my_repo.sqlite_handle);
+            sqerr := SQLite.get_last_error_code (R.sqlite_handle);
             case sqerr is
                when sqlite_h.SQLITE_CONSTRAINT =>
                   Event.emit_debug (3, "Deleting conflicting package " & USS (pkg_access.origin)
@@ -1141,7 +1149,7 @@ package body Core.Repo.Operations is
          end case;
       end loop;
       pkg_access.id :=
-        Pkgtypes.Package_ID (sqlite_h.sqlite3_last_insert_rowid (my_repo.sqlite_handle));
+        Pkgtypes.Package_ID (sqlite_h.sqlite3_last_insert_rowid (R.sqlite_handle));
 
       pkg_access.depends.Iterate (insert_dependency'Access);
       pkg_access.categories.Iterate (insert_category'Access);

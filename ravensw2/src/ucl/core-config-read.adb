@@ -483,7 +483,7 @@ package body Core.Config.Read is
       for n in 1 .. num_repos loop
          declare
             reponame : String := specific_field (list_of_loaded_repos, n, LAT.LF & "");
-            R        : Repo.A_repo := Repo.get_repository (reponame);
+            R        : Repo.Repo_Cursor := Repo.get_repository (reponame);
             url      : String := Repo.repo_url (R);
             fatal    : Boolean := True;
             scheme   : constant String := part_1 (url, delim);

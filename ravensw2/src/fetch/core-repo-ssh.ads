@@ -26,26 +26,26 @@ package Core.Repo.SSH is
       end record;
 
    function start_ssh
-     (my_repo        : in out A_repo;
+     (my_repo        : Repo_Cursor;
       url_components : Libfetch.URL_Component_Set;
       size           : out int64) return Action_Result;
 
    --  Sets SRV mirrors from the given url
    --  If none found, zero is returned -- otherwise 1 is returned
    function set_http_mirrors
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       url       : String) return Natural;
 
    function get_http_mirror
-     (my_repo  : A_repo;
+     (my_repo  : Repo_Cursor;
       index    : Natural) return Mirror_Host;
 
    function get_srv_information
-     (my_repo  : A_repo;
+     (my_repo  : Repo_Cursor;
       index    : Natural) return SRV_Host;
 
-   function total_http_mirrors (my_repo : A_repo) return Natural;
-   function total_srv_records (my_repo : A_repo) return Natural;
+   function total_http_mirrors (my_repo : Repo_Cursor) return Natural;
+   function total_srv_records (my_repo : Repo_Cursor) return Natural;
 
 private
 
@@ -59,7 +59,6 @@ private
       buffer : System.Address;
       buflen : IC.size_t) return IC.Extensions.long_long;
    pragma Convention (C, ssh_write);
-
    function ssh_read
      (data   : System.Address;
       buffer : System.Address;
@@ -67,10 +66,12 @@ private
    pragma Convention (C, ssh_read);
 
    function compose_ssh_command
-     (my_repo        : in out A_repo;
+     (my_repo        : Repo_Cursor;
       url_components : Libfetch.URL_Component_Set) return String;
 
    function convert_to_mirror (url : String) return A_http_mirror;
 
+   procedure close_ssh (Key : text; Element : in out A_repo);
+   procedure fork_ssh  (Key : text; Element : in out A_repo);
 
 end Core.Repo.SSH;

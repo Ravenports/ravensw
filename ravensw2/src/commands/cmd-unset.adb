@@ -198,7 +198,7 @@ package body Cmd.Unset is
          for x in 1 .. num_repos loop
             declare
                reponame : constant String := specific_field (joined_list, x, LAT.LF & "");
-               R        : Repo.A_repo := repo.get_repository (reponame);
+               R        : Repo.Repo_Cursor := repo.get_repository (reponame);
             begin
                TIO.Put_Line ("  " & Repo.repo_name (R) & ": {");
                print_extconfig ("url", Repo.repo_url (R), True);

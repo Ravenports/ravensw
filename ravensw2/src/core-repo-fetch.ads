@@ -8,14 +8,14 @@ with Core.Unix;
 package Core.Repo.Fetch is
 
    function fetch_meta
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       timestamp : access Unix.T_epochtime) return Action_Result;
 
    --  Temporary file produced must be deleted by calling routine
    --  filename is basename of archive (e.g. "packagesite" or "packagesite.tzst"
    --  innerfile is the full file name of the file to be extracted (e.g. packagesite.yaml)
    function fetch_remote_extract_to_temporary_file
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       filename  : String;
       innerfile : String;
       timestamp : access Unix.T_epochtime;
@@ -27,7 +27,7 @@ private
    package CON renames Ada.Containers;
 
    function fetch_remote_tmp
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       filename  : String;
       timestamp : access Unix.T_epochtime;
       retcode   : out Action_Result) return Unix.File_Descriptor;
@@ -71,7 +71,7 @@ private
       Index_Type   => Natural);
 
    function archive_extract_archive
-     (my_repo  : in out A_repo;
+     (my_repo  : Repo_Cursor;
       fd       : Unix.File_Descriptor;
       filename : String;
       dest_fd  : Unix.File_Descriptor;
@@ -82,11 +82,11 @@ private
       signature      : out Signature_Certificate) return Action_Result;
 
    function check_fingerprints
-     (my_repo  : in out A_repo;
+     (my_repo  : Repo_Cursor;
       cert_set : in out Set_Signature_Certificates.Vector) return Boolean;
 
    function archive_extract_check_archive
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       fd        : Unix.File_Descriptor;
       filename  : String;
       dest_fd   : Unix.File_Descriptor) return Action_Result;

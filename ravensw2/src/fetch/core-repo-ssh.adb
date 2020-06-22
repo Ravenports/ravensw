@@ -219,37 +219,53 @@ package body Core.Repo.SSH is
    --  start_ssh
    --------------------------------------------------------------------
    function start_ssh
-     (my_repo        : in out A_repo;
+     (my_repo        : Repo_Cursor;
       url_components : Libfetch.URL_Component_Set;
       size           : out int64) return Action_Result
    is
       ssh_cookie_functions : fetch_h.es_cookie_io_functions_t;
+      R : A_repo renames Repository_Crate.Element (my_repo.position);
    begin
       ssh_cookie_functions.func_read  := ssh_read'Access;
       ssh_cookie_functions.func_write := ssh_write'Access;
       ssh_cookie_functions.func_close := ssh_close'Access;
 
-      if not Libfetch.stream_is_active (my_repo.ssh) then
+      if not Libfetch.stream_is_active (R.ssh) then
          declare
+            procedure open_ssh (Key : text; Element : in out A_repo);
+
             use type Unix.Process_ID;
             use type Unix.File_Descriptor;
 
             sshin   : aliased Unix.Two_Sockets;
             sshout  : aliased Unix.Two_Sockets;
             ssh_cmd : constant String := compose_ssh_command (my_repo, url_components);
+
+            --------------------------------------------------------------------
+            --  open_ssh
+            --------------------------------------------------------------------
+            procedure open_ssh (Key : text; Element : in out A_repo) is
+            begin
+               Element.ssh_io.fd_in := sshout (0);
+               Element.ssh_io.fd_out := sshin (1);
+               Unix.set_blocking (Element.ssh_io.fd_in);
+
+               Element.ssh := Libfetch.open_cookie (cookie    => Element'Address,
+                                                    functions => ssh_cookie_functions);
+            end open_ssh;
          begin
             if not Unix.socket_pair_stream (sshin'Access) or else
               not Unix.socket_pair_stream (sshout'Access)
             then
                return RESULT_FATAL;
             end if;
-            my_repo.ssh_io.pid := Unix.fork;
-            if my_repo.ssh_io.pid < 0 then
+            repositories.Update_Element (my_repo.position, fork_ssh'Access);
+            if R.ssh_io.pid < 0 then
                Event.emit_errno ("start_ssh", "fork", Unix.errno);
                return RESULT_FATAL;
             end if;
 
-            if my_repo.ssh_io.pid = 0 then
+            if R.ssh_io.pid = 0 then
                --  child process
 
                if not
@@ -288,25 +304,20 @@ package body Core.Repo.SSH is
             end if;
             Event.emit_debug (1, "SSH> connected");
 
-            my_repo.ssh_io.fd_in := sshout (0);
-            my_repo.ssh_io.fd_out := sshin (1);
-            Unix.set_blocking (my_repo.ssh_io.fd_in);
+            repositories.Update_Element (my_repo.position, open_ssh'Access);
 
-            my_repo.ssh := Libfetch.open_cookie (cookie    => my_repo'Address,
-                                                 functions => ssh_cookie_functions);
-
-            if not Libfetch.stream_is_active (my_repo.ssh) then
+            if not Libfetch.stream_is_active (R.ssh) then
                Event.emit_errno ("start_ssh", "Failed to close stream", Unix.errno);
                return RESULT_FATAL;
             end if;
 
             declare
                done : Boolean;
-               line : constant String := Libfetch.fx_getline (my_repo.ssh, done);
+               line : constant String := Libfetch.fx_getline (R.ssh, done);
             begin
                if done then
                   Event.emit_debug (1, "SSH> nothing to read, got: " & line);
-                  Libfetch.fx_close (my_repo.ssh);
+                  repositories.Update_Element (my_repo.position, close_ssh'Access);
                   return RESULT_OK;
                else
                   if leads (line, "ok:") then
@@ -314,7 +325,7 @@ package body Core.Repo.SSH is
                        (1, "SSH> server is: " & line (line'First + 3  .. line'Last));
                   else
                      Event.emit_debug (1, "SSH> server rejected, got: " & line);
-                     Libfetch.fx_close (my_repo.ssh);
+                     repositories.Update_Element (my_repo.position, close_ssh'Access);
                      return RESULT_OK;
                   end if;
                end if;
@@ -328,11 +339,11 @@ package body Core.Repo.SSH is
            & Libfetch.url_ims_time (url_components)'Img;
       begin
          Event.emit_debug (1, "SSH> " & info);
-         Libfetch.fx_print (my_repo.ssh, info);
+         Libfetch.fx_print (R.ssh, info);
       end;
       declare
          done : Boolean;
-         line : constant String := Libfetch.fx_getline (my_repo.ssh, done);
+         line : constant String := Libfetch.fx_getline (R.ssh, done);
       begin
          if not done then
             Event.emit_debug (1, "SSH> recv: " & line);
@@ -342,17 +353,17 @@ package body Core.Repo.SSH is
                exception
                   when others =>
                      Event.emit_error ("start_ssh: failed to parse " & line);
-                     Libfetch.fx_close (my_repo.ssh);
+                     repositories.Update_Element (my_repo.position, close_ssh'Access);
                      return RESULT_FATAL;
                end;
                if size = 0 then
-                  Libfetch.fx_close (my_repo.ssh);
+                  repositories.Update_Element (my_repo.position, close_ssh'Access);
                   return RESULT_UPTODATE;
                end if;
             end if;
          end if;
       end;
-      Libfetch.fx_close (my_repo.ssh);
+      repositories.Update_Element (my_repo.position, close_ssh'Access);
       return RESULT_OK;
    end start_ssh;
 
@@ -361,7 +372,7 @@ package body Core.Repo.SSH is
    --  compose_ssh_command
    --------------------------------------------------------------------
    function compose_ssh_command
-     (my_repo        : in out A_repo;
+     (my_repo        : Repo_Cursor;
       url_components : Libfetch.URL_Component_Set) return String
    is
       cmd_text : Text;
@@ -369,12 +380,13 @@ package body Core.Repo.SSH is
       user     : constant String  := Libfetch.url_user (url_components);
       host     : constant String  := Libfetch.url_host (url_components);
       port     : constant Natural := Libfetch.url_port (url_components);
+      R        : A_repo renames Repository_Crate.Element (my_repo.position);
    begin
       cmd_text := SUS ("/usr/bin/ssh -e none -T");
       if not IsBlank (ssh_args) then
          SU.Append (cmd_text, " " & ssh_args);
       end if;
-      case my_repo.flags is
+      case R.flags is
          when Repo.REPO_FLAGS_LIMIT_IPV4 =>
             SU.Append (cmd_text, " -4");
          when Repo.REPO_FLAGS_LIMIT_IPV6 =>
@@ -398,13 +410,14 @@ package body Core.Repo.SSH is
    --  set_http_mirrors
    --------------------------------------------------------------------
    function set_http_mirrors
-     (my_repo   : in out A_repo;
+     (my_repo   : Repo_Cursor;
       url       : String) return Natural
    is
       fstream : Libfetch.Fetch_Stream;
       index   : Natural := 0;
+      R       : A_repo renames Repository_Crate.Element (my_repo.position);
    begin
-      if not my_repo.http.Is_Empty then
+      if not R.http.Is_Empty then
          return 1;
       end if;
 
@@ -416,15 +429,22 @@ package body Core.Repo.SSH is
       loop
          declare
             done : Boolean;
-            line : constant String := Libfetch.fx_getline (my_repo.ssh, done);
+            line : constant String := Libfetch.fx_getline (R.ssh, done);
          begin
             exit when done;
             if leads (line, "URL:") then
                declare
+                  procedure add_mirror (Key : text; Element : in out A_repo);
+
                   trimmed : String := trim (line (line'First + 4 .. line'Last));
+
+                  procedure add_mirror (Key : text; Element : in out A_repo) is
+                  begin
+                     Element.http.Append  (convert_to_mirror (trimmed));
+                  end add_mirror;
                begin
                   if not IsBlank (trimmed) then
-                     my_repo.http.Append (convert_to_mirror (trimmed));
+                     repositories.Update_Element (my_repo.position, add_mirror'Access);
                      index := 1;
                   end if;
                end;
@@ -464,7 +484,7 @@ package body Core.Repo.SSH is
    --  get_http_mirror
    --------------------------------------------------------------------
    function get_http_mirror
-     (my_repo  : A_repo;
+     (my_repo  : Repo_Cursor;
       index    : Natural) return Mirror_Host
    is
       procedure flip (position : A_http_mirror_crate.Cursor);
@@ -485,10 +505,10 @@ package body Core.Repo.SSH is
          end if;
       end flip;
    begin
-      if index = 0 or else index > Natural (my_repo.http.Length) then
+      if index = 0 or else index > Natural (total_http_mirrors (my_repo)) then
          raise bad_http_index;
       end if;
-      my_repo.http.Iterate (flip'Access);
+      Repository_Crate.Element (my_repo.position).http.Iterate (flip'Access);
       return result;
    end get_http_mirror;
 
@@ -497,7 +517,7 @@ package body Core.Repo.SSH is
    --  get_srv_information
    --------------------------------------------------------------------
    function get_srv_information
-     (my_repo  : A_repo;
+     (my_repo  : Repo_Cursor;
       index    : Natural) return SRV_Host
    is
       procedure flip (position : Resolve.Answer_Crate.Cursor);
@@ -516,10 +536,10 @@ package body Core.Repo.SSH is
          end if;
       end flip;
    begin
-      if index = 0 or else index > Natural (my_repo.srv.Length) then
+      if index = 0 or else index > Natural (total_srv_records (my_repo)) then
          raise bad_srv_index;
       end if;
-      my_repo.srv.Iterate (flip'Access);
+      Repository_Crate.Element (my_repo.position).srv.Iterate (flip'Access);
       return result;
    end get_srv_information;
 
@@ -527,19 +547,37 @@ package body Core.Repo.SSH is
    --------------------------------------------------------------------
    --  total_http_mirrors
    --------------------------------------------------------------------
-   function total_http_mirrors (my_repo : A_repo) return Natural is
+   function total_http_mirrors (my_repo : Repo_Cursor) return Natural is
    begin
-      return Natural (my_repo.http.Length);
+      return Natural (Repository_Crate.Element (my_repo.position).http.Length);
    end total_http_mirrors;
 
 
    --------------------------------------------------------------------
    --  total_srv_records
    --------------------------------------------------------------------
-   function total_srv_records (my_repo : A_repo) return Natural is
+   function total_srv_records (my_repo : Repo_Cursor) return Natural is
    begin
-      return Natural (my_repo.srv.Length);
+      return Natural (Repository_Crate.Element (my_repo.position).srv.Length);
    end total_srv_records;
+
+
+   --------------------------------------------------------------------
+   --  close_ssh
+   --------------------------------------------------------------------
+   procedure close_ssh (Key : text; Element : in out A_repo) is
+   begin
+      Libfetch.fx_close (Element.ssh);
+   end close_ssh;
+
+
+   --------------------------------------------------------------------
+   --  fork_ssh
+   --------------------------------------------------------------------
+   procedure fork_ssh (Key : text; Element : in out A_repo) is
+   begin
+      Element.ssh_io.pid := Unix.fork;
+   end fork_ssh;
 
 
 end Core.Repo.SSH;
