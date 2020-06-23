@@ -757,6 +757,7 @@ package body Core.Database.Operations.Schema is
          Event.emit_error ("failed to reset prepared statement #" & index'Img);
          return False;
       end if;
+      SQLite.clear_bindings (prepared_statements (index));
       args.Iterate (bind'Access);
       return SQLite.step_to_completion (prepared_statements (index));
    end run_prepared_statement;
