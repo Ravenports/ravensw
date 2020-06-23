@@ -1,6 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Ada.Exceptions;
 with System;
 with Interfaces;
 
@@ -78,8 +79,7 @@ package body Core.Manifest is
       str : String := get_value;
    begin
       if IsBlank (str) then
-         Event.emit_error (field'Img & " field is blank");
-         return RESULT_FATAL;
+         Event.emit_debug (3, field'Img & " field is blank (" & USS (pkg_access.name) & ")");
       end if;
       case field is
          when liclogic =>
@@ -875,6 +875,11 @@ package body Core.Manifest is
       libucl.ucl_object_unref (obj);
 
       return rc;
+   exception
+      when oops : others =>
+         Event.emit_error ("Unexpected exception caught at parse_manifest");
+         Event.emit_error (Ada.Exceptions.Exception_Information (oops));
+         return RESULT_FATAL;
    end parse_manifest;
 
 

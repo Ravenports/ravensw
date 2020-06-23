@@ -157,9 +157,9 @@ package body Core.Utilities is
 
       --  1s place
       case V01 is
-         when '0' .. '9' => value := value + (Character'Pos (V10) - Character'Pos ('0'));
-         when 'a' .. 'f' => value := value + (Character'Pos (V10) - Character'Pos ('a') + 10);
-         when 'A' .. 'F' => value := value + (Character'Pos (V10) - Character'Pos ('A') + 10);
+         when '0' .. '9' => value := value + (Character'Pos (V01) - Character'Pos ('0'));
+         when 'a' .. 'f' => value := value + (Character'Pos (V01) - Character'Pos ('a') + 10);
+         when 'A' .. 'F' => value := value + (Character'Pos (V01) - Character'Pos ('A') + 10);
          when others => return Character'Val (0);
       end case;
 
