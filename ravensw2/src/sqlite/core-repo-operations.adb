@@ -1116,14 +1116,14 @@ package body Core.Repo.Operations is
       begin
          if not problem then
             push_arg (args1, name);
-            problem := ROS.run_repo_prepared_statement (ROS.OPT1, args1);
+            problem := not ROS.run_repo_prepared_statement (ROS.OPT1, args1);
             if problem then
                spit_out_error (ROS.OPT1);
             else
                push_arg (args2, int64 (pkg_access.id));
                push_arg (args2, name);
                push_arg (args2, value);
-               problem := ROS.run_repo_prepared_statement (ROS.OPT2, args2);
+               problem := not ROS.run_repo_prepared_statement (ROS.OPT2, args2);
                if problem then
                   spit_out_error (ROS.OPT2);
                end if;
@@ -1141,19 +1141,19 @@ package body Core.Repo.Operations is
       begin
          if not problem then
             push_arg (args1, name);
-            problem := ROS.run_repo_prepared_statement (ROS.ANNOTATE1, args1);
+            problem := not ROS.run_repo_prepared_statement (ROS.ANNOTATE1, args1);
             if problem then
                spit_out_error (ROS.ANNOTATE1);
             else
                push_arg (args2, value);
-               problem := ROS.run_repo_prepared_statement (ROS.ANNOTATE1, args2);
+               problem := not ROS.run_repo_prepared_statement (ROS.ANNOTATE1, args2);
                if problem then
                   spit_out_error (ROS.ANNOTATE1);
                else
                   push_arg (args3, int64 (pkg_access.id));
                   push_arg (args3, name);
                   push_arg (args3, value);
-                  problem := ROS.run_repo_prepared_statement (ROS.ANNOTATE2, args3);
+                  problem := not ROS.run_repo_prepared_statement (ROS.ANNOTATE2, args3);
                   if problem then
                      spit_out_error (ROS.ANNOTATE2);
                   end if;
