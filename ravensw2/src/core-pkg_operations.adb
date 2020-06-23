@@ -161,7 +161,7 @@ package body Core.Pkg_Operations is
       key        : Text;
       value      : Text) return Action_Result is
    begin
-      Event.emit_debug (2, "Pkg> adding options: " & USS (key) & " = " & USS (value));
+      Event.emit_debug (2, "Pkg: adding options: " & USS (key) & " = " & USS (value));
       if pkg_access.options.Contains (key) then
          if Context.reveal_developer_mode then
             Event.emit_error

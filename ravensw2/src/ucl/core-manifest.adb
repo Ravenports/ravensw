@@ -523,7 +523,7 @@ package body Core.Manifest is
          return RESULT_FATAL;
       end if;
 
-      Event.emit_debug (2, "Found " & okey);
+      Event.emit_debug (4, "Found " & okey);
       declare
          iter : aliased libucl.ucl_object_iter_t :=
            libucl.ucl_object_iter_t (System.Null_Address);

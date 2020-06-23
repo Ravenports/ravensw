@@ -622,20 +622,26 @@ package body Core.Repo.Operations is
                         Event.emit_progress_tick (total_len, file_size);
                      end if;
                      rc := add_from_manifest (this_repo, line);
-                     if rc = RESULT_OK then
-                        Event.emit_incremental_update (reponame, cnt);
-                     else
+                     if rc /= RESULT_OK then
+                        Event.emit_debug (4, "add_from_manifest failed: " & DQ (line));
                         exit;
                      end if;
                   end;
                end loop;
-               Event.emit_progress_tick (file_size, file_size);
+               if rc = RESULT_OK then
+                  Event.emit_progress_tick (file_size, file_size);
+                  Event.emit_incremental_update (reponame, cnt);
+               else
+                  Event.emit_progress_tick (total_len, file_size);
+                  Event.emit_notice ("Failed to completely parse packsite manifest.");
+               end if;
                TIO.Close (file_handle);
             exception
                when others =>
                   if TIO.Is_Open (file_handle) then
                      TIO.Close (file_handle);
                   end if;
+                  rc := RESULT_FATAL;
             end;
             if rc = RESULT_OK then
                silentrc := CommonSQL.exec
