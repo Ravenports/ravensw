@@ -946,8 +946,6 @@ package body Core.Repo.Operations is
       procedure insert_option      (position : Pkgtypes.Package_NVPairs.Cursor);
       procedure insert_annotations (position : Pkgtypes.Package_NVPairs.Cursor);
       procedure insert_generic     (index1, index2 : ROS.repository_stmt_index; value : Text);
-      procedure insert_generic_nv  (index1, index2 : ROS.repository_stmt_index;
-                                    name, value : Text);
 
       rc      : Action_Result;
       problem : Boolean := False;
@@ -1109,42 +1107,59 @@ package body Core.Repo.Operations is
                          Pkgtypes.Text_Crate.Element (position));
       end insert_require;
 
-      procedure insert_generic_nv (index1, index2 : ROS.repository_stmt_index; name, value : Text)
+      procedure insert_option (position : Pkgtypes.Package_NVPairs.Cursor)
       is
          args1 : Set_Repo_Stmt_Args.Vector;
          args2 : Set_Repo_Stmt_Args.Vector;
+         name  : Text renames Pkgtypes.Package_NVPairs.Key (position);
+         value : Text renames Pkgtypes.Package_NVPairs.Element (position);
       begin
          if not problem then
             push_arg (args1, name);
-            problem := not ROS.run_repo_prepared_statement (index1, args1);
+            problem := ROS.run_repo_prepared_statement (ROS.OPT1, args1);
             if problem then
-               spit_out_error (index1);
+               spit_out_error (ROS.OPT1);
             else
                push_arg (args2, int64 (pkg_access.id));
                push_arg (args2, name);
                push_arg (args2, value);
-               problem := not ROS.run_repo_prepared_statement (index2, args2);
+               problem := ROS.run_repo_prepared_statement (ROS.OPT2, args2);
                if problem then
-                  spit_out_error (index2);
+                  spit_out_error (ROS.OPT2);
                end if;
             end if;
          end if;
-      end insert_generic_nv;
-
-      procedure insert_option (position : Pkgtypes.Package_NVPairs.Cursor) is
-      begin
-         insert_generic_nv (index1 => ROS.OPT1,
-                            index2 => ROS.OPT2,
-                            name   => Pkgtypes.Package_NVPairs.Key (position),
-                            value  => Pkgtypes.Package_NVPairs.Element (position));
       end insert_option;
 
-      procedure insert_annotations (position : Pkgtypes.Package_NVPairs.Cursor) is
+      procedure insert_annotations (position : Pkgtypes.Package_NVPairs.Cursor)
+      is
+         args1 : Set_Repo_Stmt_Args.Vector;
+         args2 : Set_Repo_Stmt_Args.Vector;
+         args3 : Set_Repo_Stmt_Args.Vector;
+         name  : Text renames Pkgtypes.Package_NVPairs.Key (position);
+         value : Text renames Pkgtypes.Package_NVPairs.Element (position);
       begin
-         insert_generic_nv (index1 => ROS.ANNOTATE1,
-                            index2 => ROS.ANNOTATE2,
-                            name   => Pkgtypes.Package_NVPairs.Key (position),
-                            value  => Pkgtypes.Package_NVPairs.Element (position));
+         if not problem then
+            push_arg (args1, name);
+            problem := ROS.run_repo_prepared_statement (ROS.ANNOTATE1, args1);
+            if problem then
+               spit_out_error (ROS.ANNOTATE1);
+            else
+               push_arg (args2, value);
+               problem := ROS.run_repo_prepared_statement (ROS.ANNOTATE1, args2);
+               if problem then
+                  spit_out_error (ROS.ANNOTATE1);
+               else
+                  push_arg (args3, int64 (pkg_access.id));
+                  push_arg (args3, name);
+                  push_arg (args3, value);
+                  problem := ROS.run_repo_prepared_statement (ROS.ANNOTATE2, args3);
+                  if problem then
+                     spit_out_error (ROS.ANNOTATE2);
+                  end if;
+               end if;
+            end if;
+         end if;
       end insert_annotations;
 
    begin
