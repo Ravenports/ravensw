@@ -852,7 +852,7 @@ package body Core.Manifest is
       obj    : access libucl.ucl_object_t;
       rc     : Action_Result;
    begin
-      Event.emit_debug (2, "Parsing manifest from buffer");
+      Event.emit_debug (2, "Parsing manifest line : " & pad_right (manifest, 40));
 
       parser := Ucl.ucl_parser_new_nofilevars;
 
@@ -866,6 +866,8 @@ package body Core.Manifest is
       libucl.ucl_parser_free (parser);
 
       if obj = null then
+         Event.emit_error ("parse_manifest: failed ucl_parser_get_object");
+         Event.emit_debug (1, manifest);
          return RESULT_FATAL;
       end if;
 
