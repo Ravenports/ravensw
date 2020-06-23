@@ -1120,9 +1120,10 @@ package body Core.Repo.Operations is
             if problem then
                spit_out_error (ROS.OPT1);
             else
-               push_arg (args2, int64 (pkg_access.id));
+               --  dragons!  option table in different order on repo from local
                push_arg (args2, name);
                push_arg (args2, value);
+               push_arg (args2, int64 (pkg_access.id));
                problem := not ROS.run_repo_prepared_statement (ROS.OPT2, args2);
                if problem then
                   spit_out_error (ROS.OPT2);
