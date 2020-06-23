@@ -633,7 +633,7 @@ package body Core.Repo.Operations is
                   Event.emit_incremental_update (reponame, cnt);
                else
                   Event.emit_progress_tick (total_len, file_size);
-                  Event.emit_notice ("Failed to completely parse packsite manifest.");
+                  Event.emit_notice ("Failed to completely parse package-site manifest.");
                end if;
                TIO.Close (file_handle);
             exception
@@ -1042,7 +1042,7 @@ package body Core.Repo.Operations is
             push_arg (args, pkg_access.name);
             push_arg (args, pkg_access.version);
             push_arg (args, int64 (pkg_access.id));
-            problem := ROS.run_repo_prepared_statement (index, args);
+            problem := not ROS.run_repo_prepared_statement (index, args);
          end if;
       end insert_dependency;
 
@@ -1053,13 +1053,13 @@ package body Core.Repo.Operations is
       begin
          if not problem then
             push_arg (args1, value);
-            problem := ROS.run_repo_prepared_statement (index1, args1);
+            problem := not ROS.run_repo_prepared_statement (index1, args1);
             if problem then
                spit_out_error (index1);
             else
                push_arg (args2, int64 (pkg_access.id));
                push_arg (args2, value);
-               problem := ROS.run_repo_prepared_statement (index2, args2);
+               problem := not ROS.run_repo_prepared_statement (index2, args2);
                if problem then
                   spit_out_error (index2);
                end if;
@@ -1116,14 +1116,14 @@ package body Core.Repo.Operations is
       begin
          if not problem then
             push_arg (args1, name);
-            problem := ROS.run_repo_prepared_statement (index1, args1);
+            problem := not ROS.run_repo_prepared_statement (index1, args1);
             if problem then
                spit_out_error (index1);
             else
                push_arg (args2, int64 (pkg_access.id));
                push_arg (args2, name);
                push_arg (args2, value);
-               problem := ROS.run_repo_prepared_statement (index2, args2);
+               problem := not ROS.run_repo_prepared_statement (index2, args2);
                if problem then
                   spit_out_error (index2);
                end if;

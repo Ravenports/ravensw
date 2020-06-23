@@ -597,6 +597,7 @@ package body Core.Manifest is
          item := Ucl.ucl_object_iterate (obj'Access, iter'Access, True);
          exit when item = null;
 
+         Event.emit_debug (4, field'Img);
          case field is
             when categories =>
                if Ucl.type_is_string (item) then
