@@ -33,6 +33,7 @@ private
       name,
       options,
       origin,
+      path,
       pkg_config_files,
       pkg_conflicts,
       pkg_dirs,

@@ -117,6 +117,9 @@ package body Core.Manifest is
             pkg_access.www := SUS (str);
          when version =>
             pkg_access.version := SUS (str);
+         when path =>
+            --  duplicate of repopath with FreeBSD's pkg(8), ignore
+            null;
          when others =>
             Event.emit_error ("Developer failure, not a string : " & field'Img);
             return RESULT_FATAL;
@@ -914,6 +917,7 @@ package body Core.Manifest is
                     version        |
                     origin         |
                     prefix         |
+                    path           |
                     arch           |
                     name           |
                     abi            |
@@ -1001,6 +1005,7 @@ package body Core.Manifest is
          ("name           ", name),
          ("options        ", options),
          ("origin         ", origin),
+         ("path           ", path),
          ("pkgsize        ", pkgsize),
          ("prefix         ", prefix),
          ("provides       ", pkg_provides),
