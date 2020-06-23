@@ -430,7 +430,6 @@ package body SQLite is
          return True;
       else
          msg := SUS (translate_char_pointer (errmsg));
-         ICS.Free (errmsg);
          return False;
       end if;
    end exec_sql;

@@ -517,12 +517,13 @@ package body Core.Repo.Operations is
       force    : Boolean) return Action_Result
    is
       local_time : aliased Unix.T_epochtime;
-      my_repo    : Repo_Cursor := get_repository (reponame);
+      repo_key   : Text := SUS (reponame);
       file_size  : int64;
       rc         : Action_Result := RESULT_FATAL;
       skip_rest  : Boolean := False;
    begin
       --  We know repository name is valid; we don't need to check again
+      --  Don't use static repo cursor because it can change after updates.
 
       Event.emit_debug (1, "Proceed: begin update of " & DQ (filepath));
       if force then
@@ -533,7 +534,7 @@ package body Core.Repo.Operations is
       --  fetch meta
       --
       local_time := mtime;
-      if Repo.Fetch.fetch_meta (my_repo   => my_repo,
+      if Repo.Fetch.fetch_meta (my_repo   => get_repository (reponame),
                                 timestamp => local_time'Access) = RESULT_FATAL
       then
          Event.emit_notice
@@ -545,13 +546,14 @@ package body Core.Repo.Operations is
       --
       local_time := mtime;
       declare
-         R       : A_repo renames Repository_Crate.Element (my_repo.position);
+         arcfile : constant String := USS (repositories.Element (repo_key).meta.manifests_archive);
+         target  : constant String := USS (repositories.Element (repo_key).meta.manifests);
 
          tmp_manifest : String :=
            Repo.Fetch.fetch_remote_extract_to_temporary_file
-             (my_repo   => my_repo,
-              filename  => USS (R.meta.manifests_archive),
-              innerfile => USS (R.meta.manifests),
+             (my_repo   => get_repository (reponame),
+              filename  => arcfile,
+              innerfile => target,
               timestamp => local_time'Access,
               file_size => file_size,
               retcode   => rc);
@@ -561,6 +563,7 @@ package body Core.Repo.Operations is
          backup   : constant String := filepath & "-ravtmp";
          CIP      : constant String := "CREATE INDEX packages";
          silentrc : Action_Result;
+         repodb   : sqlite_h.sqlite3_Access;
       begin
          if rc = RESULT_OK then
             mtime := local_time;
@@ -580,18 +583,19 @@ package body Core.Repo.Operations is
          end if;
 
          if not skip_rest then
+            repodb := repositories.Element (repo_key).sqlite_handle;
             Event.emit_debug (1, "Proceed: reading new packagesite.yaml for " & SQ (reponame));
             Event.emit_progress_start ("Processing entries");
 
             --  200MB should be enough for mmap
-            silentrc := CommonSQL.exec (R.sqlite_handle, "PRAGMA mmap_size = 209715200;");
-            silentrc := CommonSQL.exec (R.sqlite_handle, "PRAGMA foreign_keys = OFF;");
-            silentrc := CommonSQL.exec (R.sqlite_handle, "PRAGMA synchronous = OFF;");
+            silentrc := CommonSQL.exec (repodb, "PRAGMA mmap_size = 209715200;");
+            silentrc := CommonSQL.exec (repodb, "PRAGMA foreign_keys = OFF;");
+            silentrc := CommonSQL.exec (repodb, "PRAGMA synchronous = OFF;");
             --  FreeBSD set PRAGMA page_size = getpagesize().
             --  It's unclear what the benefit is over the default 4Kb page size.
             --  Omit this PRAGMA for now
 
-            if CommonSQL.transaction_begin (R.sqlite_handle, internal_srcfile, func, "REPO") then
+            if CommonSQL.transaction_begin (repodb, internal_srcfile, func, "REPO") then
                in_trans := True;
             else
                skip_rest := True;
@@ -603,6 +607,7 @@ package body Core.Repo.Operations is
                file_handle : TIO.File_Type;
                cnt         : Natural := 0;
                total_len   : int64 := 0;
+               this_repo   : Repo_Cursor := get_repository (reponame);
             begin
                TIO.Open (File => file_handle,
                          Mode => TIO.In_File,
@@ -616,7 +621,7 @@ package body Core.Repo.Operations is
                      if (cnt mod 10) = 0 then
                         Event.emit_progress_tick (total_len, file_size);
                      end if;
-                     rc := add_from_manifest (my_repo, line);
+                     rc := add_from_manifest (this_repo, line);
                      if rc = RESULT_OK then
                         Event.emit_incremental_update (reponame, cnt);
                      else
@@ -634,7 +639,7 @@ package body Core.Repo.Operations is
             end;
             if rc = RESULT_OK then
                silentrc := CommonSQL.exec
-                 (R.sqlite_handle,
+                 (repodb,
                     CIP & "_origin ON packages(origin COLLATE NOCASE);"
                   & CIP & "_name ON packages(name COLLATE NOCASE);"
                   & CIP & "_uid_nocase ON packages(name COLLATE NOCASE, origin COLLATE NOCASE);"
@@ -651,14 +656,12 @@ package body Core.Repo.Operations is
          --
          if in_trans then
             if rc /= RESULT_OK then
-               if not CommonSQL.transaction_rollback
-                 (R.sqlite_handle, internal_srcfile, func, "REPO")
+               if not CommonSQL.transaction_rollback (repodb, internal_srcfile, func, "REPO")
                then
                   null;
                end if;
             else
-               if CommonSQL.transaction_commit
-                 (R.sqlite_handle, internal_srcfile, func, "REPO")
+               if CommonSQL.transaction_commit (repodb, internal_srcfile, func, "REPO")
                then
                   rc := RESULT_FATAL;
                end if;
