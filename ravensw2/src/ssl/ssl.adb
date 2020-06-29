@@ -158,18 +158,20 @@ package body SSL is
       --  * 2) siglen must be reduced by one to support this legacy method
       --  *
       --  * by @bdrewery
+      --
+      --  hash must be null terminated
 
       NID_sha1 : constant IC.int := 64;
       zerochar : constant IC.unsigned_char := IC.unsigned_char'First;
       res      : IC.int;
-      m_length : Natural := Natural (hash'Length);
+      m_length : Natural := Natural (hash'Length + 1);
       siglen   : Natural := Natural (signature'Length - 1);
       m        : array (1 .. m_length) of aliased IC.unsigned_char := (others => zerochar);
       sigbuf   : array (1 .. siglen) of aliased IC.unsigned_char := (others => zerochar);
       index    : Natural;
    begin
       index := hash'First;
-      for x in m'Range loop
+      for x in m'First .. m'Last - 1 loop
          m (x) := IC.unsigned_char (Character'Pos (hash (index)));
          index := index + 1;
       end loop;
