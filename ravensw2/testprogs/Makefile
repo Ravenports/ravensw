@@ -12,7 +12,7 @@ usage:
 
 clean:
 	rm -f dns_srv retrieve_int64 check_bind fetch_meta_c fetch_meta check_blake3
-	rm -r load_pubkey_c
+	rm -f load_pubkey_c
 	rm -f *.ali *.o b~*
 
 CFLAGS=	-I/raven/include
@@ -56,7 +56,7 @@ stat_ops.o: ../src/unix/stat_ops.c
 sql3int.o: ../src/sqlite/sqlite3_interface.c
 	${CC} -c ${CFLAGS} -I../../external/sqlite ${.ALLSRC} -o ${.TARGET}
 
-blake.o: ../src/blake3/blake3.c
+blake3.o: ../src/blake3/blake3.c
 	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
 
 blake3_dispatch.o: ../src/blake3/blake3_dispatch.c
@@ -107,8 +107,10 @@ fetch_meta: fetch_meta.adb ${unix_objs}
 
 check_blake3: check_blake3.adb ${b3_objs}
 	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
-	gnatmake -g -fstack-check ${.TARGET} ${b3_objs}
-		
+	gnatmake -g -fstack-check ${.TARGET} \
+		-aI../src/blake3 -aI../src \
+		-largs ${b3_objs}
+
 # load_pubkey_c: load_pubkey.c
 #	${CC} ${CFLAGS} ${SSLCFLAGS} -o ${.TARGET} ${.ALLSRC} \
 #		/raven/libressl/lib/libssl_pic.a \
