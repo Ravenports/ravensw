@@ -2,14 +2,13 @@
 --  Reference: ../License.txt
 
 with Interfaces;
-with System;
 
 with Core.Repo;
 with Core.Event;
 with Core.Utilities;
 with Core.Database.Operations;
 with SSL;
-with blake2;
+with blake_3;
 
 package body Core.Checksum is
 
@@ -41,10 +40,9 @@ package body Core.Checksum is
          when HASH_TYPE_SHA256_BASE32  => return "sha256_base32";
          when HASH_TYPE_SHA256_HEX     => return "sha256_hex";
          when HASH_TYPE_SHA256_RAW     => return "sha256_raw";
-         when HASH_TYPE_BLAKE2_BASE32  => return "blake2_base32";
-         when HASH_TYPE_BLAKE2_RAW     => return "blake2_raw";
-         when HASH_TYPE_BLAKE2S_BASE32 => return "blake2s_base32";
-         when HASH_TYPE_BLAKE2S_RAW    => return "blake2s_raw";
+         when HASH_TYPE_BLAKE3_BASE32  => return "blake3_base32";
+         when HASH_TYPE_BLAKE3_HEX     => return "blake3_hex";
+         when HASH_TYPE_BLAKE3_RAW     => return "blake3_raw";
          when HASH_TYPE_UNKNOWN        => return "unknown";
       end case;
    end checksum_type_to_string;
@@ -193,118 +191,60 @@ package body Core.Checksum is
 
 
    --------------------------------------------------------------------
-   --  checksum_hash_blake2b
+   --  checksum_hash_blake3
    --------------------------------------------------------------------
-   function checksum_hash_blake2b (entries : checksum_entry_crate.Vector) return String
+   function checksum_hash_blake3 (entries : checksum_entry_crate.Vector) return String
    is
       procedure add (position : checksum_entry_crate.Cursor);
 
-      sign_ctx : aliased blake2.blake2b_state;
+      sign_ctx : aliased blake_3.blake3_hasher;
 
       procedure add (position : checksum_entry_crate.Cursor)
       is
          item : checksum_entry renames checksum_entry_crate.Element (position);
       begin
-         blake2.blake2b_update (sign_ctx'Unchecked_Access, USS (item.field));
-         blake2.blake2b_update (sign_ctx'Unchecked_Access, USS (item.value));
+         blake_3.b3_update (sign_ctx'Unchecked_Access, USS (item.field));
+         blake_3.b3_update (sign_ctx'Unchecked_Access, USS (item.value));
       end add;
    begin
-      blake2.blake2b_init (sign_ctx'Unchecked_Access);
+      blake_3.b3_init (sign_ctx'Unchecked_Access);
       entries.Iterate (add'Access);
-      return blake2.blake2b_final (sign_ctx'Unchecked_Access);
-   end checksum_hash_blake2b;
-
+      return blake_3.b3_finalize (sign_ctx'Unchecked_Access);
+   end checksum_hash_blake3;
 
 
    --------------------------------------------------------------------
-   --  checksum_hash_blake2b_file
+   --  checksum_hash_blake3_file
    --------------------------------------------------------------------
-   function checksum_hash_blake2b_file  (fd : Unix.File_Descriptor) return String
+   function checksum_hash_blake3_file (fd : Unix.File_Descriptor) return String
    is
-      sign_ctx   : aliased blake2.blake2b_state;
+      sign_ctx   : aliased blake_3.blake3_hasher;
       chunk_size : constant Natural := 16 * 1024;
    begin
-      blake2.blake2b_init (sign_ctx'Unchecked_Access);
+      blake_3.b3_init (sign_ctx'Unchecked_Access);
       loop
          declare
             chunk : constant String := Unix.read_fd (fd, chunk_size);
          begin
             exit when chunk'Length = 0;
-            blake2.blake2b_update (sign_ctx'Unchecked_Access, chunk);
+            blake_3.b3_update (sign_ctx'Unchecked_Access, chunk);
          end;
       end loop;
-      return blake2.blake2b_final (sign_ctx'Unchecked_Access);
-   end checksum_hash_blake2b_file;
+      return blake_3.b3_finalize (sign_ctx'Unchecked_Access);
+   end checksum_hash_blake3_file;
 
 
    --------------------------------------------------------------------
-   --  checksum_hash_blake2s
+   --  checksum_hash_blake3_bulk
    --------------------------------------------------------------------
-   function checksum_hash_blake2s (entries : checksum_entry_crate.Vector) return String
+   function checksum_hash_blake3_bulk (plain : String) return String
    is
-      procedure add (position : checksum_entry_crate.Cursor);
-
-      sign_ctx : aliased blake2.blake2s_state;
-
-      procedure add (position : checksum_entry_crate.Cursor)
-      is
-         item : checksum_entry renames checksum_entry_crate.Element (position);
-      begin
-         blake2.blake2s_update (sign_ctx'Unchecked_Access, USS (item.field));
-         blake2.blake2s_update (sign_ctx'Unchecked_Access, USS (item.value));
-      end add;
+      sign_ctx : aliased blake_3.blake3_hasher;
    begin
-      blake2.blake2s_init (sign_ctx'Unchecked_Access);
-      entries.Iterate (add'Access);
-      return blake2.blake2s_final (sign_ctx'Unchecked_Access);
-   end checksum_hash_blake2s;
-
-
-   --------------------------------------------------------------------
-   --  checksum_hash_blake2s_file
-   --------------------------------------------------------------------
-   function checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String
-   is
-      sign_ctx   : aliased blake2.blake2s_state;
-      chunk_size : constant Natural := 16 * 1024;
-   begin
-      blake2.blake2s_init (sign_ctx'Unchecked_Access);
-      loop
-         declare
-            chunk : constant String := Unix.read_fd (fd, chunk_size);
-         begin
-            exit when chunk'Length = 0;
-            blake2.blake2s_update (sign_ctx'Unchecked_Access, chunk);
-         end;
-      end loop;
-      return blake2.blake2s_final (sign_ctx'Unchecked_Access);
-   end checksum_hash_blake2s_file;
-
-
-   --------------------------------------------------------------------
-   --  checksum_hash_blake2b_bulk
-   --------------------------------------------------------------------
-   function checksum_hash_blake2b_bulk (plain : String) return String
-   is
-      sign_ctx : aliased blake2.blake2b_state;
-   begin
-      blake2.blake2b_init (sign_ctx'Unchecked_Access);
-      blake2.blake2b_update (sign_ctx'Unchecked_Access, plain);
-      return blake2.blake2b_final (sign_ctx'Unchecked_Access);
-   end checksum_hash_blake2b_bulk;
-
-
-   --------------------------------------------------------------------
-   --  checksum_hash_blake2s_bulk
-   --------------------------------------------------------------------
-   function checksum_hash_blake2s_bulk (plain : String) return String
-   is
-      sign_ctx : aliased blake2.blake2s_state;
-   begin
-      blake2.blake2s_init (sign_ctx'Unchecked_Access);
-      blake2.blake2s_update (sign_ctx'Unchecked_Access, plain);
-      return blake2.blake2s_final (sign_ctx'Unchecked_Access);
-   end checksum_hash_blake2s_bulk;
+      blake_3.b3_init (sign_ctx'Unchecked_Access);
+      blake_3.b3_update (sign_ctx'Unchecked_Access, plain);
+      return blake_3.b3_finalize (sign_ctx'Unchecked_Access);
+   end checksum_hash_blake3_bulk;
 
 
    --------------------------------------------------------------------
@@ -317,10 +257,9 @@ package body Core.Checksum is
          when HASH_TYPE_SHA256_BASE32  |
               HASH_TYPE_SHA256_RAW     |
               HASH_TYPE_SHA256_HEX     => return checksum_hash_sha256_file (fd);
-         when HASH_TYPE_BLAKE2_BASE32  |
-              HASH_TYPE_BLAKE2_RAW     => return checksum_hash_blake2b_file (fd);
-         when HASH_TYPE_BLAKE2S_BASE32 |
-              HASH_TYPE_BLAKE2S_RAW    => return checksum_hash_blake2s_file (fd);
+         when HASH_TYPE_BLAKE3_BASE32  |
+              HASH_TYPE_BLAKE3_RAW     |
+              HASH_TYPE_BLAKE3_HEX     => return checksum_hash_blake3_file (fd);
          when HASH_TYPE_UNKNOWN        => return "";
       end case;
    end checksum_hash_file;
@@ -333,12 +272,11 @@ package body Core.Checksum is
    begin
       case checksum_type is
          when HASH_TYPE_SHA256_BASE32  |
-              HASH_TYPE_BLAKE2_BASE32  |
-              HASH_TYPE_BLAKE2S_BASE32 => return checksum_encode_base32 (plain);
-         when HASH_TYPE_SHA256_HEX     => return checksum_encode_hex (plain);
+              HASH_TYPE_BLAKE3_BASE32  => return checksum_encode_base32 (plain);
+         when HASH_TYPE_SHA256_HEX     |
+              HASH_TYPE_BLAKE3_HEX     => return checksum_encode_hex (plain);
          when HASH_TYPE_SHA256_RAW     |
-              HASH_TYPE_BLAKE2_RAW     |
-              HASH_TYPE_BLAKE2S_RAW    => return plain;
+              HASH_TYPE_BLAKE3_RAW     => return plain;
          when HASH_TYPE_UNKNOWN        => return "";
       end case;
    end checksum_encode;
@@ -356,10 +294,9 @@ package body Core.Checksum is
          when HASH_TYPE_SHA256_BASE32  |
               HASH_TYPE_SHA256_RAW     |
               HASH_TYPE_SHA256_HEX     => return checksum_hash_sha256 (entries);
-         when HASH_TYPE_BLAKE2_BASE32  |
-              HASH_TYPE_BLAKE2_RAW     => return checksum_hash_blake2b (entries);
-         when HASH_TYPE_BLAKE2S_BASE32 |
-              HASH_TYPE_BLAKE2S_RAW    => return checksum_hash_blake2s (entries);
+         when HASH_TYPE_BLAKE3_BASE32  |
+              HASH_TYPE_BLAKE3_RAW     |
+              HASH_TYPE_BLAKE3_HEX     => return checksum_hash_blake3 (entries);
          when HASH_TYPE_UNKNOWN        => return "";
       end case;
    end checksum_hash;
@@ -491,10 +428,9 @@ package body Core.Checksum is
          when HASH_TYPE_SHA256_BASE32  |
               HASH_TYPE_SHA256_HEX     |
               HASH_TYPE_SHA256_RAW     => return checksum_hash_sha256_bulk (plain);
-         when HASH_TYPE_BLAKE2_BASE32  |
-              HASH_TYPE_BLAKE2_RAW     => return checksum_hash_blake2b_bulk (plain);
-         when HASH_TYPE_BLAKE2S_BASE32 |
-              HASH_TYPE_BLAKE2S_RAW    => return checksum_hash_blake2s_bulk (plain);
+         when HASH_TYPE_BLAKE3_BASE32  |
+              HASH_TYPE_BLAKE3_HEX     |
+              HASH_TYPE_BLAKE3_RAW     => return checksum_hash_blake3_bulk (plain);
          when HASH_TYPE_UNKNOWN        => return "";
       end case;
    end checksum_hash_bulk;
@@ -625,11 +561,10 @@ package body Core.Checksum is
       case Integer'Value (frag) is
          when 0 => return HASH_TYPE_SHA256_BASE32;
          when 1 => return HASH_TYPE_SHA256_HEX;
-         when 2 => return HASH_TYPE_BLAKE2_BASE32;
-         when 3 => return HASH_TYPE_SHA256_RAW;
-         when 4 => return HASH_TYPE_BLAKE2_RAW;
-         when 5 => return HASH_TYPE_BLAKE2S_BASE32;
-         when 6 => return HASH_TYPE_BLAKE2S_RAW;
+         when 2 => return HASH_TYPE_SHA256_RAW;
+         when 3 => return HASH_TYPE_BLAKE3_BASE32;
+         when 4 => return HASH_TYPE_BLAKE3_HEX;
+         when 5 => return HASH_TYPE_BLAKE3_RAW;
          when others => return HASH_TYPE_UNKNOWN;
       end case;
    exception
@@ -706,16 +641,18 @@ package body Core.Checksum is
       case checksum_type is
          when HASH_TYPE_UNKNOWN =>
             return 0;
-         when HASH_TYPE_BLAKE2S_BASE32
-            | HASH_TYPE_BLAKE2S_RAW =>
-            return blake2.blake2s_size;
-         when HASH_TYPE_BLAKE2_BASE32
-            | HASH_TYPE_BLAKE2_RAW =>
-            return blake2.blake2b_size;
-         when HASH_TYPE_SHA256_BASE32
-            | HASH_TYPE_SHA256_HEX
-            | HASH_TYPE_SHA256_RAW =>
+         when HASH_TYPE_BLAKE3_RAW =>
+            return blake_3.b3_hashsize;
+         when HASH_TYPE_BLAKE3_HEX =>
+            return blake_3.b3_hashsize * 2;
+         when HASH_TYPE_BLAKE3_BASE32 =>
+            return (blake_3.b3_hashsize * 8 + 4) / 5;
+         when HASH_TYPE_SHA256_RAW =>
             return SSL.sha256_size;
+         when HASH_TYPE_SHA256_HEX =>
+            return SSL.sha256_size * 2;
+         when HASH_TYPE_SHA256_BASE32 =>
+            return (SSL.sha256_size * 8 + 4) / 5;
       end case;
    end checksum_size;
 
@@ -862,11 +799,7 @@ package body Core.Checksum is
    is
       cs_type : A_Checksum_Type;
    begin
-      if System.Word_Size = 32 then
-         cs_type := HASH_TYPE_BLAKE2S_BASE32;
-      else
-         cs_type := HASH_TYPE_BLAKE2_BASE32;
-      end if;
+      cs_type := HASH_TYPE_BLAKE3_BASE32;
 
       declare
          rname : constant String := USS (pkg_access.reponame);

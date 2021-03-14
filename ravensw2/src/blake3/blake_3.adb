@@ -41,4 +41,14 @@ package body blake_3 is
       return result;
    end b3_finalize;
 
+
+   --------------------------------------------------------------------
+   --  b3_hashsize
+   --------------------------------------------------------------------
+   function b3_hashsize return Natural
+   is
+   begin
+      return blake3_hash'Length;
+   end b3_hashsize;
+
 end blake_3;

@@ -17,6 +17,8 @@ package blake_3 is
    procedure b3_update  (self : blake3_hasher_Access; plain : String);
    function b3_finalize (self : blake3_hasher_Access) return blake3_hash;
 
+   function b3_hashsize return Natural;
+
 private
 
    package IC renames Interfaces.C;

@@ -99,7 +99,7 @@ package body SSL is
       res   : BIO_Access;
       c_len : IC.int := IC.int (buffer'Length);
    begin
-      res := C_BIO_new_mem_buf (buffer'Access, c_len);
+      res := C_BIO_new_mem_buf (buffer'Unchecked_Access, c_len);
 
       return res;
    end create_new_memory_BIO;

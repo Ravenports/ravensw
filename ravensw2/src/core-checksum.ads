@@ -25,11 +25,10 @@ package Core.Checksum is
    type A_Checksum_Type is
       (HASH_TYPE_SHA256_BASE32,
        HASH_TYPE_SHA256_HEX,
-       HASH_TYPE_BLAKE2_BASE32,
        HASH_TYPE_SHA256_RAW,
-       HASH_TYPE_BLAKE2_RAW,
-       HASH_TYPE_BLAKE2S_BASE32,
-       HASH_TYPE_BLAKE2S_RAW,
+       HASH_TYPE_BLAKE3_BASE32,
+       HASH_TYPE_BLAKE3_HEX,
+       HASH_TYPE_BLAKE3_RAW,
        HASH_TYPE_UNKNOWN);
    pragma Convention (C, A_Checksum_Type);
 
@@ -97,9 +96,8 @@ private
 
    package Entry_Sorter is new checksum_entry_crate.Generic_Sorting ("<" => lower_key);
 
-   function checksum_hash_sha256  (entries : checksum_entry_crate.Vector) return String;
-   function checksum_hash_blake2b (entries : checksum_entry_crate.Vector) return String;
-   function checksum_hash_blake2s (entries : checksum_entry_crate.Vector) return String;
+   function checksum_hash_sha256 (entries : checksum_entry_crate.Vector) return String;
+   function checksum_hash_blake3 (entries : checksum_entry_crate.Vector) return String;
 
    function checksum_hash
      (entries       : checksum_entry_crate.Vector;
@@ -109,9 +107,8 @@ private
      (fd : Unix.File_Descriptor;
       checksum_type : A_Checksum_Type) return String;
 
-   function checksum_hash_sha256_file  (fd : Unix.File_Descriptor) return String;
-   function checksum_hash_blake2b_file (fd : Unix.File_Descriptor) return String;
-   function checksum_hash_blake2s_file (fd : Unix.File_Descriptor) return String;
+   function checksum_hash_sha256_file (fd : Unix.File_Descriptor) return String;
+   function checksum_hash_blake3_file (fd : Unix.File_Descriptor) return String;
 
    function checksum_encode
      (plain : String;
@@ -124,9 +121,8 @@ private
      (plain : String;
       checksum_type : A_Checksum_Type) return String;
 
-   function checksum_hash_sha256_bulk  (plain : String) return String;
-   function checksum_hash_blake2b_bulk (plain : String) return String;
-   function checksum_hash_blake2s_bulk (plain : String) return String;
+   function checksum_hash_sha256_bulk (plain : String) return String;
+   function checksum_hash_blake3_bulk (plain : String) return String;
 
    function checksum_symlink_readlink
      (link_path     : String;
