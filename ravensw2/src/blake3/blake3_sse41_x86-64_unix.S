@@ -1,4 +1,4 @@
-#if defined(__ELF__) && defined(__linux__)
+#if defined(__ELF__) && !defined(__sun__)
 .section .note.GNU-stack,"",%progbits
 #endif
 
@@ -2010,7 +2010,7 @@ ROT16:
         .byte  2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13
 ROT8:
         .byte  1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12
-ADD0:	
+ADD0:
         .long  0, 1, 2, 3
 ADD1:
 	.long  4, 4, 4, 4

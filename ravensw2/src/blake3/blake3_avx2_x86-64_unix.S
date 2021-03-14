@@ -1,4 +1,4 @@
-#if defined(__ELF__) && defined(__linux__)
+#if defined(__ELF__) && !defined(__sun__)
 .section .note.GNU-stack,"",%progbits
 #endif
 
@@ -1812,4 +1812,3 @@ CMP_MSB_MASK:
         .long  0x80000000, 0x80000000, 0x80000000, 0x80000000
 BLAKE3_IV:
         .long  0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A
-
