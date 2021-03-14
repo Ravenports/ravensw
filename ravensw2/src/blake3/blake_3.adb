@@ -9,12 +9,20 @@ package body blake_3 is
    --------------------------------------------------------------------
    procedure b3_update (self : blake3_hasher_Access; plain : String)
    is
-      buffer : array (plain'Range) of aliased IC.unsigned_char;
    begin
-      for x in plain'Range loop
-         buffer (x) := IC.unsigned_char (Character'Pos (plain (x)));
-      end loop;
-      C_b3hasher_update (self, buffer (buffer'First)'Access, plain'Length);
+      if plain'Length = 0 then
+         C_b3hasher_update (self, null, 0);
+      else
+         declare
+            buffer : array (plain'Range) of aliased IC.unsigned_char;
+         begin
+            for x in plain'Range loop
+               buffer (x) := IC.unsigned_char (Character'Pos (plain (x)));
+            end loop;
+
+            C_b3hasher_update (self, buffer (buffer'First)'Access, plain'Length);
+         end;
+      end if;
    end b3_update;
 
 
