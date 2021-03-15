@@ -5,6 +5,10 @@ project Ravensw is
    for Main use ("main.adb");
    for Languages use ("Ada", "C", "Asm");
 
+   package Builder is
+      for Executable ("main.adb") use "ravensw";
+   end Builder;
+
    package Compiler is
       for Switches ("ada") use ("-gnatyabABcdefiIklnOptx", "-gnatyM100", "-fstack-check");
    end Compiler;
@@ -13,8 +17,7 @@ project Ravensw is
       for Switches ("ada") use ("-L/raven/lib", "-lucl_pic", "-lm", "-lelf_pic", 
 	"-larchive_pic", "-lzstd_pic", "-lfetch_pic", "-L../external/sqlite", 
 	"-lsqlite_pic", "-llinenoise", "-L/raven/libressl/lib", "-lssl_pic", 
-	"-lcrypto_pic", "-lpthread");
+	"-lcrypto_pic", "-lpthread", "-lresolv");
    end Linker;
 
 end Ravensw;
-
