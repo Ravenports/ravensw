@@ -14,7 +14,7 @@
 *.pc
 tags
 TAGS
-BUILDME.sh
+BUILD*
 src/pkg
 src/ravensw
 tests/test

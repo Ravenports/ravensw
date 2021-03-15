@@ -1,16 +1,4 @@
-#if defined(__ELF__) && !defined(__sun__)
 .section .note.GNU-stack,"",%progbits
-#endif
-
-#if defined(__ELF__) && defined(__CET__) && defined(__has_include)
-#if __has_include(<cet.h>)
-#include <cet.h>
-#endif
-#endif
-
-#if !defined(_CET_ENDBR)
-#define _CET_ENDBR
-#endif
 
 .intel_syntax noprefix
 .global blake3_hash_many_sse41
@@ -19,15 +7,10 @@
 .global _blake3_compress_in_place_sse41
 .global blake3_compress_xof_sse41
 .global _blake3_compress_xof_sse41
-#ifdef __APPLE__
-.text
-#else
 .section .text
-#endif
         .p2align  6
 _blake3_hash_many_sse41:
 blake3_hash_many_sse41:
-        _CET_ENDBR
         push    r15
         push    r14
         push    r13
@@ -1789,7 +1772,6 @@ blake3_hash_many_sse41:
 .p2align 6
 blake3_compress_in_place_sse41:
 _blake3_compress_in_place_sse41:
-        _CET_ENDBR
         movups  xmm0, xmmword ptr [rdi]
         movups  xmm1, xmmword ptr [rdi+0x10]
         movaps  xmm2, xmmword ptr [BLAKE3_IV+rip]
@@ -1890,7 +1872,6 @@ _blake3_compress_in_place_sse41:
 .p2align 6
 blake3_compress_xof_sse41:
 _blake3_compress_xof_sse41:
-        _CET_ENDBR
         movups  xmm0, xmmword ptr [rdi]
         movups  xmm1, xmmword ptr [rdi+0x10]
         movaps  xmm2, xmmword ptr [BLAKE3_IV+rip]
@@ -1997,11 +1978,7 @@ _blake3_compress_xof_sse41:
         ret
 
 
-#ifdef __APPLE__
-.static_data
-#else
 .section .rodata
-#endif
 .p2align  6
 BLAKE3_IV:
         .long  0x6A09E667, 0xBB67AE85

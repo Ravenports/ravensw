@@ -4,6 +4,7 @@
  */
 
 #include <fcntl.h>
+#include <stddef.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 

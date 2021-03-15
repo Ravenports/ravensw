@@ -3,7 +3,7 @@ project Ravensw is
    for Source_Dirs use ("src/**");
    for Object_Dir use "obj";
    for Main use ("main.adb");
-   for Languages use ("Ada", "C"); --  , "Asm");
+   for Languages use ("Ada", "C", "Asm");
 
    package Compiler is
       for Switches ("ada") use ("-gnatyabABcdefiIklnOptx", "-gnatyM100", "-fstack-check");
@@ -11,9 +11,9 @@ project Ravensw is
 
    package Linker is
       for Switches ("ada") use ("-L/raven/lib", "-lucl_pic", "-lm", "-lelf_pic", 
-	     "-larchive_pic", "-lzstd_pic", "-lfetch_pic", "-L../external/sqlite", 
-		 "-lsqlite_pic", "-llinenoise", "-L/raven/libressl/lib", "-lssl_pic", 
-		 "-lcrypto_pic");
+	"-larchive_pic", "-lzstd_pic", "-lfetch_pic", "-L../external/sqlite", 
+	"-lsqlite_pic", "-llinenoise", "-L/raven/libressl/lib", "-lssl_pic", 
+	"-lcrypto_pic", "-lpthread");
    end Linker;
 
 end Ravensw;

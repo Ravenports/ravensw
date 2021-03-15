@@ -1,16 +1,4 @@
-#if defined(__ELF__) && !defined(__sun__)
 .section .note.GNU-stack,"",%progbits
-#endif
-
-#if defined(__ELF__) && defined(__CET__) && defined(__has_include)
-#if __has_include(<cet.h>)
-#include <cet.h>
-#endif
-#endif
-
-#if !defined(_CET_ENDBR)
-#define _CET_ENDBR
-#endif
 
 .intel_syntax noprefix
 .global _blake3_hash_many_avx512
@@ -20,15 +8,10 @@
 .global blake3_compress_xof_avx512
 .global _blake3_compress_xof_avx512
 
-#ifdef __APPLE__
-.text
-#else
 .section .text
-#endif
 .p2align  6
 _blake3_hash_many_avx512:
 blake3_hash_many_avx512:
-        _CET_ENDBR
         push    r15
         push    r14
         push    r13
@@ -2386,7 +2369,6 @@ blake3_hash_many_avx512:
 .p2align 6
 _blake3_compress_in_place_avx512:
 blake3_compress_in_place_avx512:
-        _CET_ENDBR
         vmovdqu xmm0, xmmword ptr [rdi]
         vmovdqu xmm1, xmmword ptr [rdi+0x10]
         movzx   eax, r8b
@@ -2469,7 +2451,6 @@ blake3_compress_in_place_avx512:
 .p2align 6
 _blake3_compress_xof_avx512:
 blake3_compress_xof_avx512:
-        _CET_ENDBR
         vmovdqu xmm0, xmmword ptr [rdi]
         vmovdqu xmm1, xmmword ptr [rdi+0x10]
         movzx   eax, r8b
@@ -2553,11 +2534,7 @@ blake3_compress_xof_avx512:
         vmovdqu xmmword ptr [r9+0x30], xmm3
         ret
 
-#ifdef __APPLE__
-.static_data
-#else
 .section .rodata
-#endif
 .p2align  6
 INDEX0:
         .long    0,  1,  2,  3, 16, 17, 18, 19

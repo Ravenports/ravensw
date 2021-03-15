@@ -1,29 +1,12 @@
-#if defined(__ELF__) && !defined(__sun__)
 .section .note.GNU-stack,"",%progbits
-#endif
-
-#if defined(__ELF__) && defined(__CET__) && defined(__has_include)
-#if __has_include(<cet.h>)
-#include <cet.h>
-#endif
-#endif
-
-#if !defined(_CET_ENDBR)
-#define _CET_ENDBR
-#endif
 
 .intel_syntax noprefix
 .global _blake3_hash_many_avx2
 .global blake3_hash_many_avx2
-#ifdef __APPLE__
-.text
-#else
 .section .text
-#endif
         .p2align  6
 _blake3_hash_many_avx2:
 blake3_hash_many_avx2:
-        _CET_ENDBR
         push    r15
         push    r14
         push    r13
@@ -1778,11 +1761,7 @@ blake3_hash_many_avx2:
         jmp     4b
 
 
-#ifdef __APPLE__
-.static_data
-#else
 .section .rodata
-#endif
 .p2align  6
 ADD0:
         .long  0, 1, 2, 3, 4, 5, 6, 7
