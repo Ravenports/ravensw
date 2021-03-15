@@ -177,8 +177,7 @@ package body Cmd.Help is
 
       declare
          Result    : Integer;
-         Arguments : OSL.Argument_List := (1 => new String'(manprog),
-                                           2 => new String'(manpage));
+         Arguments : OSL.Argument_List := (1 => new String'(manpage));
       begin
          OSL.Spawn (Program_Name           => manprog,
                     Args                   => Arguments,
