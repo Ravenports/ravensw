@@ -466,11 +466,11 @@ package body Core.Repo.SSH is
       result     : A_http_mirror;
    begin
       components      := Libfetch.parse_url (url);
-      result.scheme   := SUS (Libfetch.url_scheme (components));
-      result.user     := SUS (Libfetch.url_user   (components));
-      result.pwd      := SUS (Libfetch.url_pwd    (components));
-      result.host     := SUS (Libfetch.url_host   (components));
-      result.doc      := SUS (Libfetch.url_doc    (components));
+      result.scheme   := SUS (Libfetch.url_scheme   (components));
+      result.user     := SUS (Libfetch.url_user     (components));
+      result.pwd      := SUS (Libfetch.url_password (components));
+      result.host     := SUS (Libfetch.url_host     (components));
+      result.doc      := SUS (Libfetch.url_doc      (components));
       result.port     := Libfetch.url_port     (components);
       result.offset   := Libfetch.url_offset   (components);
       result.length   := Libfetch.url_length   (components);

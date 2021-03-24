@@ -12,8 +12,6 @@
    filegroup */
 
 #ifdef _WIN32
-#define S_IWGRP 0
-#define S_IWOTH 0
 #define S_ISLNK
 #endif
 

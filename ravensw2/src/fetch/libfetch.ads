@@ -54,7 +54,16 @@ package Libfetch is
    function parse_url (url : String) return URL_Component_Set;
 
    --  Frees resources used by URL components
-   procedure free_url (url_components : URL_Component_Set);
+   procedure free_url (url_components : in out URL_Component_Set);
+
+   --  Construct a URL structure
+   function make_url_component
+     (scheme   : String;
+      host     : String;
+      port     : Natural;
+      document : String;
+      user     : String;
+      password : String) return URL_Component_Set;
 
    --  Returns True if url parsing was succesful
    function url_is_valid (url_components : URL_Component_Set) return Boolean;
@@ -73,11 +82,6 @@ package Libfetch is
    --  Set the scheme
    procedure provide_scheme
      (scheme : String;
-      url_components : in out URL_Component_Set);
-
-   procedure provide_doc
-     (doc : String;
-      holder : Interfaces.C.Strings.char_array_access;
       url_components : in out URL_Component_Set);
 
    procedure provide_offset
@@ -105,8 +109,8 @@ package Libfetch is
    --  returns either "[user]@[host]" or just "[host]" depending if user is blank or not
    function url_user_at_host (url_components : URL_Component_Set) return String;
 
-   --  Return pwd component of url
-   function url_pwd (url_components : URL_Component_Set) return String;
+   --  Return password component of url
+   function url_password (url_components : URL_Component_Set) return String;
 
    --  Return offset component of url
    function url_offset (url_components : URL_Component_Set) return Integer;
@@ -145,7 +149,6 @@ private
          valid      : Boolean;
          components : access fetch_h.url;
          status     : aliased fetch_h.url_stat;
-         orig_doc   : Interfaces.C.Strings.chars_ptr;
       end record;
 
    type Fetch_Stream is

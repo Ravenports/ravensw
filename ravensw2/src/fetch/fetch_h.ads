@@ -15,8 +15,8 @@ package fetch_h is
    URL_SCHEMELEN  : constant := 16;
    URL_USERLEN    : constant := 256;
    URL_PWDLEN     : constant := 256;
-   MAXHOSTNAMELEN : constant := 256;
-   PATH_MAX       : constant := 1024;
+   URL_HOSTNAME   : constant := 256;
+   MAX_PATH_LEN   : constant := 4096;
    IPPORT_MAX     : constant := 65535;
 
    SCHEME_FTP   : aliased constant String := "ftp" & ASCII.NUL;
@@ -47,10 +47,10 @@ package fetch_h is
    MAXERRSTRING  : constant := 256;
 
    subtype time_t is Interfaces.Integer_64;
-   subtype anon884_scheme_array is Interfaces.C.char_array (0 .. 16);
-   subtype anon884_user_array   is Interfaces.C.char_array (0 .. 256);
-   subtype anon884_pwd_array    is Interfaces.C.char_array (0 .. 256);
-   subtype anon884_host_array   is Interfaces.C.char_array (0 .. 256);
+   subtype anon884_scheme_array is Interfaces.C.char_array (0 .. 16);   --  URL_SCHEMELEN+1
+   subtype anon884_user_array   is Interfaces.C.char_array (0 .. 256);  --  URL_USERLEN+1
+   subtype anon884_pwd_array    is Interfaces.C.char_array (0 .. 256);  --  URL_PWDLEN+1
+   subtype anon884_host_array   is Interfaces.C.char_array (0 .. 256);  --  URL_HOSTNAME+1
    type url is record
       scheme   : aliased anon884_scheme_array;
       user     : aliased anon884_user_array;
@@ -72,7 +72,7 @@ package fetch_h is
    end record;
    pragma Convention (C_Pass_By_Copy, url_stat);
 
-   subtype anon890_name_array is Interfaces.C.char_array (0 .. 1023);
+   subtype anon890_name_array is Interfaces.C.char_array (0 .. 4095);  -- MAX_PATH_LEN
    type url_ent is record
       name : aliased anon890_name_array;
       stat : aliased url_stat;

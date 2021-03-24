@@ -217,14 +217,18 @@ package body Core.Fetching is
             if http_index > 0 then
                declare
                   info : Repo.SSH.Mirror_Host;
-                  doc_original : String := Libfetch.url_doc (url_components);
+                  original_doc  : String := Libfetch.url_doc (url_components);
+                  original_pwd  : String := Libfetch.url_password (url_components);
+                  original_user : String := Libfetch.url_user (url_components);
                begin
                   info := Repo.SSH.get_http_mirror (my_repo, http_index);
-                  Libfetch.provide_host_information (USS (info.host), info.port, url_components);
-                  Libfetch.provide_scheme (USS (info.scheme), url_components);
-                  Libfetch.provide_doc (doc            => USS (info.doc) & doc_original,
-                                        holder         => docpath'Unchecked_Access,
-                                        url_components => url_components);
+                  Libfetch.free_url (url_components);
+                  url_components := Libfetch.make_url_component (scheme   => USS (info.scheme),
+                                                                 host     => USS (info.host),
+                                                                 port     => info.port,
+                                                                 document => original_doc,
+                                                                 user     => original_user,
+                                                                 password => original_pwd);
                end;
             end if;
          when Repo.SRV =>

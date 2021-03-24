@@ -178,9 +178,11 @@ package body Libfetch is
    begin
       arg1 := ICS.New_String (url);
       url_components.components := fetch_h.fetchParseURL (arg1);
-      url_components.orig_doc   := url_components.components.doc;
       ICS.Free (arg1);
       url_components.valid := (url_components.components /= null);
+      url_components.status.size := 0;
+      url_components.status.atime := fetch_h.time_t (0);
+      url_components.status.mtime := fetch_h.time_t (0);
       return url_components;
    end parse_url;
 
@@ -188,10 +190,12 @@ package body Libfetch is
    --------------------------------------------------------------------
    --  free_url
    --------------------------------------------------------------------
-   procedure free_url (url_components : URL_Component_Set) is
+   procedure free_url (url_components : in out URL_Component_Set) is
    begin
-      url_components.components.doc := url_components.orig_doc;
-      fetch_h.fetchFreeURL (url_components.components);
+      if url_components.valid then
+         fetch_h.fetchFreeURL (url_components.components);
+         url_components.valid := False;
+      end if;
    end free_url;
 
 
@@ -247,23 +251,46 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-   --  provide_doc
+   --  make_url_component
    --------------------------------------------------------------------
-   procedure provide_doc
-     (doc : String;
-      holder : ICS.char_array_access;
-      url_components : in out URL_Component_Set)
+   function make_url_component
+     (scheme   : String;
+      host     : String;
+      port     : Natural;
+      document : String;
+      user     : String;
+      password : String) return URL_Component_Set
    is
-      use type IC.size_t;
-      index : IC.size_t := holder.all'First;
+      arg1 : ICS.chars_ptr;
+      arg2 : ICS.chars_ptr;
+      arg3 : IC.int;
+      arg4 : ICS.chars_ptr;
+      arg5 : ICS.chars_ptr;
+      arg6 : ICS.chars_ptr;
+
+      result : URL_Component_Set;
    begin
-      holder.all := (others => IC.char'Val (0));
-      for x in doc'Range loop
-         holder.all (index) := IC.char'Val (Character'Pos (doc (x)));
-         index := index + 1;
-      end loop;
-      url_components.components.doc := ICS.To_Chars_Ptr (holder);
-   end provide_doc;
+      arg1 := ICS.New_String (scheme);
+      arg2 := ICS.New_String (host);
+      arg3 := IC.int (port);
+      arg4 := ICS.New_String (document);
+      arg5 := ICS.New_String (user);
+      arg6 := ICS.New_String (password);
+
+      result.components := fetch_h.fetchMakeURL (arg1, arg2, arg3, arg4, arg5, arg6);
+      result.valid := (result.components /= null);
+      result.status.size := 0;
+      result.status.atime := fetch_h.time_t (0);
+      result.status.mtime := fetch_h.time_t (0);
+
+      ICS.Free (arg1);
+      ICS.Free (arg2);
+      ICS.Free (arg4);
+      ICS.Free (arg5);
+      ICS.Free (arg6);
+
+      return result;
+   end make_url_component;
 
 
    --------------------------------------------------------------------
@@ -332,12 +359,12 @@ package body Libfetch is
 
 
    --------------------------------------------------------------------
-   --  url_pwd
+   --  url_password
    --------------------------------------------------------------------
-   function url_pwd (url_components : URL_Component_Set) return String is
+   function url_password (url_components : URL_Component_Set) return String is
    begin
       return IC.To_Ada (url_components.components.pwd);
-   end url_pwd;
+   end url_password;
 
 
    --------------------------------------------------------------------
