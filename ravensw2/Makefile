@@ -12,7 +12,7 @@ THISPATH=	/raven/toolchain/gcc10/bin:/raven/toolchain/bin:${PATH}
 all:
 	${MAKE} -C ${.CURDIR}/extlib/custom_sqlite
 	${MAKE} -C ${.CURDIR}/extlib/blake3
-	#env PATH=${THISPATH} gprbuild -p -P ravensw
+	env PATH=${THISPATH} gprbuild -p -P ${.CURDIR}/ravensw
 
 clean:
 	${MAKE} -C ${.CURDIR}/extlib/custom_sqlite clean
