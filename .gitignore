@@ -121,3 +121,4 @@ scripts/sbin/pkg2ng
 /ada_source/libobj
 /ada_source/libobj0
 /ravensw2/obj
+/ravensw2/vendor/sqlite3
