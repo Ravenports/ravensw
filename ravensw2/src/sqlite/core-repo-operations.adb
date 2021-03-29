@@ -676,7 +676,7 @@ package body Core.Repo.Operations is
                   null;
                end if;
             else
-               if CommonSQL.transaction_commit (repodb, internal_srcfile, func, "REPO")
+               if not CommonSQL.transaction_commit (repodb, internal_srcfile, func, "REPO")
                then
                   rc := RESULT_FATAL;
                end if;
@@ -721,8 +721,8 @@ package body Core.Repo.Operations is
       skip_next_step    : Boolean := False;
       res               : Action_Result;
       local_force       : Boolean := force;
-      my_repo           : Repo_Cursor := get_repository (reponame);
-      R                 : A_repo renames Repository_Crate.Element (my_repo.position);
+      repo_key          : Text := SUS (reponame);
+      repodb            : sqlite_h.sqlite3_Access;
    begin
       if not SQLite.initialize_sqlite then
          return RESULT_ENODB;
@@ -775,7 +775,8 @@ package body Core.Repo.Operations is
 
       if not skip_next_step then
          if res = RESULT_OK then
-            res := CommonSQL.exec (R.sqlite_handle, update_finish_sql);
+            repodb := repositories.Element (repo_key).sqlite_handle;
+            res := CommonSQL.exec (repodb, update_finish_sql);
          end if;
       end if;
 
