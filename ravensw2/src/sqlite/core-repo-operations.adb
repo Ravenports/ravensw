@@ -159,10 +159,12 @@ package body Core.Repo.Operations is
             opened : Boolean;
          begin
             if readonly then
+               Event.emit_debug (3, "Attempt to open " & dbfile & " (read-only)");
                opened := SQLite.open_sqlite_database_readonly
                  (path => dbfile,
                   ppDB => repository.sqlite_handle'Access);
             else
+               Event.emit_debug (3, "Attempt to open/create " & dbfile);
                opened := SQLite.open_sqlite_database_readwrite
                  (path => dbfile,
                   ppDB => repository.sqlite_handle'Access);
@@ -306,13 +308,13 @@ package body Core.Repo.Operations is
       end open_database;
 
    begin
-      Event.emit_debug (3, "open_repository " & SQ (reponame));
+      Event.emit_debug (2, "open_repository " & SQ (reponame));
       if repositories.Contains (SUS (reponame)) then
          dbdirfd := Context.reveal_db_directory_fd;
          repositories.Update_Element (repositories.Find (SUS (reponame)), open_database'Access);
          return result;
       else
-         Event.emit_debug (3, "open_repository invalid! " & SQ (reponame));
+         Event.emit_debug (2, "open_repository invalid! " & SQ (reponame));
          raise invalid_repo_name;
       end if;
    end open_repository;
@@ -605,6 +607,7 @@ package body Core.Repo.Operations is
                in_trans := True;
             else
                skip_rest := True;
+               rc := RESULT_FATAL;
             end if;
          end if;
 
@@ -650,7 +653,7 @@ package body Core.Repo.Operations is
                   rc := RESULT_FATAL;
             end;
             if rc = RESULT_OK then
-               silentrc := CommonSQL.exec
+               rc := CommonSQL.exec
                  (repodb,
                     CIP & "_origin ON packages(origin COLLATE NOCASE);"
                   & CIP & "_name ON packages(name COLLATE NOCASE);"
