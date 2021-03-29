@@ -123,6 +123,12 @@ port_faccessat_writable (int fd, const char *path)
 }
 
 int
+port_faccessat_file_exists (int fd, const char *path)
+{
+  return port_faccessat (fd, path, F_OK, 0);
+}
+
+int
 port_unlinkat(int fd, const char *path, int remove_dir)
 {
 	int ret;

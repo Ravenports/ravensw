@@ -143,8 +143,14 @@ package body Core.Repo.Operations is
             return;
          end if;
 
-         if not Unix.relative_file_readable (dbdirfd, dbfile) then
-            Event.emit_error (dbfile & " is not readable");
+         if Unix.relative_file_exists (dbdirfd, dbfile) then
+            if not Unix.relative_file_readable (dbdirfd, dbfile) then
+               Event.emit_error (dbfile & " is not readable.");
+               Event.emit_debug (2, dbfile & ": " & Unix.strerror (Unix.errno));
+               return;
+            end if;
+         else
+            Event.emit_notice (dbfile & " does not exist.");
             return;
          end if;
 

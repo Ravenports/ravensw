@@ -154,6 +154,10 @@ package Core.Unix is
      (dfd  : File_Descriptor;
       path : String) return Boolean;
 
+   function relative_file_exists
+     (dfd  : File_Descriptor;
+      path : String) return Boolean;
+
    function get_current_working_directory return String;
 
    function getuid return uid_t;
@@ -371,6 +375,11 @@ private
      (dfd  : IC.int;
       path : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_faccessat_writable, "port_faccessat_writable");
+
+   function C_faccessat_file_exists
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_faccessat_file_exists, "port_faccessat_file_exists");
 
    function C_getcwd
      (buf  : IC.Strings.chars_ptr;
