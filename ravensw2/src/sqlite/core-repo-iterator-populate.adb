@@ -68,13 +68,11 @@ package body Core.Repo.Iterator.Populate is
       function get_liclogic (col_index : Natural) return Pkgtypes.License_Logic
       is
          r64  : SQLite.sql_int64 := SQLite.retrieve_integer (stmt, col_index);
-         AOR  : constant SQLite.sql_int64 := SQLite.sql_int64 (Character'Pos ('|'));
-         AAND : constant SQLite.sql_int64 := SQLite.sql_int64 (Character'Pos ('&'));
       begin
          case r64 is
-            when AOR    => return Pkgtypes.LICENSE_OR;
-            when AAND   => return Pkgtypes.LICENSE_AND;
-            when 1      => return Pkgtypes.LICENSE_SINGLE;
+            when 0 => return Pkgtypes.LICENSE_OR;
+            when 1 => return Pkgtypes.LICENSE_AND;
+            when 2 => return Pkgtypes.LICENSE_SINGLE;
             when others =>
                Event.emit_notice
                  ("Invalid license logic value " & int2str (Integer (r64)) &
