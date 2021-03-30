@@ -669,12 +669,12 @@ package body Core.Checksum is
    begin
       my_entry.field := SUS (key);
       my_entry.value := value;
-      entries.Append (entries);
+      entries.Append (my_entry);
    end checksum_add_entry;
 
 
    --------------------------------------------------------------------
-   --  checksum_add_entry
+   --  lower_key
    --------------------------------------------------------------------
    function lower_key (Left, Right : checksum_entry) return Boolean
    is
@@ -782,6 +782,8 @@ package body Core.Checksum is
            int2str (CHECKSUM_CUR_VERSION) & CHECKSUM_SEPARATOR &
            int2str (A_Checksum_Type'Pos (checksum_type)) & CHECKSUM_SEPARATOR;
       begin
+         Core.Event.emit_debug (4, "Checksum-type=" & checksum_type'Img &
+                                  " Hash=" & checksum_encode_hex (bdigest));
          if bdigest = "" then
             return "";
          end if;
