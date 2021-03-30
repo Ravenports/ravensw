@@ -945,6 +945,7 @@ package body Core.Repo.Operations is
    is
       function get_arch return String;
       function insert_main_package (rc : out Action_Result) return Boolean;
+      function convert_licence_logic (logic : Pkgtypes.License_Logic) return int64;
       procedure spit_out_error     (index : ROS.repository_stmt_index; extra : String := "");
       procedure insert_dependency  (position : Pkgtypes.Dependency_Crate.Cursor);
       procedure insert_category    (position : Pkgtypes.Text_Crate.Cursor);
@@ -969,6 +970,15 @@ package body Core.Repo.Operations is
             return USS (pkg_access.abi);
          end if;
       end get_arch;
+
+      function convert_licence_logic (logic : Pkgtypes.License_Logic) return int64 is
+      begin
+         case logic is
+            when Pkgtypes.LICENSE_OR     => return int64 (Character'Pos ('|'));
+            when Pkgtypes.LICENSE_AND    => return int64 (Character'Pos ('&'));
+            when Pkgtypes.LICENSE_SINGLE => return int64 (1);
+         end case;
+      end convert_licence_logic;
 
       procedure spit_out_error (index : ROS.repository_stmt_index; extra : String := "") is
       begin
@@ -999,7 +1009,7 @@ package body Core.Repo.Operations is
          push_arg (args, pkg_access.prefix);
          push_arg (args, int64 (pkg_access.pkgsize));
          push_arg (args, int64 (pkg_access.flatsize));
-         push_arg (args, int64 (Pkgtypes.License_Logic'Pos (pkg_access.licenselogic)));
+         push_arg (args, convert_licence_logic (pkg_access.licenselogic));
 
          push_arg (args, pkg_access.sum);
          push_arg (args, pkg_access.repopath);
