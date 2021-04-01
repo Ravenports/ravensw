@@ -304,6 +304,8 @@ private
          version_test2        : Text;
          version_origin       : Text;
          version_pkg_name     : Text;
+         version_hyphen1      : Boolean := False;
+         version_hyphen2      : Boolean := False;
 
          which_origin         : Boolean := False;
          which_show_match     : Boolean := False;

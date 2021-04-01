@@ -44,6 +44,7 @@ package body Cmd is
       end case;
    end convert_command_enum_to_label;
 
+
    --------------------------------------------------------------------
    --  convert_search_enum_to_label
    --------------------------------------------------------------------

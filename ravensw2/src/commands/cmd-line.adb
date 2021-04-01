@@ -1317,35 +1317,35 @@ package body Cmd.Line is
       ---------------------------------
       procedure check_version_stdin
       is
-         --  stdin can be used for either the pattern or the input, but not both
+         --  stdin can be used for either the pattern or the package name, but not both
       begin
          if result.version_behavior = compare_against_pattern then
+            result.version_hyphen1 := equivalent (result.version_test1, "-");
+            result.version_hyphen2 := equivalent (result.version_test2, "-");
             declare
-               hyphen1 : Boolean := equivalent (result.version_test1, "-");
-               hyphen2 : Boolean := equivalent (result.version_test2, "-");
-               c       : Character;
+               c : Character;
             begin
-               if hyphen1 and then hyphen1 then
+               if result.version_hyphen1 and then result.version_hyphen2 then
                   set_error ("Only one input can be set through standard-in stream");
                   return;
                end if;
-               if hyphen1 or else hyphen2 then
+               if result.version_hyphen1 or else result.version_hyphen2 then
+                  if result.version_hyphen1 then
+                     result.version_test1 := blank;
+                  else
+                     result.version_test2 := blank;
+                  end if;
                   while not TIO.End_Of_File loop
                      TIO.Get (c);
                      if c = ' ' then
                         set_error ("Only one input expected through standard-in stream");
                      end if;
-                     if hyphen1 then
+                     if result.version_hyphen1 then
                         SU.Append (result.version_test1, c);
                      else
                         SU.Append (result.version_test2, c);
                      end if;
                   end loop;
-                  if hyphen1 then
-                     TIO.Put_Line (USS (result.version_test1));
-                  else
-                     TIO.Put_Line (USS (result.version_test1));
-                  end if;
                end if;
             end;
          end if;

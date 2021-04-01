@@ -60,7 +60,10 @@ package body Cmd.Version is
          when test_versions =>
             return do_testversion (USS (comline.version_test1), USS (comline.version_test2));
          when compare_against_pattern =>
-            return do_testpattern (USS (comline.version_test1), USS (comline.version_test2));
+            return do_testpattern (pkgname => USS (comline.version_test1),
+                                   pattern => USS (comline.version_test2),
+                                   hyphen1 => comline.version_hyphen1,
+                                   hyphen2 => comline.version_hyphen2);
       end case;
 
       match := Database.set_match_behavior (request_exact => comline.version_exact_match,
@@ -133,9 +136,23 @@ package body Cmd.Version is
    --------------------------------------------------------------------
    --  do_testpattern
    --------------------------------------------------------------------
-   function do_testpattern (pkgname, pattern : String) return Boolean is
+   function do_testpattern
+     (pkgname : String;
+      pattern : String;
+      hyphen1 : Boolean;
+      hyphen2 : Boolean) return Boolean
+   is
+      result : Boolean;
    begin
-      return Unix.filename_match (pattern, pkgname);
+      result := Unix.filename_match (pattern, pkgname);
+      if result then
+         if hyphen1 then
+            TIO.Put_Line (pkgname);
+         elsif hyphen2 then
+            TIO.Put_Line (pattern);
+         end if;
+      end if;
+      return result;
    end do_testpattern;
 
 

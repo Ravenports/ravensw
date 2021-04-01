@@ -13,7 +13,11 @@ private
    function do_testversion (pkgname1, pkgname2 : String) return Boolean;
 
    --  ravensw version -T <pkgname> <pattern>
-   function do_testpattern (pkgname, pattern : String) return Boolean;
+   function do_testpattern
+     (pkgname : String;
+      pattern : String;
+      hyphen1 : Boolean;
+      hyphen2 : Boolean) return Boolean;
 
    option_verbose : Boolean;
    option_origin  : Boolean;
