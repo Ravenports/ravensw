@@ -28,6 +28,11 @@ package body Cmd.Version is
       use_catalog    : Boolean := False;
       match          : Database.Match_Behavior := Database.MATCH_ALL;
    begin
+      if comline.verb_help then
+         --  show usage, this overrides everything else
+         return True;
+      end if;
+
       case comline.version_behavior is
          when no_defined_behavior =>
             --  happens when no -t, -T, -I, -R, or -r switch set

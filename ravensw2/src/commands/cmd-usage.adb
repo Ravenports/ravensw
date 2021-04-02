@@ -52,7 +52,9 @@ package body Cmd.Usage is
    --------------------------------------------------------------------
    procedure display_error (error_msg : String) is
    begin
-      TIO.Put_Line (TIO.Standard_Error, progname & ": " & error_msg);
+      if error_msg /= "" then
+         TIO.Put_Line (TIO.Standard_Error, progname & ": " & error_msg);
+      end if;
    end display_error;
 
 
@@ -976,17 +978,24 @@ package body Cmd.Usage is
    function verb_version (comline : Cldata) return Boolean
    is
       function alert (error_msg : String) return Boolean;
-      function alert (error_msg : String) return Boolean
+      procedure print_usage;
+
+      procedure print_usage
       is
          msg1 : constant String := "version [-IPR] [-hoqvU] [-l limchar] [-L limchar] " &
            "[-Cegix pattern] [-r reponame] [-O origin|-n pkgname] [index]";
          msg2 : constant String := "version -t <version1> <version2>";
          msg3 : constant String := "version -T <pkgname> <pattern>";
       begin
-         display_error (error_msg);
          display_usage (msg1, True);
          display_usage (msg2, False);
          display_usage (msg3, False);
+      end print_usage;
+
+      function alert (error_msg : String) return Boolean is
+      begin
+         display_error (error_msg);
+         print_usage;
          display_help_suggestion (cv_version);
          return False;
       end alert;
@@ -1020,6 +1029,10 @@ package body Cmd.Usage is
             then
                return alert ("--test-pattern requires 2 arguments");
             end if;
+         end if;
+
+         if comline.verb_help then
+            print_usage;
          end if;
 
          return True;

@@ -471,6 +471,8 @@ package body Cmd.Line is
          swl_nocat  : constant String := "--no-repo-update";
          sws_repo   : constant String := "-r";
          swl_repo   : constant String := "--repository";
+         sws_help   : constant String := "-h";
+         swl_help   : constant String := "--help";
          AME        : constant String := " switches are mutually exclusive.";
          error_rec  : constant String := "Unrecognized option: ";
          error_exp  : constant String := "Unexpected argument: ";
@@ -1071,6 +1073,8 @@ package body Cmd.Line is
                      result.verb_quiet := True;
                   elsif datum = sws_verb or else datum = swl_verb then
                      result.verb_verbose := True;
+                  elsif datum = sws_help or else datum = swl_help then
+                     result.verb_help := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      result.verb_skip_catalog := True;
                   elsif datum = sws_repo or else datum = swl_repo then

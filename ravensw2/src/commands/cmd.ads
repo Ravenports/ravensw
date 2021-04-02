@@ -191,6 +191,7 @@ private
          verb_dry_run         : Boolean := False;
          verb_verbose         : Boolean := False;
          verb_skip_catalog    : Boolean := False;
+         verb_help            : Boolean := False;
          verb_name_pattern    : Text;
          verb_repo_name       : Text;
          verb_raw_format      : Data_Format := unformatted;
