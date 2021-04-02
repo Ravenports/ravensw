@@ -73,6 +73,17 @@ package body Cmd.Usage is
 
 
    --------------------------------------------------------------------
+   --  display_usage_multiline
+   --------------------------------------------------------------------
+   procedure display_usage_multiline (usage_msg : String)
+   is
+      blanks : String (1 .. progname'Length) := (others => ' ');
+   begin
+      TIO.Put_Line (TIO.Standard_Error, "       " & blanks & " " & usage_msg);
+   end display_usage_multiline;
+
+
+   --------------------------------------------------------------------
    --  insert_carriage_return
    --------------------------------------------------------------------
    procedure insert_carriage_return is
@@ -988,7 +999,7 @@ package body Cmd.Usage is
          msg4 : String := "version -T <pkgname> <pattern>";
       begin
          display_usage (msg1, True);
-         display_usage (msg2, False);
+         display_usage_multiline (msg2);
          display_usage (msg3, False);
          display_usage (msg4, False);
       end print_usage;

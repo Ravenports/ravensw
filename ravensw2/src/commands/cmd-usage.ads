@@ -15,6 +15,9 @@ private
    --  Common routine to display usage messages
    procedure display_usage (usage_msg : String; first_line : Boolean);
 
+   --  Common routine to display usage message without progname
+   procedure display_usage_multiline (usage_msg : String);
+
    --  Common routine to display final help suggestion
    procedure display_help_suggestion (command : Command_verb);
 
