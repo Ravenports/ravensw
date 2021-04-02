@@ -982,14 +982,15 @@ package body Cmd.Usage is
 
       procedure print_usage
       is
-         msg1 : constant String := "version [-IPR] [-hoqvU] [-l limchar] [-L limchar] " &
-           "[-Cegix pattern] [-r reponame] [-O origin|-n pkgname] [index]";
-         msg2 : constant String := "version -t <version1> <version2>";
-         msg3 : constant String := "version -T <pkgname> <pattern>";
+         msg1 : String := "version [-IPR] [-hoqvU] [-l limchar] [-L limchar] [-Cegix pattern]";
+         msg2 : String := "        [-r reponame] [-O origin|-n pkgname] [index]";
+         msg3 : String := "version -t <version1> <version2>";
+         msg4 : String := "version -T <pkgname> <pattern>";
       begin
          display_usage (msg1, True);
          display_usage (msg2, False);
          display_usage (msg3, False);
+         display_usage (msg4, False);
       end print_usage;
 
       function alert (error_msg : String) return Boolean is
@@ -1033,6 +1034,7 @@ package body Cmd.Usage is
 
          if comline.verb_help then
             print_usage;
+            display_help_suggestion (cv_version);
          end if;
 
          return True;
