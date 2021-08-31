@@ -116,3 +116,7 @@ scripts/sbin/pkg2ng
 /tests/pkg_printf
 /tests/pkg_validation
 /tests/plist
+
+#ravensw2
+ada_source
+ravensw2
