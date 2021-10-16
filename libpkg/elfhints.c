@@ -327,6 +327,10 @@ __unused
 	add_dir ("fake-elf-hints-5", "/usr/lib/32", 1);
 	add_dir ("fake-elf-hints-6", "/usr/lib/64", 1);
 #endif
+#if defined __NetBSD__
+	add_dir ("fake-elf-hints-1", "/lib", 1);
+	add_dir ("fake-elf-hints-2", "/usr/lib", 1);
+#endif
 
 	return (scan_dirs_for_shlibs(&shlibs, ndirs, dirs, true));
 }
