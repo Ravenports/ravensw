@@ -19,15 +19,10 @@ CFLAGS=	-I/raven/include
 SSLCFLAGS= -I/raven/libressl/include
 
 dns_srv: dns_srv.adb
-	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+	env PATH=${PATH}:/raven/toolchain/ravensys-gcc/bin \
 	gnatmake -g -fstack-check ${.TARGET} -aI../src/resolv -aI../src
 
 unix_objs=	errno.o fileat.o socket.o mode.o file_times.o open.o dprint.o stat_ops.o
-b3_objs=	blake3.o blake3_dispatch.o blake3_portable.o \
-			blake3_avx2_x86-64_unix.o \
-			blake3_avx512_x86-64_unix.o \
-			blake3_sse2_x86-64_unix.o \
-			blake3_sse41_x86-64_unix.o
 
 errno.o: ../src/unix/errno.c
 	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
@@ -55,37 +50,16 @@ stat_ops.o: ../src/unix/stat_ops.c
 
 sql3int.o: ../src/sqlite/sqlite3_interface.c
 	${CC} -c ${CFLAGS} -I../../external/sqlite ${.ALLSRC} -o ${.TARGET}
-
-blake3.o: ../src/blake3/blake3.c
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
-
-blake3_dispatch.o: ../src/blake3/blake3_dispatch.c
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
-
-blake3_portable.o: ../src/blake3/blake3_portable.c
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
-
-blake3_avx2_x86-64_unix.o: ../src/blake3/blake3_avx2_x86-64_unix.S
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
-	
-blake3_avx512_x86-64_unix.o: ../src/blake3/blake3_avx512_x86-64_unix.S
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
-
-blake3_sse2_x86-64_unix.o: ../src/blake3/blake3_sse2_x86-64_unix.S
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
-
-blake3_sse41_x86-64_unix.o: ../src/blake3/blake3_sse41_x86-64_unix.S
-	${CC} -c ${CFLAGS} ${.ALLSRC} -o ${.TARGET}
 	
 retrieve_int64: retrieve_int64.adb ${unix_objs} sql3int.o
-	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+	env PATH=${PATH}:/raven/toolchain/ravensys-gcc/bin \
 	gnatmake -g -fstack-check ${.TARGET} -aI../src/resolv \
 		-aI../src -aI../src/sqlite -aI../src/regex -aI../src/unix \
 		-largs ../../external/sqlite/libsqlite_pic.a \
 		${unix_objs} sql3int.o
 
 check_bind: check_bind.adb ${unix_objs} sql3int.o
-	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+	env PATH=${PATH}:/raven/toolchain/ravensys-gcc/bin \
 	gnatmake -g -fstack-check ${.TARGET} -aI../src/resolv \
 		-aI../src -aI../src/sqlite -aI../src/regex -aI../src/unix \
 		-largs ../../external/sqlite/libsqlite_pic.a \
@@ -98,18 +72,18 @@ fetch_meta_c: fetch_meta.c
 		/raven/libressl/lib/libcrypto_pic.a
 
 fetch_meta: fetch_meta.adb ${unix_objs}
-	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+	env PATH=${PATH}:/raven/toolchain/ravensys-gcc/bin \
 	gnatmake -g -fstack-check ${.TARGET} -aI../src/fetch -aI../src \
 		-aI../src/unix -largs ${unix_objs} \
 		/raven/lib/libfetch_pic.a \
 		/raven/libressl/lib/libssl_pic.a \
 		/raven/libressl/lib/libcrypto_pic.a
 
-check_blake3: check_blake3.adb ${b3_objs}
-	env PATH=${PATH}:/raven/toolchain/gcc9/bin \
+check_blake3: check_blake3.adb
+	env PATH=${PATH}:/raven/toolchain/ravensys-gcc/bin \
 	gnatmake -g -fstack-check ${.TARGET} \
 		-aI../src/blake3 -aI../src \
-		-largs ${b3_objs}
+		-largs /raven/lib/libblake3_pic.a
 
 # load_pubkey_c: load_pubkey.c
 #	${CC} ${CFLAGS} ${SSLCFLAGS} -o ${.TARGET} ${.ALLSRC} \
