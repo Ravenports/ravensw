@@ -1,0 +1,7 @@
+# ignore gnat object files
+
+b~*
+*.ali
+
+# ignore test files
+testprogs/check_blake3
