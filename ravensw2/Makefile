@@ -6,14 +6,12 @@
 .if defined(RAVENADM)
 THISPATH=	${PATH}
 .else
-THISPATH=	/raven/toolchain/gcc10/bin:/raven/toolchain/bin:${PATH}
+THISPATH=	/raven/toolchain/ravensys-gcc/bin:/raven/toolchain/bin:${PATH}
 .endif
 
 all:
 	${MAKE} -C ${.CURDIR}/extlib/custom_sqlite
-	${MAKE} -C ${.CURDIR}/extlib/blake3
 	env PATH=${THISPATH} gprbuild -p -P ${.CURDIR}/ravensw
 
 clean:
 	${MAKE} -C ${.CURDIR}/extlib/custom_sqlite clean
-	${MAKE} -C ${.CURDIR}/extlib/blake3 clean

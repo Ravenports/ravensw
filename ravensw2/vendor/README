@@ -1,6 +1,6 @@
 This directory contains folder of source code for:
-1) blake3 library
-2) sqlite3
+1) sqlite3
+2) future...?
 
 The user is expected to extract sqlite3 distribution
 files into the sqlite3 subdirectory (which they create)
