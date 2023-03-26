@@ -60,10 +60,15 @@ extern "C" {
 #define PKG_PORTVERSION "@VERSION@"
 
 /* The OS major version at the time of compilation */
+# ifdef __MidnightBSD__
+#undef OSMAJOR
+#define USE_HINTSFILE
+# else
 #ifdef __FreeBSD__
 #define OSMAJOR	__FreeBSD__
 #define USE_HINTSFILE
 #endif
+# endif
 
 /* Not supported under DragonFly */
 #ifdef __DragonFly__

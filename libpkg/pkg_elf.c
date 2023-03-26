@@ -232,7 +232,7 @@ shlib_valid_abi(const char *fpath, GElf_Ehdr *hdr, const char *abi)
 	return (true);
 }
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__MidnightBSD__)
 static bool
 is_old_freebsd_armheader(const GElf_Ehdr *e)
 {
@@ -370,7 +370,7 @@ analyse_elf(struct pkg *pkg, const char *fpath)
 		goto cleanup; /* Invalid ABI */
 	}
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__MidnightBSD__)
 	if (elfhdr.e_ident[EI_OSABI] != ELFOSABI_FREEBSD &&
 	    !is_old_freebsd_armheader(&elfhdr)) {
 		ret = EPKG_END;
@@ -748,6 +748,7 @@ elf_note_analyse(Elf_Data *data, GElf_Ehdr *elfhdr, struct elf_info *ei)
 		if ((strncmp ((const char *) src, "FreeBSD", note.n_namesz) == 0) ||
 		    (strncmp ((const char *) src, "DragonFly", note.n_namesz) == 0) ||
 		    (strncmp ((const char *) src, "NetBSD", note.n_namesz) == 0) ||
+		    (strncmp ((const char *) src, "MidnightBSD", note.n_namesz) == 0) ||
 		    (note.n_namesz == 0)) {
 			if (note.n_type == NT_VERSION) {
 				version_style = 1;
@@ -815,6 +816,8 @@ elf_note_analyse(Elf_Data *data, GElf_Ehdr *elfhdr, struct elf_info *ei)
 		xasprintf(&ei->strversion, "%d.%d", version / 100000, (((version / 100 % 1000)+1)/2)*2);
 # elif defined(__NetBSD__)
 		xasprintf(&ei->strversion, "%d", (version + 1000000) / 100000000);
+# elif defined (__MidnightBSD__)
+		xasprintf(&ei->strversion, "%d.%d", version / 100000, (version / 100 % 1000));
 # else
 		xasprintf(&ei->strversion, "%d", version / 100000);
 # endif

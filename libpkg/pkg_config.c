@@ -87,7 +87,7 @@ struct config_entry {
 };
 
 static char myabi[BUFSIZ], myabi_legacy[BUFSIZ];
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__MidnightBSD__)
 static char myosversion[BUFSIZ];
 #endif
 static struct pkg_repo *repos = NULL;
@@ -423,7 +423,7 @@ static struct config_entry c[] = {
 		NULL,
 		"Write out the METALOG to the specified file",
 	},
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__MidnightBSD__)
 	{
 		PKG_INT,
 		"OSVERSION",
@@ -901,7 +901,7 @@ pkg_ini(const char *path, const char *reposdir, pkg_init_flags flags)
 
 	pkg_get_myarch(myabi, BUFSIZ, &ctx.osversion);
 	pkg_get_myarch_legacy(myabi_legacy, BUFSIZ);
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__MidnightBSD__)
 	snprintf(myosversion, sizeof(myosversion), "%d", ctx.osversion);
 #endif
 	if (parsed != false) {
@@ -1177,7 +1177,7 @@ pkg_ini(const char *path, const char *reposdir, pkg_init_flags flags)
 
 	pkg_debug(1, "%s", "pkg initialized");
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__MidnightBSD__)
 	ctx.osversion = pkg_object_int(pkg_config_get("OSVERSION"));
 #endif
 	/* Start the event pipe */
