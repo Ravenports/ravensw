@@ -816,8 +816,6 @@ elf_note_analyse(Elf_Data *data, GElf_Ehdr *elfhdr, struct elf_info *ei)
 		xasprintf(&ei->strversion, "%d.%d", version / 100000, (((version / 100 % 1000)+1)/2)*2);
 # elif defined(__NetBSD__)
 		xasprintf(&ei->strversion, "%d", (version + 1000000) / 100000000);
-# elif defined (__MidnightBSD__)
-		xasprintf(&ei->strversion, "%d.%d", version / 100000, (version / 100 % 1000));
 # else
 		xasprintf(&ei->strversion, "%d", version / 100000);
 # endif
