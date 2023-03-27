@@ -1348,6 +1348,10 @@ EOF
     *:DragonFly:*:*)
 	echo ${UNAME_MACHINE}-unknown-dragonfly`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
 	exit ;;
+    *:MidnightBSD:*:*)
+	echo ${UNAME_MACHINE}-unknown-midnightbsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
+	exit ;;
+
     *:*VMS:*:*)
 	UNAME_MACHINE=`(uname -p) 2>/dev/null`
 	case "${UNAME_MACHINE}" in
