@@ -346,7 +346,7 @@ is_valid_abi(const char *arch, bool emit_error) {
 	myarch = pkg_object_string(pkg_config_get("ABI"));
 	myarch_legacy = pkg_object_string(pkg_config_get("ALTABI"));
 
-	if (strncasecmp("accept-all", myarch_legacy, strlen(myarch_legacy)) != 0) {
+	if (strncasecmp("accept-all", myarch_legacy, strlen(myarch_legacy)) == 0) {
 		return (true);
 	}
 
