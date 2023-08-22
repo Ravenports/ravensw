@@ -31,7 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef __sun__
+#if !defined(__sun__) && !defined(__linux__)
 #include <sys/sysctl.h>
 #endif
 #include <sys/uio.h>
