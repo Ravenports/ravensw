@@ -840,6 +840,11 @@ pkg_get_myarch_elfparse(char *dest, size_t sz, int *osversion)
 	int i;
 	const char *abi_files[] = {
 		getenv("ABI_FILE"),
+#ifdef __linux__
+		/* uname is built, not provided.
+		 * hostname is provided, thus the ABI will always be correct. */
+		_PATH_HOSTNAME,
+#endif
 #ifdef __sun__
 		/* uname, etc, is compiled at 32-bit
 		 * Use the 64-bit libc to force detection of amd64 */
