@@ -71,6 +71,7 @@
 #endif
 
 #define _PATH_UNAME "/usr/bin/uname"
+#define _PATH_HOSTNAME "/bin/hostname"
 
 /* FFR: when we support installing a 32bit package on a 64bit host */
 #define _PATH_ELF32_HINTS       "/var/run/ld-elf32.so.hints"

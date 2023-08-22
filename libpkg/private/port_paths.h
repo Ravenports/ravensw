@@ -13,8 +13,4 @@
 #define	_PATH_TMP	"/tmp/"
 #endif
 
-#ifdef __linux__
-#define _PATH_HOSTNAME	"/bin/hostname"
-#endif
-
 #endif /* PORT_PATHS_H */
