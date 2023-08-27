@@ -60,12 +60,12 @@ struct avl_tree{
 #endif
 
 #define avl_parent(node) \
-        ((struct avl_node *)((uint64_t)(node)->parent & ~0x3))
+        ((struct avl_node *)((uintptr_t)(node)->parent & ~0x3))
 
 #ifdef _AVL_SEPARATE_PARENT_BF
     #define avl_bf(node) ((node)->bf)
 #else
-    #define avl_bf(node) (((int)((uint64_t)(node)->parent & 0x3)) - 1)
+    #define avl_bf(node) (((int)((uintptr_t)(node)->parent & 0x3)) - 1)
 #endif
 
 // *a < *b : return neg
