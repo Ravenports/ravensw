@@ -176,6 +176,7 @@ pkg_jobs_free(struct pkg_jobs *j)
 	}
 
 	pkg_jobs_universe_free(j->universe);
+	free(j->conflict_items);
 	LL_FREE(j->jobs, free);
 	LL_FREE(j->patterns, pkg_jobs_pattern_free);
 	free(j);

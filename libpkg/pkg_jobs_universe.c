@@ -818,6 +818,7 @@ pkg_jobs_universe_free(struct pkg_jobs_universe *universe)
 	kh_destroy_pkg_jobs_seen(universe->seen);
 	HASH_FREE(universe->provides, pkg_jobs_universe_provide_free);
 	LL_FREE(universe->uid_replaces, pkg_jobs_universe_replacement_free);
+	free(universe);
 }
 
 struct pkg_jobs_universe *
