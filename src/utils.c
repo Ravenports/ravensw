@@ -139,8 +139,9 @@ vquery_yesno(bool deft, const char *msg, va_list ap)
 	char *out;
 	size_t linecap = 0;
 	int linelen;
-	bool	 r = deft;
-	char	yesnomsg[65536];
+	bool r = deft;
+	bool setbreak = false;
+	char yesnomsg[65536];
 
 	/* We use default value of yes or default in case of quiet mode */
 	if (quiet)
@@ -165,27 +166,31 @@ vquery_yesno(bool deft, const char *msg, va_list ap)
 			if (linelen == 1 && line[0] == '\n') {
 				if (default_yes)
 					r = true;
-				break;
+				setbreak = true;
 			}
 			else if (linelen == 2) {
 				if (line[0] == 'y' || line[0] == 'Y') {
 					r = true;
-					break;
+					setbreak = true;
 				}
 				else if (line[0] == 'n' || line[0] == 'N') {
 					r = false;
-					break;
+					setbreak = true;
 				}
 			}
 			else {
 				if (strcasecmp(line, "yes\n") == 0) {
 					r = true;
-					break;
+					setbreak = true;
 				}
 				else if (strcasecmp(line, "no\n") == 0) {
 					r = false;
-					break;
+					setbreak = true;
 				}
+			}
+			free(line);
+			if (setbreak) {
+				break;
 			}
 			printf("Please type 'Y[es]' or 'N[o]' to make a selection\n");
 			printf("%s", out);
