@@ -67,6 +67,7 @@ pkg_free(struct pkg *pkg)
 
 	free(pkg->name);
 	free(pkg->origin);
+	free(pkg->version);
 	free(pkg->old_version);
 	free(pkg->maintainer);
 	free(pkg->www);
@@ -79,6 +80,7 @@ pkg_free(struct pkg *pkg)
 	free(pkg->comment);
 	free(pkg->desc);
 	free(pkg->sum);
+	free(pkg->reponame);
 	free(pkg->repopath);
 	free(pkg->repourl);
 	free(pkg->reason);
