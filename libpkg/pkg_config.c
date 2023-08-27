@@ -1071,7 +1071,6 @@ pkg_ini(const char *path, const char *reposdir, pkg_init_flags flags)
 		ucl_object_unref(ncfg);
 	}
 
-	ucl_object_unref(ncfg);
 	ncfg = NULL;
 	it = NULL;
 	while ((cur = ucl_iterate_object(config, &it, true))) {
