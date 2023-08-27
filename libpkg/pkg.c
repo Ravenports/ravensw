@@ -90,6 +90,11 @@ pkg_free(struct pkg *pkg)
 		if (pkg->scripts[i])
 			utstring_free(pkg->scripts[i]);
 
+	for (int i = 0; i < pkg->dir_to_del_len ; i++) {
+		free(pkg->dir_to_del[i]);
+       }
+	free(pkg->dir_to_del);
+
 	pkg_list_free(pkg, PKG_DEPS);
 	pkg_list_free(pkg, PKG_RDEPS);
 	pkg_list_free(pkg, PKG_FILES);
