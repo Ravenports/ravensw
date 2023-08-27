@@ -1071,6 +1071,7 @@ pkg_ini(const char *path, const char *reposdir, pkg_init_flags flags)
 		ucl_object_unref(ncfg);
 	}
 
+	ucl_object_unref(ncfg);
 	ncfg = NULL;
 	it = NULL;
 	while ((cur = ucl_iterate_object(config, &it, true))) {
@@ -1318,7 +1319,8 @@ pkg_repo_free(struct pkg_repo *r)
 	free(r->url);
 	free(r->name);
 	free(r->pubkey);
-	free(r->meta);
+	free(r->fingerprints);
+	pkg_repo_meta_free(r->meta);
 	if (r->ssh != NULL) {
 		FXFPRINTF(r->ssh, "quit\n");
 		FXCLOSE(r->ssh);
