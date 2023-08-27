@@ -31,6 +31,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _JSAHN_AVL_TREE_H
 #define _JSAHN_AVL_TREE_H
 
+/* Hardcode these definitions so ravensw doesn't need to set them */
+#define _AVL_SEPARATE_PARENT_BF
+#define _AVL_NEXT_POINTER
+
 #include "stddef.h"
 #include "stdint.h"
 
